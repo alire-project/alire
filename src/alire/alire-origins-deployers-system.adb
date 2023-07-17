@@ -1,5 +1,6 @@
 with Alire.Origins.Deployers.System.Apt;
 with Alire.Origins.Deployers.System.Homebrew;
+with Alire.Origins.Deployers.System.Macports;
 with Alire.Origins.Deployers.System.Pacman;
 with Alire.Origins.Deployers.System.RPM_Wrappers;
 with Alire.Origins.Deployers.System.Zypper;
@@ -108,6 +109,9 @@ package body Alire.Origins.Deployers.System is
                                     with others => <>),
          when Platforms.Homebrew =>
             System.Homebrew.Deployer'(Deployers.Deployer'(Base => From)
+                                      with others => <>),
+         when Platforms.Macports =>
+            System.Macports.Deployer'(Deployers.Deployer'(Base => From)
                                       with others => <>));
       --  NOTE: add here other native package managers as they get
       --  implemented.
