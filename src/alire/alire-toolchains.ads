@@ -99,7 +99,7 @@ package Alire.Toolchains is
               & "dependencies on particular compiler crates, for example to "
               & "use a cross-compiler. In this situation, a compiler already "
               & "available (selected as default or already installed) will "
-              & "take precedence over a compiler available in the catalog. ")
+              & "take precedence over a compiler available in the index. ")
      .Append ("")
      .Append ("See also "
               & TTY.URL ("https://alire.ada.dev/docs/#toolchains") & " for "

@@ -15,7 +15,7 @@ project-files = ["alr.gpr"]
 executables = ["alr"]
 
 [[depends-on]]
-aaa = "~0.2.7"
+aaa = "~0.3.0"
 ada_toml = "~0.3"
 ajunitgen = "^1.0.1"
 ansiada = "^1.0"
@@ -45,9 +45,9 @@ windows = { ALIRE_OS = "windows" }
 
 # Some dependencies require precise versions during the development cycle:
 [[pins]]
-aaa = { url = "https://github.com/mosteo/aaa", commit = "f60254934a7d6e39b72380b496527295602f75e3" }
+aaa = { url = "https://github.com/mosteo/aaa", commit = "fbfffb1cb269a852201d172119d94f3024b617f2" }
 ada_toml = { url = "https://github.com/mosteo/ada-toml", commit = "da4e59c382ceb0de6733d571ecbab7ea4919b33d" }
-clic = { url = "https://github.com/alire-project/clic", commit = "8d26222de71014554999e48c821906fca0e3dc41" }
+clic = { url = "https://github.com/alire-project/clic", commit = "6879b90876a1c918b4e112f59c6db0e25b713f52" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "403efe11405113cf12ae3d014df474cf7a046176" }
 minirest = { url = "https://github.com/mosteo/minirest.git", commit = "17fa789b71ccaf65e8c892816456c94a09a384d0" }
 semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning", commit = "2f23fc5f6b4855b836b599adf292fed9c0ed4144" }

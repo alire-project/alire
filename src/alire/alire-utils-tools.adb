@@ -57,7 +57,7 @@ package body Alire.Utils.Tools is
             return "";
 
          when Msys2 | Debian | Ubuntu | Arch | Centos | Fedora | Rhel | Suse
-           | Homebrew =>
+           | Homebrew | Macports =>
             return (case Tool is
                        when Easy_Graph =>
                       (if Distribution = Centos or else

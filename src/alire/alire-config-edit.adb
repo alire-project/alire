@@ -67,6 +67,25 @@ package body Alire.Config.Edit is
       end case;
    end Set;
 
+   -----------
+   -- Unset --
+   -----------
+
+   procedure Unset (Level : Config.Level;
+                    Key   : CLIC.Config.Config_Key)
+   is
+   begin
+      if CLIC.Config.Edit.Unset (Filepath (Level), Key, Quiet => True) then
+         Trace.Debug ("Config key " & Key & " unset from " & Level'Image
+                      & "configuration at " & Filepath (Level));
+         Load_Config;
+      else
+         Trace.Debug ("Config key " & Key & " requested to be unset at level "
+                      & Level'Image & " but it was already unset at "
+                      & Filepath (Level));
+      end if;
+   end Unset;
+
    -----------------
    -- Set_Boolean --
    -----------------

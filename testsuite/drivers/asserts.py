@@ -53,13 +53,17 @@ def assert_contents(dir: str, expected, regex: str = ""):
 
 
 def assert_match(expected_re, actual, label=None, flags=re.S):
-    if not re.match(expected_re, actual, flags=flags):
-        text = ['Unexpected {}'.format(label or 'output'),
-                'Expecting a match on:',
-                indent(expected_re),
-                'But got:',
-                indent(actual)]
-        assert False, '\n'.join(text)
+    try:
+        if not re.match(expected_re, actual, flags=flags):
+            text = ['Unexpected {}'.format(label or 'output'),
+                    'Expecting a match on:',
+                    indent(expected_re),
+                    'But got:',
+                    indent(actual)]
+            assert False, '\n'.join(text)
+    except re.error as e:
+        print(f"Invalid regex at assert_match: {expected_re}", file=sys.stderr)
+        raise
 
 
 def assert_profile(profile: str, crate: str, root: str = "."):
@@ -113,3 +117,15 @@ def assert_in_file(path : str, expected : str):
         contents = f.read()
     assert expected in contents, \
         f"Missing expected string '{expected}' in file {path}:\n{contents}"
+
+
+def match_deploy_dir(crate : str, path_fragment : str):
+    """
+    Check that a deployment directory for a crate matches a regex. The path
+    fragment must be anything between the variable name and the crate name in
+    the output of printenv, e.g.: MAKE_ALIRE_PREFIX=<matchable part><crate name>
+    """
+    p = run_alr("printenv")
+    assert_match(f".*[: ]{crate.upper()}_ALIRE_PREFIX=[^\\n]*"
+                 f"{re.escape(path_fragment)}[^\\n]*{crate}_.*",
+                 p.out)

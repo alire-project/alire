@@ -1040,11 +1040,11 @@ package body Alire.Solver is
 
             else
 
-               --  The crate plainly doesn't exist in our loaded catalog, so
+               --  The crate plainly doesn't exist in our loaded index, so
                --  mark it as missing an move on:
 
                Trace.Debug
-                 ("SOLVER: catalog LACKS the crate " & Raw_Dep.Image
+                 ("SOLVER: index LACKS the crate " & Raw_Dep.Image
                   & " when the search tree was "
                   & Image_One_Line (State));
 
