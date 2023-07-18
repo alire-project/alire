@@ -285,7 +285,7 @@ package body Alire.Toolchains is
             Pick_Up_Tool (Crate, Fill_Version_Choices (Crate));
          else
             Put_Warning
-              ("No indexed versions in the catalog for crate "
+              ("No indexed versions found for crate "
                & Crate.TTY_Image);
          end if;
 

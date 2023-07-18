@@ -47,15 +47,16 @@ package body Alire.TOML_Index is
                           Root     : Any_Path;
                           Result   : out Load_Result)
       with Pre => Result.Success;
-   --  Check that Catalog_Dir contains a file called "index.toml" and that it
-   --  describes a supported catalog.
+   --  Check that the index contains a file called "index.toml" and that it
+   --  describes a supported index, and that the file tree follows the proper
+   --  naming conventions, without extraneous files being present.
 
    procedure Load_Manifest (Item   : Ada.Directories.Directory_Entry_Type;
                             Stop   : in out Boolean);
    --  Check if entry is a candidate to manifest file, and in that case load
    --  its contents. May raise Checked_Error.
 
-   procedure Load_From_Catalog_Internal
+   procedure Load_From_Index_Internal
      (File_Name : Absolute_Path;
       Name      : Crate_Name;
       Version   : String;
@@ -289,7 +290,7 @@ package body Alire.TOML_Index is
 
       TOML_Index.Strict := Load.Strict;
 
-      Trace.Detail ("Loading full catalog from " & Root);
+      Trace.Detail ("Loading full index from " & Root);
 
       Check_Index (Index, Root, Result);
 
@@ -418,7 +419,7 @@ package body Alire.TOML_Index is
                                     & Path);
             end if;
 
-            Load_From_Catalog_Internal (File_Name => Path,
+            Load_From_Index_Internal (File_Name => Path,
                                         Name      => FS_Name,
                                         Version   => FS_Version,
                                         Strict    => Strict);
@@ -426,11 +427,11 @@ package body Alire.TOML_Index is
       end;
    end Load_Manifest;
 
-   --------------------------------
-   -- Load_From_Catalog_Internal --
-   --------------------------------
+   ------------------------------
+   -- Load_From_Index_Internal --
+   ------------------------------
 
-   procedure Load_From_Catalog_Internal
+   procedure Load_From_Index_Internal
      (File_Name : Absolute_Path;
       Name      : Crate_Name;
       Version   : String;
@@ -511,7 +512,7 @@ package body Alire.TOML_Index is
                Manifest.Index,
                Strict));
       end if;
-   end Load_From_Catalog_Internal;
+   end Load_From_Index_Internal;
 
    -------------------
    -- Index_Release --

@@ -88,7 +88,7 @@ package Alire.Solver is
 
    ---------------------
    --  Basic queries  --
-   --  Merely check the catalog
+   --  Merely check the index
 
    function Exists (Name    : Alire.Crate_Name;
                     Version : Semantic_Versioning.Version;
@@ -123,7 +123,7 @@ package Alire.Solver is
 
    -----------------------
    --  Advanced queries --
-   --  They may need to travel the full catalog, with multiple individual
+   --  They may need to travel the full index, with multiple individual
    --  availability checks.
 
    type Query_Options is record

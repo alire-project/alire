@@ -345,7 +345,7 @@ package body Alr.Commands.Get is
 
          if not Alire.Index.Exists (Allowed.Crate) then
             Reportaise_Command_Failed
-              ("Crate [" & Args (1) & "] does not exist in the catalog.");
+              ("Crate [" & Args (1) & "] does not exist in the index.");
          end if;
 
          Check_Unavailable_External (Allowed.Crate);
@@ -355,7 +355,7 @@ package body Alr.Commands.Get is
          if not Query.Exists (Allowed.Crate, Allowed.Versions) then
             Reportaise_Command_Failed
               ("Release within the requested versions ["
-               & Allowed.TTY_Image & "] does not exist in the catalog.");
+               & Allowed.TTY_Image & "] does not exist in the index.");
          end if;
 
          Retrieve (Cmd, Allowed.Crate, Allowed.Versions);
