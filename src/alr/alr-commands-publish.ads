@@ -68,6 +68,9 @@ private
       Skip_Submit : aliased Boolean := False;
       --  Stop after generation instead of asking the user to continue
 
+      Status     : aliased Boolean := False;
+      --  Retrieve the status of PRs opened by the user
+
       Tar        : aliased Boolean := False;
       --  Start the assistant from a local folder to be tar'ed and uploaded
    end record;

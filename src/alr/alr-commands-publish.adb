@@ -1,5 +1,5 @@
 with Alire.Origins;
-with Alire.Publish;
+with Alire.Publish.States;
 with Alire.URI;
 with Alire.Utils;
 
@@ -29,7 +29,8 @@ package body Alr.Commands.Publish is
                      Skip_Submit => Cmd.Skip_Submit);
 
    begin
-      if Alire.Utils.Count_True ((Cmd.Tar, Cmd.Print_Trusted)) > 1 or else
+      if Alire.Utils.Count_True
+        ((Cmd.Tar, Cmd.Print_Trusted, Cmd.Status)) > 1 or else
         (Cmd.Manifest.all /= "" and then Cmd.Print_Trusted)
       then
          Reportaise_Wrong_Arguments
@@ -51,6 +52,9 @@ package body Alr.Commands.Publish is
            (Path     => (if Args.Count >= 1 then Args (1) else "."),
             Revision => (if Args.Count >= 2 then Args (2) else "HEAD"),
             Options  => Options);
+
+      elsif Cmd.Status then
+         Alire.Publish.States.Print_Status;
 
       else
          if Args.Count < 1 then
@@ -113,9 +117,21 @@ package body Alr.Commands.Publish is
 
       Define_Switch
         (Config,
+         Cmd.Skip_Build'Access,
+         "", "--skip-build",
+         "Skip the build check step");
+
+      Define_Switch
+        (Config,
          Cmd.Skip_Submit'Access,
          "", "--skip-submit",
          "Do not create the online pull request onto the community index");
+
+      Define_Switch
+        (Config,
+         Cmd.Status'Access,
+         "", "--status",
+         "Check the status of the last pull request for the crate");
 
       Define_Switch
         (Config,
@@ -129,12 +145,6 @@ package body Alr.Commands.Publish is
          Cmd.Print_Trusted'Access,
          "", "--trusted-sites",
          "Print a list of trusted git repository sites");
-
-      Define_Switch
-        (Config,
-         Cmd.Skip_Build'Access,
-         "", "--skip-build",
-         "Skip the build check step");
    end Setup_Switches;
 
 end Alr.Commands.Publish;

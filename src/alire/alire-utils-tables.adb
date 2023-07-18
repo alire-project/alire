@@ -11,6 +11,14 @@ package body Alire.Utils.Tables is
       T.Append (TTY.Emph (AAA.Strings.To_Upper_Case (Cell)));
    end Header;
 
+   function Header (T    : aliased in out Table;
+                    Cell : String)
+                    return access Table is
+   begin
+      T.Header (Cell);
+      return T'Access;
+   end Header;
+
    -----------
    -- Print --
    -----------

@@ -10,13 +10,14 @@ the [gitter channel](https://gitter.im/ada-lang/Alire) of the project.
 The simplest publishing experience, provided you have a GitHub account and
 Personal Access Token, consist on issuing
 ```
-alr publish --submit
+alr publish
 ```
 at the root of your workspace, when said workspace is an up-to-date clone of a
 git repository.
 
 The publishing assistant will review your submission, point out any necessary
-fixes or additional information required, and provide you with a tracking URL.
+fixes or additional information required, and request a pull into the community
+index on GitHub on your behalf.
 
 Read on for the details underlying these automated steps, or in case you need
 to perform further tweaking.
@@ -48,10 +49,11 @@ The community index is supported through two kinds of branches:
   format, during the development of `alr`.
 
 Your `alr` version knows which branch to use, so you do not need to manually
-select one. When using `alr publish` to assist on creating a release, you will
+select one. When using `alr publish` to assist on creating a release, `alr`
+will either create the pull request against the proper branch, or you will
 be provided with an upload link for the branch your `alr` is using.
 
-However, when submitting releases manually, you must decide to which branch
+However, when submitting releases manually, you can decide to which branch
 they will be added: selecting the latest stable branch results in the release
 becoming immediately available to the latest stable `alr`. Conversely, using
 the latest development branch will make the releases available for testing by
@@ -122,8 +124,9 @@ path to it.
 
 At this point, `alr publish` will carry out a few tests and, if everything
 checks out, it will create a `${repo_root}/alire/releases/crate-version.toml`
-file. This file must be submitted to the community index via a PR. A link for
-conveniently creating this PR will also be provided by `alr`:
+file. This file must be submitted to the community index via a PR. `alr` will
+offer to create the pull request for you, unless you specify `--skip-submit`.
+If so, a link for conveniently creating this PR will also be provided by `alr`:
 
 - Upload the generated index manifest file (`crate-version.toml`) to the
   supplied page link on github and create a pull-request.
@@ -185,8 +188,7 @@ URL to do so.
 
 Invoking `alr publish --tar` inside an Alire workspace will result in the
 creation of a source archive at `${CRATE_ROOT}/alire/archives/`. This archive
-must be manually uploaded (for now) by the user to a publicly accessible
-hosting service.
+must be manually uploaded by the user to a publicly accessible hosting service.
 
 After the upload, the user can supply the URL to fetch this archive to the
 publishing assistant (which will be waiting for this information), and the
@@ -251,8 +253,9 @@ link, you can follow the usual procedure to submit a PR to a github repository:
 ## Publishing outcome
 
 Once the pull request is verified and merged, the new release will become
-available for normal use. The open source Ada ecosystem needs all the help it
-can get, so thank you for contributing!
+available for normal use after running `alr index --update-all`. The open
+source Ada ecosystem needs all the help it can get, so thank you for
+contributing!
 
 ## ALR Badge
 

@@ -11,6 +11,7 @@ with Minirest;
 
 package body Alire.GitHub is
 
+   use Minirest;
    use URI.Operators;
 
    Base_URL    : constant URL    := "https://api.github.com";
@@ -28,7 +29,6 @@ package body Alire.GitHub is
                       Token : String := OS_Lib.Getenv (Env_GH_Token, ""))
                       return Minirest.Response
    is
-      use Minirest;
       Full_URL : constant String :=
                    Base_URL
                    & (if Proc (Proc'First) /= '/' then "/" else "")
@@ -124,7 +124,6 @@ package body Alire.GitHub is
      )
       return Natural
    is
-      use all type Minirest.Parameters;
       Response : constant Minirest.Response
         := API_Call
           (Kind  => POST,
@@ -153,25 +152,21 @@ package body Alire.GitHub is
       end;
    end Create_Pull_Request;
 
-   -----------------------
-   -- Find_Pull_Request --
-   -----------------------
+   ---------------
+   -- Get_Pulls --
+   ---------------
 
-   function Find_Pull_Request (M : Milestones.Milestone)
-                               return GNATCOLL.JSON.JSON_Value
+   function Get_Pulls (Args : Minirest.Parameters)
+                       return GNATCOLL.JSON.JSON_Value
    is
-      use all type Minirest.Parameters;
-
       Response : constant Minirest.Response
         := API_Call ("repos"
                      / Index.Community_Organization
                      / Index.Community_Repo_Name
                      / "pulls",
                      Kind => GET,
-                     Args =>
-                       "state" = "all"
-                     and "head" = User_Info.User_GitHub_Login & ":"
-                                & Publish.Branch_Name (M));
+                     Args => Args
+                             and "per_page" = 100);
    begin
       if Response.Succeeded then
          return GNATCOLL.JSON.Read (Response.Content.Flatten (""));
@@ -183,7 +178,25 @@ package body Alire.GitHub is
             & " and status: "
             & Response.Status_Line & Response.Content.Flatten (ASCII.LF));
       end if;
-   end Find_Pull_Request;
+   end Get_Pulls;
+
+   -----------------------
+   -- Find_Pull_Request --
+   -----------------------
+
+   function Find_Pull_Request (M : Milestones.Milestone)
+                               return GNATCOLL.JSON.JSON_Value
+   is (Get_Pulls ("state" = "all"
+              and "head"  = User_Info.User_GitHub_Login & ":"
+                            & Publish.Branch_Name (M)));
+
+   ------------------------
+   -- Find_Pull_Requests --
+   ------------------------
+
+   function Find_Pull_Requests return GNATCOLL.JSON.JSON_Value
+   is (Get_Pulls ("state" = "open"
+              and "head"  = User_Info.User_GitHub_Login));
 
    ----------
    -- Fork --
