@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env
 
 function guess_OS() {
     # Returns one of the values needed in ALIRE_OS, using environment variables

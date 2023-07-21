@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env
 
 # Import reusable bits
 pushd $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) > /dev/null
