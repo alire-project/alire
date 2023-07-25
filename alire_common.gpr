@@ -2,9 +2,9 @@ abstract project Alire_Common is
 
    for Create_Missing_Dirs use "True";
 
-   type Host_OSes is ("linux", 
-                      "freebsd", 
-                      "macos", 
+   type Host_OSes is ("linux",
+                      "freebsd",
+                      "macos",
                       "windows");
 
    Host_OS : Host_OSes := external ("ALIRE_OS");
@@ -23,7 +23,8 @@ abstract project Alire_Common is
    Style_Check_Switches := ();
    case Style_Check_Mode is
       when "enabled"  => Style_Check_Switches :=
-           ("-gnatyg",   -- Standard checks
+           ("-gnatwe",   -- Warnings as errors
+            "-gnatyg",   -- Standard checks
             "-gnatyI",   -- no IN mode
             "-gnatyO",   -- all overrides
             "-gnaty-s"); -- relax fwd decl
@@ -52,8 +53,8 @@ abstract project Alire_Common is
                --  Report Elaboration Circularity Details
                "-gnatd_F",
 
-               --  Enable all warnings and treat them as errors
-               "-gnatwae")
+               --  Enable all warnings
+               "-gnatwa")
               & Style_Check_Switches;
 
             for Default_Switches ("C") use ("-g", "-O0", "-Wall");
