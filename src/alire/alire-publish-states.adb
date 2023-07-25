@@ -20,7 +20,7 @@ package body Alire.Publish.States is
    -------------
    -- Matches --
    -------------
-   --  The API isn't fully consistent on the case of returned enums
+   --  The GitHub API isn't fully consistent on the case of returned enums
    function Matches (S : String; Target : String) return Boolean
    is
       use AAA.Strings;

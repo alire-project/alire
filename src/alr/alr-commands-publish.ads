@@ -52,7 +52,7 @@ package Alr.Commands.Publish is
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
    is ("[--skip-build] [--skip-submit] [--tar] "
-       & "[--manifest <file>] [<URL> [commit]]]");
+       & "[--manifest <file>] [<URL> [commit]]] [--request-review NUM]");
 
 private
 

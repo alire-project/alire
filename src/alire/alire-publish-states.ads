@@ -27,7 +27,7 @@ package Alire.Publish.States is
          when True  =>
             Branch  : UString; -- In truth, it's `user:branch`
             Number  : Natural           := 0;
-            Node_ID : UString;
+            Node_ID : UString; -- Internal ID for the GraphQL API
             Title   : UString;
             Status  : Lifecycle_States  := Checks_Ongoing;
       end case;

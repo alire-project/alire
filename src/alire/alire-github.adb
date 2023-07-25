@@ -58,7 +58,7 @@ package body Alire.GitHub is
                       Raw   : String := "")
                       return Minirest.Response
    is
-      --  We receive either Args or a Raw body to send
+      --  We receive either JSON Args or a Raw body to send
       pragma Assert (Raw = "" or else Args = Minirest.No_Arguments);
 
       Full_URL : constant String :=
@@ -251,31 +251,14 @@ package body Alire.GitHub is
 
    function Find_Pull_Request (Number : Natural)
                                return GNATCOLL.JSON.JSON_Value
-   is
-      Response : constant Minirest.Response
-        := API_Call
-          ("repos"
-           / Index.Community_Organization
-           / Index.Community_Repo_Name
-           / "pulls"
-           / AAA.Strings.Trim (Number'Image),
-           Kind  => GET);
-   begin
-      if Response.Succeeded then
-         return GNATCOLL.JSON.Read (Response.Content.Flatten (""));
-      elsif Response.Status_Code = 404 then
-         Raise_Checked_Error ("Pull request" & TTY.Emph (Number'Image)
-                              & " does not exist");
-      else
-         Raise_Checked_Error
-           (Errors.New_Wrapper
-            .Wrap ("Error retrieving PR using GitHub REST API")
-            .Wrap ("Status line: " & Response.Status_Line)
-            .Wrap ("Response body:")
-            .Wrap (Response.Content.Flatten (ASCII.LF))
-            .Get);
-      end if;
-   end Find_Pull_Request;
+   is (API_Call
+         ("repos"
+          / Index.Community_Organization
+          / Index.Community_Repo_Name
+          / "pulls"
+          / AAA.Strings.Trim (Number'Image),
+          Error => "Could not retrieve pull request information",
+          Kind  => GET));
 
    ------------------------
    -- Find_Pull_Requests --
@@ -423,15 +406,15 @@ package body Alire.GitHub is
       use AAA.Strings;
 
       --  Unfortunately, removing the draft flag isn't available through REST.
-      --  We must resort to teh GraphQL API, much more powerful but also more
+      --  We must resort to the GraphQL API, much more powerful but also more
       --  complex. To get this out of the way, this query is hardcoded here.
 
       --  mutation {
       --    markPullRequestReadyForReview
       --      (input:
       --        {
-      --          clientMutationId: "alire",
-      --          pullRequestId: "PR_kwDOC8Oy585VBe2c"
+      --          clientMutationId: "alr-x.y.z",
+      --          pullRequestId: "PR_<id>"
       --        }
       --      ) {
       --      clientMutationId
