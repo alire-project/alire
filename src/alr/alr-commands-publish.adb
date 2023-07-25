@@ -7,6 +7,14 @@ package body Alr.Commands.Publish is
 
    package URI renames Alire.URI;
 
+   function To_Int (S : String) return Integer is
+   begin
+      return Integer'Value (S);
+   exception
+      when others =>
+         Alire.Raise_Checked_Error ("Not a valid integer: " & S);
+   end To_Int;
+
    -------------
    -- Execute --
    -------------
@@ -30,7 +38,9 @@ package body Alr.Commands.Publish is
 
    begin
       if Alire.Utils.Count_True
-        ((Cmd.Tar, Cmd.Print_Trusted, Cmd.Status)) > 1 or else
+        ((Cmd.Tar, Cmd.Print_Trusted, Cmd.Status,
+          Cmd.Cancel.all /= Unset)) > 1
+        or else
         (Cmd.Manifest.all /= "" and then Cmd.Print_Trusted)
       then
          Reportaise_Wrong_Arguments
@@ -52,6 +62,25 @@ package body Alr.Commands.Publish is
            (Path     => (if Args.Count >= 1 then Args (1) else "."),
             Revision => (if Args.Count >= 2 then Args (2) else "HEAD"),
             Options  => Options);
+
+      elsif Cmd.Cancel.all /= Unset then
+         if Cmd.Cancel.all = "" then
+            Reportaise_Wrong_Arguments
+              ("--cancel requires one pull request number");
+         end if;
+
+         if Cmd.Reason.all in "" | "unset" then
+            Reportaise_Wrong_Arguments
+              ("--cancel requires a --reason");
+         end if;
+
+         if not Args.Is_Empty then
+            Reportaise_Wrong_Arguments
+              ("Unexpected argumets; verify --reason text is quoted");
+         end if;
+
+         Alire.Publish.States.Cancel (PR     => To_Int (Cmd.Cancel.all),
+                                      Reason => Cmd.Reason.all);
 
       elsif Cmd.Status then
          Alire.Publish.States.Print_Status;
@@ -126,6 +155,20 @@ package body Alr.Commands.Publish is
          Cmd.Skip_Submit'Access,
          "", "--skip-submit",
          "Do not create the online pull request onto the community index");
+
+      Define_Switch
+        (Config,
+         Cmd.Cancel'Access,
+         "", "--cancel=",
+         "Prematurely close a pull request without waiting for the merge",
+         Argument => "NUM");
+
+      Define_Switch
+        (Config,
+         Cmd.Reason'Access,
+         "", "--reason=",
+         "Give a message for the record on why the PR is being closed",
+         Argument => "'short text'");
 
       Define_Switch
         (Config,

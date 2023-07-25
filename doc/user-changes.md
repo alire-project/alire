@@ -6,6 +6,20 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### Cancel an index submission with `alr publish --cancel`
+
+PR [#1406](https://github.com/alire-project/alire/pull/1406)
+
+A pending submission can be closed with `alr publish --cancel
+<num> --reason <text>`.
+
+### Track user's index submissions with `alr publish --status`
+
+PR [#1400](https://github.com/alire-project/alire/pull/1400)
+
+The new `alr publish --status` switch will print a table with unmerged pull
+requests opened by the user against the community index repository.
+
 ### Automatic release submission during `alr publish`
 
 PR [#1398](https://github.com/alire-project/alire/pull/1398)

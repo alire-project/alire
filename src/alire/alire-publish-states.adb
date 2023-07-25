@@ -4,6 +4,8 @@ with Alire.URI;
 with Alire.Utils.Tables;
 with Alire.Utils.User_Input.Query_Config;
 
+with CLIC.User_Input;
+
 with GNATCOLL.JSON;
 
 package body Alire.Publish.States is
@@ -37,6 +39,7 @@ package body Alire.Publish.States is
       Label  : constant String := "label";
       Number : constant String := "number";
       State  : constant String := "state";
+      Title  : constant String := "title";
    end Key;
 
    package Val is
@@ -50,9 +53,14 @@ package body Alire.Publish.States is
    function To_Status (Info : GNATCOLL.JSON.JSON_Value) return PR_Status
    is
    begin
+      if Info.Is_Empty then
+         return (Exists => False);
+      end if;
+
       return
         (Exists  => True,
          Branch  => +Info.Get (Key.Head).Get (Key.Label),
+         Title   => +Info.Get (Key.Title),
          Number  => Info.Get (Key.Number),
          Status  => (if Info.Get (Key.State) = Val.Open
                      then Open
@@ -157,5 +165,55 @@ package body Alire.Publish.States is
 
       Table.Print (Always);
    end Print_Status;
+
+   ------------
+   -- Cancel --
+   ------------
+
+   procedure Cancel (PR : Natural; Reason : String) is
+      use Simple_Logging;
+      Busy : constant Ongoing := Activity ("Checking PR status")
+        with Unreferenced;
+
+      Status : constant PR_Status
+        := To_Status (GitHub.Find_Pull_Request (PR));
+
+      ---------------
+      -- Fail_With --
+      ---------------
+
+      procedure Fail_With (Reason : String) is
+      begin
+         Raise_Checked_Error
+           ("Requested pull request" & TTY.Emph (PR'Image) & " " & Reason);
+      end Fail_With;
+
+      Busy_Closing : constant Ongoing := Activity ("Closing")
+        with Unreferenced;
+
+      use CLIC.User_Input;
+   begin
+      if not Status.Exists then
+         Fail_With ("does not exist");
+      end if;
+
+      if not Status.Is_Open then
+         Fail_With ("is already closed");
+      end if;
+
+      Trace.Info (""); -- New line required after busy spinner
+
+      if Query ("Are you sure that you want to close PR"
+                & PR'Image & " (" & (+Status.Title) & ") "
+                & "giving as reason: """ & Reason & """?",
+                (Yes | No => True, others => False), Yes) = Yes
+      then
+         GitHub.Close (PR, Reason);
+         Put_Success ("Pull request" & TTY.Emph (PR'Image)
+                      & " closed successfully");
+      else
+         Put_Warning ("Operation abandoned", Info);
+      end if;
+   end Cancel;
 
 end Alire.Publish.States;

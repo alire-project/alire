@@ -14,6 +14,7 @@ package Alire.Publish.States is
          when True  =>
             Branch  : UString; -- In truth, it's `user:branch`
             Number  : Natural      := 0;
+            Title   : UString;
             Status  : Life_States  := Open;
             Checks  : Check_States := Pending;
       end case;
@@ -40,5 +41,7 @@ package Alire.Publish.States is
    --  Find all open pull requests created by the user
 
    procedure Print_Status;
+
+   procedure Cancel (PR : Natural; Reason : String);
 
 end Alire.Publish.States;
