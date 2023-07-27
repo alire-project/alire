@@ -39,7 +39,7 @@ package body Alr.Commands.Publish is
    begin
       if Alire.Utils.Count_True
         ((Cmd.Tar, Cmd.Print_Trusted, Cmd.Status,
-          Cmd.Cancel.all /= Unset)) > 1
+          Cmd.Cancel.all /= Unset, Cmd.Review.all /= Unset)) > 1
         or else
         (Cmd.Manifest.all /= "" and then Cmd.Print_Trusted)
       then
@@ -76,11 +76,18 @@ package body Alr.Commands.Publish is
 
          if not Args.Is_Empty then
             Reportaise_Wrong_Arguments
-              ("Unexpected argumets; verify --reason text is quoted");
+              ("Unexpected arguments; verify --reason text is quoted");
          end if;
 
          Alire.Publish.States.Cancel (PR     => To_Int (Cmd.Cancel.all),
                                       Reason => Cmd.Reason.all);
+
+      elsif Cmd.Review.all /= Unset then
+         if not Args.Is_Empty then
+            Reportaise_Wrong_Arguments ("Unexpected arguments");
+         end if;
+
+         Alire.Publish.States.Request_Review (To_Int (Cmd.Review.all));
 
       elsif Cmd.Status then
          Alire.Publish.States.Print_Status;
@@ -169,6 +176,13 @@ package body Alr.Commands.Publish is
          "", "--reason=",
          "Give a message for the record on why the PR is being closed",
          Argument => "'short text'");
+
+      Define_Switch
+        (Config,
+         Cmd.Review'Access,
+         "", "--request-review=",
+         "Remove draft status from the pull request and request a review",
+         Argument => "NUM");
 
       Define_Switch
         (Config,

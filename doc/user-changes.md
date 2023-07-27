@@ -6,6 +6,14 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### Request review of an index submission with `alr publish --request-review`
+
+PR [#1409](https://github.com/alire-project/alire/pull/1409)
+
+When a submission has passed all server-side tests, for the time being it must
+be reviewed and merged manually. This can now be done with `alr publish
+--request-review <num>`.
+
 ### Cancel an index submission with `alr publish --cancel`
 
 PR [#1406](https://github.com/alire-project/alire/pull/1406)

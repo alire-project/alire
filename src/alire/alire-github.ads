@@ -6,6 +6,8 @@ with GNATCOLL.JSON;
 
 package Alire.GitHub is
 
+   subtype JSON_Value is GNATCOLL.JSON.JSON_Value;
+
    Env_GH_Token : constant String := "GH_TOKEN";
    --  This is the environment variable used by the `gh` tool to look for the
    --  user token. We can reuse it so if it's available, we need not pester the
@@ -40,16 +42,16 @@ package Alire.GitHub is
    --  Returns the number of the PR just created
 
    function Find_Pull_Request (M : Milestones.Milestone)
-                               return GNATCOLL.JSON.JSON_Value;
+                               return JSON_Value;
    --  Find a pull request that matches the user and branch, and return the raw
    --  JSON info. It will return the unique open PR, or the most recent closed
    --  one.
 
    function Find_Pull_Request (Number : Natural)
-                               return GNATCOLL.JSON.JSON_Value;
+                               return JSON_Value;
    --  Find the PR with the given number, in any state
 
-   function Find_Pull_Requests return GNATCOLL.JSON.JSON_Value;
+   function Find_Pull_Requests return JSON_Value;
    --  Return open pull requests created by the user
 
    procedure Comment (Number : Natural; Text : String);
@@ -70,6 +72,17 @@ package Alire.GitHub is
    --  accepted, so we have to busy wait for it to become available. If Timeout
    --  elapses without succeeding, it will return Pending. It'll only raise if
    --  the initial request is denied.
+
+   procedure Request_Review (Number  : Natural;
+                             Node_ID : String);
+   --  The Node_ID is the "node_id" returned by the REST API, which is the "id"
+   --  needed by the GraphQL API.
+
+   function Checks (SHA : String) return JSON_Value;
+   --  Get the workflow run results on a commit
+
+   function Reviews (PR : Natural) return JSON_Value;
+   --  Get the reviews for a pull request
 
    function Repo_Exists
      (User : String := User_Info.User_GitHub_Login;
