@@ -2,6 +2,7 @@ with AAA.Directories;
 
 with Ada.Exceptions;
 with Ada.Numerics.Discrete_Random;
+with Ada.Real_Time;
 with Ada.Unchecked_Deallocation;
 
 with Alire.OS_Lib.Subprocess;
@@ -424,13 +425,44 @@ package body Alire.Directories is
    -- TEMP FILES --
    ----------------
 
+   Epoch : constant Ada.Real_Time.Time :=
+             Ada.Real_Time.Time_Of (0, Ada.Real_Time.To_Time_Span (0.0));
+
    function Temp_Name (Length : Positive := 8) return String is
       subtype Valid_Character is Character range 'a' .. 'z';
       package Char_Random is new
         Ada.Numerics.Discrete_Random (Valid_Character);
       Gen : Char_Random.Generator;
+
+      --  The default random seed has a granularity of 1 second, which is not
+      --  enough when we run our tests with high parallelism. Increasing the
+      --  resolution to nanoseconds should be enough? At least I couldn't
+      --  reproduce the errors once this is added.
+
+      --  It would be safer to use an atomic OS call that returns a unique file
+      --  name, but we would need native versions for all OSes we support and
+      --  that may be too much hassle? since GNAT.OS_Lib doesn't do it either.
+
+      use Ada.Real_Time;
+
+      Nano : constant String :=
+               AAA.Strings.Replace (To_Duration (Clock - Epoch)'Image,
+                                    ".", "");
+      --  This gives us an image without loss of precision and without
+      --  having to be worried about overflows
+
+      function "mod" (X, Y : Long_Long_Float) return Long_Long_Float
+      is (X - Y * Long_Long_Float'Floor (X / Y));
+
+      Seed : constant Integer :=
+               Integer
+                 (Long_Long_Float'Value (Nano)
+                  mod Long_Long_Float (Integer'Last));
+      --  We get the remainder of these two which has to fit into Integer
+
    begin
-      Char_Random.Reset (Gen);
+
+      Char_Random.Reset (Gen, Seed);
 
       return Result : String (1 .. Length + 4) do
          Result (1 .. 4) := "alr-";

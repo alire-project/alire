@@ -249,6 +249,7 @@ private
 
    overriding
    procedure Initialize (This : in out Temp_File);
+
    overriding
    procedure Finalize (This : in out Temp_File);
 
