@@ -19,7 +19,8 @@ package Alire.Platforms.Current is
 
    procedure Load_Environment (Ctx : in out Alire.Environment.Context);
    --  Set environment variables from the platform. Used by Windows to
-   --  initialize msys2 environment.
+   --  initialize msys2 environment, and by macOS to initialize which,
+   --  if either, of the Homebrew or MacPorts environment.
 
    -----------------------
    --  Self identification
