@@ -45,10 +45,12 @@ def assert_eq(expected, actual, label=None):
 
 def assert_contents(dir: str, expected, regex: str = ""):
     """
-    Check that entries in dir filtered by regex match the list in expected
+    Check that entries in dir filtered by regex match the list in expected.
+    Transforms all paths to use forward slashes, and sorts the contents.
     """
     real = contents(dir, regex)
-    assert real == expected, \
+
+    assert real == sorted([path.replace('\\', '/') for path in expected]), \
         f"Wanted contents:\n{expected}\nBut got:\n{real}\n"
 
 

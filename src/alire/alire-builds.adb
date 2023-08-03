@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 with Alire.Config.Edit;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
@@ -17,6 +19,31 @@ package body Alire.Builds is
    function Sandboxed_Dependencies return Boolean
    is (not Config.DB.Get (Config.Keys.Dependencies_Shared,
                           Config.Defaults.Dependencies_Shared));
+
+   -------------------
+   -- To_Msys2_Path --
+   -------------------
+   --  Convert C:\blah\blah into /c/blah/blah. This is needed because otherwise
+   --  rsync confuses drive letters with remote hostnames. This might be useful
+   --  in our troubles with tar?
+   function To_Msys2_Path (Path : Absolute_Path) return String
+   is
+   begin
+      if not Platforms.Current.On_Windows then
+         return Path;
+      end if;
+
+      declare
+         use AAA.Strings;
+         New_Path : String (1 .. Path'Length) := Path;
+      begin
+         --  Replace ':' with '/'
+         New_Path (2) := '/';
+
+         --  Replace '\' with '/'
+         return "/" & Replace (New_Path, "\", "/");
+      end;
+   end To_Msys2_Path;
 
    ----------
    -- Sync --
@@ -59,8 +86,9 @@ package body Alire.Builds is
             --  Archive, no CVS folders, keep hard links, human units
             & (if Log_Level > Detail then To_Vector ("-P") else Empty_Vector)
             & (if Log_Level < Info   then To_Vector ("-q") else Empty_Vector)
-            & (Src / "") -- trailing '/' to access contents directly
-            & (Dst / "") -- likewise
+            --  Trailing '/' to access contents directly in the following paths
+            & To_Msys2_Path (Src / "")
+            & To_Msys2_Path (Dst / "")
            );
          --  TODO: this may take some time, and rsync doesn't have a way
          --  to show oneliner progress, so at some point we may want to use
