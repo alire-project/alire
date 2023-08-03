@@ -727,7 +727,7 @@ package body Alire.Roots is
 
                --  At this point, post-fetch have been run by either
                --  Builds.Sync or Rel.Deploy; also completion will only
-               --  have succeeded if the post-fetch actions have.
+               --  have succeeded if the post-fetch actions have too.
 
                --  If the release was newly deployed, we can inform about its
                --  nested crates now.

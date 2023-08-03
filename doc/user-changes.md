@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### Deprecation of `dependencies.dir` in favor of `dependencies.shared`
 
-PR [#](https://github.com/alire-project/alire/pull/)
+PR [#1419](https://github.com/alire-project/alire/pull/1419)
 
 A new system of shared sources and builds is being implemented, which will
 ensure full consistency and reuse of builds.

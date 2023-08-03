@@ -17,13 +17,13 @@ package Alire.Paths with Preelaborate is
 
    Working_Folder_Inside_Root : constant Relative_Path := "alire";
    --  Folder within a workspace that will contain metadata/build files,
-   --  dependency releases, etc.e
+   --  dependency releases, etc.
 
    Scripts_Graph_Easy            : constant String := "graph-easy";
    --  Script for ASCII graphs
 
    Complete_Flag : constant String := "complete_copy";
-   --  We use <root>/alire/complete to mark that a file operation was completed
+   --  We use <root>/alire/<flag> to mark that a file operation was completed
 
 private
 

@@ -2,8 +2,8 @@ with Alire.Config.Edit;
 
 package Alire.Paths.Vault is
 
-   --  We call "vault" (so not to abuse "cache" which has another meaning)
-   --  to the "read-only" location where all releases are initially deployed
+   --  We call the 'vault' (so not to abuse "cache" which has another meaning)
+   --  the "read-only" location where all releases are initially deployed
    --  as-is, without actions being run (unless for binary releases, which are
    --  deployed once and have their actions run at that time). Before building,
    --  a non-binary release is synced to the actual build location and actions

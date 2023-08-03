@@ -223,12 +223,14 @@ package Alire.Directories is
    --  the original file remains untouched.
 
    --  To ensure that certain download/copy/sync operations are complete, we
-   --  use this RAII type that will delete/create an ~/path/alire/complete
-   --  canary file
+   --  use this type that will check/delete/create a <path>/alire/complete_copy
+   --  canary file.
 
    type Completion (<>) is tagged limited private;
 
    function New_Completion (Path : Directory_Path) return Completion;
+   --  This is the destination folder whose operation we want to ensure was
+   --  completed: a download/copy destination, for example.
 
    function Is_Complete (This : Completion) return Boolean;
    --  Say if the operation at This path was already complete in which case
@@ -237,7 +239,8 @@ package Alire.Directories is
    procedure Mark (This     : in out Completion;
                    Complete : Boolean)
      with Post => This.Is_Complete = Complete;
-   --  Set/remove the canary flag of the operation on path being complete
+   --  Set/remove the canary flag of the operation on path being complete. This
+   --  should be called when the operation has actually been completed.
 
 private
 

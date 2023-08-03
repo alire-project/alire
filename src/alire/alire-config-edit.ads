@@ -108,11 +108,11 @@ private
 
    Builtins : constant array (Natural range <>) of Builtin_Entry :=
      (
-      (+Keys.Dependencies_Shared,
-       Cfg_Bool,
-       +("When true (default), releases are downloaded and built in a shared "
-         & "location inside the global cache. When false, releases are "
-         & "sandboxed in each workspace."
+        (+Keys.Dependencies_Shared,
+      Cfg_Bool,
+      +("When true, dependencies are downloaded and built in a shared "
+        & "location inside the global cache. When false (default), "
+        & "dependencies are sandboxed in each workspace."
        )),
 
       (+Keys.Index_Auto_Community,
