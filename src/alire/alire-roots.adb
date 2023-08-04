@@ -193,6 +193,7 @@ package body Alire.Roots is
 
       if Saved_Profiles then
          This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
+         This.Build_Hasher.Clear;
       end if;
 
       --  Check if crate configuration should be re-generated. This is the old
@@ -203,6 +204,9 @@ package body Alire.Roots is
         and then This.Configuration.Must_Regenerate
       then
          This.Generate_Configuration;
+      elsif not Builds.Sandboxed_Dependencies then
+         This.Deploy_Dependencies;
+         --  Changes in configuration may require new build dirs
       end if;
 
       This.Configuration.Ensure_Complete;
