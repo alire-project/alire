@@ -1,4 +1,5 @@
 with Alire.Releases;
+limited with Alire.Roots;
 
 package Alire.Builds is
 
@@ -29,14 +30,17 @@ package Alire.Builds is
    function Sandboxed_Dependencies return Boolean;
    --  Queries config to see if dependencies should be sandboxed in workspace
 
-   procedure Sync (Release   : Releases.Release;
+   procedure Sync (Root      : in out Roots.Root;
+                   Release   : Releases.Release;
                    Was_There : out Boolean)
      with Pre => Release.Origin.Requires_Build;
 
    function Path return Absolute_Path;
    --  Location of shared builds
 
-   function Path (Release : Releases.Release) return Absolute_Path;
+   function Path (Root    : in out Roots.Root;
+                  Release : Releases.Release)
+                  return Absolute_Path;
    --  Computes the complete path in which the release is going to be built
 
 end Alire.Builds;

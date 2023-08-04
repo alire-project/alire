@@ -232,6 +232,22 @@ package body Alire.Roots is
       end return;
    end Build_Context;
 
+   ----------------
+   -- Build_Hash --
+   ----------------
+
+   function Build_Hash (This : in out Root;
+                        Name : Crate_Name)
+                        return String
+   is
+   begin
+      if This.Build_Hasher.Is_Empty then
+         This.Build_Hasher.Compute (This);
+      end if;
+
+      return This.Build_Hasher.Hash (Name);
+   end Build_Hash;
+
    -------------
    -- Install --
    -------------
@@ -722,7 +738,7 @@ package body Alire.Roots is
                --  Sync sources to its shared build location
 
                if not Builds.Sandboxed_Dependencies then
-                  Builds.Sync (Rel, Was_There);
+                  Builds.Sync (This, Rel, Was_There);
                end if;
 
                --  At this point, post-fetch have been run by either
@@ -1173,6 +1189,9 @@ package body Alire.Roots is
    is
    begin
       This.Cached_Solution.Set (Solution, This.Lock_File);
+
+      --  Invalidate hashes as the new solution may contain new releases
+      This.Build_Hasher.Clear;
    end Set;
 
    --------------
@@ -1180,7 +1199,17 @@ package body Alire.Roots is
    --------------
 
    function Solution (This : in out Root) return Solutions.Solution
-   is (This.Cached_Solution.Element (This.Lock_File));
+   is
+      Result : constant Cached_Solutions.Cached_Info
+        := This.Cached_Solution.Element (This.Lock_File);
+   begin
+      --  Clear hashes in case of manifest change
+      if not Result.Reused then
+         This.Build_Hasher.Clear;
+      end if;
+
+      return Result.Element;
+   end Solution;
 
    -----------------
    -- Environment --
@@ -1211,6 +1240,7 @@ package body Alire.Roots is
       Release         => Releases.Containers.To_Release_H (R),
       Cached_Solution => <>,
       Configuration   => <>,
+      Build_Hasher    => <>,
       Pins            => <>,
       Lockfile        => <>,
       Manifest        => <>);
@@ -1324,10 +1354,10 @@ package body Alire.Roots is
          declare
             Rel : constant Releases.Release := Release (This, Crate);
          begin
-            if Builds.Sandboxed_Dependencies then
+            if not This.Requires_Build_Sync (Rel) then
                return This.Release_Parent (Rel, For_Build) / Rel.Base_Folder;
             else
-               return Builds.Path (Rel);
+               return Builds.Path (This, Rel);
             end if;
          end;
       elsif This.Solution.State (Crate).Is_Linked then

@@ -3,6 +3,7 @@ private with Ada.Finalization;
 
 with AAA.Strings;
 
+private with Alire.Builds.Hashes;
 with Alire.Containers;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.States;
@@ -256,6 +257,11 @@ package Alire.Roots is
    --  the ones given in This.Configuration are used. These come in order of
    --  increasing priority from: defaults -> manifests -> explicit set via API.
 
+   function Build_Hash (This : in out Root;
+                        Name : Crate_Name)
+                        return String;
+   --  Returns the build hash of a crate if the solution; computes on demand.
+
    procedure Install
      (This           : in out Root;
       Prefix         : Absolute_Path;
@@ -352,6 +358,9 @@ private
       --  debug). It may be worthwhile to try to remove this with future GNAT
       --  versions. As a data point, with the stock Ubuntu 20.04 GNAT (9.3),
       --  there is no problem.
+
+      Build_Hasher    : Builds.Hashes.Hasher;
+      --  Used to compute the build hashes of releases in the solution
 
       Pins            : Solutions.Solution;
       --  Closure of all pins that are recursively found
