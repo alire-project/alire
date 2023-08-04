@@ -7,7 +7,6 @@ with Alire.Milestones;
 with Alire.Paths.Vault;
 with Alire.Properties;
 with Alire.Roots.Optional;
-with Alire.Shared;
 with Alire.Toolchains;
 with Alire.Utils.Tables;
 
@@ -94,7 +93,8 @@ package body Alr.Commands.Version is
                        & AAA.Strings.Trim (Index.Priority'Image) & ":")
            .Append ("(" & Index.Name & ") " & Index.Origin).New_Row;
       end loop;
-      Table.Append ("toolchain folder:").Append (Alire.Shared.Path).New_Row;
+      Table.Append ("toolchain folder:")
+        .Append (Alire.Toolchains.Path).New_Row;
       Table.Append ("toolchain assistant:")
         .Append (if Alire.Toolchains.Assistant_Enabled
                  then "enabled"

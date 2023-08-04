@@ -14,7 +14,6 @@ with Alire.OS_Lib;
 with Alire.Paths.Vault;
 with Alire.Properties.Actions.Executor;
 with Alire.Roots.Optional;
-with Alire.Shared;
 with Alire.Solutions.Diffs;
 with Alire.Spawn;
 with Alire.Toolchains;
@@ -695,7 +694,7 @@ package body Alire.Roots is
             if Toolchains.Is_Tool (Rel) then
 
                --  Toolchain crates are installed to their own place
-               Shared.Share (Rel);
+               Toolchains.Deploy (Rel);
 
             else
 
@@ -1295,7 +1294,7 @@ package body Alire.Roots is
    is
    begin
       if Toolchains.Is_Tool (Rel) then
-         return Shared.Path;
+         return Toolchains.Path;
       elsif Builds.Sandboxed_Dependencies then
          --  Note that, even for releases not requiring a build (e.g.
          --  externals), in sandboxed mode we are creating a folder for them
