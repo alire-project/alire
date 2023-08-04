@@ -238,9 +238,17 @@ package body Alire.Directories is
    -- Force_Delete --
    ------------------
 
-   procedure Force_Delete (Path : Any_Path) is
+   procedure Force_Delete (Path : Absolute_Path) is
       use Ada.Directories;
    begin
+
+      --  Given that we never delete anything outside one of our folders, the
+      --  conservatively shortest thing we can be asked to delete is something
+      --  like "/c/alire". This is for peace of mind.
+      if Path'Length < 8 then
+         Recoverable_Error ("Suspicious deletion request for path: " & Path);
+      end if;
+
       if Exists (Path) then
          if Kind (Path) = Ordinary_File then
             Trace.Debug ("Deleting file " & Path & "...");
