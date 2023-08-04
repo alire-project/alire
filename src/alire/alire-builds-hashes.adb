@@ -1,7 +1,12 @@
+with Alire.Directories;
 with Alire.Hashes.SHA256_Impl;
+with Alire.Paths;
 with Alire.Roots;
+with Alire.Utils.Text_Files;
 
 package body Alire.Builds.Hashes is
+
+   use Directories.Operators;
 
    package SHA renames Alire.Hashes.SHA256_Impl;
 
@@ -68,6 +73,37 @@ package body Alire.Builds.Hashes is
             This.Hashes.Insert (Rel.Name, SHA.Get_Digest (C));
          end Compute_Hash;
 
+         ------------------
+         -- Write_Inputs --
+         ------------------
+
+         procedure Write_Inputs is
+            File : constant Absolute_Path :=
+                     Builds.Path
+                       / Rel.Base_Folder & "_" & This.Hashes (Rel.Name)
+                       / Paths.Working_Folder_Inside_Root
+                       / "build_hash_inputs";
+            use Directories;
+            use Utils.Text_Files;
+
+            Lines : AAA.Strings.Vector;
+         begin
+            --  First ensure we have a pristine file to work with
+            Delete_Tree (File);
+            Create_Tree (Parent (File));
+            Touch (File);
+
+            --  Now add the hashed contents for the record
+
+            for Var of Vars loop
+               Lines.Append (Var);
+            end loop;
+
+            Append_Lines (File,
+                          Lines,
+                          Backup => False);
+         end Write_Inputs;
+
       begin
          Trace.Debug ("   build hashing: " & Rel.Milestone.TTY_Image);
 
@@ -86,6 +122,9 @@ package body Alire.Builds.Hashes is
 
          --  Final computation
          Compute_Hash;
+
+         --  Write the hash input for the record
+         Write_Inputs;
 
          Trace.Debug ("   build hashing release complete");
       end Compute;
