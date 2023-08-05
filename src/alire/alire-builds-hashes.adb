@@ -108,7 +108,8 @@ package body Alire.Builds.Hashes is
          Trace.Debug ("   build hashing: " & Rel.Milestone.TTY_Image);
 
          --  Build profile
-         Add ("profile", "profile",
+         Add ("profile",
+              Rel.Name.As_String,
               Root.Configuration.Build_Profile (Rel.Name)'Image);
 
          --  GPR externals
