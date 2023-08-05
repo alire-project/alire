@@ -1,48 +1,54 @@
 """
-Check that globally sharing dependencies works as expected
+Check that globally sharing builds works as expected
 """
 
+import glob
 import os
-from drivers.alr import alr_with, alr_workspace_cache, init_local_crate, run_alr
+
+from drivers.alr import (alr_builds_dir, alr_vault_dir, alr_with, alr_workspace_cache,
+                         init_local_crate, run_alr)
 from drivers.asserts import assert_contents, assert_file_exists
 from drivers.helpers import lines_of
 
-deps_dir = "deps"
+vault_dir = alr_vault_dir()
+build_dir = alr_builds_dir()
 
-# Check that using a relative path fails, even if it exists
-os.mkdir("fake")
-run_alr("config", "--global", "--set", "dependencies.dir", "fake",
-        complain_on_error=False)
-
-# Check that using an absolute non-existing path fails
-run_alr("config", "--global", "--set", "dependencies.dir",
-        os.path.abspath(deps_dir),
-        complain_on_error=False)
-
-# Succeed after creating the destination
-os.mkdir(deps_dir)
-run_alr("config", "--global", "--set", "dependencies.dir",
-        os.path.abspath(deps_dir))
+# Enable shared builds
+run_alr("config", "--global", "--set", "dependencies.shared", "true")
 
 # Create a crate with a dependency
 init_local_crate()
 alr_with("hello")
 
-# Ensure the dependencies are where expected
-assert_file_exists(os.path.join("..", deps_dir, "hello_1.0.1_filesystem"))
-assert_file_exists(os.path.join("..", deps_dir, "libhello_1.0.0_filesystem"))
+# Ensure the "read-only" sources are where expected
+assert_file_exists(os.path.join(vault_dir, "hello_1.0.1_filesystem"))
+assert_file_exists(os.path.join(vault_dir, "libhello_1.0.0_filesystem"))
 
 # Check contents of one of the dependencies to make even surer
-assert_contents(os.path.join("..", deps_dir, "hello_1.0.1_filesystem"),
-                ['../deps/hello_1.0.1_filesystem/alire',
-                 '../deps/hello_1.0.1_filesystem/alire.toml',
-                 '../deps/hello_1.0.1_filesystem/config',
-                 '../deps/hello_1.0.1_filesystem/config/hello_config.ads',
-                 '../deps/hello_1.0.1_filesystem/config/hello_config.gpr',
-                 '../deps/hello_1.0.1_filesystem/config/hello_config.h',
-                 '../deps/hello_1.0.1_filesystem/hello.gpr',
-                 '../deps/hello_1.0.1_filesystem/src',
-                 '../deps/hello_1.0.1_filesystem/src/hello.adb'])
+assert_contents(base := os.path.join(vault_dir, "hello_1.0.1_filesystem"),
+                [f'{base}/alire',
+                 f'{base}/alire.toml',
+                 f'{base}/alire/complete_copy',
+                 f'{base}/hello.gpr',
+                 f'{base}/src',
+                 f'{base}/src/hello.adb'])
+
+# Check the contents in the build dir, that should include generated configs
+
+# We need to find the hash first
+base = glob.glob(os.path.join(build_dir, "hello_1.0.1_filesystem_*"))[0]
+
+assert_contents(base,
+                [f'{base}/alire',
+                 f'{base}/alire.toml',
+                 f'{base}/alire/complete_copy',
+                 f'{base}/config',
+                 f'{base}/config/hello_config.ads',
+                 f'{base}/config/hello_config.gpr',
+                 f'{base}/config/hello_config.h',
+                 f'{base}/hello.gpr',
+                 f'{base}/src',
+                 f'{base}/src/hello.adb'])
 
 # And that the crate usual cache dir doesn't exist
 assert not os.path.exists(alr_workspace_cache())

@@ -60,6 +60,11 @@ def prepare_env(config_dir, env):
     run_alr("-c", config_dir, "config", "--global",
             "--set", "warning.old_index", "false")
 
+    # Disable shared dependencies (keep old pre-2.0 behavior) not to break lots
+    # of tests. The post-2.0 behavior will have its own tests.
+    run_alr("-c", config_dir, "config", "--global",
+            "--set", "dependencies.shared", "false")
+
     # If distro detection is disabled via environment, configure so in alr
     if "ALIRE_DISABLE_DISTRO" in env:
         if env["ALIRE_DISABLE_DISTRO"] == "true":
@@ -505,3 +510,24 @@ def alr_publish(name,
             index_path)
 
     return p
+
+
+def alr_config_dir() -> str:
+    """
+    Return the path to the alr configuration directory
+    """
+    return os.environ.get("ALR_CONFIG")
+
+
+def alr_vault_dir() -> str:
+    """
+    Return the path to the vault for release pristine sources
+    """
+    return os.path.join(alr_config_dir(), "cache", "releases")
+
+
+def alr_builds_dir() -> str:
+    """
+    Return the path to the builds directory
+    """
+    return os.path.join(alr_config_dir(), "cache", "builds")

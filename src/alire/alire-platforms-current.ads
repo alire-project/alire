@@ -35,6 +35,8 @@ package Alire.Platforms.Current is
    --------------------------------
    --  Beyond this point, nothing has to be done in the body
 
+   function On_Windows return Boolean is (Operating_System in Windows);
+
    Disable_Distribution_Detection : Boolean := False with Atomic;
 
    function Distribution return Platforms.Distributions;

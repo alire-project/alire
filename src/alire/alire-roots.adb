@@ -1,5 +1,6 @@
 with Ada.Unchecked_Deallocation;
 
+with Alire.Builds;
 with Alire.Conditional;
 with Alire.Config;
 with Alire.Dependencies.Containers;
@@ -10,11 +11,13 @@ with Alire.Install;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.OS_Lib;
+with Alire.Paths.Vault;
 with Alire.Properties.Actions.Executor;
 with Alire.Roots.Optional;
 with Alire.Shared;
 with Alire.Solutions.Diffs;
 with Alire.Spawn;
+with Alire.Toolchains;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
@@ -192,15 +195,18 @@ package body Alire.Roots is
          This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
       end if;
 
-      --  Check if crate configuration should be re-generated
+      --  Check if crate configuration should be re-generated. This is the old
+      --  behavior; for shared builds, config needs to be generated only once.
 
       This.Load_Configuration;
-      if This.Configuration.Must_Regenerate then
+      if Builds.Sandboxed_Dependencies
+        and then This.Configuration.Must_Regenerate
+      then
          This.Generate_Configuration;
       end if;
 
       This.Configuration.Ensure_Complete;
-      --  For building the configuration must be complete
+      --  For proceeding to build, the configuration must be complete
 
       if Export_Build_Env then
          This.Export_Build_Environment;
@@ -619,13 +625,6 @@ package body Alire.Roots is
    procedure Deploy_Dependencies (This : in out Roots.Root)
    is
 
-      -----------------------------
-      -- Dependencies_Are_Shared --
-      -----------------------------
-
-      function Dependencies_Are_Shared return Boolean
-      is (Config.DB.Get (Config.Keys.Dependencies_Dir, "") /= "");
-
       --------------------
       -- Deploy_Release --
       --------------------
@@ -691,34 +690,44 @@ package body Alire.Roots is
          declare
             Rel : constant Releases.Release := Dep.Release;
          begin
-            if Rel.Origin.Kind in Origins.Binary_Archive then
+            Trace.Debug ("deploy: process " & Rel.Milestone.TTY_Image);
 
-               --  Binary releases are always installed as shared releases
+            if Toolchains.Is_Tool (Rel) then
+
+               --  Toolchain crates are installed to their own place
                Shared.Share (Rel);
-
-            elsif Dep.Is_Shared and then not Rel.Origin.Is_Index_Provided then
-
-               --  Externals shouldn't leave a trace in the binary cache
-               Trace.Debug ("deploy: skip shared external");
 
             else
 
-               --  Remaining cases expect to receive a Deploy call, even
-               --  externals in the working directory
-               Rel.Deploy (Env             => This.Environment,
-                           Parent_Folder   =>
-                             This.Dependencies_Dir (Rel.Name),
-                           Perform_Actions => False,
-                           Was_There       => Was_There,
-                           Create_Manifest =>
-                             Dep.Is_Shared or else Dependencies_Are_Shared,
-                           Include_Origin  =>
-                             Dep.Is_Shared);
+               --  Remaining cases need deploying and running of actions
 
-               --  Always run the post-fetch on update of dependencies, in
-               --  case there is some interaction with some other updated
-               --  dependency, even for crates that didn't change.
-               Run_Post_Fetch (Rel);
+               Rel.Deploy
+                 (Env             => This.Environment,
+                  Parent_Folder   => This.Release_Parent (Rel, For_Deploy),
+                  Was_There       => Was_There,
+                  Perform_Actions =>
+                     not This.Requires_Build_Sync (Rel),
+                     --  In sandbox mode, this is the final destination so
+                     --  post-fetch must run. For binaries not built, that
+                     --  always live in the vault, we too run post-fetch
+                     --  immediately as this is the only chance.
+                  Create_Manifest =>
+                     not Builds.Sandboxed_Dependencies,
+                     --  Merely for back-compatibility
+                  Include_Origin  =>
+                     not Builds.Sandboxed_Dependencies
+                     --  Merely for back-compatibility
+                 );
+
+               --  Sync sources to its shared build location
+
+               if not Builds.Sandboxed_Dependencies then
+                  Builds.Sync (Rel, Was_There);
+               end if;
+
+               --  At this point, post-fetch have been run by either
+               --  Builds.Sync or Rel.Deploy; also completion will only
+               --  have succeeded if the post-fetch actions have too.
 
                --  If the release was newly deployed, we can inform about its
                --  nested crates now.
@@ -751,7 +760,11 @@ package body Alire.Roots is
 
       --  Update/Create configuration files
 
+      This.Load_Configuration;
       This.Generate_Configuration;
+      --  TODO: this should be made more granular to only generate
+      --  configurations of newly synced build sources, since with the
+      --  new shared builds system configs do not change once created.
 
       --  Check that the solution does not contain suspicious dependencies,
       --  taking advantage that this procedure is called whenever a change
@@ -1260,30 +1273,41 @@ package body Alire.Roots is
 
    use OS_Lib;
 
-   ----------------------
-   -- Dependencies_Dir --
-   ----------------------
+   -------------------------
+   -- Requires_Build_Sync --
+   -------------------------
 
-   function Dependencies_Dir (This  : in out Root;
-                                 Crate : Crate_Name)
-                                 return Any_Path
+   function Requires_Build_Sync (This : in out Root;
+                                 Rel  : Releases.Release)
+                                 return Boolean
+   is (Rel.Origin.Requires_Build
+       and then not Builds.Sandboxed_Dependencies
+       and then not This.Solution.State (Rel).Is_Linked);
+
+   --------------------
+   -- Release_Parent --
+   --------------------
+
+   function Release_Parent (This  : in out Root;
+                            Rel   : Releases.Release;
+                            Usage : Usages)
+                            return Absolute_Path
    is
    begin
-      if This.Solution.State (Crate).Is_Solved then
-         if This.Solution.State (Crate).Is_Shared then
-            return Shared.Path;
-         elsif Config.DB.Get (Config.Keys.Dependencies_Dir, "") /= "" then
-            return Config.DB.Get (Config.Keys.Dependencies_Dir, "");
-         else
-            return
-              This.Cache_Dir
-              / Paths.Deps_Folder_Inside_Cache_Folder;
-         end if;
+      if Toolchains.Is_Tool (Rel) then
+         return Shared.Path;
+      elsif Builds.Sandboxed_Dependencies then
+         --  Note that, even for releases not requiring a build (e.g.
+         --  externals), in sandboxed mode we are creating a folder for them
+         --  in the workspace cache in which actions could be run.
+         return This.Dependencies_Dir;
       else
-         raise Program_Error
-           with "deploy base only applies to solved releases";
+         case Usage is
+            when For_Deploy => return Paths.Vault.Path;
+            when For_Build  => return Builds.Path;
+         end case;
       end if;
-   end Dependencies_Dir;
+   end Release_Parent;
 
    ------------------
    -- Release_Base --
@@ -1291,7 +1315,7 @@ package body Alire.Roots is
 
    function Release_Base (This  : in out  Root;
                           Crate : Crate_Name)
-                          return Any_Path
+                          return Absolute_Path
    is
    begin
       if This.Release.Element.Name = Crate then
@@ -1300,7 +1324,11 @@ package body Alire.Roots is
          declare
             Rel : constant Releases.Release := Release (This, Crate);
          begin
-            return This.Dependencies_Dir (Crate) / Rel.Base_Folder;
+            if Builds.Sandboxed_Dependencies then
+               return This.Release_Parent (Rel, For_Build) / Rel.Base_Folder;
+            else
+               return Builds.Path (Rel);
+            end if;
          end;
       elsif This.Solution.State (Crate).Is_Linked then
          return This.Solution.State (Crate).Link.Path;
@@ -1366,6 +1394,15 @@ package body Alire.Roots is
 
    function Cache_Dir (This : Root) return Absolute_Path
    is (This.Working_Folder / Paths.Cache_Folder_Inside_Working_Folder);
+
+   ----------------------
+   -- Dependencies_Dir --
+   ----------------------
+
+   function Dependencies_Dir (This  : in out Root) return Any_Path
+   is (if Builds.Sandboxed_Dependencies
+       then This.Cache_Dir / Paths.Deps_Folder_Inside_Cache_Folder
+       else Paths.Vault.Path);
 
    --------------
    -- Pins_Dir --
@@ -1464,8 +1501,8 @@ package body Alire.Roots is
          --  a non-exhaustive sync of pins, that will anyway detect evident
          --  changes (new/removed pins, changed explicit commits).
 
-         This.Sync_Dependencies (Silent   => Silent,
-                                 Interact => Interact);
+         This.Update_Dependencies (Silent   => Silent,
+                                   Interact => Interact);
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
          --  to match the manifest. As any change in dependencies will be
@@ -1537,7 +1574,7 @@ package body Alire.Roots is
 
       --  And look for updates in dependencies
 
-      This.Sync_Dependencies
+      This.Update_Dependencies
         (Allowed  => Allowed,
          Silent   => Silent,
          Interact => Interact and not CLIC.User_Input.Not_Interactive);
@@ -1586,11 +1623,11 @@ package body Alire.Roots is
          Options => Options);
    end Compute_Update;
 
-   -----------------------
-   -- Sync_Dependencies --
-   -----------------------
+   -------------------------
+   -- Update_Dependencies --
+   -------------------------
 
-   procedure Sync_Dependencies
+   procedure Update_Dependencies
      (This     : in out Root;
       Silent   : Boolean; -- Do not output anything
       Interact : Boolean; -- Request confirmation from the user
@@ -1675,7 +1712,7 @@ package body Alire.Roots is
 
          Trace.Detail ("Update completed");
       end;
-   end Sync_Dependencies;
+   end Update_Dependencies;
 
    --------------------
    -- Temporary_Copy --

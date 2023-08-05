@@ -252,6 +252,8 @@ package body Alire.Releases is
       use Alire.Directories;
       use all type Alire.Properties.Actions.Moments;
       Folder : constant Any_Path := Parent_Folder / This.Deployment_Folder;
+      Completed : Directories.Completion :=
+                    Directories.New_Completion (Folder);
 
       ------------------------------
       -- Backup_Upstream_Manifest --
@@ -300,7 +302,7 @@ package body Alire.Releases is
 
       --  Deploy if the target dir is not already there
 
-      if Ada.Directories.Exists (Folder) then
+      if Completed.Is_Complete then
          Was_There := True;
          Trace.Detail ("Skipping checkout of already available " &
                          This.Milestone.Image);
@@ -347,6 +349,8 @@ package body Alire.Releases is
                                 "re-run with -vv -d for details");
          end;
       end if;
+
+      Completed.Mark (Complete => True);
 
    exception
       when E : others =>

@@ -1,6 +1,7 @@
 with Ada.Text_IO;
 
 with Alire.Environment;
+with Alire.Paths;
 with Alire.Platforms.Folders;
 with Alire.Platforms.Current;
 with Alire.Utils;
@@ -181,6 +182,8 @@ package body Alire.Config.Edit is
 
    end Load_Config;
 
+   Default_Config_Path : constant Absolute_Path := Platforms.Folders.Config;
+
    ----------
    -- Path --
    ----------
@@ -191,9 +194,18 @@ package body Alire.Config.Edit is
          return Config_Path.all;
       else
          return OS_Lib.Getenv (Environment.Config,
-                               Platforms.Folders.Config);
+                               Default_Config_Path);
       end if;
    end Path;
+
+   ----------------
+   -- Cache_Path --
+   ----------------
+
+   function Cache_Path return Absolute_Path
+   is (if Path = Default_Config_Path
+       then Platforms.Folders.Cache
+       else Path / Paths.Cache_Folder_Inside_Working_Folder);
 
    --------------
    -- Set_Path --

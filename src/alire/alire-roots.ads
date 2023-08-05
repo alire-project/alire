@@ -117,10 +117,26 @@ package Alire.Roots is
        Post => Release'Result.Provides (Crate);
    --  Retrieve a release, that can be either the root or any in the solution
 
+   type Usages is (For_Deploy, For_Build);
+
+   function Release_Parent (This  : in out Root;
+                            Rel   : Releases.Release;
+                            Usage : Usages)
+                            return Absolute_Path
+     with Pre => This.Solution.Contains_Release (Rel.Name);
+   --  The dir into which a release is deployed taking into account all config
+   --  and release particulars (binary...)
+
    function Release_Base (This  : in out Root;
                           Crate : Crate_Name)
-                          return Any_Path;
+                          return Absolute_Path;
    --  Find the base folder in which a release can be found for the given root
+
+   function Requires_Build_Sync (This : in out Root;
+                                 Rel  : Releases.Release)
+                                 return Boolean
+     with Pre => This.Solution.Contains_Release (Rel.Name);
+   --  Says if the release requires a build copy taking into account everything
 
    function Nonabstract_Crates (This : in out Root)
                                 return Containers.Crate_Name_Sets.Set;
@@ -181,7 +197,7 @@ package Alire.Roots is
    procedure Deploy_Dependencies (This : in out Root);
    --  Download all dependencies not already on disk from This.Solution
 
-   procedure Sync_Dependencies
+   procedure Update_Dependencies
      (This     : in out Root;
       Silent   : Boolean; -- Do not output anything
       Interact : Boolean; -- Request confirmation from the user
@@ -285,6 +301,12 @@ package Alire.Roots is
    function Cache_Dir (This : Root) return Absolute_Path;
    --  The "alire/cache" dir inside the root path, containing releases and pins
 
+   function Dependencies_Dir (This  : in out Root) return Any_Path;
+   --  The path at which dependencies are deployed, which will
+   --  be either Paths.Vault.Path if dependencies are shared, or
+   --  <workspace>/alire/cache/dependencies when dependencies are
+   --  sandboxed (legacy pre-2.0 mode).
+
    function Crate_File (This : Root) return Absolute_Path;
    --  The "/path/to/alire.toml" file inside Working_Folder
 
@@ -372,12 +394,5 @@ private
    procedure Commit (This : in out Root);
    --  Renames the manifest and lockfile to their regular places, making this
    --  root a regular one to all effects.
-
-   function Dependencies_Dir (This  : in out Root;
-                              Crate : Crate_Name)
-                              return Any_Path;
-   --  The path at which dependencies have to be deployed, which for regular
-   --  releases is simply ./alire/cache/dependencies, unless overridden by the
-   --  config option `dependencies.dir`
 
 end Alire.Roots;

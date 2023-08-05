@@ -1,7 +1,6 @@
 with AAA.Strings;
 
 with Alire.Directories;
-with Alire.Paths;
 
 with CLIC.Config;
 
@@ -46,6 +45,12 @@ package Alire.Config.Edit is
    --  * A manually set path with Set_Path (below)
    --  * An ALR_CONFIG env given folder
    --  * Default per-platform path (see alire-platforms-*)
+
+   function Cache_Path return Absolute_Path;
+   --  The location for data that will be recreated if missing; defaults to
+   --  Platforms.Folders.Cache; if Path above is overridden, the cache will
+   --  be inside the config folder so as to keep that configuration completely
+   --  isolated.
 
    procedure Set_Path (Path : Absolute_Path);
    --  Override global config folder path
@@ -103,17 +108,11 @@ private
 
    Builtins : constant array (Natural range <>) of Builtin_Entry :=
      (
-      (+Keys.Dependencies_Dir,
-       Cfg_Existing_Absolute_Path,
-      +("Overrides the default storage directory of regular (non-binary) "
-        & " dependencies. When unset, releases are stored inside each "
-        & "workspace at '" & TTY.URL
-          (Paths.Working_Folder_Inside_Root
-           / Paths.Cache_Folder_Inside_Working_Folder
-           / Paths.Deps_Folder_Inside_Cache_Folder) & "'. "
-        & "Sharing dependencies across workspaces may save disk space, but "
-        & "it is generally not recommended as different dependents may need "
-        & "to configure dependencies differently. Use at your own risk."
+        (+Keys.Dependencies_Shared,
+      Cfg_Bool,
+      +("When true, dependencies are downloaded and built in a shared "
+        & "location inside the global cache. When false (default), "
+        & "dependencies are sandboxed in each workspace."
        )),
 
       (+Keys.Index_Auto_Community,

@@ -1,15 +1,12 @@
 with Ada.Directories;
 
-with Alire.Config;
+with Alire.Config.Edit;
 with Alire.Containers;
 with Alire.Directories;
-with Alire.Environment;
 with Alire.Index;
 with Alire.Manifest;
 with Alire.Origins;
-with Alire.OS_Lib;
 with Alire.Paths;
-with Alire.Platforms.Folders;
 with Alire.Properties.Actions;
 with Alire.Root;
 with Alire.Toolchains.Solutions;
@@ -87,36 +84,12 @@ package body Alire.Shared is
       return Result;
    end Available;
 
-   Global_Cache_Path : access String;
-
    ----------
    -- Path --
    ----------
 
    function Path return String
-   is ((if Global_Cache_Path /= null
-       then Global_Cache_Path.all
-       else OS_Lib.Getenv (Environment.Config,
-                           Platforms.Folders.Cache))
-       --  Up to here, it's the default prefix or an overriden prefix
-       /
-         (if Global_Cache_Path = null and then
-             OS_Lib.Getenv (Environment.Config, "") = ""
-          then Paths.Deps_Folder_Inside_Cache_Folder
-          else Paths.Cache_Folder_Inside_Working_Folder
-               / Paths.Deps_Folder_Inside_Cache_Folder)
-       --  This second part is either cache/dependencies or just dependencies,
-       --  depending on if the location is shared with the config folder or not
-      );
-
-   --------------
-   -- Set_Path --
-   --------------
-
-   procedure Set_Path (Path : Absolute_Path) is
-   begin
-      Global_Cache_Path := new String'(Path);
-   end Set_Path;
+   is (Config.Edit.Cache_Path / "toolchains");
 
    -----------
    -- Share --
@@ -164,14 +137,6 @@ package body Alire.Shared is
       end Is_Installable;
 
    begin
-
-      --  See if it is a valid installable origin
-
-      if Release.Origin.Kind in Origins.External_Kinds then
-         Raise_Checked_Error
-           ("Only regular releases can be installed, but the requested release"
-            & " has origin of kind " & Release.Origin.Kind'Image);
-      end if;
 
       if not Is_Installable then
          Recoverable_Error

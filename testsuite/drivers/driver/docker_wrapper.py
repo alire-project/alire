@@ -11,7 +11,6 @@ from e3.testsuite.driver.classic import (ClassicTestDriver,
                                          TestSkip)
 
 DOCKERFILE = "Dockerfile"
-PLACEHOLDER = "TO_BE_COMPUTED"
 TAG = "alire_testsuite"
 ENV_FLAG = "ALIRE_DOCKER_ENABLED" # Set to "False" to disable docker tests
 LABEL_HASH = "hash"

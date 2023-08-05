@@ -22,6 +22,9 @@ package Alire.Toolchains is
                .Union (Name_Sets.To_Set (GPRbuild_Crate));
    --  All crates that are part of the provided binary toolchain
 
+   function Is_Tool (Release : Releases.Release) return Boolean
+   is (for some Tool of Tools => Release.Provides (Tool));
+
    function Any_Tool (Crate : Crate_Name) return Dependencies.Dependency;
    --  Returns a dependency on crate*
 

@@ -28,14 +28,14 @@ def check_config_changed():
     global mtime
     last_mtime = mtime
     mtime = os.path.getmtime(bin_config)
-    assert last_mtime != mtime, "config file did not change"
+    assert last_mtime != mtime, "config file timestamp did not change"
 
 
 def check_config_not_changed():
     global mtime
     last_mtime = mtime
     mtime = os.path.getmtime(bin_config)
-    assert last_mtime == mtime, "config file did not change"
+    assert last_mtime == mtime, "config file timestamp did unexpectedly change"
 
 
 # Check default profiles for root and dependency

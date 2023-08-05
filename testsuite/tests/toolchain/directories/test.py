@@ -22,7 +22,7 @@ unk_re = "[0-9]+\.[0-9]+\.[0-9]+_[0-9a-f]{8}"  # Unknown version + Unknown hash
 
 
 def config_path_re(crate):
-    return re.escape(f"{config_dir}/cache/dependencies/{crate}_") + unk_re
+    return re.escape(f"{config_dir}/cache/toolchains/{crate}_") + unk_re
 
 def check_content(crate):
     paths = contents(cache_dir, crate)
