@@ -8,8 +8,9 @@ with Alire.Defaults;
 with Alire.Errors;
 with Alire.Origins.Deployers;
 with Alire.Paths;
-with Alire.Properties.Bool;
 with Alire.Properties.Actions.Executor;
+with Alire.Properties.Bool;
+with Alire.Properties.Scenarios;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
 with Alire.Warnings;
@@ -667,6 +668,33 @@ package body Alire.Releases is
       end if;
       return Exes;
    end Executables;
+
+   -----------------------------
+   -- GPR_Externals_Affecting --
+   -----------------------------
+
+   function GPR_Externals_Affecting (R : Release;
+                                     P : Alire.Properties.Vector :=
+                                       Platforms.Current.Properties)
+                                     return GPR.Name_Vector
+   is
+   begin
+      return Result : GPR.Name_Vector do
+         for Prop of R.On_Platform_Properties
+           (P, Alire.Properties.Scenarios.Property'Tag)
+         loop
+            declare
+               Var : Alire.Properties.Scenarios.Property'Class renames
+                       Alire.Properties.Scenarios.Property'Class (Prop);
+            begin
+               if Var.Value.Kind in GPR.Enumeration | GPR.Free_String then
+                  --  This is a declaration of an external that affects R
+                  Result.Include (Var.Value.Name);
+               end if;
+            end;
+         end loop;
+      end return;
+   end GPR_Externals_Affecting;
 
    -------------------
    -- Project_Files --

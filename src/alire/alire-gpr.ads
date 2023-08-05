@@ -19,6 +19,8 @@ package Alire.GPR with Preelaborate is
 
    subtype Value is String;
 
+   type Name_Vector is new AAA.Strings.Set with null record;
+
    type Value_Vector is new AAA.Strings.Vector with null record;
 
    function Enum_Variable (Name   : String;

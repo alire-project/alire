@@ -6,6 +6,7 @@ with AAA.Strings;
 with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.Containers;
+with Alire.GPR;
 with Alire.Interfaces;
 with Alire.Manifest;
 with Alire.Milestones;
@@ -211,6 +212,14 @@ package Alire.Releases is
                          return AAA.Strings.Vector;
    --  Only explicitly declared ones
    --  Under some conditions (usually current platform)
+
+   function GPR_Externals_Affecting (R : Release;
+                                     P : Alire.Properties.Vector :=
+                                       Platforms.Current.Properties)
+                                     return GPR.Name_Vector;
+   --  Returns a list of all variables that can influence the build via GPR
+   --  externals or environment variables (the `gpr-externals` table in the
+   --  manifest).
 
    function Pins (R : Release) return User_Pins.Maps.Map;
 

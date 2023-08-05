@@ -36,7 +36,7 @@ package Alire.Environment is
 
    procedure Export (This : Context);
    --  Export the environment variables built from the variables previously
-   --  loaded and defined in the context.
+   --  loaded and defined in the context to the OS.
 
    procedure Print_Shell (This : Context; Kind : Platforms.Shells);
    --  Print the shell commands that can be used to export the environment
@@ -45,6 +45,14 @@ package Alire.Environment is
    procedure Print_Details (This : Context);
    --  Print details about the environment context. What are the variables
    --  definitions and their origin.
+
+   --  Bulk export
+
+   subtype Env_Map is AAA.Strings.Map;
+   --  key --> value map
+
+   function Get_All (This : Context) return Env_Map;
+   --  Build a map for all variables in the solution (both GPR and environment)
 
 private
 

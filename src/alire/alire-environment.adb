@@ -388,4 +388,17 @@ package body Alire.Environment is
       end loop;
    end Export;
 
+   -------------
+   -- Get_All --
+   -------------
+
+   function Get_All (This : Context) return Env_Map is
+   begin
+      return Result : Env_Map do
+         for Var of This.Compile loop
+            Result.Insert (+Var.Key, +Var.Value);
+         end loop;
+      end return;
+   end Get_All;
+
 end Alire.Environment;

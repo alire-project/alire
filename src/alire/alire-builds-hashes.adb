@@ -1,4 +1,5 @@
 with Alire.Directories;
+with Alire.Environment;
 with Alire.Hashes.SHA256_Impl;
 with Alire.Paths;
 with Alire.Roots;
@@ -36,6 +37,8 @@ package body Alire.Builds.Hashes is
    procedure Compute (This : in out Hasher;
                       Root : in out Roots.Root)
    is
+
+      Env : Environment.Env_Map;
 
       -------------
       -- Compute --
@@ -115,10 +118,14 @@ package body Alire.Builds.Hashes is
               Root.Configuration.Build_Profile (Rel.Name)'Image);
 
          --  GPR externals
-         --  TBD
-
-         --  Environment variables
-         --  TBD
+         for Var of Rel.GPR_Externals_Affecting loop
+            if Env.Contains (Var) then
+               Add ("external", Var, Env (Var));
+            else
+               Add ("external", Var, "default");
+            end if;
+         end loop;
+         --  TODO: check if BUILD / LIBRARY_BUILD / CRATE_BUILD should be added
 
          --  Configuration variables
          --  TBD
@@ -132,9 +139,14 @@ package body Alire.Builds.Hashes is
          Trace.Debug ("   build hashing release complete");
       end Compute;
 
+      Context : Environment.Context;
+
    begin
       Trace.Debug ("build hashing root " & Root.Path);
       This.Hashes.Clear;
+
+      Environment.Load (Context, Root);
+      Env := Context.Get_All;
 
       for Rel of Root.Solution.Releases loop
          if Root.Requires_Build_Sync (Rel) then
