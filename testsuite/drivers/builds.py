@@ -11,8 +11,8 @@ def find_dir(crate_name: str) -> str:
     """
     Find the build dir of a crate in the shared build directory
     """
-    if len(glob(f"{path()}/{crate_name}_*")) != 1:
-        raise AssertionError(f"Unexpected number of dirs for crate {crate_name}")
+    if len(found := glob(f"{path()}/{crate_name}_*")) != 1:
+        raise AssertionError(f"Unexpected number of dirs for crate {crate_name}: {found}")
     return glob(f"{path()}/{crate_name}_*")[0]
 
 
@@ -20,8 +20,6 @@ def find_hash(crate_name: str) -> str:
     """
     Find the hash of a crate in the shared build directory
     """
-    if len(found := glob(f"{path()}/{crate_name}_*")) != 1:
-        raise AssertionError(f"Unexpected number of dirs for crate {crate_name}: {found}")
     return find_dir(crate_name).split("_")[-1]
 
 

@@ -42,7 +42,8 @@ package body Alire.Hashes.Common is
    is
       use Ada.Streams;
       Bytes : Stream_Element_Array (1 .. S'Length)
-        with Address => S (S'First)'address, Import;
+        with Address => S (S'First)'Address, Import;
+      pragma Assert (Bytes'Size = S (S'Range)'Size);
    begin
       Update (C, Bytes);
       if Append_Nul then

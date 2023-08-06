@@ -68,6 +68,8 @@ package body Alire.Builds.Hashes is
          begin
             for Var of Vars loop
                SHA.Update (C, Var, Append_Nul => True);
+               --  The nul character as separator ensures no ambiguity because
+               --  of consecutive entries.
             end loop;
 
             This.Hashes.Insert (Rel.Name, SHA.Get_Digest (C));

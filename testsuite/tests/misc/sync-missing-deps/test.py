@@ -20,6 +20,7 @@ assert os.path.isdir(target), "Directory missing at expected location"
 
 # Run commands that require a valid session after deleting a dependency. All
 # should succeed and recreate the missing dependency folder.
+# The first round uses sandboxed dependencies. The second round uses shared ones.
 for round in range(2):
     if round == 2:
         # Prepare same test for shared dependencies

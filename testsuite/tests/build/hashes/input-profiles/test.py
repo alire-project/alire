@@ -18,7 +18,7 @@ hash1 = find_hash("libhello")
 assert_match(".*profile:libhello=RELEASE.*",
              hash_input("libhello"))
 
-# Build with dependencies in VALIDATION modes.
+# Build with dependencies in VALIDATION mode
 # Clean up first because find_hash() will fail if there are multiple builds
 shutil.rmtree(builds.path())
 run_alr("build", "--profiles=*=validation")

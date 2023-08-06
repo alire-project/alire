@@ -21,8 +21,7 @@ package Alire.Builds.Hashes is
                   Name : Crate_Name)
                   return String
      with Pre => not This.Is_Empty;
-   --  Retrieve the hash of a crate in Root's solution; if This.Is_Empty all
-   --  hashes will be computed at this time.
+   --  Retrieve the hash of a crate in Root's solution
 
 private
 
