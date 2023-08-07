@@ -29,10 +29,15 @@ package Alire.Environment is
    procedure Prepend (This : in out Context; Name, Value, Origin : String);
    --  Prepend a value to a variable in the context
 
-   procedure Load (This : in out Context;
-                   Root : in out Alire.Roots.Root);
+   procedure Load (This        : in out Context;
+                   Root        : in out Alire.Roots.Root;
+                   For_Hashing : Boolean := False);
    --  Load the environment variables of a releases found in the workspace
-   --  Solution (GPR_PROJECT_PATH and custom variables) in the context.
+   --  Solution (GPR_PROJECT_PATH and custom variables) in the context. If
+   --  For_Hashing, skip or mock actions that require the build hash which is
+   --  part of the build path. We use this to gather all configuration when
+   --  paths aren't yet known (as they depend on the hash that is computed
+   --  from the configuration which will become itself part of the path).
 
    procedure Export (This : Context);
    --  Export the environment variables built from the variables previously
@@ -51,8 +56,12 @@ package Alire.Environment is
    subtype Env_Map is AAA.Strings.Map;
    --  key --> value map
 
-   function Get_All (This : Context) return Env_Map;
-   --  Build a map for all variables in the solution (both GPR and environment)
+   function Get_All (This            : Context;
+                     Check_Conflicts : Boolean := False)
+                     return Env_Map;
+   --  Build a map for all variables in the solution (both GPR and
+   --  environment). Since this is used during hash computation, we must
+   --  skip conflict checks at this time as definitive paths aren't yet known.
 
 private
 
@@ -71,9 +80,13 @@ private
       Element_Type => Var,
       Array_Type   => Var_Array);
 
-   function Compile (This : Context) return Var_Array;
+   function Compile (This            : Context;
+                     Check_Conflicts : Boolean)
+                     return Var_Array;
    --  Return an array of environment variable key/value built from the
-   --  variables previously loaded and defined in the context.
+   --  variables previously loaded and defined in the context. During
+   --  hashing, we know some paths will conflict with the definitive ones,
+   --  so Check_Conflicts allows to skip those checks.
 
    type Env_Action is record
       Kind   : Alire.Properties.Environment.Actions;
@@ -100,8 +113,9 @@ private
 
    procedure Load (This            : in out Context;
                    Root            : in out Roots.Editable.Root;
-                   Crate           : Crate_Name);
+                   Crate           : Crate_Name;
+                   For_Hashing     : Boolean := False);
    --  Load the environment variables of a release (GPR_PROJECT_PATH and custom
-   --  variables) in the context.
+   --  variables) in the context. See note in previous Load about For_Hashing.
 
 end Alire.Environment;

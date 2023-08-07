@@ -1,5 +1,6 @@
 with Alire.Directories;
 with Alire.Environment;
+with Alire.GPR;
 with Alire.Hashes.SHA256_Impl;
 with Alire.Paths;
 with Alire.Roots;
@@ -59,7 +60,7 @@ package body Alire.Builds.Hashes is
                       & Trim (Value);
          begin
             Trace.Debug ("      build hashing " & Datum);
-            Vars.Insert (Datum);
+            Vars.Include (Datum);
          end Add;
 
          ------------------
@@ -118,16 +119,32 @@ package body Alire.Builds.Hashes is
               Root.Configuration.Build_Profile (Rel.Name)'Image);
 
          --  GPR externals
-         for Var of Rel.GPR_Externals_Affecting loop
-            if Env.Contains (Var) then
-               Add ("external", Var, Env (Var));
-            else
-               Add ("external", Var, "default");
-            end if;
-         end loop;
-         --  TODO: check if BUILD / LIBRARY_BUILD / CRATE_BUILD should be added
+         declare
+            Externals : constant Releases.Externals_Info := Rel.GPR_Externals;
+         begin
+            for Var of GPR.Name_Vector'(Externals.Declared
+                                                 .Union (Externals.Modified))
+            loop
+               if Env.Contains (Var) then
+                  Add ("external", Var, Env (Var));
+               else
+                  Add ("external", Var, "default");
+               end if;
+            end loop;
+         end;
 
          --  Configuration variables
+         --  TBD
+
+         --  Dependencies recursive hash? Since a crate can use a dependency
+         --  config spec, it is possible in the worst case for a crate to
+         --  require unique builds that include their dependencies hash
+         --  in their own hash. This is likely a corner case, but we can't
+         --  currently detect it. Two options are to alway err on the side of
+         --  caution, always including dependencies hashes, or to add some new
+         --  info in the manifest saying whose crates config affect the crate.
+         --  We could also enable this recursive hashing globally or per
+         --  crate...
          --  TBD
 
          --  Final computation
@@ -145,7 +162,7 @@ package body Alire.Builds.Hashes is
       Trace.Debug ("build hashing root " & Root.Path);
       This.Hashes.Clear;
 
-      Environment.Load (Context, Root);
+      Environment.Load (Context, Root, For_Hashing => True);
       Env := Context.Get_All;
 
       for Rel of Root.Solution.Releases loop

@@ -213,13 +213,18 @@ package Alire.Releases is
    --  Only explicitly declared ones
    --  Under some conditions (usually current platform)
 
-   function GPR_Externals_Affecting (R : Release;
+   type Externals_Info is record
+      Declared : GPR.Name_Vector; -- The crate uses these vars
+      Modified : GPR.Name_Vector; -- The crate modifies these vars
+   end record;
+
+   function GPR_Externals (R : Release;
                                      P : Alire.Properties.Vector :=
                                        Platforms.Current.Properties)
-                                     return GPR.Name_Vector;
-   --  Returns a list of all variables that can influence the build via GPR
-   --  externals or environment variables (the `gpr-externals` table in the
-   --  manifest).
+                                     return Externals_Info;
+   --  Returns a list of all variables that can influence the build via
+   --  GPR externals or environment variables (the `gpr-externals` and
+   --  gpr-set-externals tables in the manifest).
 
    function Pins (R : Release) return User_Pins.Maps.Map;
 

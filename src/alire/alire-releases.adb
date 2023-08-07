@@ -669,17 +669,17 @@ package body Alire.Releases is
       return Exes;
    end Executables;
 
-   -----------------------------
-   -- GPR_Externals_Affecting --
-   -----------------------------
+   -------------------
+   -- GPR_Externals --
+   -------------------
 
-   function GPR_Externals_Affecting (R : Release;
+   function GPR_Externals (R : Release;
                                      P : Alire.Properties.Vector :=
                                        Platforms.Current.Properties)
-                                     return GPR.Name_Vector
+                                     return Externals_Info
    is
    begin
-      return Result : GPR.Name_Vector do
+      return Result : Externals_Info do
          for Prop of R.On_Platform_Properties
            (P, Alire.Properties.Scenarios.Property'Tag)
          loop
@@ -687,14 +687,17 @@ package body Alire.Releases is
                Var : Alire.Properties.Scenarios.Property'Class renames
                        Alire.Properties.Scenarios.Property'Class (Prop);
             begin
-               if Var.Value.Kind in GPR.Enumeration | GPR.Free_String then
-                  --  This is a declaration of an external that affects R
-                  Result.Include (Var.Value.Name);
-               end if;
+               case Var.Value.Kind is
+                  when GPR.Enumeration | GPR.Free_String =>
+                     --  This is a declaration of an external that affects R
+                     Result.Declared.Include (Var.Value.Name);
+                  when GPR.External =>
+                     Result.Modified.Include (Var.Value.Name);
+               end case;
             end;
          end loop;
       end return;
-   end GPR_Externals_Affecting;
+   end GPR_Externals;
 
    -------------------
    -- Project_Files --
