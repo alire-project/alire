@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.Config;
+with Alire.Config.Builtins;
 with Alire.Crates;
 with Alire.Directories;
 with Alire.TOML_Adapters;
@@ -107,8 +107,7 @@ package body Alire.TOML_Index is
       use type Semantic_Versioning.Version;
 
       Warn_Of_Old_Compatible : constant Boolean :=
-                             Config.DB.Get (Config.Keys.Warning_Old_Index,
-                                            Config.Defaults.Warning_Old_Index);
+                                 Config.Builtins.Warning_Old_Index.Get;
 
       ----------------------
       -- Compare_Branches --
@@ -125,7 +124,7 @@ package body Alire.TOML_Index is
                & TTY.Emph (Alire.Index.Branch_Kind)
                & "' but your community index branch is '"
                & TTY.Emph (Local) & "'",
-               Disable_Config => Config.Keys.Warning_Old_Index);
+               Disable_Config => Config.Builtins.Warning_Old_Index.Key);
             Suggest_Update := True;
          end if;
       end Compare_Branches;
@@ -183,7 +182,8 @@ package body Alire.TOML_Index is
                          & "' version (" & Version.Image
                          & ") is older than the newest supported by alr ("
                          & Alire.Index.Version.Image & ")",
-                         Disable_Config => Config.Keys.Warning_Old_Index);
+                         Disable_Config =>
+                           Config.Builtins.Warning_Old_Index.Key);
             Suggest_Update := True;
          elsif not Alire.Index.Valid_Versions.Contains (Version) then
 

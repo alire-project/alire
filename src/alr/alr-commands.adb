@@ -9,6 +9,7 @@ with CLIC.User_Input;
 
 with Alire.Platforms;
 with Alire_Early_Elaboration;
+with Alire.Config.Builtins;
 with Alire.Config.Edit;
 with Alire.Errors;
 with Alire.Index_On_Disk.Loading;
@@ -288,8 +289,7 @@ package body Alr.Commands is
       Unchecked : Alire.Roots.Optional.Root renames Cmd.Optional_Root;
 
       Manual_Only : constant Boolean :=
-                      Alire.Config.DB.Get
-                        (Alire.Config.Keys.Update_Manually, False);
+                      Alire.Config.Builtins.Update_Manually_Only.Get;
 
       package Conf renames Alire.Config;
    begin

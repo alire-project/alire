@@ -4,7 +4,7 @@ with Ada.Directories;
 with Ada.Wide_Wide_Text_IO;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Alire.Config;
+with Alire.Config.Builtins;
 with Alire.Utils.User_Input.Query_Config;
 with CLIC.User_Input;
 
@@ -242,9 +242,9 @@ package body Alr.Commands.Init is
       procedure Generate_Manifest is
          use Alire.Config;
       begin
-         if not DB.Defined (Keys.User_Email) or else
-           not DB.Defined (Keys.User_Name) or else
-           not DB.Defined (Keys.User_Github_Login)
+         if Builtins.User_Email.Is_Empty or else
+           Builtins.User_Name.Is_Empty or else
+           Builtins.User_Github_Login.Is_Empty
          then
             AAA.Text_IO.Put_Paragraph
               ("Alire needs some user information to initialize the crate"

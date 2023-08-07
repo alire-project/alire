@@ -415,9 +415,7 @@ package body Alire.Toolchains is
    procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level)
    is
    begin
-      Config.Edit.Set_Boolean (Level,
-                               Config.Keys.Toolchain_Assistant,
-                               Enabled);
+      Config.Builtins.Toolchain_Assistant.Set (Level, Enabled);
    end Set_Automatic_Assistant;
 
    ------------------------

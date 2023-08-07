@@ -1,9 +1,12 @@
-with Alire.OS_Lib; use Alire.OS_Lib.Operators;
 with AAA.Strings;
+
+private with Ada.Containers.Indefinite_Ordered_Maps;
+
+with Alire.OS_Lib; use Alire.OS_Lib.Operators;
 
 with CLIC.Config;
 
-package Alire.Config with Preelaborate is
+package Alire.Config is
 
    DB : CLIC.Config.Instance;
    --  The Alire user configuration database
@@ -16,87 +19,89 @@ package Alire.Config with Preelaborate is
    -- Built-ins --
    ---------------
 
-   package Keys is
+   type Builtin_Kind is (Cfg_Int, Cfg_Float, Cfg_Bool,
+                         Cfg_String, Cfg_Absolute_Path,
+                         Cfg_Existing_Absolute_Path,
+                         Cfg_Email, Cfg_GitHub_Login);
 
-      use CLIC.Config;
+   function Image (Kind : Builtin_Kind) return String;
 
-      --  A few predefined keys that are used in several places. This list is
-      --  not exhaustive.
+   function Is_Builtin (Key : CLIC.Config.Config_Key) return Boolean;
 
-      Dependencies_Shared : constant Config_Key := "dependencies.shared";
+   function Kind_Of_Builtin (Key : CLIC.Config.Config_Key) return Builtin_Kind
+     with Pre => Is_Builtin (Key);
 
-      Editor_Cmd  : constant Config_Key := "editor.cmd";
+   type Builtin_Option is tagged private;
 
-      Distribution_Disable_Detection : constant Config_Key :=
-                                         "distribution.disable_detection";
-      --  When set to True, distro will be reported as unknown, and in turn no
-      --  native package manager will be used.
+   function Key (This : Builtin_Option) return CLIC.Config.Config_Key;
 
-      Index_Auto_Community : constant Config_Key := "index.auto_community";
-      --  When unset (default) or true, add the community index if no other
-      --  index is already configured.
+   function Is_Empty (This : Builtin_Option) return Boolean
+     with Post => Is_Empty'Result = (This.Get = "");
+   --  True if undefined or equal to "" (considering its own default)
 
-      Index_Host      : constant Config_Key := "index.host";
-      Index_Owner     : constant Config_Key := "index.owner";
-      Index_Repo_Name : constant Config_Key := "index.repository_name";
-      --  These three conform the URL where the community index is hosted,
-      --  allowing to override the default.
+   function Get (This : Builtin_Option) return String;
+   function Get (This : Builtin_Option) return Boolean;
 
-      Solver_Autonarrow : constant Config_Key := "solver.autonarrow";
-      --  When true, `alr with` will substitute "any" dependencies by the
-      --  appropriate caret/tilde.
+   procedure Set_Locally (This : Builtin_Option; Value : String);
 
-      Toolchain_Assistant : constant Config_Key := "toolchain.assistant";
-      --  When true (default), on first `Requires_Workspace`, the
-      --  assistant to select a gnat compiler and corresponding gprbuild
-      --  will be launched.
+   procedure Set_Globally (This : Builtin_Option; Value : String);
 
-      Toolchain_External : constant Config_Key := "toolchain.external";
-      --  We use this key to store whether a tool in the toolchain requires
-      --  external detection. It stores a boolean per tool, e.g, for gprbuild:
-      --  toolchain.external.gprbuild
+   procedure Set (This  : Builtin_Option;
+                  Level : Config.Level;
+                  Value : String);
 
-      Toolchain_Use : constant Config_Key := "toolchain.use";
-      --  We use this key internally to store the configured tools picked
-      --  up by the user. Not really intended to be set up by users, so
-      --  not listed as a built-in. Each tool is a child of this key,
-      --  e.g.: toolchain.use.gnat, toolchain.use.gprbuild
+   procedure Set (This  : Builtin_Option;
+                  Level : Config.Level;
+                  Value : Boolean);
 
-      Update_Manually   : constant Config_Key := "update-manually-only";
-      --  Used by `get --only` to flag a workspace to not autoupdate itself
-      --  despite having no solution in the lockfile.
+   procedure Unset (This  : Builtin_Option;
+                    Level : Config.Level);
 
-      User_Email        : constant Config_Key := "user.email";
-      User_Name         : constant Config_Key := "user.name";
-      User_Github_Login : constant Config_Key := "user.github_login";
+   function New_Builtin (Key    : CLIC.Config.Config_Key;
+                         Kind   : Builtin_Kind;
+                         Def    : String := "";
+                         Help   : String := "";
+                         Public : Boolean := True;
+                         Check  : CLIC.Config.Check_Import := null)
+                         return Builtin_Option
+     with Pre => Help /= "" or not Public;
 
-      Warning_Caret : constant Config_Key := "warning.caret";
-      --  Set to false to disable warnings about caret/tilde use for ^0 deps.
+   function New_Builtin (Key    : CLIC.Config.Config_Key;
+                         Def    : Boolean;
+                         Help   : String := "";
+                         Public : Boolean := True;
+                         Check  : CLIC.Config.Check_Import := null)
+                         return Builtin_Option
+     with Pre => Help /= "" or not Public;
 
-      Warning_Old_Index : constant Config_Key := "warning.old_index";
-      --  Warn about old but compatible index in use
+private
 
-      Msys2_Do_Not_Install : constant Config_Key := "msys2.do_not_install";
-      Msys2_Install_Dir    : constant Config_Key := "msys2.install_dir";
-      Msys2_Installer      : constant Config_Key := "msys2.installer";
-      Msys2_Installer_URL  : constant Config_Key := "msys2.installer_url";
-   end Keys;
+   type Builtin_Option is tagged record
+      Key     : Ada.Strings.Unbounded.Unbounded_String;
+      Kind    : Builtin_Kind;
+      Def     : Ada.Strings.Unbounded.Unbounded_String;
+      Help    : Ada.Strings.Unbounded.Unbounded_String;
+      Check   : CLIC.Config.Check_Import := null;
+   end record;
 
    --------------
-   -- Defaults --
+   -- Is_Empty --
    --------------
 
-   package Defaults is
+   function Is_Empty (This : Builtin_Option) return Boolean
+   is (This.Get = "");
 
-      Dependencies_Shared : constant Boolean := False;
-      --  TODO: enable it when hashing is complete
+   ---------
+   -- Key --
+   ---------
 
-      Index_Host        : constant String := "https://github.com";
-      Index_Owner       : constant String := "alire-project";
-      Index_Repo_Name   : constant String := "alire-index";
+   function Key (This : Builtin_Option) return CLIC.Config.Config_Key
+   is (+This.Key);
 
-      Warning_Old_Index : constant Boolean := True;
+   package Builtin_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps (CLIC.Config.Config_Key,
+                                             Builtin_Option);
 
-   end Defaults;
+   All_Builtins : Builtin_Maps.Map;
 
 end Alire.Config;

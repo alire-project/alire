@@ -1,5 +1,6 @@
 with AAA.Strings;
 
+with Alire.Config.Builtins;
 with Alire.Config.Edit;
 with Alire.Directories;
 with Alire.Paths.Vault;
@@ -18,8 +19,7 @@ package body Alire.Builds is
    ----------------------------
 
    function Sandboxed_Dependencies return Boolean
-   is (not Config.DB.Get (Config.Keys.Dependencies_Shared,
-                          Config.Defaults.Dependencies_Shared));
+   is (not Config.Builtins.Dependencies_Shared.Get);
 
    ----------
    -- Sync --

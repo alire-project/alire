@@ -1,5 +1,6 @@
 with Ada.Text_IO;
 
+with Alire.Config.Builtins;
 with Alire.Environment;
 with Alire.Paths;
 with Alire.Platforms.Folders;
@@ -131,30 +132,6 @@ package body Alire.Config.Edit is
       end case;
    end Filepath;
 
-   ----------------
-   -- Is_Builtin --
-   ----------------
-
-   function Is_Builtin (Key : CLIC.Config.Config_Key) return Boolean
-   is (for some Cfg of Builtins => To_String (Cfg.Key) = Key);
-
-   ---------------------
-   -- Kind_Of_Builtin --
-   ---------------------
-
-   function Kind_Of_Builtin (Key : CLIC.Config.Config_Key)
-                             return Builtin_Kind
-   is
-   begin
-      for Ent of Builtins loop
-         if To_String (Ent.Key) = Key then
-            return Ent.Kind;
-         end if;
-      end loop;
-
-      Raise_Checked_Error ("Kind is only valid for builtin config key");
-   end Kind_Of_Builtin;
-
    -----------------
    -- Load_Config --
    -----------------
@@ -175,7 +152,7 @@ package body Alire.Config.Edit is
       --  Set variables elsewhere
 
       Platforms.Current.Disable_Distribution_Detection :=
-        DB.Get (Keys.Distribution_Disable_Detection, False);
+        Config.Builtins.Distribution_Disable_Detection.Get;
       if Platforms.Current.Disable_Distribution_Detection then
          Trace.Debug ("Distribution detection disabled by configuration");
       end if;
@@ -237,8 +214,11 @@ package body Alire.Config.Edit is
    is
       Result : Boolean := True;
    begin
-      for Ent of Builtins loop
+      for Ent of All_Builtins loop
          if To_String (Ent.Key) = Key then
+
+            --  Verify the type/specific constraints
+
             case Ent.Kind is
             when Cfg_Int =>
                Result := Value.Kind = TOML_Integer;
@@ -273,6 +253,19 @@ package body Alire.Config.Edit is
                  and then Utils.Is_Valid_GitHub_Username (Value.As_String);
             end case;
 
+            exit when not Result;
+
+            --  Apply the own builtin check if any.
+
+            if Result and then Ent.Check not in null then
+               if not Ent.Check (Key, Value) then
+                  Trace.Error
+                    ("Invalid value '" & CLIC.Config.Image (Value)  &
+                       "' for builtin configuration '" & Key & "'. " &
+                       "Specific builtin check failed.");
+               end if;
+            end if;
+
             exit;
          end if;
       end loop;
@@ -287,21 +280,6 @@ package body Alire.Config.Edit is
       return Result;
    end Valid_Builtin;
 
-   -----------
-   -- Image --
-   -----------
-
-   function Image (Kind : Builtin_Kind) return String
-   is (case Kind is
-          when Cfg_Int           => "Integer",
-          when Cfg_Float         => "Float",
-          when Cfg_Bool          => "Boolean",
-          when Cfg_String        => "String",
-          when Cfg_Absolute_Path => "Absolute path",
-          when Cfg_Existing_Absolute_Path => "Absolute path already existing",
-          when Cfg_Email         => "Email address",
-          when Cfg_GitHub_Login  => "GitHub login");
-
    -------------------
    -- Builtins_Info --
    -------------------
@@ -309,9 +287,10 @@ package body Alire.Config.Edit is
    function Builtins_Info return AAA.Strings.Vector is
       Results : AAA.Strings.Vector;
    begin
-      for Ent of Builtins loop
-         Results.Append (String'("- " & To_String (Ent.Key) &
-                           " [" & Image (Ent.Kind) & "]"));
+      for Ent of All_Builtins loop
+         Results.Append (String'("- " & To_String (Ent.Key)
+                         & " [" & Image (Ent.Kind) & "]"
+                         & "[Default:" & To_String (Ent.Def) & "]"));
          Results.Append (To_String (Ent.Help));
          Results.Append ("");
       end loop;
@@ -325,9 +304,10 @@ package body Alire.Config.Edit is
    procedure Print_Builtins_Doc is
       use Ada.Text_IO;
    begin
-      for Ent of Builtins loop
+      for Ent of All_Builtins loop
          Put (" - **`" & To_String (Ent.Key) & "`** ");
-         Put_Line ("[" & Image (Ent.Kind) & "]:");
+         Put ("[" & Image (Ent.Kind) & "]");
+         Put_Line ("[Default:" & To_String (Ent.Def) & "]:");
          Put_Line ("   " & To_String (Ent.Help));
          New_Line;
       end loop;
