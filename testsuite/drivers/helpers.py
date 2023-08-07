@@ -97,8 +97,10 @@ def distribution():
         return 'DISTRO_UNKNOWN'
 
     elif on_macos():
-        if os.environ.get('HOMEBREW_PREFIX'):
+        if shutil.which('brew'):
             return 'HOMEBREW'
+        elif shutil.which('port'):
+            return 'MACPORTS'
         else:
             return 'DISTRO_UNKNOWN'
 
