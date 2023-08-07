@@ -123,7 +123,15 @@ package body Alire.Builds.Hashes is
             Externals : constant Releases.Externals_Info := Rel.GPR_Externals;
          begin
             for Var of GPR.Name_Vector'(Externals.Declared
-                                                 .Union (Externals.Modified))
+                                .Union (Externals.Modified))
+              --  Externals modified but not declared are presumably for the
+              --  benefit of another crate. It's unclear if these will affect
+              --  the crate doing the setting, so we err on the side of
+              --  caution and include them in the hashing. Maybe we could make
+              --  this inclusion dependent on some config variable, or push
+              --  responsibility to crate maintainers to declare all externals
+              --  that affect the own crate properly and remove them from the
+              --  hashing inputs.
             loop
                if Env.Contains (Var) then
                   Add ("external", Var, Env (Var));
@@ -132,6 +140,9 @@ package body Alire.Builds.Hashes is
                end if;
             end loop;
          end;
+
+         --  Environment variables
+         --  TBD
 
          --  Configuration variables
          --  TBD
