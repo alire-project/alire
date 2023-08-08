@@ -2,7 +2,6 @@ with AAA.Strings;
 
 with Alire.Index;
 with Alire.Root;
-with Alire.Shared;
 
 package body Alire.Toolchains.Solutions is
 
@@ -22,14 +21,14 @@ package body Alire.Toolchains.Solutions is
          use type Milestones.Milestone;
       begin
          --  Check that is not already there
-         if (for some Rel of Shared.Available => Rel.Milestone = Mil) then
+         if (for some Rel of Toolchains.Available => Rel.Milestone = Mil) then
             return;
          end if;
 
          --  It must be redeployed
          Put_Warning ("Tool " & Mil.TTY_Image & " is missing, redeploying...");
 
-         Shared.Share (Index.Find (Mil.Crate, Mil.Version));
+         Toolchains.Deploy (Index.Find (Mil.Crate, Mil.Version));
       end Redeploy_If_Needed;
 
       Result : Alire.Solutions.Solution := Solution;
@@ -53,7 +52,7 @@ package body Alire.Toolchains.Solutions is
 
             --  Add the configured tool release to the solution
             Result := Result.Including
-              (Release        => Shared.Release
+              (Release        => Toolchains.Release
                  (Target           => Tool_Milestone (Tool),
                   Detect_Externals => Tool_Is_External (Tool)),
                Env            => Root.Platform_Properties,

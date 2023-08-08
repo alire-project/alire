@@ -10,7 +10,6 @@ with Alire.Errors;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.Releases.Containers;
-with Alire.Shared;
 with Alire.Solver;
 with Alire.Toolchains;
 with Alire.Utils; use Alire.Utils;
@@ -245,7 +244,7 @@ package body Alr.Commands.Toolchain is
 
          if Cmd.Install_Dir.all /= "" then
             if Rel.Origin.Is_Index_Provided then
-               Shared.Share (Rel, Cmd.Install_Dir.all);
+               Toolchains.Deploy (Rel, Cmd.Install_Dir.all);
             else
                Reportaise_Command_Failed
                  ("Releases with external origins cannot be installed at "
@@ -254,7 +253,7 @@ package body Alr.Commands.Toolchain is
             end if;
          else
             if Rel.Origin.Is_Index_Provided then
-               Shared.Share (Rel);
+               Toolchains.Deploy (Rel);
             elsif Rel.Origin.Is_System then
                Origins.Deployers.Deploy (Rel).Assert;
             elsif Rel.Origin.Kind = External then
@@ -307,7 +306,7 @@ package body Alr.Commands.Toolchain is
       --  Even if we have selected a non-external toolchain, in this case we
       --  want to force detection of external toolchains to be aware of them.
 
-      if Alire.Shared.Available.Is_Empty then
+      if Alire.Toolchains.Available.Is_Empty then
          Trace.Info ("Nothing installed in configuration prefix "
                      & TTY.URL (Alire.Config.Edit.Path));
          return;
@@ -320,7 +319,7 @@ package body Alr.Commands.Toolchain is
         .Append (TTY.Emph ("NOTES"))
         .New_Row;
 
-      for Dep of Alire.Shared.Available loop
+      for Dep of Alire.Toolchains.Available loop
          if (for some Crate of Toolchains.Tools =>
                Dep.Provides (Crate))
          then
@@ -361,7 +360,7 @@ package body Alr.Commands.Toolchain is
          --  Obtain all installed releases for the crate; we will proceed if
          --  only one exists.
          Available : constant Alire.Releases.Containers.Release_Set :=
-                       Alire.Shared.Available.Satisfying
+                       Alire.Toolchains.Available.Satisfying
                          (Alire.Dependencies.New_Dependency
                             (Crate    => Alire.To_Name (Target),
                              Versions => Semantic_Versioning.Extended.Any));
@@ -390,7 +389,7 @@ package body Alr.Commands.Toolchain is
 
       --  Otherwise we proceed with a complete milestone
 
-      Alire.Shared.Remove (Alire.Milestones.New_Milestone (Target));
+      Alire.Toolchains.Remove (Alire.Milestones.New_Milestone (Target));
 
    end Uninstall;
 

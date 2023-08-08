@@ -4,12 +4,14 @@ with AAA.Strings;
 
 with Alire.Config;
 with Alire.Dependencies;
+with Alire.Errors;
 with Alire.Milestones;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.Utils;
 with Alire.Utils.TTY;
 
 with CLIC.Config;
+with CLIC.User_Input;
 
 package Alire.Toolchains is
 
@@ -108,6 +110,41 @@ package Alire.Toolchains is
               & TTY.URL ("https://alire.ada.dev/docs/#toolchains") & " for "
               & "additional details about compiler dependencies and toolchain "
               & "interactions.");
+
+   --  From here on, these are former Alire.Shared subprograms, so they were
+   --  more generally oriented.
+
+   function Available (Detect_Externals : Boolean := True)
+                       return Releases.Containers.Release_Set;
+   --  Returns tools installed at the toolchain location
+
+   function Release (Target : Milestones.Milestone;
+                     Detect_Externals : Boolean := True)
+                     return Releases.Release;
+   --  Retrieve the release corresponding to Target, if it exists. Will raise
+   --  Constraint_Error if not among Available.
+
+   function Path return Any_Path;
+   --  Returns the base folder in which all shared releases live, defaults to
+   --  <cache>/toolchains
+
+   procedure Deploy (Release  : Releases.Release;
+                     Location : Any_Path := Path);
+   --  Deploy a release in the specified location
+
+   procedure Remove
+     (Release : Releases.Release;
+      Confirm : Boolean := not CLIC.User_Input.Not_Interactive)
+     with Pre => Available.Contains (Release)
+     or else raise Checked_Error with
+       Errors.Set ("Requested release is not installed: "
+                   & Release.Milestone.TTY_Image);
+   --  Remove a release from the shared location for the configuration
+
+   procedure Remove
+     (Target : Milestones.Milestone;
+      Confirm : Boolean := not CLIC.User_Input.Not_Interactive);
+   --  Behaves as the previous Remove
 
 private
 

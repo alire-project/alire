@@ -10,7 +10,6 @@ with Alire.Milestones;
 with Alire.Optional;
 with Alire.Platforms.Current;
 with Alire.Releases.Containers;
-with Alire.Shared;
 with Alire.Root;
 with Alire.Toolchains;
 with Alire.Utils.TTY;
@@ -259,7 +258,7 @@ package body Alire.Solver is
       --  solution is found).
 
       Installed : constant Releases.Containers.Release_Set :=
-                                  Shared.Available
+                                  Toolchains.Available
                                     (Detect_Externals =>
                                         Options.Detecting = Detect);
       --  Installed releases do not change during resolution, we make a local
