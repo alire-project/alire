@@ -51,10 +51,10 @@ package Alire.Directories is
    --  In Windows, git checkouts are created with read-only file that do not
    --  sit well with Ada.Directories.Delete_Tree.
 
-   procedure Force_Delete (Path : Any_Path);
+   procedure Force_Delete (Path : Absolute_Path);
    --  Calls Ensure_Deletable and then uses GNATCOLL.VFS deletion
 
-   procedure Delete_Tree (Path : Any_Path) renames Force_Delete;
+   procedure Delete_Tree (Path : Absolute_Path) renames Force_Delete;
    --  Delete Path, and anythin below if it was a dir
 
    function Find_Files_Under (Folder    : String;
