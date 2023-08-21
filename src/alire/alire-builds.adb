@@ -6,6 +6,7 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Paths.Vault;
 with Alire.Platforms.Current;
 with Alire.Properties.Actions.Executor;
+with Alire.Roots;
 with Alire.Utils.Tools;
 
 package body Alire.Builds is
@@ -49,12 +50,13 @@ package body Alire.Builds is
    -- Sync --
    ----------
 
-   procedure Sync (Release   : Releases.Release;
+   procedure Sync (Root      : in out Roots.Root;
+                   Release   : Releases.Release;
                    Was_There : out Boolean)
    is
       Src       : constant Absolute_Path := Paths.Vault.Path
                                             / Release.Deployment_Folder;
-      Dst       : constant Absolute_Path := Builds.Path (Release);
+      Dst       : constant Absolute_Path := Builds.Path (Root, Release);
       Completed : Directories.Completion := Directories.New_Completion (Dst);
 
       use AAA.Strings;
@@ -126,10 +128,12 @@ package body Alire.Builds is
    -- Path --
    ----------
 
-   function Path (Release : Releases.Release) return Absolute_Path
+   function Path (Root    : in out Roots.Root;
+                  Release : Releases.Release)
+                  return Absolute_Path
    is (Builds.Path
        / (Release.Deployment_Folder
-         & "_deadbeef"));
-   --  TODO: implement actual hashing of environment for a release
+         & "_"
+         & Root.Build_Hash (Release.Name)));
 
 end Alire.Builds;

@@ -4,7 +4,6 @@ it should.
 """
 
 import os
-import sys
 
 from drivers.alr import alr_with, init_local_crate, run_alr
 from drivers.helpers import contents
@@ -36,9 +35,10 @@ assert \
     f"Vault not found at the expected location: f{contents(base)}"
 
 # Shared builds
+# We hardcode this hash so we detect unwilling changes to our hashing scheme
+hash = "e66592c9a181de97dc3a342cf76378f6ffa6667d7c1864c74d98bec8ffaf4f3d"
 assert \
-    os.path.isdir(f"{base}/builds/crate_real_1.0.0_filesystem_deadbeef"), \
-    "Vault not found at the expected location: f{contents(base)"
-    # TODO: above hash will need updating once hash computation is in place
+    os.path.isdir(f"{base}/builds/crate_real_1.0.0_filesystem_{hash}"), \
+    f"Shared build not found at the expected location: f{contents(base)}"
 
 print('SUCCESS')

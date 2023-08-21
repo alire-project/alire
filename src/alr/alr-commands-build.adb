@@ -1,3 +1,4 @@
+with Alire.Builds;
 with Alire.Crate_Configuration;
 with Alire.Utils.Switches;
 
@@ -61,6 +62,14 @@ package body Alr.Commands.Build is
          Reportaise_Wrong_Arguments ("Only one build profile can be selected");
       end if;
 
+      --  Prevent premature update of dependencies, as the exact folders
+      --  will depend on the build hashes, which are yet unknown until
+      --  build profiles are applied.
+      Cmd.Requires_Workspace (Sync => Alire.Builds.Sandboxed_Dependencies);
+      --  For sandboxed dependencies we keep the legacy behavior. We can unify
+      --  behaviors when crate configuration is only generated per missing
+      --  crate.
+
       --  Build profile in the command line takes precedence. The configuration
       --  will have been loaded at this time with all profiles found in
       --  manifests.
@@ -102,6 +111,11 @@ package body Alr.Commands.Build is
                      return Boolean
    is
    begin
+      --  Prevent premature update of dependencies, as the exact folders
+      --  will depend on the build hashes, which are yet unknown until
+      --  build profiles are applied.
+      Cmd.Requires_Workspace (Sync => Alire.Builds.Sandboxed_Dependencies);
+      --  TODO: remove sync once config generation is per crate.
 
       declare
          Timer : Stopwatch.Instance;

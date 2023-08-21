@@ -64,6 +64,7 @@ package body Alire.Roots.Editable is
             Changed_Only => not Alire.Detailed)
          then
             Edited.Commit;
+            Edited.Deploy_Dependencies;
          else
             Trace.Info ("No changes applied.");
          end if;
