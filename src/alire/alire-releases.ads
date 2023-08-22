@@ -348,11 +348,15 @@ package Alire.Releases is
       Was_There       : out Boolean;
       Perform_Actions : Boolean := True;
       Create_Manifest : Boolean := False;
-      Include_Origin  : Boolean := False);
+      Include_Origin  : Boolean := False;
+      Mark_Completion : Boolean := True);
    --  Deploy the sources of this release under the given Parent_Folder. If
    --  Create_Manifest, any packaged manifest will be moved out of the way
    --  and an authoritative manifest will be generated from index information.
-   --  The created manifest may optionally Include_Origin information.
+   --  The created manifest may optionally Include_Origin information. When
+   --  Mark_Completion, a trace file will be created in ./alire/copy_complete
+   --  so future inspections of the folder can ensure the operation wasn't
+   --  interrupted.
 
 private
 
