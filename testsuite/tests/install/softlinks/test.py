@@ -1,5 +1,16 @@
 """
-Test that binary files containing softlinks can be installed properly
+Test that binary files containing softlinks can be installed properly. The test
+crate contains all kinds of pernicious links (broken, recursive, etc.):
+
+crate
+├── bin -> subdir/bin
+├── broken -> missing
+└── subdir
+    ├── bin
+    │   ├── loop -> ../../subdir
+    │   └── x
+    ├── parent -> ..
+    └── self -> ../subdir
 """
 
 import sys
