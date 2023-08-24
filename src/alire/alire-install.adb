@@ -49,9 +49,15 @@ package body Alire.Install is
          --  Use or regular deployment facilities, in case there are any
          --  actions to perform.
 
-         Rel.Deploy (Env           => Platforms.Current.Properties,
-                     Parent_Folder => Prefix,
-                     Was_There     => Was_There);
+         Rel.Deploy (Env             => Platforms.Current.Properties,
+                     Parent_Folder   => Prefix,
+                     Was_There       => Was_There,
+                     Mark_Completion => False);
+         --  We set Mark_Completion to False because the deployment folder
+         --  is temporary, so we don't need to track completion if the
+         --  installation fails, and otherwise we will have a common file to
+         --  all installations (the ./alire/ canary file) that will cause a
+         --  clash after the first installation.
 
          if not Rel.Project_Files (Platforms.Current.Properties,
                                    With_Path => False).Is_Empty

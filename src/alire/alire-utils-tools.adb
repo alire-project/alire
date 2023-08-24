@@ -40,7 +40,6 @@ package body Alire.Utils.Tools is
           when Unzip      => "unzip",
           when Curl       => "curl",
           when Mercurial  => "hg",
-          when Rsync      => "rsync",
           when Subversion => "svn");
 
    -----------------------------
@@ -66,7 +65,7 @@ package body Alire.Utils.Tools is
                           elsif Distribution /= Msys2 and Distribution /= Arch
                           then "libgraph-easy-perl"
                           else ""),
-                       when Git | Tar | Unzip | Curl | Rsync =>
+                       when Git | Tar | Unzip | Curl =>
                           Exec_For_Tool (Tool),
                        when Mercurial  => "mercurial",
                        when Subversion => "subversion");

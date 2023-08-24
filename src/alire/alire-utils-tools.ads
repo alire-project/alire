@@ -5,7 +5,6 @@ package Alire.Utils.Tools is
       Easy_Graph, -- For `--graph`
       Git,        -- Release origin
       Mercurial,  -- Release origin
-      Rsync,      -- For shared builds
       Subversion, -- Release origin
       Tar,        -- For source archive origins
       Unzip       -- For source archive origins

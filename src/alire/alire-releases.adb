@@ -248,7 +248,8 @@ package body Alire.Releases is
       Was_There       : out Boolean;
       Perform_Actions : Boolean := True;
       Create_Manifest : Boolean := False;
-      Include_Origin  : Boolean := False)
+      Include_Origin  : Boolean := False;
+      Mark_Completion : Boolean := True)
    is
       use Alire.Directories;
       use all type Alire.Properties.Actions.Moments;
@@ -351,7 +352,9 @@ package body Alire.Releases is
          end;
       end if;
 
-      Completed.Mark (Complete => True);
+      if Mark_Completion then
+         Completed.Mark (Complete => True);
+      end if;
 
    exception
       when E : others =>
