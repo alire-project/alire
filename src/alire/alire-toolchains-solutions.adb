@@ -9,8 +9,9 @@ package body Alire.Toolchains.Solutions is
    -- Add_Toolchain --
    -------------------
 
-   function Add_Toolchain (Solution : Alire.Solutions.Solution)
-                              return Alire.Solutions.Solution
+   function Add_Toolchain (Solution : Alire.Solutions.Solution;
+                           Deploy   : Boolean := True)
+                           return Alire.Solutions.Solution
    is
 
       ------------------------
@@ -46,7 +47,7 @@ package body Alire.Toolchains.Solutions is
 
             --  This shouldn't happen normally, but it can happen if the user
             --  has just changed the cache location.
-            if not Tool_Is_External (Tool) then
+            if Deploy and then not Tool_Is_External (Tool) then
                Redeploy_If_Needed (Tool_Milestone (Tool));
             end if;
 
@@ -66,6 +67,40 @@ package body Alire.Toolchains.Solutions is
 
       return Result;
    end Add_Toolchain;
+
+   --------------
+   -- Compiler --
+   --------------
+
+   function Compiler (Solution : Alire.Solutions.Solution)
+                      return Releases.Release
+   is
+   begin
+      if not Solution.Depends_On (GNAT_Crate) then
+         declare
+            With_GNAT : constant Alire.Solutions.Solution :=
+                          Add_Toolchain (Solution,
+                                         Deploy => False);
+         begin
+            if not With_GNAT.Depends_On (GNAT_Crate) then
+               Raise_Checked_Error
+                 (Errors.New_Wrapper
+                  .Wrap ("Unable to determine compiler version.")
+                  .Wrap ("Check that the workspace solution is complete.")
+                  .Get);
+            else
+               return Compiler (With_GNAT);
+            end if;
+         end;
+      end if;
+
+      --  At this point we have a GNAT in the solution
+
+      Assert (Solution.Releases_Providing (GNAT_Crate).Length in 1,
+              "Solution contains more than one compiler?");
+
+      return Solution.Releases_Providing (GNAT_Crate).First_Element;
+   end Compiler;
 
    ---------------------
    -- Is_In_Toolchain --
