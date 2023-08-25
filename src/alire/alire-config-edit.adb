@@ -288,9 +288,10 @@ package body Alire.Config.Edit is
       Results : AAA.Strings.Vector;
    begin
       for Ent of All_Builtins loop
-         Results.Append (String'("- " & To_String (Ent.Key)
-                         & " [" & Image (Ent.Kind) & "]"
-                         & "[Default:" & To_String (Ent.Def) & "]"));
+         Results.Append (String'("- " & TTY.Bold (To_String (Ent.Key))
+                         & " [" & TTY.Emph (Image (Ent.Kind)) & "]"
+                         & "[Default:" & TTY.Terminal (To_String (Ent.Def))
+                         & "]"));
          Results.Append (To_String (Ent.Help));
          Results.Append ("");
       end loop;
