@@ -2,6 +2,7 @@ with AAA.Strings;
 
 with Alire.Index;
 with Alire.Root;
+with Alire.Solver;
 
 package body Alire.Toolchains.Solutions is
 
@@ -75,6 +76,26 @@ package body Alire.Toolchains.Solutions is
    function Compiler (Solution : Alire.Solutions.Solution)
                       return Releases.Release
    is
+
+      --------------------------
+      -- Environment_Compiler --
+      --------------------------
+
+      function Environment_Compiler return Releases.Release is
+      begin
+         Index.Detect_Externals (GNAT_Crate, Root.Platform_Properties);
+         return Solver.Find (GNAT_External_Crate,
+                             Policy => Solver.Default_Options.Age);
+      exception
+         when Query_Unsuccessful =>
+            Raise_Checked_Error
+              (Errors.New_Wrapper
+               .Wrap ("Unable to determine compiler version.")
+               .Wrap ("Check that the workspace solution is complete "
+                 & "and a compiler is available.")
+               .Get);
+      end Environment_Compiler;
+
    begin
       if not Solution.Depends_On (GNAT_Crate) then
          declare
@@ -83,11 +104,10 @@ package body Alire.Toolchains.Solutions is
                                          Deploy => False);
          begin
             if not With_GNAT.Depends_On (GNAT_Crate) then
-               Raise_Checked_Error
-                 (Errors.New_Wrapper
-                  .Wrap ("Unable to determine compiler version.")
-                  .Wrap ("Check that the workspace solution is complete.")
-                  .Get);
+               --  This means that no compiler (or None) has been selected
+               --  with `alr toolchain`, so we return whichever one is in
+               --  the environment.
+               return Environment_Compiler;
             else
                return Compiler (With_GNAT);
             end if;

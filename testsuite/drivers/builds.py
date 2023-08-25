@@ -4,7 +4,15 @@ Helper functions for the testing of shared builds
 
 from glob import glob
 import os
+from shutil import rmtree
 from drivers.alr import alr_builds_dir
+
+
+def clear_builds_dir() -> None:
+    """
+    Clear the shared build directory
+    """
+    rmtree(path())
 
 
 def find_dir(crate_name: str) -> str:
