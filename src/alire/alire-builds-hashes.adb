@@ -110,20 +110,26 @@ package body Alire.Builds.Hashes is
                           Backup => False);
          end Write_Inputs;
 
-      begin
-         Trace.Debug ("   build hashing: " & Rel.Milestone.TTY_Image);
+         -----------------
+         -- Add_Profile --
+         -----------------
 
-         --  Build profile
-         Add ("profile",
-              Rel.Name.As_String,
-              Root.Configuration.Build_Profile (Rel.Name)'Image);
+         procedure Add_Profile is
+         begin
+            Add ("profile",
+                 Rel.Name.As_String,
+                 Root.Configuration.Build_Profile (Rel.Name)'Image);
+         end Add_Profile;
 
-         --  GPR externals
-         declare
+         -------------------
+         -- Add_Externals --
+         -------------------
+
+         procedure Add_Externals is
             Externals : constant Releases.Externals_Info := Rel.GPR_Externals;
          begin
             for Var of GPR.Name_Vector'(Externals.Declared
-                                .Union (Externals.Modified))
+                                        .Union (Externals.Modified))
               --  Externals modified but not declared are presumably for the
               --  benefit of another crate. It's unclear if these will affect
               --  the crate doing the setting, so we err on the side of
@@ -139,22 +145,44 @@ package body Alire.Builds.Hashes is
                   Add ("external", Var, "default");
                end if;
             end loop;
-         end;
+         end Add_Externals;
 
-         --  Environment variables
-         --  TBD
+         ------------------
+         -- Add_Compiler --
+         ------------------
 
-         --  Configuration variables
-         --  TBD
-
-         --  Compiler version. Changing compiler will result in incompatible
-         --  ALI files and produce rebuilds, so it must be part of the hash.
-         --  Incidentally, this serves to separate by cross-target too.
-         declare
+         procedure Add_Compiler is
+            --  Compiler version. Changing compiler will result in incompatible
+            --  ALI files and produce rebuilds, so it must be part of the hash.
+            --  Incidentally, this serves to separate by cross-target too.
             Compiler : constant Releases.Release := Root.Compiler;
          begin
             Add ("version", Compiler.Name.As_String, Compiler.Version.Image);
-         end;
+         end Add_Compiler;
+
+         ---------------------
+         -- Add_Environment --
+         ---------------------
+
+         procedure Add_Environment is
+         begin
+            for Var of Rel.Environment (Root.Environment) loop
+               --  If the crate modifies the var, it must be in the loaded env
+               Add ("environment", Var.Key, Env (Var.Key));
+            end loop;
+         end Add_Environment;
+
+      begin
+         Trace.Debug ("   build hashing: " & Rel.Milestone.TTY_Image);
+
+         --  Add individual contributors to the hash input
+         Add_Profile;
+         Add_Externals;
+         Add_Environment;
+         Add_Compiler;
+
+         --  Configuration variables
+         --  TBD
 
          --  Dependencies recursive hash? Since a crate can use a dependency
          --  config spec, it is possible in the worst case for a crate to
