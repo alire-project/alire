@@ -35,8 +35,11 @@ assert \
     f"Vault not found at the expected location: f{contents(base)}"
 
 # Shared builds
-# We hardcode this hash so we detect unwilling changes to our hashing scheme
-hash = "7b5ad18029d4984b4076f4910c699700e7a325ab0c3dc786ccf89c3c6035212f"
+
+# We hardcode this hash so we detect unwilling changes to our hashing scheme.
+# Every time this hash changes we must know the reason (changes in the hashing
+# procedures)
+hash = "1a29f0454348e767e78ac6912c7409b374b7bf650e81396c8a8750797ae073eb"
 assert \
     os.path.isdir(f"{base}/builds/crate_real_1.0.0_filesystem_{hash}"), \
     f"Shared build not found at the expected location: f{contents(base)}"

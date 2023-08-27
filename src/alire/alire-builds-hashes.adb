@@ -168,7 +168,7 @@ package body Alire.Builds.Hashes is
          begin
             for Var of Rel.Environment (Root.Environment) loop
                --  If the crate modifies the var, it must be in the loaded env
-               Add ("environment", Var.Key, Env (Var.Key));
+               Add ("environment", Var.Name, Env (Var.Name));
             end loop;
          end Add_Environment;
 
