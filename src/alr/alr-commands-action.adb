@@ -126,7 +126,9 @@ package body Alr.Commands.Action is
             then
                Some_Output := True;
                declare
-                  CWD : Guard (Enter (Cmd.Root.Release_Base (Rel.Name)))
+                  use all type Alire.Roots.Usages;
+                  CWD : Guard (Enter (Cmd.Root.Release_Base (Rel.Name,
+                                                             For_Build)))
                     with Unreferenced;
                begin
                   Alire.Properties.Actions.Executor.Execute_Actions

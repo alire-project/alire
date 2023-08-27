@@ -33,20 +33,31 @@ assert_contents(base := os.path.join(vault_dir, "hello_1.0.1_filesystem"),
                  f'{base}/src',
                  f'{base}/src/hello.adb'])
 
-# Check the contents in the build dir, that should include generated configs
+# Check the contents in the build dir, that should not include generated config
+# because no build has been attempted yet, hence a sync has not been performed.
 
 # We need to find the hash first
 base = glob.glob(os.path.join(build_dir, "hello_1.0.1_filesystem_*"))[0]
 
 assert_contents(base,
                 [f'{base}/alire',
+                 f'{base}/alire/build_hash_inputs'
+                 ])
+
+# Do a build, and now the sync should have happened and the build dir be filled
+run_alr("build")
+
+assert_contents(base,
+                [f'{base}/alire',
                  f'{base}/alire.toml',
+                 f'{base}/alire/build_hash_inputs',
                  f'{base}/alire/complete_copy',
                  f'{base}/config',
                  f'{base}/config/hello_config.ads',
                  f'{base}/config/hello_config.gpr',
                  f'{base}/config/hello_config.h',
                  f'{base}/hello.gpr',
+                 f'{base}/obj',
                  f'{base}/src',
                  f'{base}/src/hello.adb'])
 
