@@ -4,14 +4,12 @@ Helpers to run alr in the testsuite.
 
 import os
 import os.path
-
-from shutil import copytree
-from e3.os.process import Run, quote_arg
-from e3.fs import mkdir
-from e3.testsuite.driver.classic import ProcessResult
-
 import re
+from shutil import copytree
 
+from e3.fs import mkdir
+from e3.os.process import Run, quote_arg
+from e3.testsuite.driver.classic import ProcessResult
 
 TESTSUITE_ROOT = os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))
@@ -531,3 +529,14 @@ def alr_builds_dir() -> str:
     Return the path to the builds directory
     """
     return os.path.join(alr_config_dir(), "cache", "builds")
+
+
+def external_compiler_version() -> str:
+    """
+    Return the version of the external compiler
+    """
+    # Obtain available compilers
+    p = run_alr("toolchain")
+
+    # Capture version
+    return re.search("gnat_external ([0-9.]+)", p.out, re.MULTILINE).group(1)
