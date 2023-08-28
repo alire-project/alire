@@ -35,6 +35,7 @@ assert hash1 != hash2, "Hashes should be different"
 # profile, compiler version.
 
 assert_eq(
+    'config:libhello.var1=true\n'            # crate config var
     'environment:TEST_ENV=myenv\n'           # plain env var set
     'external:TEST_FREEFORM_UNSET=default\n' # declared unset GPR external
     'external:TEST_GPR_EXTERNAL=gpr_ext_B\n' # declared set GPR external

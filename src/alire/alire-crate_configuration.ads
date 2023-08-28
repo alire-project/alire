@@ -172,4 +172,7 @@ private
                                 Filepath : Absolute_Path;
                                 Version  : String);
 
+   function Key (Crate : Crate_Name; Var_Name : String) return String;
+   --  Keys in the var map are normalized as "crate.var" lowercased
+
 end Alire.Crate_Configuration;

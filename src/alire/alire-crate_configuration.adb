@@ -734,6 +734,13 @@ package body Alire.Crate_Configuration is
       TIO.Close (File);
    end Generate_C_Config;
 
+   ---------
+   -- Key --
+   ---------
+
+   function Key (Crate : Crate_Name; Var_Name : String) return String
+   is (To_Lower_Case (Crate.As_String & "." & Var_Name));
+
    --------------------
    -- Add_Definition --
    --------------------
@@ -744,7 +751,7 @@ package body Alire.Crate_Configuration is
    is
       Type_Name_Lower : constant String := To_Lower_Case (Type_Def.Name);
 
-      Name : constant Unbounded_String := +(+Crate & "." & Type_Name_Lower);
+      Name : constant Unbounded_String := +Key (Crate, Type_Def.Name);
    begin
 
       if Is_Reserved_Name (Type_Name_Lower) then

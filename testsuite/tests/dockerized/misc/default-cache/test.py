@@ -39,7 +39,7 @@ assert \
 # We hardcode this hash so we detect unwilling changes to our hashing scheme.
 # Every time this hash changes we must know the reason (changes in the hashing
 # procedures)
-hash = "1a29f0454348e767e78ac6912c7409b374b7bf650e81396c8a8750797ae073eb"
+hash = "d56fceceba3a7deaa9df1a9b43afa4fb9c643bf5245b335cc12ba0ae4df15682"
 assert \
     os.path.isdir(f"{base}/builds/crate_real_1.0.0_filesystem_{hash}"), \
     f"Shared build not found at the expected location: f{contents(base)}"
