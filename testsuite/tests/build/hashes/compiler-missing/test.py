@@ -13,7 +13,10 @@ run_alr("config", "--set", "--global", "dependencies.shared", "true")
 
 # Init a crate without explicit compiler dependency
 init_local_crate("xxx")
-p = run_alr("with", "libhello", complain_on_error=False)  # This should fail
+run_alr("with", "libhello")
+
+# The build fails because we cannot compute the build hash without a compiler
+p = run_alr("build", complain_on_error=False)
 assert_match(".*Unable to determine compiler version", p.out)
 
 print("SUCCESS")

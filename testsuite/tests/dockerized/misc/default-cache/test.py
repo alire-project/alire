@@ -36,6 +36,10 @@ assert \
 
 # Shared builds
 
+# This generates the synced build dir. It fails because there is no toolchain
+# configured, but that is not relevant for this test.
+run_alr("build", complain_on_error=False)
+
 # We hardcode this hash so we detect unwilling changes to our hashing scheme.
 # Every time this hash changes we must know the reason (changes in the hashing
 # procedures)

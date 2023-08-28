@@ -5,7 +5,8 @@ Helper functions for the testing of shared builds
 from glob import glob
 import os
 from shutil import rmtree
-from drivers.alr import alr_builds_dir
+import subprocess
+from drivers.alr import alr_builds_dir, run_alr
 
 
 def clear_builds_dir() -> None:
@@ -46,3 +47,20 @@ def path() -> str:
     Return the path to the shared build directory.
     """
     return alr_builds_dir()
+
+
+def sync() -> None:
+    """
+    Sync the shared build directory
+    """
+    # We force the sync by running a build, no matter if it succeeds or not
+    try:
+        subprocess.run(["alr", "-q", "-d", "build"]
+                       , stdout=subprocess.DEVNULL
+                       , stderr=subprocess.DEVNULL
+                       )
+    except:
+        pass
+
+def sync_builds() -> None:
+    sync()

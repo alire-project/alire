@@ -212,7 +212,7 @@ package body Alire.Roots is
          --  Changes in configuration may require new build dirs
       end if;
 
-      if Export_Build_Env then
+      if Export_Build_Env or else not Builds.Sandboxed_Dependencies then
          This.Export_Build_Environment;
       end if;
 
@@ -765,7 +765,24 @@ package body Alire.Roots is
       --  dependencies from there. Post-fetch may happen even with shared
       --  builds for linked and binary dependencies.
 
-      This.Export_Build_Environment;
+      if Builds.Sandboxed_Dependencies then
+         This.Export_Build_Environment;
+      else
+         null;
+         --  When using shared dependencies we have a conflict between crates
+         --  "in-place" (without syncing, e.g. links/binaries), which should
+         --  have its post-fetch run immediately, and regular crates, which
+         --  get the post-fetch run after sync. Since the complete environment
+         --  cannot be known for the former until build time (as config could
+         --  be incomplete otherwise), we need to delay post-fetch for all
+         --  crates to build time, in a follow-up PR. Meanwhile, in some corner
+         --  cases post-fetch could fail when using shared deps (in-place
+         --  crates with a post-fetch that relies on the environment).
+
+         --  TODO: delay post-fetch for binary/linked crates to the build
+         --  moment too. Do this for both sandboxed/shared, for the sake
+         --  of simplicity?
+      end if;
 
       --  Visit dependencies in a safe order to be fetched, and their actions
       --  ran
