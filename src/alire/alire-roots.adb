@@ -199,21 +199,19 @@ package body Alire.Roots is
       This.Configuration.Ensure_Complete;
       --  For proceeding to build, the configuration must be complete
 
-      --  Check if crate configuration should be re-generated. This is the old
-      --  behavior; for shared builds, config needs to be generated only once.
+      --  Ensure sources and configurations are up to date
 
-      if Builds.Sandboxed_Dependencies
-        and then This.Configuration.Must_Regenerate
-      then
+      if Builds.Sandboxed_Dependencies then
          This.Generate_Configuration;
+         --  Will regenerate on demand only those changed
+
       elsif not Builds.Sandboxed_Dependencies then
-         This.Deploy_Dependencies;
          This.Sync_Builds;
          --  Changes in configuration may require new build dirs
+
          This.Configuration.Generate_Config_Files (This, Release (This));
-         --  Generate the config for the root crate.
-         --  TODO: generate only when changed (same optimization as for
-         --  sandboxed dependencies).
+         --  Generate the config for the root crate only, the previous sync
+         --  takes care of the rest.
       end if;
 
       if Export_Build_Env or else not Builds.Sandboxed_Dependencies then
@@ -251,6 +249,12 @@ package body Alire.Roots is
    begin
       if This.Build_Hasher.Is_Empty then
          This.Build_Hasher.Compute (This);
+
+         if not Builds.Sandboxed_Dependencies then
+            This.Build_Hasher.Write_Inputs (This);
+         end if;
+         --  For sandboxed dependencies, we must delay writing this info until
+         --  after configurations are generated.
       end if;
 
       return This.Build_Hasher.Hash (Name);
@@ -505,6 +509,25 @@ package body Alire.Roots is
       return This.Configuration.all;
    end Configuration;
 
+   ---------------------
+   -- Config_Outdated --
+   ---------------------
+
+   function Config_Outdated (This : in out Root;
+                             Name : Crate_Name)
+                             return Boolean
+   is
+      Unused : constant String := This.Build_Hash (Name);
+      --  Ensure hashes are computed
+      Current : constant Builds.Hashes.Variables :=
+                  This.Build_Hasher.Inputs (Name);
+      Stored  : constant Builds.Hashes.Variables :=
+                  Builds.Hashes.Stored_Inputs (This, Release (This, Name));
+      use type Builds.Hashes.Variables;
+   begin
+      return Current /= Stored;
+   end Config_Outdated;
+
    ------------------------
    -- Load_Configuration --
    ------------------------
@@ -583,6 +606,9 @@ package body Alire.Roots is
    begin
       This.Load_Configuration;
       This.Configuration.Generate_Config_Files (This);
+      This.Build_Hasher.Write_Inputs (This);
+      --  We commit hashes to disk after generating the configuration, as we
+      --  rely on these hash inputs to know when config must be regenerated.
    end Generate_Configuration;
 
    ------------------
@@ -801,11 +827,7 @@ package body Alire.Roots is
       --  Update/Create configuration files
 
       if Builds.Sandboxed_Dependencies then
-         This.Load_Configuration;
          This.Generate_Configuration;
-         --  TODO: this should be made more granular to only generate
-         --  configurations of newly deployed build sources, since with the
-         --  new shared builds system configs do not change once created.
       end if;
 
       --  Check that the solution does not contain suspicious dependencies,

@@ -13,9 +13,6 @@ package body Alire.Builds.Hashes is
 
    package SHA renames Alire.Hashes.SHA256_Impl;
 
-   subtype Variables is AAA.Strings.Set;
-   --  We'll store all variables that affect a Release in a deterministic order
-
    -----------
    -- Clear --
    -----------
@@ -78,38 +75,8 @@ package body Alire.Builds.Hashes is
             end loop;
 
             This.Hashes.Insert (Rel.Name, SHA.Get_Digest (C));
+            This.Inputs.Insert (Rel.Name, Vars);
          end Compute_Hash;
-
-         ------------------
-         -- Write_Inputs --
-         ------------------
-
-         procedure Write_Inputs is
-            File : constant Absolute_Path :=
-                     Builds.Path
-                       / Rel.Base_Folder & "_" & This.Hashes (Rel.Name)
-                       / Paths.Working_Folder_Inside_Root
-                       / "build_hash_inputs";
-            use Directories;
-            use Utils.Text_Files;
-
-            Lines : AAA.Strings.Vector;
-         begin
-            --  First ensure we have a pristine file to work with
-            Delete_Tree (File);
-            Create_Tree (Parent (File));
-            Touch (File);
-
-            --  Now add the hashed contents for the record
-
-            for Var of Vars loop
-               Lines.Append (Var);
-            end loop;
-
-            Append_Lines (File,
-                          Lines,
-                          Backup => False);
-         end Write_Inputs;
 
          -----------------
          -- Add_Profile --
@@ -209,9 +176,6 @@ package body Alire.Builds.Hashes is
          --  Final computation
          Compute_Hash;
 
-         --  Write the hash input for the record
-         Write_Inputs;
-
          Trace.Debug ("   build hashing release complete");
       end Compute;
 
@@ -226,12 +190,63 @@ package body Alire.Builds.Hashes is
 
       Root.Configuration.Ensure_Complete;
 
-      for Rel of Root.Solution.Releases loop
-         if Root.Requires_Build_Sync (Rel) then
+      for Rel of Root.Solution.Releases.Including (Root.Release) loop
+         --  We need to hash the root release to be able to check for changes
+         --  in the root crate configuration.
+
+         if Rel.Origin.Requires_Build then
             Compute (Rel);
          end if;
       end loop;
    end Compute;
+
+   ----------------------
+   -- Inputs_File_Name --
+   ----------------------
+
+   function Inputs_File_Name (Root : in out Roots.Root;
+                              Rel  : Releases.Release)
+                              return Absolute_Path
+   is (Root.Release_Base (Rel.Name, Roots.For_Build)
+       / Paths.Working_Folder_Inside_Root
+       / "build_hash_inputs");
+
+   ------------------
+   -- Write_Inputs --
+   ------------------
+
+   procedure Write_Inputs (This : Hasher;
+                           Root : in out Roots.Root)
+   is
+
+      ------------------
+      -- Write_Inputs --
+      ------------------
+
+      procedure Write_Inputs (Rel : Releases.Release) is
+         File : constant Absolute_Path := Inputs_File_Name (Root, Rel);
+         use Directories;
+         use Utils.Text_Files;
+      begin
+         --  First ensure we have a pristine file to work with
+         Delete_Tree (File);
+         Create_Tree (Parent (File));
+         Touch (File);
+
+         --  Now add the hashed contents for the record
+
+         Append_Lines (File,
+                       This.Inputs (Rel.Name).To_Vector,
+                       Backup => False);
+      end Write_Inputs;
+
+   begin
+      for Rel of Root.Solution.Releases.Including (Root.Release) loop
+         if Rel.Origin.Requires_Build then
+            Write_Inputs (Rel);
+         end if;
+      end loop;
+   end Write_Inputs;
 
    ----------
    -- Hash --
@@ -241,5 +256,37 @@ package body Alire.Builds.Hashes is
                   Name : Crate_Name)
                   return String
    is (This.Hashes (Name));
+
+   ------------
+   -- Inputs --
+   ------------
+
+   function Inputs (This : Hasher;
+                   Name : Crate_Name)
+                   return Variables
+   is (This.Inputs (Name));
+
+   -------------------
+   -- Stored_Inputs --
+   -------------------
+
+   function Stored_Inputs (Root : in out Roots.Root;
+                           Rel  : Releases.Release)
+                           return Variables
+   is
+      Name : constant Absolute_Path := Inputs_File_Name (Root, Rel);
+   begin
+      if Directories.Is_File (Name) then
+         declare
+            File : Utils.Text_Files.File :=
+                     Utils.Text_Files.Load (Name);
+            Lines : constant AAA.Strings.Vector := File.Lines.all;
+         begin
+            return Lines.To_Set;
+         end;
+      else
+         return AAA.Strings.Empty;
+      end if;
+   end Stored_Inputs;
 
 end Alire.Builds.Hashes;

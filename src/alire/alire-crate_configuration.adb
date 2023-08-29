@@ -380,6 +380,12 @@ package body Alire.Crate_Configuration is
    is
       Solution : constant Solutions.Solution := Root.Solution;
    begin
+      if not This.Is_Config_Complete then
+         Warnings.Warn_Once
+           ("Skipping config generation as unset variables remain");
+         return;
+      end if;
+
       if not Solution.Is_Complete then
          Warnings.Warn_Once ("Generating possibly incomplete configuration"
                              & " because of missing dependencies");
@@ -440,7 +446,15 @@ package body Alire.Crate_Configuration is
             Warnings.Warn_Once
               ("Skipping generation of incomplete configuration files "
                & "for crate " & Utils.TTY.Name (Rel.Name_Str));
+
+         elsif not Root.Config_Outdated (Rel.Name) then
+            Trace.Debug ("Skipping generation of up-to-date config for "
+                         & Rel.Milestone.TTY_Image);
+
          else
+            Trace.Debug ("Generating config files for release: "
+                         & Rel.Milestone.TTY_Image);
+
             declare
                Ent : constant Config_Entry := Get_Config_Entry (Rel);
 
@@ -560,17 +574,6 @@ package body Alire.Crate_Configuration is
    function Is_Valid (This : Global_Config) return Boolean
    is (not This.Profile_Map.Is_Empty);
    --  Because at a minimum it must contain the root crate profile
-
-   ---------------------
-   -- Must_Regenerate --
-   ---------------------
-
-   function Must_Regenerate (This : Global_Config) return Boolean
-   is
-      use type Profile_Maps.Map;
-   begin
-      return This.Profile_Map /= Last_Build_Profiles;
-   end Must_Regenerate;
 
    ---------------------------
    -- Pretty_Print_Switches --

@@ -70,11 +70,6 @@ package Alire.Crate_Configuration is
    --  Get the last profile used from user configuration. Note that we can have
    --  more/fewer crates in a new run if dependencies have changed.
 
-   function Must_Regenerate (This : Global_Config) return Boolean;
-   --  Say if some profile has changed so config files must be regenerated.
-   --  This call will always return True if global sharing of dependencies is
-   --  in effect.
-
    type Profile_Wildcards is (To_None,    --  No wildcard given
                               To_Unset, --  '%' (not set otherwise)
                               To_All);  --  '*' (total override)

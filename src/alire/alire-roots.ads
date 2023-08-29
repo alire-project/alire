@@ -268,6 +268,12 @@ package Alire.Roots is
                         return String;
    --  Returns the build hash of a crate if the solution; computes on demand.
 
+   function Config_Outdated (This : in out Root;
+                             Name : Crate_Name)
+                             return Boolean;
+   --  Say if the config on disk must be regenerated, comparing the hash on
+   --  disk with the newly computed hash.
+
    procedure Install
      (This           : in out Root;
       Prefix         : Absolute_Path;
