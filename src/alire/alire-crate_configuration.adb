@@ -8,7 +8,6 @@ with AAA.Strings; use AAA.Strings;
 with Alire.Containers;
 with Alire_Early_Elaboration;
 with Alire.Solutions;
-with Alire.Releases;
 with Alire.Roots;
 with Alire.Origins;
 with Alire.Warnings;
@@ -379,10 +378,41 @@ package body Alire.Crate_Configuration is
    procedure Generate_Config_Files (This : Global_Config;
                                     Root : in out Alire.Roots.Root)
    is
+      Solution : constant Solutions.Solution := Root.Solution;
+   begin
+      if not Solution.Is_Complete then
+         Warnings.Warn_Once ("Generating possibly incomplete configuration"
+                             & " because of missing dependencies");
+      end if;
+
+      Trace.Detail ("Generating crate config files");
+
+      This.Save_Last_Build_Profiles;
+
+      for Crate of Root.Nonabstract_Crates loop
+         declare
+            Rel : constant Releases.Release := Root.Release (Crate);
+         begin
+            This.Generate_Config_Files (Root, Rel);
+         end;
+      end loop;
+   end Generate_Config_Files;
+
+   ---------------------------
+   -- Generate_Config_Files --
+   ---------------------------
+
+   procedure Generate_Config_Files (This : Global_Config;
+                                    Root : in out Alire.Roots.Root;
+                                    Rel  : Releases.Release)
+   is
+
       use Alire.Directories;
       use Alire.Origins;
 
-      Solution : constant Solutions.Solution := Root.Solution;
+      ----------------------
+      -- Get_Config_Entry --
+      ----------------------
 
       function Get_Config_Entry (Rel : Releases.Release) return Config_Entry is
       begin
@@ -400,72 +430,59 @@ package body Alire.Crate_Configuration is
          end;
       end Get_Config_Entry;
    begin
+      --  We don't create config files for external releases, since they
+      --  are not sources built by Alire.
+      if Rel.Origin.Requires_Build then
 
-      if not Solution.Is_Complete then
-         Warnings.Warn_Once ("Generating possibly incomplete configuration"
-                             & " because of missing dependencies");
-      end if;
+         --  Check completeness before generating anything
 
-      Trace.Detail ("Generating crate config files");
+         if not This.Is_Config_Complete (Rel.Name_Str) then
+            Warnings.Warn_Once
+              ("Skipping generation of incomplete configuration files "
+               & "for crate " & Utils.TTY.Name (Rel.Name_Str));
+         else
+            declare
+               Ent : constant Config_Entry := Get_Config_Entry (Rel);
 
-      This.Save_Last_Build_Profiles;
+               Conf_Dir : constant Absolute_Path :=
+                            Root.Release_Base (Rel.Name, Roots.For_Build)
+                            / Ent.Output_Dir;
 
-      for Crate of Root.Nonabstract_Crates loop
-         declare
-            Rel : constant Releases.Release := Root.Release (Crate);
-         begin
-            --  We don't create config files for external releases, since they
-            --  are not sources built by Alire.
-            if Rel.Origin.Kind /= Alire.Origins.External then
+               Version_Str : constant String := Rel.Version.Image;
+            begin
+               if not Ent.Disabled then
+                  Ada.Directories.Create_Path (Conf_Dir);
 
-               --  Check completeness before generating anything
+                  if Ent.Generate_Ada then
+                     This.Generate_Ada_Config
+                       (Rel.Name,
+                        Conf_Dir / (+Rel.Name & "_config.ads"),
+                        Version_Str);
+                  end if;
 
-               if not This.Is_Config_Complete (Rel.Name_Str) then
-                  Warnings.Warn_Once
-                    ("Skipping generation of incomplete configuration files "
-                     & "for crate " & Utils.TTY.Name (Rel.Name_Str));
-               else
-                  declare
-                     Ent : constant Config_Entry := Get_Config_Entry (Rel);
+                  if Ent.Generate_GPR then
+                     This.Generate_GPR_Config
+                       (Rel.Name,
+                        Conf_Dir / (+Rel.Name & "_config.gpr"),
+                        (if Ent.Auto_GPR_With
+                         then Root.Direct_Withs (Rel)
+                         else AAA.Strings.Empty_Set),
+                        Version_Str);
+                  end if;
 
-                     Conf_Dir : constant Absolute_Path :=
-                                  Root.Release_Base (Rel.Name, Roots.For_Build)
-                                  / Ent.Output_Dir;
-
-                     Version_Str : constant String := Rel.Version.Image;
-                  begin
-                     if not Ent.Disabled then
-                        Ada.Directories.Create_Path (Conf_Dir);
-
-                        if Ent.Generate_Ada then
-                           This.Generate_Ada_Config
-                             (Rel.Name,
-                              Conf_Dir / (+Rel.Name & "_config.ads"),
-                              Version_Str);
-                        end if;
-
-                        if Ent.Generate_GPR then
-                           This.Generate_GPR_Config
-                             (Rel.Name,
-                              Conf_Dir / (+Rel.Name & "_config.gpr"),
-                              (if Ent.Auto_GPR_With
-                               then Root.Direct_Withs (Rel)
-                               else AAA.Strings.Empty_Set),
-                              Version_Str);
-                        end if;
-
-                        if Ent.Generate_C then
-                           This.Generate_C_Config
-                             (Rel.Name,
-                              Conf_Dir / (+Rel.Name & "_config.h"),
-                              Version_Str);
-                        end if;
-                     end if;
-                  end;
+                  if Ent.Generate_C then
+                     This.Generate_C_Config
+                       (Rel.Name,
+                        Conf_Dir / (+Rel.Name & "_config.h"),
+                        Version_Str);
+                  end if;
                end if;
-            end if;
-         end;
-      end loop;
+            end;
+         end if;
+      else
+         Trace.Debug ("Not generating config files for non-buildable release: "
+                      & Rel.Milestone.TTY_Image);
+      end if;
    end Generate_Config_Files;
 
    -------------------------

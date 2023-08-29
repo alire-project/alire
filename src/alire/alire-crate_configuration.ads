@@ -2,6 +2,7 @@ with TOML;
 
 with Alire.Utils.Switches;
 with Alire.Properties.Configurations;
+with Alire.Releases;
 limited with Alire.Roots;
 
 private with Ada.Strings.Unbounded;
@@ -55,6 +56,11 @@ package Alire.Crate_Configuration is
 
    procedure Generate_Config_Files (This : Global_Config;
                                     Root : in out Alire.Roots.Root);
+
+   procedure Generate_Config_Files (This : Global_Config;
+                                    Root : in out Alire.Roots.Root;
+                                    Rel  : Releases.Release);
+   --  Generate config files only for the given release
 
    procedure Save_Last_Build_Profiles (This : Global_Config);
    --  Record in local user configuration the last profiles used in crate

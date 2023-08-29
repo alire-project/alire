@@ -62,6 +62,9 @@ package body Alire.Builds is
                  "Could not sync build dir from " & Src & " to " & Dst);
       end;
 
+      --  At this point we can generate the final crate configuration
+      Root.Configuration.Generate_Config_Files (Root, Release);
+
       declare
          use Directories;
          Work_Dir : Guard (Enter (Dst)) with Unreferenced;
