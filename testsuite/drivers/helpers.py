@@ -238,6 +238,15 @@ def md5sum(file):
     return file_hash.hexdigest()
 
 
+def prepend_to_file(filename : str, lines : []) -> None:
+    """
+    Prepend the given lines to a file
+    """
+    old_contents = content_of(filename)
+    with open(filename, "wt") as file:
+        file.write("\n".join(lines) + "\n" + old_contents)
+
+
 def replace_in_file(filename : str, old : str, new : str):
     """
     Replace all occurrences of a string in a file
