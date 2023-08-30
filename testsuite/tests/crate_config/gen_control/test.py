@@ -1,5 +1,5 @@
 """
-Test basic crate configuration
+Test selective disabling of configuration
 """
 
 from drivers.alr import run_alr

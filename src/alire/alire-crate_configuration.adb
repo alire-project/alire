@@ -257,8 +257,8 @@ package body Alire.Crate_Configuration is
 
             Config : Alire.Utils.Switches.Switches_Configuration
               := (case Profile is
-                     when Release => Default_Release_Switches,
-                     when Validation => Default_Validation_Switches,
+                     when Release     => Default_Release_Switches,
+                     when Validation  => Default_Validation_Switches,
                      when Development => Default_Development_Switches);
 
             Modif : Properties.Build_Switches.Profile_Modifier;

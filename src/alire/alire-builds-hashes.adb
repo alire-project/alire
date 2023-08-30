@@ -157,10 +157,16 @@ package body Alire.Builds.Hashes is
 
          --  Add individual contributors to the hash input
          Add_Profile;       -- Build profile
-         Add_Externals;     -- GPR externals
-         Add_Environment;   -- Environment variables
-         Add_Compiler;      -- Compiler version
          Add_Configuration; -- Crate configuration variables
+
+         --  These are only relevant for shared dependencies, as they don't
+         --  appear in the contents of generated files. Not including them
+         --  allows things to work as they were for sandboxed dependencies.
+         if not Builds.Sandboxed_Dependencies then
+            Add_Externals;     -- GPR externals
+            Add_Environment;   -- Environment variables
+            Add_Compiler;      -- Compiler version
+         end if;
 
          --  Dependencies recursive hash? Since a crate can use a dependency
          --  config spec, it is possible in the worst case for a crate to
