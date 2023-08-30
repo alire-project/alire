@@ -151,6 +151,10 @@ package Alire.Roots is
    --  including root, excluding those that are provided by another crate.
    --  I.e., only actual regular releases.
 
+   function Nonabstract_Releases (This : in out Root)
+                                  return Releases.Containers.Release_Set;
+   --  Same as Nonabstract_Crates, but the releases themselves
+
    function Solution (This : in out Root) return Solutions.Solution with
      Pre => This.Has_Lockfile;
    --  Returns the solution stored in the lockfile
@@ -283,7 +287,7 @@ package Alire.Roots is
    --  Call gprinstall on the releases in solution using --prefix=Prefix
 
    function Configuration (This : in out Root)
-                           return Crate_Configuration.Global_Config;
+                           return access Crate_Configuration.Global_Config;
    --  Returns the global configuration for the root and dependencies. This
    --  configuration is computed the first time it is requested.
 
@@ -304,8 +308,11 @@ package Alire.Roots is
       Profiles : Crate_Configuration.Profile_Maps.Map);
    --  Give explicit profiles per crate. These are always overriding.
 
-   procedure Generate_Configuration (This : in out Root);
-   --  Generate or re-generate the crate configuration files
+   procedure Generate_Configuration (This : in out Root;
+                                     Full : Boolean);
+   --  Generate or re-generate the crate configuration files. If Full,
+   --  overwrite even if existing (so `alr update` can deal with any
+   --  corner case).
 
    procedure Print_Nested_Crates (Path : Any_Path);
    --  Look for nested crates below the given path and print a summary of

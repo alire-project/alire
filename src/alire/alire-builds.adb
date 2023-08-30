@@ -43,6 +43,9 @@ package body Alire.Builds is
       else
          Directories.Delete_Tree (Dst);
          --  Ensure nothing interferes at destination with the new copy
+
+         Directories.Create_Tree (Directories.Parent (Dst));
+         --  And that the destination parent exists
       end if;
 
       declare
@@ -63,7 +66,7 @@ package body Alire.Builds is
       end;
 
       --  At this point we can generate the final crate configuration
-      Root.Configuration.Generate_Config_Files (Root, Release);
+      Root.Configuration.Generate_Config_Files (Root, Release, Full => Force);
 
       declare
          use Directories;

@@ -23,7 +23,7 @@ def check_config(path, profile):
         case 'release':
             assert_match('.*"-O3"', conf)
         case 'validation':
-            assert_match('.*"-Og"', conf)
+            assert_match('.*"-gnata"', conf)
         case _:
             raise Exception("Unknown profile: %s" % profile)
 

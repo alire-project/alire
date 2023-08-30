@@ -33,6 +33,11 @@ package Alire.Crate_Configuration is
    function Is_Valid (This : Global_Config) return Boolean;
    --  False until Load is called
 
+   function Is_Config_Complete (This  : Global_Config;
+                                Crate : String := "")
+                                return Boolean;
+   --  Say if all variables in configuration are set, for all or one crate
+
    procedure Ensure_Complete (This : Global_Config);
    --  Verify all variables have a value, or report and raise
 
@@ -48,19 +53,23 @@ package Alire.Crate_Configuration is
 
    procedure Set_Build_Profile (This    : in out Global_Config;
                                 Crate   : Crate_Name;
-                                Profile : Profile_Kind)
+                                Profile : Profile_Kind;
+                                Set_By  : String := "library client")
      with Pre => This.Is_Valid;
 
    procedure Load (This : in out Global_Config;
                    Root : in out Alire.Roots.Root);
 
-   procedure Generate_Config_Files (This : Global_Config;
-                                    Root : in out Alire.Roots.Root);
-
-   procedure Generate_Config_Files (This : Global_Config;
+   procedure Generate_Config_Files (This : in out Global_Config;
                                     Root : in out Alire.Roots.Root;
-                                    Rel  : Releases.Release);
-   --  Generate config files only for the given release
+                                    Full : Boolean);
+   --  When Full, overwrite
+
+   procedure Generate_Config_Files (This : in out Global_Config;
+                                    Root : in out Alire.Roots.Root;
+                                    Rel  : Releases.Release;
+                                    Full : Boolean);
+   --  Generate config files only for the given release. When Full, overwrite.
 
    procedure Save_Last_Build_Profiles (This : Global_Config);
    --  Record in local user configuration the last profiles used in crate
@@ -126,6 +135,7 @@ private
    type Global_Config is tagged record
       Var_Map : Config_Maps.Map;
       --  Mapping "crate.var" --> setting
+      --  Includes the Build_Profile var added by Alire
 
       Profile_Map  : Profile_Maps.Map;
       --  Mapping crate -> profile, exists for all crates in solution

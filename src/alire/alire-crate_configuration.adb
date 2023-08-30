@@ -102,7 +102,8 @@ package body Alire.Crate_Configuration is
 
    procedure Set_Build_Profile (This    : in out Global_Config;
                                 Crate   : Crate_Name;
-                                Profile : Profile_Kind)
+                                Profile : Profile_Kind;
+                                Set_By  : String := "library client")
    is
       Key : constant String := Build_Profile_Key (Crate);
       Val : Config_Setting  := This.Var_Map (+Key);
@@ -111,7 +112,7 @@ package body Alire.Crate_Configuration is
    begin
       --  Update config value that holds the profile value
       Val.Value  := TOML.Create_String (To_Lower_Case (Profile'Image));
-      Val.Set_By := +"library client";
+      Val.Set_By := +Set_By;
       This.Var_Map (+Key) := Val;
 
       --  Update profile itself
@@ -288,7 +289,7 @@ package body Alire.Crate_Configuration is
                   Properties.Build_Switches.Apply (Config, Modif.Development);
             end case;
 
-            This.Switches_Map.Insert (Rel.Name, Get_List (Config));
+            This.Switches_Map.Include (Rel.Name, Get_List (Config));
          end;
       end loop;
    end Make_Switches_Map;
@@ -316,8 +317,6 @@ package body Alire.Crate_Configuration is
 
       Make_Build_Profile_Map (This, Root, Rel_Vect);
 
-      Make_Switches_Map (This, Root, Rel_Vect);
-
       for Create of Rel_Vect loop
          This.Load_Settings (Root, Create);
       end loop;
@@ -339,7 +338,7 @@ package body Alire.Crate_Configuration is
    ------------------------
    -- Is_Config_Complete --
    ------------------------
-   --  Say if all variables in configuration are set, for all or one crate
+
    function Is_Config_Complete (This  : Global_Config;
                                 Crate : String := "")
                                 return Boolean
@@ -375,17 +374,12 @@ package body Alire.Crate_Configuration is
    -- Generate_Config_Files --
    ---------------------------
 
-   procedure Generate_Config_Files (This : Global_Config;
-                                    Root : in out Alire.Roots.Root)
+   procedure Generate_Config_Files (This : in out Global_Config;
+                                    Root : in out Alire.Roots.Root;
+                                    Full : Boolean)
    is
       Solution : constant Solutions.Solution := Root.Solution;
    begin
-      if not This.Is_Config_Complete then
-         Warnings.Warn_Once
-           ("Skipping config generation as unset variables remain");
-         return;
-      end if;
-
       if not Solution.Is_Complete then
          Warnings.Warn_Once ("Generating possibly incomplete configuration"
                              & " because of missing dependencies");
@@ -399,7 +393,7 @@ package body Alire.Crate_Configuration is
          declare
             Rel : constant Releases.Release := Root.Release (Crate);
          begin
-            This.Generate_Config_Files (Root, Rel);
+            This.Generate_Config_Files (Root, Rel, Full);
          end;
       end loop;
    end Generate_Config_Files;
@@ -408,9 +402,10 @@ package body Alire.Crate_Configuration is
    -- Generate_Config_Files --
    ---------------------------
 
-   procedure Generate_Config_Files (This : Global_Config;
+   procedure Generate_Config_Files (This : in out Global_Config;
                                     Root : in out Alire.Roots.Root;
-                                    Rel  : Releases.Release)
+                                    Rel  : Releases.Release;
+                                    Full : Boolean)
    is
 
       use Alire.Directories;
@@ -435,6 +430,13 @@ package body Alire.Crate_Configuration is
             return Ret;
          end;
       end Get_Config_Entry;
+
+      Ent : constant Config_Entry := Get_Config_Entry (Rel);
+
+      Conf_Dir : constant Absolute_Path :=
+                   Root.Release_Base (Rel.Name, Roots.For_Build)
+                   / Ent.Output_Dir;
+
    begin
       --  We don't create config files for external releases, since they
       --  are not sources built by Alire.
@@ -447,7 +449,11 @@ package body Alire.Crate_Configuration is
               ("Skipping generation of incomplete configuration files "
                & "for crate " & Utils.TTY.Name (Rel.Name_Str));
 
-         elsif not Root.Config_Outdated (Rel.Name) then
+         elsif not Full
+           and then Directories.Is_Directory (Conf_Dir)
+           and then This.Is_Config_Complete -- avoid hashing in Config_Outdated
+           and then not Root.Config_Outdated (Rel.Name)
+         then
             Trace.Debug ("Skipping generation of up-to-date config for "
                          & Rel.Milestone.TTY_Image);
 
@@ -455,13 +461,12 @@ package body Alire.Crate_Configuration is
             Trace.Debug ("Generating config files for release: "
                          & Rel.Milestone.TTY_Image);
 
+            --  Update switches to match profile
+            This.Make_Switches_Map
+              (Root,
+               Containers.Crate_Name_Sets.To_Set (Rel.Name));
+
             declare
-               Ent : constant Config_Entry := Get_Config_Entry (Rel);
-
-               Conf_Dir : constant Absolute_Path :=
-                            Root.Release_Base (Rel.Name, Roots.For_Build)
-                            / Ent.Output_Dir;
-
                Version_Str : constant String := Rel.Version.Image;
             begin
                if not Ent.Disabled then
@@ -825,9 +830,7 @@ package body Alire.Crate_Configuration is
                         Val    : Assignment;
                         Set_By : String)
    is
-      Val_Name_Lower : constant String := To_Lower_Case (+Val.Name);
-      Crate_Str : constant String := +Crate;
-      Name : constant Unbounded_String := (+Crate_Str) & "." & Val_Name_Lower;
+      Name : constant Unbounded_String := +Key (Crate, +Val.Name);
    begin
       --  TODO check if setting configuration of a dependency
 
@@ -843,7 +846,7 @@ package body Alire.Crate_Configuration is
 
          if not Valid (Ref.Type_Def.Element, Val.Value) then
             Raise_Checked_Error
-              ("Invalid value from '" & Crate_Str &
+              ("Invalid value from '" & Crate.As_String &
                  "'" & " for type " & Image (Ref.Type_Def.Element));
          end if;
 

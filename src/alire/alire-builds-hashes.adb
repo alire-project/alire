@@ -20,6 +20,7 @@ package body Alire.Builds.Hashes is
    procedure Clear (This : in out Hasher) is
    begin
       This.Hashes.Clear;
+      This.Inputs.Clear;
    end Clear;
 
    --------------
@@ -147,7 +148,7 @@ package body Alire.Builds.Hashes is
          procedure Add_Configuration is
          begin
             Crate_Configuration.Hashes.Add_From
-              (Config => Root.Configuration,
+              (Config => Root.Configuration.all,
                Rel    => Rel,
                Add    => Add'Access);
          end Add_Configuration;
@@ -196,10 +197,7 @@ package body Alire.Builds.Hashes is
 
       Root.Configuration.Ensure_Complete;
 
-      for Rel of Root.Solution.Releases.Including (Root.Release) loop
-         --  We need to hash the root release to be able to check for changes
-         --  in the root crate configuration.
-
+      for Rel of Root.Nonabstract_Releases loop -- includes the root release
          if Rel.Origin.Requires_Build then
             Compute (Rel);
          end if;
@@ -247,7 +245,7 @@ package body Alire.Builds.Hashes is
       end Write_Inputs;
 
    begin
-      for Rel of Root.Solution.Releases.Including (Root.Release) loop
+      for Rel of Root.Nonabstract_Releases loop
          if Rel.Origin.Requires_Build then
             Write_Inputs (Rel);
          end if;

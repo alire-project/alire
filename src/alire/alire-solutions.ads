@@ -307,7 +307,9 @@ package Alire.Solutions is
 
    function Releases (This : Solution) return Release_Map;
    --  Returns the proper releases in the solution (regular and detected
-   --  externals). This also includes releases found at a linked folder.
+   --  externals). This also includes releases found at a linked folder. Since
+   --  this is a map name -> release, for provided releases there will be two
+   --  entries: the provider release and the provided dependency.
 
    function Required (This : Solution) return State_Map
                       renames All_Dependencies;
