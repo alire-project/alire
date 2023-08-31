@@ -38,7 +38,7 @@ check_hash(f"version:gnat_external={external_compiler_version()}")
 # Next, check that selecting a compiler results in it being used
 
 # Select the default preferred compiler, in this index is gnat_native=8888
-run_alr("toolchain", "--select", "gnat_native")
+run_alr("toolchain", "--select", "gnat_native", "gprbuild")
 # Clear the build cache so we are able to locate the new hash
 clear_builds_dir()
 builds.sync()
