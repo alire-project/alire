@@ -39,6 +39,8 @@ assert hash1 != hash2, "Hashes should be different"
 assert_eq(
     'config:libhello.var1=false\n'           # crate config var (set by hello)
     'environment:TEST_ENV=myenv\n'           # plain env var set
+    'external:LIBHELLO_LIBRARY_TYPE=default\n'
+    'external:LIBRARY_TYPE=default\n'        # hardcoded undeclared GPR external
     'external:TEST_FREEFORM_UNSET=default\n' # declared unset GPR external
     'external:TEST_GPR_EXTERNAL=gpr_ext_B\n' # declared set GPR external
     'external:TEST_UNDECLARED=used_by_another_crate\n' # modified GPR external
@@ -58,6 +60,8 @@ assert_eq(
     'config:hello.var6=0.00000000000000E+00\n'
     'config:hello.var7=0.00000000000000E+00\n'
     f'dependency:libhello=1.0.0={find_hash("libhello")}\n'
+    'external:HELLO_LIBRARY_TYPE=default\n'
+    'external:LIBRARY_TYPE=default\n'
     'profile:hello=VALIDATION\n'
     f'version:gnat_external={external_compiler_version()}\n',
     hash_input("hello"))
@@ -67,6 +71,8 @@ assert_eq(
 # the inputs of a different crate that depends on it.
 assert_eq(
     f'dependency:hello=1.0.1={find_hash("hello")}\n'
+    'external:LIBRARY_TYPE=default\n'
+    'external:XXX_LIBRARY_TYPE=default\n'
     'profile:xxx=VALIDATION\n'
     f'version:gnat_external={external_compiler_version()}\n',
     content_of(os.path.join("alire", "build_hash_inputs"))

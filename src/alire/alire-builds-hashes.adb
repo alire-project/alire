@@ -109,9 +109,20 @@ package body Alire.Builds.Hashes is
 
          procedure Add_Externals is
             Externals : constant Releases.Externals_Info := Rel.GPR_Externals;
+
+            function Set (S : String) return GPR.Name_Vector
+            is (GPR.To_Set (S));
+
+            Hardcoded : constant GPR.Name_Vector
+              := Set ("LIBRARY_TYPE")
+              .Union (Set (AAA.Strings.To_Upper_Case (Rel.Name_Str)
+                      & "_LIBRARY_TYPE"));
+            --  We add these to our generated library crates, although they're
+            --  not declared anywhere in manifests.
          begin
             for Var of GPR.Name_Vector'(Externals.Declared
-                                .Union (Externals.Modified))
+                                .Union (Externals.Modified)
+                                .Union (Hardcoded))
               --  Externals modified but not declared are presumably for the
               --  benefit of another crate. It's unclear if these will affect
               --  the crate doing the setting, so we err on the side of
