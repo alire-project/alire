@@ -17,15 +17,17 @@ def check_config(path, profile):
     conf = content_of(path)
     assert_match('.*Build_Profile : Build_Profile_Kind := "%s"' % profile,
                  conf)
-    match profile.lower():
-        case 'development':
-            assert_match('.*"-Og"', conf)
-        case 'release':
-            assert_match('.*"-O3"', conf)
-        case 'validation':
-            assert_match('.*"-gnata"', conf)
-        case _:
-            raise Exception("Unknown profile: %s" % profile)
+
+    # Extra check for the compiler switches
+    profile = profile.lower()
+    if profile == 'development':
+        assert_match('.*"-Og"', conf)
+    elif profile == 'release':
+        assert_match('.*"-O3"', conf)
+    elif profile == 'validation':
+        assert_match('.*"-gnata"', conf)
+    else:
+        raise Exception("Unknown profile: %s" % profile)
 
 
 lib1_config = "../lib_1/config/lib_1_config.gpr"

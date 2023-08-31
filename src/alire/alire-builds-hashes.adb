@@ -289,7 +289,7 @@ package body Alire.Builds.Hashes is
             return Lines.To_Set;
          end;
       else
-         return AAA.Strings.Empty;
+         return AAA.Strings.Empty_Set;
       end if;
    end Stored_Inputs;
 
