@@ -6,6 +6,7 @@ with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Errors;
+with Alire.Flags;
 with Alire.Install;
 with Alire.Manifest;
 with Alire.Origins;
@@ -1695,8 +1696,9 @@ package body Alire.Roots is
 
       if (for some Rel of This.Solution.Releases =>
             This.Solution.State (Rel.Name).Is_Solved and then
-            not Directories.New_Completion
-              (This.Release_Base (Rel.Name, For_Deploy)).Is_Complete)
+            not Flags.New_Flag (Flags.Complete_copy,
+                                This.Release_Base (Rel.Name, For_Deploy))
+                     .Exists)
       then
          Trace.Detail
            ("Detected missing dependency sources, updating workspace...");

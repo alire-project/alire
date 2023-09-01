@@ -3,6 +3,7 @@ with AAA.Strings;
 with Alire.Config.Builtins;
 with Alire.Config.Edit;
 with Alire.Directories;
+with Alire.Flags;
 with Alire.Paths.Vault;
 with Alire.Platforms.Current;
 with Alire.Properties.Actions.Executor;
@@ -32,11 +33,11 @@ package body Alire.Builds is
       Src       : constant Absolute_Path := Paths.Vault.Path
                                             / Release.Deployment_Folder;
       Dst       : constant Absolute_Path := Builds.Path (Root, Release);
-      Completed : Directories.Completion := Directories.New_Completion (Dst);
+      Completed : Flags.Flag := Flags.New_Flag (Flags.Complete_copy, Dst);
    begin
       Was_There := False;
 
-      if Completed.Is_Complete then
+      if Completed.Exists then
          Trace.Detail ("Skipping build syncing to existing " & Dst);
          Was_There := True;
          return;
@@ -83,7 +84,7 @@ package body Alire.Builds is
                              "re-run with -vv -d for details");
       end;
 
-      Completed.Mark (Complete => True);
+      Completed.Mark (Done => True);
    end Sync;
 
    ----------

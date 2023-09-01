@@ -6,6 +6,7 @@ with Alire.Crates;
 with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
+with Alire.Flags;
 with Alire.Origins.Deployers;
 with Alire.Paths;
 with Alire.Properties.Actions.Executor;
@@ -254,8 +255,7 @@ package body Alire.Releases is
       use Alire.Directories;
       use all type Alire.Properties.Actions.Moments;
       Folder : constant Any_Path := Parent_Folder / This.Deployment_Folder;
-      Completed : Directories.Completion :=
-                    Directories.New_Completion (Folder);
+      Completed : Flags.Flag := Flags.New_Flag (Flags.Complete_copy, Folder);
 
       ------------------------------
       -- Backup_Upstream_Manifest --
@@ -304,7 +304,7 @@ package body Alire.Releases is
 
       --  Deploy if the target dir is not already there
 
-      if Completed.Is_Complete then
+      if Completed.Exists then
          Was_There := True;
          Trace.Detail ("Skipping checkout of already available " &
                          This.Milestone.Image);
@@ -353,7 +353,7 @@ package body Alire.Releases is
       end if;
 
       if Mark_Completion then
-         Completed.Mark (Complete => True);
+         Completed.Mark (Done => True);
       end if;
 
    exception
