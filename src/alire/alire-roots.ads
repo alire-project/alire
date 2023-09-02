@@ -172,6 +172,11 @@ package Alire.Roots is
    --  conceivably we could use checksums to make it more robust against
    --  automated changes within the same second.
 
+   function Is_Root_Release (This : in out Root;
+                             Dep  : Dependencies.States.State)
+                             return Boolean;
+   --  Say if a state during Traverse is the Root release itself
+
    procedure Sync_From_Manifest (This     : in out Root;
                                  Silent   : Boolean;
                                  Interact : Boolean;
