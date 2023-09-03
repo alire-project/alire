@@ -143,8 +143,7 @@ package body Alire.Roots is
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
-               Properties.Actions.Post_Fetch,
-               Flags.Post_Fetch_Done);
+               Properties.Actions.Post_Fetch);
 
             --  Pre-build must run always
             Properties.Actions.Executor.Execute_Actions
@@ -1646,8 +1645,7 @@ package body Alire.Roots is
 
       if (for some Rel of This.Solution.Releases =>
             This.Solution.State (Rel.Name).Is_Solved and then
-            not Flags.New_Flag (Flags.Complete_copy,
-                                This.Release_Base (Rel.Name, For_Deploy))
+            not Flags.Complete_Copy (This.Release_Base (Rel.Name, For_Deploy))
                      .Exists)
       then
          Trace.Detail
@@ -1710,9 +1708,8 @@ package body Alire.Roots is
             if Dep.Has_Release and then
               (Dep.Is_Linked or else Root.Is_Root_Release (Dep))
             then
-               Flags.New_Flag (Flags.Post_Fetch_Done,
-                               Root.Release_Base (Dep.Release.Name, For_Build))
-                    .Mark_Undone;
+               Flags.Post_Fetch
+                 (Root.Release_Base (Dep.Release.Name, For_Build)).Mark_Undone;
             end if;
          end Removing_Post_Fetch_Flag;
       begin

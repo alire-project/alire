@@ -1,4 +1,5 @@
 with Alire.Directories;
+with Alire.Flags;
 with Alire.OS_Lib.Subprocess;
 with Alire.Properties.Actions.Runners;
 with Alire.Roots;
@@ -12,8 +13,7 @@ package body Alire.Properties.Actions.Executor is
 
    procedure Execute_Actions (Root    : in out Roots.Root;
                               State   : Dependencies.States.State;
-                              Moment  : Moments;
-                              Flag    : Flags.Names := Flags.No_Flag)
+                              Moment  : Moments)
    is
       Rel : constant Releases.Release := State.Release;
 
@@ -22,8 +22,8 @@ package body Alire.Properties.Actions.Executor is
 
       CD  : Directories.Guard (Directories.Enter (CWD)) with Unreferenced;
    begin
-      if Flag not in Flags.No_Flag and then
-        Flags.New_Flag (Flag, CWD).Exists
+      if Moment = Post_Fetch and then
+        Flags.Post_Fetch (CWD).Exists
       then
          Trace.Debug
            ("Skipping already ran " &
@@ -37,8 +37,8 @@ package body Alire.Properties.Actions.Executor is
          Env     => Root.Environment,
          Moment  => Moment);
 
-      if Flag not in Flags.No_Flag then
-         Flags.New_Flag (Flag, CWD).Mark_Done;
+      if Moment = Post_Fetch then
+         Flags.Post_Fetch (CWD).Mark_Done;
       end if;
    exception
       when E : others =>

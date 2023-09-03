@@ -31,7 +31,7 @@ package body Alire.Builds is
       Src    : constant Absolute_Path := Paths.Vault.Path
                                             / Release.Deployment_Folder;
       Dst    : constant Absolute_Path := Builds.Path (Root, Release);
-      Synced : Flags.Flag := Flags.New_Flag (Flags.Complete_copy, Dst);
+      Synced : Flags.Flag := Flags.Complete_Copy (Dst);
    begin
       Was_There := False;
 

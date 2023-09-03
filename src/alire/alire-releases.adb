@@ -252,7 +252,7 @@ package body Alire.Releases is
    is
       use Alire.Directories;
       Folder : constant Any_Path := Parent_Folder / This.Deployment_Folder;
-      Completed : Flags.Flag := Flags.New_Flag (Flags.Complete_copy, Folder);
+      Completed : Flags.Flag := Flags.Complete_Copy (Folder);
 
       ------------------------------
       -- Backup_Upstream_Manifest --

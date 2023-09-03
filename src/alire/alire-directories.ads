@@ -217,10 +217,6 @@ package Alire.Directories is
    --  called, on going out of scope the Replacer will remove the temporary and
    --  the original file remains untouched.
 
-   --  To ensure that certain download/copy/sync operations are complete, we
-   --  use this type that will check/delete/create a <path>/alire/complete_copy
-   --  canary file.
-
 private
 
    ------------
