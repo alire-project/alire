@@ -43,10 +43,11 @@ package body Alire.Properties.Actions.Executor is
    exception
       when E : others =>
          Log_Exception (E);
-         Raise_Checked_Error ("A " & TOML_Adapters.Tomify (Moment'Image)
-                              & " for release " & Rel.Milestone.TTY_Image
-                              & " action failed, " &
-                                "re-run with -vv -d for details");
+         Trace.Warning ("A " & TOML_Adapters.Tomify (Moment'Image)
+                        & " for release " & Rel.Milestone.TTY_Image
+                        & " action failed, " &
+                          "re-run with -vv -d for details");
+         raise Action_Failed;
    end Execute_Actions;
 
    -----------------
@@ -107,6 +108,14 @@ package body Alire.Properties.Actions.Executor is
          Err_To_Out => False,
          Code       => Unused_Code,
          Output     => Unused_Output);
+   exception
+      when E : others =>
+         Log_Exception (E);
+         Trace.Warning ("A " & TOML_Adapters.Tomify (Moment'Image)
+                        & " for release " & Release.Milestone.TTY_Image
+                        & " action failed, " &
+                          "re-run with -vv -d for details");
+         raise Action_Failed;
    end Execute_Actions;
 
    ---------------------

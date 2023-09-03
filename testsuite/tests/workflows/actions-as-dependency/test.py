@@ -46,7 +46,9 @@ def do_checks(path_to_dependency):
     p = run_alr('build', complain_on_error=False)
     assert_match(".*compilation of empty.adb failed.*", p.out)
 
-    # Post build shouldn't be here because of build failure
+    # Post build shouldn't be here because of build failure; post-fetch should
+    # however now exist because a build has been attempted and post-fetch
+    # succeeded (even if the build failed at a later stage)
     check(flag_post_fetch, True)
     check(flag_pre_build, True)
     check(flag_post_build, False)

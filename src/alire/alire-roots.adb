@@ -207,7 +207,7 @@ package body Alire.Roots is
 
       return True;
    exception
-      when Build_Failed =>
+      when Properties.Actions.Action_Failed | Build_Failed =>
          return False;
    end Build;
 

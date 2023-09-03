@@ -2,8 +2,8 @@ with Diskflags;
 
 package Alire.Flags is
 
-   --  Flags are small files we store under the workspace's alire directory to
-   --  signal that somethings has succeeded.
+   --  Flags are empty files we store under the workspace's alire directory to
+   --  signal that some operation has succeeded.
 
    subtype Flag is Diskflags.Flag;
 
