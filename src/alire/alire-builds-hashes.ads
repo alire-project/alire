@@ -10,6 +10,8 @@ package Alire.Builds.Hashes is
    procedure Clear (This : in out Hasher);
    --  Remove any cached hashes
 
+   function Contains (This : in out Hasher; Name : Crate_Name) return Boolean;
+
    function Is_Empty (This : Hasher) return Boolean;
    --  Says if the Hasher has been used or not
 
@@ -56,5 +58,12 @@ private
       Hashes : Crate_Hash_Maps.Map;
       Inputs : Crate_Input_Maps.Map;
    end record;
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains (This : in out Hasher; Name : Crate_Name) return Boolean
+   is (This.Hashes.Contains (Name));
 
 end Alire.Builds.Hashes;
