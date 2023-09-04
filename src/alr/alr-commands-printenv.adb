@@ -1,3 +1,4 @@
+with Alire.Crate_Configuration;
 with Alire.Environment;
 with Alire.Platforms;
 
@@ -28,6 +29,11 @@ package body Alr.Commands.Printenv is
       end if;
 
       Cmd.Requires_Workspace;
+
+      if Cmd.Last_Build then
+         Cmd.Root.Set_Build_Profiles
+           (Alire.Crate_Configuration.Last_Build_Profiles);
+      end if;
 
       declare
          Context : constant Alire.Environment.Context :=
@@ -89,6 +95,10 @@ package body Alr.Commands.Printenv is
                      Cmd.Cmd_Shell'Access,
                      "", "--wincmd",
                      "Use a Windows CMD shell format for the export");
+      Define_Switch (Config,
+                     Cmd.Last_Build'Access,
+                     "", "--last-build",
+                     "Use last build profiles instead of manifest profiles");
    end Setup_Switches;
 
 end Alr.Commands.Printenv;

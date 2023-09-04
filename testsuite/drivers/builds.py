@@ -9,6 +9,13 @@ import subprocess
 from drivers.alr import alr_builds_dir, run_alr
 
 
+def clear_builds_dir() -> None:
+    """
+    Clear the shared build directory
+    """
+    rmtree(path())
+
+
 def enable_shared() -> None:
     """
     Enable shared builds

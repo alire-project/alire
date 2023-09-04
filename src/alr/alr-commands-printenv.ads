@@ -36,5 +36,6 @@ private
       Unix_Shell  : aliased Boolean := False;
       Power_Shell : aliased Boolean := False;
       Cmd_Shell   : aliased Boolean := False;
+      Last_Build  : aliased Boolean := False;
    end record;
 end Alr.Commands.Printenv;
