@@ -210,6 +210,10 @@ package body Alire.Roots is
          This.Deploy_Dependencies;
          This.Sync_Builds;
          --  Changes in configuration may require new build dirs
+         This.Configuration.Generate_Config_Files (This, Release (This));
+         --  Generate the config for the root crate.
+         --  TODO: generate only when changed (same optimization as for
+         --  sandboxed dependencies).
       end if;
 
       if Export_Build_Env or else not Builds.Sandboxed_Dependencies then
@@ -868,12 +872,6 @@ package body Alire.Roots is
 
       --  Visit dependencies in safe order
       This.Traverse (Doing => Sync_Release'Access);
-
-      --  Update/Create configuration files
-      This.Generate_Configuration;
-      --  TODO: this should be made more granular to only generate
-      --  configurations of newly synced build sources, since with the
-      --  new shared builds system configs do not change once created.
    end Sync_Builds;
 
    -----------------------------
