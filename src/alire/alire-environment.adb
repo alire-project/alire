@@ -168,7 +168,7 @@ package body Alire.Environment is
       Release_Base : constant String
         := (if For_Hashing
             then Rel.Base_Folder
-            else Root.Current.Release_Base (Rel.Name));
+            else Root.Current.Release_Base (Rel.Name, Roots.For_Build));
             --  Before we can known the Release_Base, we supplant it with its
             --  simple name. This shouldn't be a problem for hashing, as this
             --  is only used for $CRATE_ROOT paths, and the important parts

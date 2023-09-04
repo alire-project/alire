@@ -58,7 +58,7 @@ package body Alire.Roots is
          --  Relocate to the release folder
          CD : Directories.Guard
           (if State.Has_Release and then State.Release.Origin.Is_Index_Provided
-           then Directories.Enter (This.Release_Base (State.Crate))
+           then Directories.Enter (This.Release_Base (State.Crate, For_Build))
            else Directories.Stay) with Unreferenced;
 
          ---------------------------
@@ -144,7 +144,8 @@ package body Alire.Roots is
                               else "")
                             & "...");
 
-                  Spawn.Gprbuild (This.Release_Base (Release.Name) / Gpr_File,
+                  Spawn.Gprbuild (This.Release_Base (Release.Name, For_Build)
+                                  / Gpr_File,
                                   Extra_Args => Cmd_Args);
 
                   Current := Current + 1;
@@ -194,21 +195,22 @@ package body Alire.Roots is
          This.Build_Hasher.Clear;
       end if;
 
+      This.Load_Configuration;
+      This.Configuration.Ensure_Complete;
+      --  For proceeding to build, the configuration must be complete
+
       --  Check if crate configuration should be re-generated. This is the old
       --  behavior; for shared builds, config needs to be generated only once.
 
-      This.Load_Configuration;
       if Builds.Sandboxed_Dependencies
         and then This.Configuration.Must_Regenerate
       then
          This.Generate_Configuration;
       elsif not Builds.Sandboxed_Dependencies then
          This.Deploy_Dependencies;
+         This.Sync_Builds;
          --  Changes in configuration may require new build dirs
       end if;
-
-      This.Configuration.Ensure_Complete;
-      --  For proceeding to build, the configuration must be complete
 
       if Export_Build_Env then
          This.Export_Build_Environment;
@@ -339,7 +341,8 @@ package body Alire.Roots is
                declare
                   use all type Alire.Install.Actions;
                   Gpr_Path : constant Any_Path :=
-                               This.Release_Base (Rel.Name) / Gpr_File;
+                               This.Release_Base (Rel.Name, For_Build)
+                               / Gpr_File;
                   TTY_Target : constant String
                     := Rel.Milestone.TTY_Image & "/" & TTY.URL (Gpr_File);
                begin
@@ -643,6 +646,26 @@ package body Alire.Roots is
       end;
    end Create_For_Release;
 
+   --------------------
+   -- Run_Post_Fetch --
+   --------------------
+
+   procedure Run_Post_Fetch (This : in out Root; Release : Releases.Release) is
+      CD : Directories.Guard
+        (Directories.Enter (This.Release_Base (Release.Name, For_Build)))
+        with Unreferenced;
+   begin
+      Alire.Properties.Actions.Executor.Execute_Actions
+        (Release,
+         Env     => This.Environment,
+         Moment  => Alire.Properties.Actions.Post_Fetch);
+   exception
+      when E : others =>
+         Log_Exception (E);
+         Raise_Checked_Error ("A post-fetch action failed, " &
+                                "re-run with -vv -d for details");
+   end Run_Post_Fetch;
+
    -------------------------
    -- Deploy_Dependencies --
    -------------------------
@@ -660,27 +683,6 @@ package body Alire.Roots is
       is
          pragma Unreferenced (Sol);
          Was_There : Boolean;
-
-         --------------------
-         -- Run_Post_Fetch --
-         --------------------
-
-         procedure Run_Post_Fetch (Release : Releases.Release) is
-            CD : Directories.Guard
-              (Directories.Enter (This.Release_Base (Release.Name)))
-              with Unreferenced;
-         begin
-            Alire.Properties.Actions.Executor.Execute_Actions
-              (Release,
-               Env     => This.Environment,
-               Moment  => Alire.Properties.Actions.Post_Fetch);
-         exception
-            when E : others =>
-               Log_Exception (E);
-               Raise_Checked_Error ("A post-fetch action failed, " &
-                                      "re-run with -vv -d for details");
-         end Run_Post_Fetch;
-
       begin
          if Dep.Is_Linked then
             Trace.Debug ("deploy: skip linked release");
@@ -690,7 +692,7 @@ package body Alire.Roots is
             --  dependencies. This will run them more than once, but is better
             --  than never running them and breaking something.
             if Dep.Has_Release then
-               Run_Post_Fetch (Dep.Release);
+               Run_Post_Fetch (This, Dep.Release);
             end if;
             return;
 
@@ -701,7 +703,7 @@ package body Alire.Roots is
             --  The root release is never really "fetched" (unless for an alr
             --  get, but e.g. not when cloned). So, we run their post-fetch
             --  when dependencies are updated.
-            Run_Post_Fetch (Dep.Release);
+            Run_Post_Fetch (This, Dep.Release);
             return;
 
          elsif not Dep.Has_Release then
@@ -744,22 +746,13 @@ package body Alire.Roots is
                      --  Merely for back-compatibility
                  );
 
-               --  Sync sources to its shared build location
-
-               if not Builds.Sandboxed_Dependencies then
-                  Builds.Sync (This, Rel, Was_There);
-               end if;
-
-               --  At this point, post-fetch have been run by either
-               --  Builds.Sync or Rel.Deploy; also completion will only
-               --  have succeeded if the post-fetch actions have too.
-
                --  If the release was newly deployed, we can inform about its
                --  nested crates now.
 
                if not Was_There and then not CLIC.User_Input.Not_Interactive
                then
-                  Print_Nested_Crates (This.Release_Base (Rel.Name));
+                  Print_Nested_Crates (This.Release_Base (Rel.Name,
+                                                          For_Deploy));
                end if;
             end if;
          end;
@@ -769,7 +762,8 @@ package body Alire.Roots is
 
       --  Prepare environment for any post-fetch actions. This must be done
       --  after the lockfile on disk is written, since the root will read
-      --  dependencies from there.
+      --  dependencies from there. Post-fetch may happen even with shared
+      --  builds for linked and binary dependencies.
 
       This.Export_Build_Environment;
 
@@ -785,11 +779,13 @@ package body Alire.Roots is
 
       --  Update/Create configuration files
 
-      This.Load_Configuration;
-      This.Generate_Configuration;
-      --  TODO: this should be made more granular to only generate
-      --  configurations of newly synced build sources, since with the
-      --  new shared builds system configs do not change once created.
+      if Builds.Sandboxed_Dependencies then
+         This.Load_Configuration;
+         This.Generate_Configuration;
+         --  TODO: this should be made more granular to only generate
+         --  configurations of newly deployed build sources, since with the
+         --  new shared builds system configs do not change once created.
+      end if;
 
       --  Check that the solution does not contain suspicious dependencies,
       --  taking advantage that this procedure is called whenever a change
@@ -799,6 +795,69 @@ package body Alire.Roots is
       --  We don't care about the return value here
 
    end Deploy_Dependencies;
+
+   -----------------
+   -- Sync_Builds --
+   -----------------
+
+   procedure Sync_Builds (This : in out Root) is
+
+      Ongoing : Simple_Logging.Ongoing :=
+                  Simple_Logging.Activity ("Syncing build dir");
+
+      ------------------
+      -- Sync_Release --
+      ------------------
+
+      procedure Sync_Release (This : in out Root;
+                              Sol  : Solutions.Solution;
+                              Dep  : Dependencies.States.State)
+      is
+         pragma Unreferenced (Sol);
+         Was_There : Boolean;
+      begin
+         if Release (This).Provides (Dep.Crate) or else
+           (Dep.Has_Release and then Dep.Release.Name = Release (This).Name)
+         then
+            Trace.Debug ("sync: skip root");
+            return;
+
+         elsif not Dep.Has_Release then
+            Trace.Debug ("sync: skip dependency without release");
+            return;
+
+         end if;
+
+         --  At this point, the state contains a release
+
+         declare
+            Rel : constant Releases.Release := Dep.Release;
+            Ongoin_Dep : constant Simple_Logging.Ongoing :=
+                           Simple_Logging.Activity (Rel.Milestone.TTY_Image)
+                           with Unreferenced;
+         begin
+            Ongoing.Step;
+            Trace.Debug ("sync: process " & Rel.Milestone.TTY_Image);
+
+            if This.Requires_Build_Sync (Rel) then
+               Builds.Sync (This, Rel, Was_There);
+            end if;
+         end;
+      end Sync_Release;
+
+   begin
+      --  Prepare environment for any post-fetch actions
+      This.Export_Build_Environment;
+
+      --  Visit dependencies in safe order
+      This.Traverse (Doing => Sync_Release'Access);
+
+      --  Update/Create configuration files
+      This.Generate_Configuration;
+      --  TODO: this should be made more granular to only generate
+      --  configurations of newly synced build sources, since with the
+      --  new shared builds system configs do not change once created.
+   end Sync_Builds;
 
    -----------------------------
    -- Sync_Pins_From_Manifest --
@@ -1157,7 +1216,7 @@ package body Alire.Roots is
          --  Add project paths from each release
 
          for Path of Rel.Project_Paths (This.Environment) loop
-            Paths.Include (This.Release_Base (Rel.Name) / Path);
+            Paths.Include (This.Release_Base (Rel.Name, For_Build) / Path);
          end loop;
       end loop;
 
@@ -1353,7 +1412,8 @@ package body Alire.Roots is
    ------------------
 
    function Release_Base (This  : in out  Root;
-                          Crate : Crate_Name)
+                          Crate : Crate_Name;
+                          Usage : Usages)
                           return Absolute_Path
    is
    begin
@@ -1366,7 +1426,13 @@ package body Alire.Roots is
             if not This.Requires_Build_Sync (Rel) then
                return This.Release_Parent (Rel, For_Build) / Rel.Base_Folder;
             else
-               return Builds.Path (This, Rel);
+               case Usage is
+                  when For_Deploy =>
+                     return This.Release_Parent (Rel,
+                                                 For_Deploy) / Rel.Base_Folder;
+                  when For_Build =>
+                     return Builds.Path (This, Rel);
+               end case;
             end if;
          end;
       elsif This.Solution.State (Crate).Is_Linked then
@@ -1571,7 +1637,8 @@ package body Alire.Roots is
 
       if (for some Rel of This.Solution.Releases =>
             This.Solution.State (Rel.Name).Is_Solved and then
-            not GNAT.OS_Lib.Is_Directory (This.Release_Base (Rel.Name)))
+            not GNAT.OS_Lib.Is_Directory (This.Release_Base (Rel.Name,
+                                                             For_Deploy)))
       then
          Trace.Detail
            ("Detected missing dependency sources, updating workspace...");
@@ -1747,7 +1814,9 @@ package body Alire.Roots is
          This.Deploy_Dependencies;
 
          --  Update/Create configuration files
-         This.Generate_Configuration;
+         if Builds.Sandboxed_Dependencies then
+            This.Generate_Configuration;
+         end if;
 
          Trace.Detail ("Update completed");
       end;

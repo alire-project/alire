@@ -134,7 +134,8 @@ package Alire.Roots is
    --  and release particulars (binary...)
 
    function Release_Base (This  : in out Root;
-                          Crate : Crate_Name)
+                          Crate : Crate_Name;
+                          Usage : Usages)
                           return Absolute_Path;
    --  Find the base folder in which a release can be found for the given root
 
@@ -408,5 +409,8 @@ private
    procedure Commit (This : in out Root);
    --  Renames the manifest and lockfile to their regular places, making this
    --  root a regular one to all effects.
+
+   procedure Sync_Builds (This : in out Root);
+   --  Sync from vault to final build location, and generate config
 
 end Alire.Roots;

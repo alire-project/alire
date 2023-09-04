@@ -429,7 +429,8 @@ package body Alire.Crate_Configuration is
                      Ent : constant Config_Entry := Get_Config_Entry (Rel);
 
                      Conf_Dir : constant Absolute_Path :=
-                                 Root.Release_Base (Rel.Name) / Ent.Output_Dir;
+                                  Root.Release_Base (Rel.Name, Roots.For_Build)
+                                  / Ent.Output_Dir;
 
                      Version_Str : constant String := Rel.Version.Image;
                   begin
