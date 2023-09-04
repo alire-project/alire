@@ -1,6 +1,7 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
+with Alire.Config.Builtins;
 with Alire.Config.Edit;
 with Alire.Containers;
 with Alire.Index;
@@ -196,11 +197,10 @@ package body Alire.Index_On_Disk.Loading is
                             Cached => False);
       use Sets;
    begin
-      if not Config.DB.Get (Config.Keys.Index_Auto_Community, Default => True)
-      then
+      if not Config.Builtins.Index_Auto_Community.Get then
          Warnings.Warn_Once
            ("Not configuring the community index, disabled via "
-            & Config.Keys.Index_Auto_Community);
+            & Config.Builtins.Index_Auto_Community.Key);
          return Outcome_Success;
       end if;
 

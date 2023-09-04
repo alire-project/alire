@@ -1,7 +1,7 @@
 private with Alire_Early_Elaboration;
 pragma Unreferenced (Alire_Early_Elaboration);
 
-with Alire.Config; pragma Unreferenced (Alire.Config);
+with Alire.Config.Builtins;
 with Alire.Crates.Containers;
 with Alire.Dependencies;
 with Alire.Origins;
@@ -14,15 +14,12 @@ with Semantic_Versioning.Extended;
 
 package Alire.Index is
 
-   Community_Host : constant String
-     := Config.DB.Get (Config.Keys.Index_Host, Config.Defaults.Index_Host);
+   Community_Host : constant String := Config.Builtins.Index_Host.Get;
 
-   Community_Organization : constant String
-     := Config.DB.Get (Config.Keys.Index_Owner, Config.Defaults.Index_Owner);
+   Community_Organization : constant String := Config.Builtins.Index_Owner.Get;
 
    Community_Repo_Name : constant String
-     := Config.DB.Get (Config.Keys.Index_Repo_Name,
-                       Config.Defaults.Index_Repo_Name);
+     := Config.Builtins.Index_Repository_Name.Get;
 
    Community_Repo : constant URL :=
                       "git+" & Community_Host
