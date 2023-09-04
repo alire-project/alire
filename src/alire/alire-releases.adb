@@ -6,9 +6,9 @@ with Alire.Crates;
 with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
+with Alire.Flags;
 with Alire.Origins.Deployers;
 with Alire.Paths;
-with Alire.Properties.Actions.Executor;
 with Alire.Properties.Bool;
 with Alire.Properties.Scenarios;
 with Alire.TOML_Load;
@@ -246,16 +246,13 @@ package body Alire.Releases is
       Env             : Alire.Properties.Vector;
       Parent_Folder   : String;
       Was_There       : out Boolean;
-      Perform_Actions : Boolean := True;
       Create_Manifest : Boolean := False;
       Include_Origin  : Boolean := False;
       Mark_Completion : Boolean := True)
    is
       use Alire.Directories;
-      use all type Alire.Properties.Actions.Moments;
       Folder : constant Any_Path := Parent_Folder / This.Deployment_Folder;
-      Completed : Directories.Completion :=
-                    Directories.New_Completion (Folder);
+      Completed : Flags.Flag := Flags.Complete_Copy (Folder);
 
       ------------------------------
       -- Backup_Upstream_Manifest --
@@ -304,10 +301,11 @@ package body Alire.Releases is
 
       --  Deploy if the target dir is not already there
 
-      if Completed.Is_Complete then
+      if Completed.Exists then
          Was_There := True;
          Trace.Detail ("Skipping checkout of already available " &
                          This.Milestone.Image);
+
       else
          Was_There := False;
          Put_Info ("Deploying " & This.Milestone.TTY_Image & "...");
@@ -334,26 +332,8 @@ package body Alire.Releases is
                                           else Manifest.Local);
       end if;
 
-      --  Run post-fetch actions on first retrieval
-
-      if Perform_Actions and then not Was_There then
-         declare
-            Work_Dir : Guard (Enter (Folder)) with Unreferenced;
-         begin
-            Alire.Properties.Actions.Executor.Execute_Actions
-              (Release => This,
-               Env     => Env,
-               Moment  => Post_Fetch);
-         exception
-            when E : others =>
-               Log_Exception (E);
-               Trace.Warning ("A post-fetch action failed, " &
-                                "re-run with -vv -d for details");
-         end;
-      end if;
-
       if Mark_Completion then
-         Completed.Mark (Complete => True);
+         Completed.Mark (Done => True);
       end if;
 
    exception

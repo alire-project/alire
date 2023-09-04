@@ -54,3 +54,6 @@
 [submodule "deps/umwi"]
 	path = deps/umwi
 	url = https://github.com/mosteo/umwi
+[submodule "deps/diskflags"]
+	path = deps/diskflags
+	url = https://github.com/mosteo/diskflags

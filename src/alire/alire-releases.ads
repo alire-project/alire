@@ -360,7 +360,6 @@ package Alire.Releases is
       Env             : Alire.Properties.Vector;
       Parent_Folder   : String;
       Was_There       : out Boolean;
-      Perform_Actions : Boolean := True;
       Create_Manifest : Boolean := False;
       Include_Origin  : Boolean := False;
       Mark_Completion : Boolean := True);
@@ -370,7 +369,7 @@ package Alire.Releases is
    --  The created manifest may optionally Include_Origin information. When
    --  Mark_Completion, a trace file will be created in ./alire/copy_complete
    --  so future inspections of the folder can ensure the operation wasn't
-   --  interrupted.
+   --  interrupted. No actions for the release are run at this time.
 
 private
 

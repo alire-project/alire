@@ -3,9 +3,8 @@ with AAA.Strings;
 with Alire.Config.Builtins;
 with Alire.Config.Edit;
 with Alire.Directories;
+with Alire.Flags;
 with Alire.Paths.Vault;
-with Alire.Platforms.Current;
-with Alire.Properties.Actions.Executor;
 with Alire.Roots;
 
 with GNATCOLL.VFS;
@@ -29,14 +28,14 @@ package body Alire.Builds is
                    Release   : Releases.Release;
                    Was_There : out Boolean)
    is
-      Src       : constant Absolute_Path := Paths.Vault.Path
+      Src    : constant Absolute_Path := Paths.Vault.Path
                                             / Release.Deployment_Folder;
-      Dst       : constant Absolute_Path := Builds.Path (Root, Release);
-      Completed : Directories.Completion := Directories.New_Completion (Dst);
+      Dst    : constant Absolute_Path := Builds.Path (Root, Release);
+      Synced : Flags.Flag := Flags.Complete_Copy (Dst);
    begin
       Was_There := False;
 
-      if Completed.Is_Complete then
+      if Synced.Exists then
          Trace.Detail ("Skipping build syncing to existing " & Dst);
          Was_There := True;
          return;
@@ -68,22 +67,11 @@ package body Alire.Builds is
       --  At this point we can generate the final crate configuration
       Root.Configuration.Generate_Config_Files (Root, Release, Full => Force);
 
-      declare
-         use Directories;
-         Work_Dir : Guard (Enter (Dst)) with Unreferenced;
-      begin
-         Alire.Properties.Actions.Executor.Execute_Actions
-           (Release => Release,
-            Env     => Platforms.Current.Properties,
-            Moment  => Properties.Actions.Post_Fetch);
-      exception
-         when E : others =>
-            Log_Exception (E);
-            Trace.Warning ("A post-fetch action failed, " &
-                             "re-run with -vv -d for details");
-      end;
+      --  We could run post-fetch now but for consistency with sandboxed deps
+      --  and to have a single call point, we delay until build time (which is
+      --  performed right after sync anyway).
 
-      Completed.Mark (Complete => True);
+      Synced.Mark (Done => True);
    end Sync;
 
    ----------

@@ -6,6 +6,7 @@ with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Errors;
+with Alire.Flags;
 with Alire.Install;
 with Alire.Manifest;
 with Alire.Origins;
@@ -60,42 +61,6 @@ package body Alire.Roots is
           (if State.Has_Release and then State.Release.Origin.Is_Index_Provided
            then Directories.Enter (This.Release_Base (State.Crate, For_Build))
            else Directories.Stay) with Unreferenced;
-
-         ---------------------------
-         -- Run_Pre_Build_Actions --
-         ---------------------------
-
-         procedure Run_Pre_Build_Actions (Release : Releases.Release) is
-         begin
-            Alire.Properties.Actions.Executor.Execute_Actions
-              (Release,
-               Env     => This.Environment,
-               Moment  => Alire.Properties.Actions.Pre_Build);
-         exception
-            when E : others =>
-               Trace.Warning ("A pre-build action failed, " &
-                                "re-run with -vv -d for details");
-               Log_Exception (E);
-               raise Build_Failed;
-         end Run_Pre_Build_Actions;
-
-         ----------------------------
-         -- Run_Post_Build_Actions --
-         ----------------------------
-
-         procedure Run_Post_Build_Actions (Release : Releases.Release) is
-         begin
-            Alire.Properties.Actions.Executor.Execute_Actions
-              (Release,
-               Env     => This.Environment,
-               Moment  => Alire.Properties.Actions.Post_Build);
-         exception
-            when E : others =>
-               Trace.Warning ("A post-build action failed, " &
-                                "re-run with -vv -d for details");
-               Log_Exception (E);
-               raise Build_Failed;
-         end Run_Post_Build_Actions;
 
          -------------------
          -- Call_Gprbuild --
@@ -174,11 +139,26 @@ package body Alire.Roots is
             Release : constant Releases.Release := State.Release;
          begin
 
-            Run_Pre_Build_Actions (Release);
+            --  Run post-fetch, it will be skipped if already ran
+            Properties.Actions.Executor.Execute_Actions
+              (This,
+               State,
+               Properties.Actions.Post_Fetch);
 
+            --  Pre-build must run always
+            Properties.Actions.Executor.Execute_Actions
+              (This,
+               State,
+               Properties.Actions.Pre_Build);
+
+            --  Actual build
             Call_Gprbuild (Release);
 
-            Run_Post_Build_Actions (Release);
+            --  Post-build must run always
+            Properties.Actions.Executor.Execute_Actions
+              (This,
+               State,
+               Properties.Actions.Post_Build);
 
          end;
 
@@ -226,7 +206,7 @@ package body Alire.Roots is
 
       return True;
    exception
-      when Build_Failed =>
+      when Properties.Actions.Action_Failed | Build_Failed =>
          return False;
    end Build;
 
@@ -653,7 +633,6 @@ package body Alire.Roots is
         (Env             => Env,
          Parent_Folder   => Parent_Folder,
          Was_There       => Unused_Was_There,
-         Perform_Actions => False, -- Makes no sense until deps in place
          Create_Manifest => True);
 
       --  And generate its working files, if they do not exist
@@ -689,26 +668,6 @@ package body Alire.Roots is
       end;
    end Create_For_Release;
 
-   --------------------
-   -- Run_Post_Fetch --
-   --------------------
-
-   procedure Run_Post_Fetch (This : in out Root; Release : Releases.Release) is
-      CD : Directories.Guard
-        (Directories.Enter (This.Release_Base (Release.Name, For_Build)))
-        with Unreferenced;
-   begin
-      Alire.Properties.Actions.Executor.Execute_Actions
-        (Release,
-         Env     => This.Environment,
-         Moment  => Alire.Properties.Actions.Post_Fetch);
-   exception
-      when E : others =>
-         Log_Exception (E);
-         Raise_Checked_Error ("A post-fetch action failed, " &
-                                "re-run with -vv -d for details");
-   end Run_Post_Fetch;
-
    -------------------------
    -- Deploy_Dependencies --
    -------------------------
@@ -729,24 +688,12 @@ package body Alire.Roots is
       begin
          if Dep.Is_Linked then
             Trace.Debug ("deploy: skip linked release");
-
-            --  To allow local workflows to work as in a real fetching, linked
-            --  releases get their post-fetch run whenever there is a change to
-            --  dependencies. This will run them more than once, but is better
-            --  than never running them and breaking something.
-            if Dep.Has_Release then
-               Run_Post_Fetch (This, Dep.Release);
-            end if;
             return;
 
          elsif Release (This).Provides (Dep.Crate) or else
            (Dep.Has_Release and then Dep.Release.Name = Release (This).Name)
          then
             Trace.Debug ("deploy: skip root");
-            --  The root release is never really "fetched" (unless for an alr
-            --  get, but e.g. not when cloned). So, we run their post-fetch
-            --  when dependencies are updated.
-            Run_Post_Fetch (This, Dep.Release);
             return;
 
          elsif not Dep.Has_Release then
@@ -775,12 +722,6 @@ package body Alire.Roots is
                  (Env             => This.Environment,
                   Parent_Folder   => This.Release_Parent (Rel, For_Deploy),
                   Was_There       => Was_There,
-                  Perform_Actions =>
-                     not This.Requires_Build_Sync (Rel),
-                     --  In sandbox mode, this is the final destination so
-                     --  post-fetch must run. For binaries not built, that
-                     --  always live in the vault, we too run post-fetch
-                     --  immediately as this is the only chance.
                   Create_Manifest =>
                      not Builds.Sandboxed_Dependencies,
                      --  Merely for back-compatibility
@@ -1640,6 +1581,15 @@ package body Alire.Roots is
         File_Time_Stamp (This.Crate_File) > File_Time_Stamp (This.Lock_File);
    end Is_Lockfile_Outdated;
 
+   -------------
+   -- Is_Root --
+   -------------
+
+   function Is_Root_Release (This : in out Root;
+                             Dep  : Dependencies.States.State)
+                             return Boolean
+   is (Dep.Has_Release and then Dep.Crate = This.Release.Reference.Name);
+
    ------------------------
    -- Sync_From_Manifest --
    ------------------------
@@ -1695,8 +1645,8 @@ package body Alire.Roots is
 
       if (for some Rel of This.Solution.Releases =>
             This.Solution.State (Rel.Name).Is_Solved and then
-            not Directories.New_Completion
-              (This.Release_Base (Rel.Name, For_Deploy)).Is_Complete)
+            not Flags.Complete_Copy (This.Release_Base (Rel.Name, For_Deploy))
+                     .Exists)
       then
          Trace.Detail
            ("Detected missing dependency sources, updating workspace...");
@@ -1742,6 +1692,29 @@ package body Alire.Roots is
         (Allowed  => Allowed,
          Silent   => Silent,
          Interact => Interact and not CLIC.User_Input.Not_Interactive);
+
+      --  And remove post-fetch markers for root and linked dependencies, so
+      --  they're re-run on next build (to mimic deployment, since they're
+      --  never actually "fetched", but during development we are likely
+      --  interested in seeing post-fetch effects, and both root and linked
+      --  releases exist only during development.
+
+      declare
+         procedure Removing_Post_Fetch_Flag (Root : in out Roots.Root;
+                                             unused_Sol  : Solutions.Solution;
+                                             Dep  : Dependencies.States.State)
+         is
+         begin
+            if Dep.Has_Release and then
+              (Dep.Is_Linked or else Root.Is_Root_Release (Dep))
+            then
+               Flags.Post_Fetch
+                 (Root.Release_Base (Dep.Release.Name, For_Build)).Mark_Undone;
+            end if;
+         end Removing_Post_Fetch_Flag;
+      begin
+         This.Traverse (Removing_Post_Fetch_Flag'Access);
+      end;
    end Update;
 
    --------------------

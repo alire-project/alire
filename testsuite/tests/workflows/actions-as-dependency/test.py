@@ -37,17 +37,24 @@ def do_checks(path_to_dependency):
     flag_post_build = path_to_dependency + "/test_post_build"
 
     # Immediately after adding the dependency, this is the situation:
-    check(flag_post_fetch, True)
+    check(flag_post_fetch, False)
     check(flag_pre_build, False)
     check(flag_post_build, False)
-
-    # Remove post-fetch to check it doesn't come back unexpectedly
-    os.remove(flag_post_fetch)
 
     # Build with error, so only pre-build runs but not post-build
     Path(f"{path_to_dependency}/src/empty.adb").touch()
     p = run_alr('build', complain_on_error=False)
     assert_match(".*compilation of empty.adb failed.*", p.out)
+
+    # Post build shouldn't be here because of build failure; post-fetch should
+    # however now exist because a build has been attempted and post-fetch
+    # succeeded (even if the build failed at a later stage)
+    check(flag_post_fetch, True)
+    check(flag_pre_build, True)
+    check(flag_post_build, False)
+
+    # Remove post-fetch to check it doesn't come back unexpectedly
+    os.remove(flag_post_fetch)
 
     # Post build shouldn't be here because of build failure
     check(flag_post_fetch, False)

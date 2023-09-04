@@ -22,14 +22,18 @@ def check_not_expected(expected):
                (expected, '.', str(contents('.')))
 
 
-# Get and check post fetch action
+# Get and check post fetch action not yet there until first build
 run_alr('get', 'hello_world')
 os.chdir("hello_world_0.1.0_filesystem/")
-check_expected('./test_post_fetch')
+check_not_expected('./test_post_fetch')
 check_not_expected('./test_pre_build')
 check_not_expected('./test_post_build')
 
-# Remove post-fetch to check it doesn't come back
+# Run the build and verify post fetch was run
+run_alr ("build", complain_on_error=False)
+check_expected('./test_post_fetch')
+
+# Remove post-fetch to check it does come back in every build for the root
 os.remove('./test_post_fetch')
 
 # Build with error
@@ -38,7 +42,7 @@ Path('src/empty.adb').touch()
 p = run_alr('build', complain_on_error=False)
 assert_match(".*compilation of empty.adb failed.*", p.out)
 
-# Post fetch shouldn't be here because fetch already happened and was deleted
+# Post fetch should not have come back
 # Post build shouldn't be here because of build failure
 check_not_expected('./test_post_fetch')
 check_expected('./test_pre_build')
@@ -55,8 +59,10 @@ check_not_expected('./test_post_fetch')
 check_expected('./test_pre_build')
 check_expected('./test_post_build')
 
-# updating dependencies causes the post-fetch action on the root crate to run:
+# updating dependencies causes the post-fetch action on the root crate to run
+# again on next build
 run_alr('update')
+run_alr('build')
 check_expected('./test_post_fetch')
 check_expected('./test_pre_build')
 check_expected('./test_post_build')
@@ -76,7 +82,10 @@ check_not_expected('./test_post_fetch_dep')
 os.chdir("..")  # Back to parent crate
 alr_with("depended", path="depended", update=False)
 run_alr("update")
-check_not_expected('./test_post_fetch_dep')
+check_not_expected('./test_post_fetch_dep')  # should not appear in parent dir
+check_not_expected('./depended/test_post_fetch_dep')
+run_alr("build")
+check_not_expected('./test_post_fetch_dep')  # should not appear in parent dir
 check_expected('./depended/test_post_fetch_dep')
 
 print('SUCCESS')

@@ -4,14 +4,13 @@ with Ada.Containers.Indefinite_Vectors;
 with Ada.Directories;
 
 with Alire.Config.Edit;
-with Alire.Containers;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.Paths;
 with Alire.Platforms.Current;
-with Alire.Properties.Actions;
+with Alire.Properties;
 with Alire.Root;
 with Alire.Toolchains.Solutions;
 with Alire.Warnings;
@@ -564,54 +563,11 @@ package body Alire.Toolchains is
                      Location : Any_Path := Path)
    is
       Already_Installed : Boolean := False;
-
-      --------------------
-      -- Is_Installable --
-      --------------------
-
-      function Is_Installable return Boolean is
-
-         --  We can install only regular releases. Also, releases that do not
-         --  have post-fetch actions (as they might involve using dependencies)
-         --  and dependencies simultaneously. I.e., post-fetch without
-         --  dependencies is OK, as it is having dependencies and no
-         --  post-fetch. Since "make" can be a pretty common single dependency
-         --  that does not cause problems, we make an exception for it.
-
-         use Containers.Crate_Name_Sets;
-         Allowed_Dependencies : constant Containers.Crate_Name_Sets.Set :=
-           To_Set (To_Name ("make"));
-
-      begin
-         if Release.Dependencies.Is_Empty or else
-           (for all Dep of Release.Flat_Dependencies (Root.Platform_Properties)
-                => Allowed_Dependencies.Contains (Dep.Crate))
-         then
-            return True;
-         end if;
-
-         if Release.On_Platform_Actions
-           (Root.Platform_Properties,
-            (Properties.Actions.Post_Fetch => True,
-             others                        => False)).Is_Empty
-         then
-            return True;
-         end if;
-
-         return False;
-      end Is_Installable;
-
    begin
 
-      if not Is_Installable then
-         Recoverable_Error
-           ("Releases with both dependencies and post-fetch actions are not "
-            & " yet supported. (Use `"
-            & TTY.Terminal ("alr show <crate=version>") & "` to examine "
-            & "release properties.)");
-      end if;
+      --  See if it can be skipped. We cannot rely on copy flags as external
+      --  toolchains don't leave a trace on disk.
 
-      --  See if it can be skipped
       if Location = Path and then Available.Contains (Release) then
          Trace.Detail ("Skipping installation of already available release: "
                        & Release.Milestone.TTY_Image);
@@ -623,9 +579,9 @@ package body Alire.Toolchains is
       Release.Deploy (Env             => Root.Platform_Properties,
                       Parent_Folder   => Location,
                       Was_There       => Already_Installed,
-                      Perform_Actions => True,
                       Create_Manifest => True,
-                      Include_Origin  => True);
+                      Include_Origin  => True,
+                      Mark_Completion => Release.Origin.Is_Index_Provided);
       --  We need the origin to be included for the release to be recognized as
       --  a binary-origin release.
 

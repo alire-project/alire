@@ -217,26 +217,6 @@ package Alire.Directories is
    --  called, on going out of scope the Replacer will remove the temporary and
    --  the original file remains untouched.
 
-   --  To ensure that certain download/copy/sync operations are complete, we
-   --  use this type that will check/delete/create a <path>/alire/complete_copy
-   --  canary file.
-
-   type Completion (<>) is tagged limited private;
-
-   function New_Completion (Path : Directory_Path) return Completion;
-   --  This is the destination folder whose operation we want to ensure was
-   --  completed: a download/copy destination, for example.
-
-   function Is_Complete (This : Completion) return Boolean;
-   --  Say if the operation at This path was already complete in which case
-   --  nothing should be done.
-
-   procedure Mark (This     : in out Completion;
-                   Complete : Boolean)
-     with Post => This.Is_Complete = Complete;
-   --  Set/remove the canary flag of the operation on path being complete. This
-   --  should be called when the operation has actually been completed.
-
 private
 
    ------------
@@ -283,26 +263,5 @@ private
 
    function Find_Relative_Path_To (Path : Any_Path) return Any_Path
    is (Find_Relative_Path (Current, Path));
-
-   ----------------
-   -- Completion --
-   ----------------
-
-   type Completion (Length : Natural) is
-     new Ada.Finalization.Limited_Controlled with
-      record
-         Path : Absolute_Path (1 .. Length);
-      end record;
-
-   function File (This : Completion) return Absolute_File;
-
-   --------------------
-   -- New_Completion --
-   --------------------
-
-   function New_Completion (Path : Directory_Path) return Completion
-   is (Ada.Finalization.Limited_Controlled with
-       Length => Full_Name (Path)'Length,
-       Path   => Full_Name (Path));
 
 end Alire.Directories;

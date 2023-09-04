@@ -2,6 +2,7 @@
 Check that an env var is defined during dependency retrieval (get and with)
 """
 
+from glob import glob
 import os
 import re
 
@@ -19,14 +20,18 @@ def verify_output(text):
 # output is generated at the moment we want to check.
 
 # Retrieve a crate that depends on checkenv: checkparent --> checkenv
-p = run_alr("get", "checkparent")
+run_alr("get", "checkparent")
+# Build the crate to trigger the post-fetch action
+os.chdir(glob("checkparent*")[0])
+p = run_alr("build", complain_on_error=False)
 verify_output(p.out)
 
 # Create a crate from scratch and add the same dependency to perform the check
 # during retrieval by `with`
 run_alr("init", "--bin", "xxx")
 os.chdir("xxx")
-p = run_alr("with", "checkenv")
+run_alr("with", "checkenv")
+p = run_alr("build")
 verify_output(p.out)
 
 print('SUCCESS')

@@ -4,6 +4,7 @@ with "alire_common";
 with "ajunitgen";
 with "ansiada";
 with "clic";
+with "diskflags";
 with "gnatcoll";
 with "minirest";
 with "optional";
