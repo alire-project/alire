@@ -51,7 +51,7 @@ jobs:
       run: ./bin/alr -n -q with --solve || ./bin/alr -n -v -d with --solve
 
     - name: Show build environment
-      run: ./bin/alr -n printenv
+      run: ./bin/alr -n printenv || ./bin/alr -n -v -d printenv
 
     - shell: bash
       run: mv ./bin ./bin-old

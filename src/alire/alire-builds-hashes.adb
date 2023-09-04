@@ -1,6 +1,7 @@
 with Alire.Crate_Configuration.Hashes;
 with Alire.Directories;
 with Alire.Environment;
+with Alire.Errors;
 with Alire.GPR;
 with Alire.Hashes.SHA256_Impl;
 with Alire.Paths;
@@ -193,9 +194,16 @@ package body Alire.Builds.Hashes is
                   if Target.Origin.Requires_Build
                     and then Target.Satisfies (Dep)
                   then
-                     Add ("dependency",
-                          Target.Milestone.Image,
-                          This.Hashes (Target.Name));
+                     if This.Contains (Target.Name) then
+                        Add ("dependency",
+                             Target.Milestone.Image,
+                             This.Hashes (Target.Name));
+                     else
+                        raise Program_Error with Errors.Set
+                          (Rel.Milestone.Image & " depends on "
+                           & Target.Milestone.Image
+                           & " but hash is not computed yet?");
+                     end if;
                   end if;
                end loop;
             end loop;
