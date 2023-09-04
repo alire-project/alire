@@ -83,8 +83,9 @@ package body Alire.Environment is
 
    Already_Warned : Boolean := False;
 
-   procedure Load (This : in out Context;
-                   Root : in out Alire.Roots.Root)
+   procedure Load (This        : in out Context;
+                   Root        : in out Alire.Roots.Root;
+                   For_Hashing : Boolean := False)
    is
       Solution : constant Solutions.Solution :=
                    Toolchains.Solutions.Add_Toolchain (Root.Solution);
@@ -123,26 +124,29 @@ package body Alire.Environment is
       --  Project paths for all releases in the solution, implicitly defined by
       --  supplied project files.
 
-      declare
-         Sorted_Paths : constant AAA.Strings.Set :=
-                          Tool_Root.Current.Project_Paths;
-      begin
-         if not Sorted_Paths.Is_Empty then
-            for Path of reverse Sorted_Paths loop
-               --  Reverse should not matter as our paths shouldn't overlap,
-               --  but at least is nicer for user inspection to respect
-               --  alphabetical order.
+      if not For_Hashing then
+         declare
+            Sorted_Paths : constant AAA.Strings.Set :=
+                             Tool_Root.Current.Project_Paths;
+         begin
+            if not Sorted_Paths.Is_Empty then
+               for Path of reverse Sorted_Paths loop
+                  --  Reverse should not matter as our paths shouldn't overlap,
+                  --  but at least is nicer for user inspection to respect
+                  --  alphabetical order.
 
-               This.Prepend ("GPR_PROJECT_PATH", Path, "crates");
-            end loop;
-         end if;
-      end;
+                  This.Prepend ("GPR_PROJECT_PATH", Path, "crates");
+               end loop;
+            end if;
+         end;
+      end if;
 
       --  Custom definitions provided by each release
 
       for Rel of Solution.Releases.Including (Root.Release) loop
          This.Load (Root            => Tool_Root,
-                    Crate           => Rel.Name);
+                    Crate           => Rel.Name,
+                    For_Hashing     => For_Hashing);
       end loop;
 
       This.Set ("ALIRE", "True", "Alire");
@@ -154,13 +158,21 @@ package body Alire.Environment is
 
    procedure Load (This            : in out Context;
                    Root            : in out Roots.Editable.Root;
-                   Crate           : Crate_Name)
+                   Crate           : Crate_Name;
+                   For_Hashing     : Boolean := False)
    is
       Env    : constant Properties.Vector := Root.Current.Environment;
       Rel    : constant Releases.Release := Root.Current.Release (Crate);
       Origin : constant String := Rel.Name_Str;
 
-      Release_Base : constant String := Root.Current.Release_Base (Rel.Name);
+      Release_Base : constant String
+        := (if For_Hashing
+            then Rel.Base_Folder
+            else Root.Current.Release_Base (Rel.Name));
+            --  Before we can known the Release_Base, we supplant it with its
+            --  simple name. This shouldn't be a problem for hashing, as this
+            --  is only used for $CRATE_ROOT paths, and the important parts
+            --  that might merit a hash change are the rest of the path.
    begin
       Trace.Debug ("Loading environment for crate "
                    & Alire.Utils.TTY.Name (Crate)
@@ -230,7 +242,7 @@ package body Alire.Environment is
    begin
       --  TODO: PowerShell or CMD version for Windows. Is it possible to detect
       --  the kind of shell we are running in?
-      for Elt of This.Compile loop
+      for Elt of This.Compile (Check_Conflicts => True) loop
          case Kind is
          when Platforms.Unix =>
             Trace.Always (To_String ("export " & Elt.Key & "=""" &
@@ -281,8 +293,9 @@ package body Alire.Environment is
    -- Compile --
    -------------
 
-   function Compile (Key  : Unbounded_String;
-                     Vect : Action_Vectors.Vector)
+   function Compile (Key             : Unbounded_String;
+                     Vect            : Action_Vectors.Vector;
+                     Check_Conflicts : Boolean)
                      return Var
    is
       Separator : constant Character := GNAT.OS_Lib.Path_Separator;
@@ -327,7 +340,7 @@ package body Alire.Environment is
                   --  twice. Long-term, something like Boost.Process would be
                   --  more robust to call subprocesses without pilfering our
                   --  own environment.
-               else
+               elsif Check_Conflicts then
                   Raise_Checked_Error
                     (Errors.Wrap
                        ("Trying to set an already defined environment "
@@ -362,12 +375,16 @@ package body Alire.Environment is
    -- Compile --
    -------------
 
-   function Compile (This : Context) return Var_Array is
+   function Compile (This            : Context;
+                     Check_Conflicts : Boolean)
+                     return Var_Array is
       Result : Var_Array (1 .. Natural (This.Actions.Length));
       Index  : Natural := Result'First;
    begin
       for C in This.Actions.Iterate loop
-         Result (Index) := Compile (Action_Maps.Key (C), This.Actions (C));
+         Result (Index) := Compile (Action_Maps.Key (C),
+                                    This.Actions (C),
+                                    Check_Conflicts);
          Index := Index + 1;
       end loop;
 
@@ -383,9 +400,24 @@ package body Alire.Environment is
 
    procedure Export (This : Context) is
    begin
-      for Var of This.Compile loop
+      for Var of This.Compile (Check_Conflicts => True) loop
          OS_Lib.Setenv (+Var.Key, +Var.Value);
       end loop;
    end Export;
+
+   -------------
+   -- Get_All --
+   -------------
+
+   function Get_All (This            : Context;
+                     Check_Conflicts : Boolean := False)
+                     return Env_Map is
+   begin
+      return Result : Env_Map do
+         for Var of This.Compile (Check_Conflicts) loop
+            Result.Insert (+Var.Key, +Var.Value);
+         end loop;
+      end return;
+   end Get_All;
 
 end Alire.Environment;

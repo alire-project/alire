@@ -29,5 +29,15 @@ assert_match(".*profile:libhello=VALIDATION.*",
 # Check that the hashes are different
 assert hash1 != hash2, "Hashes should be different"
 
+# Chech that the hash inputs contains GPR externals
+# either set or observed by the crate:
+
+assert_match(
+    ".*external:TEST_FREEFORM_UNSET=default.*"  # a declared unset external
+    ".*external:TEST_GPR_EXTERNAL=gpr_ext_B.*"  # a declared & set enum external
+    ".*external:TEST_UNDECLARED=used_by_another_crate.*",
+                                                # set without prev declaration
+    hash_input("libhello"))
+
 
 print("SUCCESS")

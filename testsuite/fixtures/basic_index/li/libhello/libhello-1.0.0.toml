@@ -10,9 +10,14 @@ Var1={type="Boolean", default=true}
 
 [gpr-externals]
 TEST_GPR_EXTERNAL = ["gpr_ext_A", "gpr_ext_B", "gpr_ext_C"]
+TEST_FREEFORM_UNSET = "" # to test build hashing with an unset var
 
 [gpr-set-externals]
 TEST_GPR_EXTERNAL = "gpr_ext_B"
+TEST_UNDECLARED = "used_by_another_crate"
+
+[environment]
+TEST_ENV.set = "myenv"
 
 [origin]
 url = "file:../../../crates/libhello_1.0.0"

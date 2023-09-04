@@ -1,4 +1,6 @@
 with Alire.Directories;
+with Alire.Environment;
+with Alire.GPR;
 with Alire.Hashes.SHA256_Impl;
 with Alire.Paths;
 with Alire.Roots;
@@ -37,6 +39,8 @@ package body Alire.Builds.Hashes is
                       Root : in out Roots.Root)
    is
 
+      Env : Environment.Env_Map;
+
       -------------
       -- Compute --
       -------------
@@ -56,7 +60,7 @@ package body Alire.Builds.Hashes is
                       & Trim (Value);
          begin
             Trace.Debug ("      build hashing " & Datum);
-            Vars.Insert (Datum);
+            Vars.Include (Datum);
          end Add;
 
          ------------------
@@ -115,12 +119,43 @@ package body Alire.Builds.Hashes is
               Root.Configuration.Build_Profile (Rel.Name)'Image);
 
          --  GPR externals
-         --  TBD
+         declare
+            Externals : constant Releases.Externals_Info := Rel.GPR_Externals;
+         begin
+            for Var of GPR.Name_Vector'(Externals.Declared
+                                .Union (Externals.Modified))
+              --  Externals modified but not declared are presumably for the
+              --  benefit of another crate. It's unclear if these will affect
+              --  the crate doing the setting, so we err on the side of
+              --  caution and include them in the hashing. Maybe we could make
+              --  this inclusion dependent on some config variable, or push
+              --  responsibility to crate maintainers to declare all externals
+              --  that affect the own crate properly and remove them from the
+              --  hashing inputs.
+            loop
+               if Env.Contains (Var) then
+                  Add ("external", Var, Env (Var));
+               else
+                  Add ("external", Var, "default");
+               end if;
+            end loop;
+         end;
 
          --  Environment variables
          --  TBD
 
          --  Configuration variables
+         --  TBD
+
+         --  Dependencies recursive hash? Since a crate can use a dependency
+         --  config spec, it is possible in the worst case for a crate to
+         --  require unique builds that include their dependencies hash
+         --  in their own hash. This is likely a corner case, but we can't
+         --  currently detect it. Two options are to alway err on the side of
+         --  caution, always including dependencies hashes, or to add some new
+         --  info in the manifest saying whose crates config affect the crate.
+         --  We could also enable this recursive hashing globally or per
+         --  crate...
          --  TBD
 
          --  Final computation
@@ -132,9 +167,14 @@ package body Alire.Builds.Hashes is
          Trace.Debug ("   build hashing release complete");
       end Compute;
 
+      Context : Environment.Context;
+
    begin
       Trace.Debug ("build hashing root " & Root.Path);
       This.Hashes.Clear;
+
+      Environment.Load (Context, Root, For_Hashing => True);
+      Env := Context.Get_All;
 
       for Rel of Root.Solution.Releases loop
          if Root.Requires_Build_Sync (Rel) then
