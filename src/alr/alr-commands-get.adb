@@ -190,12 +190,9 @@ package body Alr.Commands.Get is
                  (Crate   =>  Cmd.Root.Name,
                   Profile =>  Alire.Utils.Switches.Release);
 
-               --  The complete build environment has been set up already by
-               --  Deploy_Dependencies, so we must not do it again.
                Build_OK := Cmd.Root.Build
                  (Cmd_Args         =>  AAA.Strings.Empty_Vector,
-                  Saved_Profiles   => False,
-                  Export_Build_Env => False);
+                  Saved_Profiles   => False);
             end if;
          else
             Build_OK := True;

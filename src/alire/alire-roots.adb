@@ -33,13 +33,56 @@ package body Alire.Roots is
 
    use type UString;
 
+   -------------------
+   -- Prepare_Build --
+   -------------------
+
+   procedure Prepare_Build (This           : in out Root;
+                            Saved_Profiles : Boolean)
+   is
+   begin
+      --  Check whether we should override configuration with the last one used
+      --  and stored on disk. Since the first time the one from disk will be be
+      --  empty, we may still have to generate files in the next step.
+
+      if Saved_Profiles then
+         This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
+      end if;
+
+      This.Load_Configuration;
+      This.Configuration.Ensure_Complete;
+      --  For proceeding to build, the configuration must be complete
+
+      --  Ensure sources and configurations are up to date
+
+      if Builds.Sandboxed_Dependencies then
+         This.Generate_Configuration (Full => Force);
+         --  Will regenerate on demand only those changed
+
+      elsif not Builds.Sandboxed_Dependencies then
+         This.Sync_Builds;
+         --  Changes in configuration may require new build dirs
+
+         This.Configuration.Generate_Config_Files (This,
+                                                   Release (This),
+                                                   Full => Force);
+         --  Generate the config for the root crate only, the previous sync
+         --  takes care of the rest.
+
+         --  We can store now the last build profiles
+         This.Configuration.Save_Last_Build_Profiles;
+
+         This.Build_Hasher.Write_Inputs (This);
+         --  Now, after the corresponding config files are in place
+      end if;
+   end Prepare_Build;
+
    -----------
    -- Build --
    -----------
 
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
-                   Export_Build_Env : Boolean;
                    Build_All_Deps   : Boolean := False;
                    Saved_Profiles   : Boolean := True)
                    return Boolean
@@ -166,41 +209,11 @@ package body Alire.Roots is
 
    begin
 
-      --  Check whether we should override configuration with the last one used
-      --  and stored on disk. Since the first time the one from disk will be be
-      --  empty, we may still have to generate files in the next step.
+      This.Prepare_Build (Saved_Profiles);
 
-      if Saved_Profiles then
-         This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
-      end if;
-
-      This.Load_Configuration;
-      This.Configuration.Ensure_Complete;
-      --  For proceeding to build, the configuration must be complete
-
-      --  Ensure sources and configurations are up to date
-
-      if Builds.Sandboxed_Dependencies then
-         This.Generate_Configuration (Full => Force);
-         --  Will regenerate on demand only those changed
-
-      elsif not Builds.Sandboxed_Dependencies then
-         This.Sync_Builds;
-         --  Changes in configuration may require new build dirs
-
-         This.Configuration.Generate_Config_Files (This,
-                                                   Release (This),
-                                                   Full => Force);
-         --  Generate the config for the root crate only, the previous sync
-         --  takes care of the rest.
-
-         This.Build_Hasher.Write_Inputs (This);
-         --  Now, after the corresponding config files are in place
-      end if;
-
-      if Export_Build_Env or else not Builds.Sandboxed_Dependencies then
-         This.Export_Build_Environment;
-      end if;
+      --  Since exporting cannot be undone, we only do it when really starting
+      --  to build.
+      This.Export_Build_Environment;
 
       This.Traverse (Build_Single_Release'Access);
 
@@ -235,7 +248,15 @@ package body Alire.Roots is
          This.Build_Hasher.Compute (This);
       end if;
 
-      return This.Build_Hasher.Hash (Name);
+      if This.Build_Hasher.Contains (Name) then
+         return This.Build_Hasher.Hash (Name);
+      else
+         Trace.Error
+           ("Requested build hash of release " & Name.As_String
+            & " not among solution states:");
+         This.Solution.Print_States ("   ", Error);
+         raise Program_Error;
+      end if;
    end Build_Hash;
 
    --------------
@@ -253,7 +274,6 @@ package body Alire.Roots is
      (This           : in out Root;
       Prefix         : Absolute_Path;
       Build          : Boolean := True;
-      Export_Env     : Boolean := True;
       Print_Solution : Boolean := True)
    is
       use AAA.Strings;
@@ -411,12 +431,11 @@ package body Alire.Roots is
 
       if Build then
          Assert (This.Build (Cmd_Args         => AAA.Strings.Empty_Vector,
-                             Export_Build_Env => Export_Env,
                              Build_All_Deps   => True),
                  Or_Else => "Build failed, cannot perform installation");
       end if;
 
-      if Export_Env then
+      if not Build then
          This.Export_Build_Environment;
       end if;
 
@@ -744,37 +763,12 @@ package body Alire.Roots is
 
    begin
 
-      --  Prepare environment for any post-fetch actions. This must be done
-      --  after the lockfile on disk is written, since the root will read
-      --  dependencies from there. Post-fetch may happen even with shared
-      --  builds for linked and binary dependencies.
-
-      if Builds.Sandboxed_Dependencies then
-         This.Export_Build_Environment;
-      else
-         null;
-         --  When using shared dependencies we have a conflict between crates
-         --  "in-place" (without syncing, e.g. links/binaries), which should
-         --  have its post-fetch run immediately, and regular crates, which
-         --  get the post-fetch run after sync. Since the complete environment
-         --  cannot be known for the former until build time (as config could
-         --  be incomplete otherwise), we need to delay post-fetch for all
-         --  crates to build time, in a follow-up PR. Meanwhile, in some corner
-         --  cases post-fetch could fail when using shared deps (in-place
-         --  crates with a post-fetch that relies on the environment).
-
-         --  TODO: delay post-fetch for binary/linked crates to the build
-         --  moment too. Do this for both sandboxed/shared, for the sake
-         --  of simplicity?
-      end if;
-
       --  Visit dependencies in a safe order to be fetched, and their actions
       --  ran
 
       This.Traverse (Doing => Deploy_Release'Access);
 
-      --  Show hints for missing externals to the user after all the noise of
-      --  dependency post-fetch compilations.
+      --  Show hints for missing externals to the user
 
       This.Solution.Print_Hints (This.Environment);
 
@@ -843,9 +837,6 @@ package body Alire.Roots is
       end Sync_Release;
 
    begin
-      --  Prepare environment for any post-fetch actions
-      This.Export_Build_Environment;
-
       --  Visit dependencies in safe order
       This.Traverse (Doing => Sync_Release'Access);
    end Sync_Builds;

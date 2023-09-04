@@ -253,9 +253,13 @@ package Alire.Roots is
          State    : Dependencies.States.State));
    --  Recursively visit all dependencies in a safe order, ending with the root
 
+   procedure Prepare_Build (This           : in out Root;
+                            Saved_Profiles : Boolean);
+   --  Sets up everything for a build. If it succeeds, the build can go ahead.
+   --  It may fail due to incomplete config or conflicting environment/config.
+
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
-                   Export_Build_Env : Boolean;
                    Build_All_Deps   : Boolean := False;
                    Saved_Profiles   : Boolean := True)
                    return Boolean;
@@ -287,7 +291,6 @@ package Alire.Roots is
      (This           : in out Root;
       Prefix         : Absolute_Path;
       Build          : Boolean := True;
-      Export_Env     : Boolean := True;
       Print_Solution : Boolean := True);
    --  Call gprinstall on the releases in solution using --prefix=Prefix
 
