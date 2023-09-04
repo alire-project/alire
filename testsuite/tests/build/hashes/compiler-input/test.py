@@ -7,6 +7,7 @@ import sys
 from drivers.alr import external_compiler_version, run_alr, init_local_crate, alr_with
 from drivers.asserts import assert_match
 from drivers.builds import clear_builds_dir, hash_input
+from drivers import builds
 
 
 def check_hash(signature: str) -> None:
@@ -28,7 +29,7 @@ run_alr("config", "--set", "--global", "dependencies.shared", "true")
 # Init a crate without explicit compiler dependency
 init_local_crate("xxx")
 alr_with("crate_real")  # A regular crate in the index
-run_alr("update")       # Ensure the hash inputs are written to disk
+builds.sync()           # Ensure the hash inputs are written to disk
 
 # Check the external compiler is in the hash inputs
 check_hash(f"version:gnat_external={external_compiler_version()}")
@@ -40,11 +41,7 @@ check_hash(f"version:gnat_external={external_compiler_version()}")
 run_alr("toolchain", "--select", "gnat_native")
 # Clear the build cache so we are able to locate the new hash
 clear_builds_dir()
-run_alr("update")
-run_alr("update")
-# Twice necessary because otherwise the hash inputs cannot be written (during
-# the first update the destination folder does not yet exist, and the crate
-# sync would remove the hash inputs file)
+builds.sync()
 
 # Check the expected compiler is in the hash inputs
 check_hash("version:gnat_native=8888.0.0")
@@ -55,7 +52,7 @@ check_hash("version:gnat_native=8888.0.0")
 
 clear_builds_dir()
 alr_with("gnat=7777")  # Downgrade the compiler with an explicit dependency
-run_alr("update")
+builds.sync()
 
 # Check the expected compiler is in the hash inputs
 check_hash("version:gnat_native=7777.0.0")
@@ -67,7 +64,7 @@ check_hash("version:gnat_native=7777.0.0")
 
 clear_builds_dir()
 alr_with("gnat_native")
-run_alr("update")
+builds.sync()
 check_hash("version:gnat_native=7777.0.0")
 
 

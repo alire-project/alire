@@ -5,8 +5,9 @@ Check that globally sharing builds works as expected
 import glob
 import os
 
-from drivers.alr import (alr_builds_dir, alr_vault_dir, alr_with, alr_workspace_cache,
-                         init_local_crate, run_alr)
+from drivers import builds
+from drivers.alr import (alr_builds_dir, alr_vault_dir, alr_with,
+                         alr_workspace_cache, init_local_crate, run_alr)
 from drivers.asserts import assert_contents, assert_file_exists
 from drivers.helpers import lines_of
 
@@ -35,17 +36,14 @@ assert_contents(base := os.path.join(vault_dir, "hello_1.0.1_filesystem"),
 
 # Check the contents in the build dir, that should not include generated config
 # because no build has been attempted yet, hence a sync has not been performed.
+# And, since there's no sync yet, neither the build dir exists:
 
-# We need to find the hash first
-base = glob.glob(os.path.join(build_dir, "hello_1.0.1_filesystem_*"))[0]
-
-assert_contents(base,
-                [f'{base}/alire',
-                 f'{base}/alire/build_hash_inputs'
-                 ])
+assert len(glob.glob(os.path.join(build_dir, "hello_1.0.1_filesystem_*"))) == 0, \
+    "Build dir should not exist yet"
 
 # Do a build, and now the sync should have happened and the build dir be filled
 run_alr("build")
+base = builds.find_dir("hello_1.0.1_filesystem")
 
 assert_contents(base,
                 [f'{base}/alire',

@@ -1,3 +1,4 @@
+with Alire.Crate_Configuration.Hashes;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.GPR;
@@ -172,17 +173,27 @@ package body Alire.Builds.Hashes is
             end loop;
          end Add_Environment;
 
+         -----------------------
+         -- Add_Configuration --
+         -----------------------
+
+         procedure Add_Configuration is
+         begin
+            Crate_Configuration.Hashes.Add_From
+              (Config => Root.Configuration,
+               Rel    => Rel,
+               Add    => Add'Access);
+         end Add_Configuration;
+
       begin
          Trace.Debug ("   build hashing: " & Rel.Milestone.TTY_Image);
 
          --  Add individual contributors to the hash input
-         Add_Profile;
-         Add_Externals;
-         Add_Environment;
-         Add_Compiler;
-
-         --  Configuration variables
-         --  TBD
+         Add_Profile;       -- Build profile
+         Add_Externals;     -- GPR externals
+         Add_Environment;   -- Environment variables
+         Add_Compiler;      -- Compiler version
+         Add_Configuration; -- Crate configuration variables
 
          --  Dependencies recursive hash? Since a crate can use a dependency
          --  config spec, it is possible in the worst case for a crate to
@@ -212,6 +223,8 @@ package body Alire.Builds.Hashes is
 
       Environment.Load (Context, Root, For_Hashing => True);
       Env := Context.Get_All;
+
+      Root.Configuration.Ensure_Complete;
 
       for Rel of Root.Solution.Releases loop
          if Root.Requires_Build_Sync (Rel) then
