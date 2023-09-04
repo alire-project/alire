@@ -92,6 +92,11 @@ package Alire.Roots is
    function Build_Context (This : in out Root)
                            return Alire.Environment.Context;
 
+   function Compiler (This : in out Root) return Releases.Release;
+   --  Return the compiler that would be used to compile this solution,
+   --  either because of an explicit dependency or with the actual toolchain
+   --  configuration.
+
    procedure Export_Build_Environment (This : in out Root);
    --  Export the build environment (PATH, GPR_PROJECT_PATH) of the given root
 

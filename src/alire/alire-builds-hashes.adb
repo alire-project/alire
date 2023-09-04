@@ -147,6 +147,15 @@ package body Alire.Builds.Hashes is
          --  Configuration variables
          --  TBD
 
+         --  Compiler version. Changing compiler will result in incompatible
+         --  ALI files and produce rebuilds, so it must be part of the hash.
+         --  Incidentally, this serves to separate by cross-target too.
+         declare
+            Compiler : constant Releases.Release := Root.Compiler;
+         begin
+            Add ("version", Compiler.Name.As_String, Compiler.Version.Image);
+         end;
+
          --  Dependencies recursive hash? Since a crate can use a dependency
          --  config spec, it is possible in the worst case for a crate to
          --  require unique builds that include their dependencies hash

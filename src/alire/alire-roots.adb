@@ -2,7 +2,6 @@ with Ada.Unchecked_Deallocation;
 
 with Alire.Builds;
 with Alire.Conditional;
-with Alire.Config;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
@@ -16,7 +15,7 @@ with Alire.Properties.Actions.Executor;
 with Alire.Roots.Optional;
 with Alire.Solutions.Diffs;
 with Alire.Spawn;
-with Alire.Toolchains;
+with Alire.Toolchains.Solutions;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
@@ -250,6 +249,13 @@ package body Alire.Roots is
 
       return This.Build_Hasher.Hash (Name);
    end Build_Hash;
+
+   --------------
+   -- Compiler --
+   --------------
+
+   function Compiler (This : in out Root) return Releases.Release
+   is (Toolchains.Solutions.Compiler (This.Solution));
 
    -------------
    -- Install --

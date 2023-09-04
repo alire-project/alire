@@ -1,0 +1,19 @@
+"""
+Check that when no compiler is available we cannot compute the build hash
+"""
+
+
+from drivers.alr import run_alr, init_local_crate
+from drivers.asserts import assert_match
+
+# The index in this test has no compilers configured; hence we cannot locate
+# even the default external compiler.
+
+run_alr("config", "--set", "--global", "dependencies.shared", "true")
+
+# Init a crate without explicit compiler dependency
+init_local_crate("xxx")
+p = run_alr("with", "libhello", complain_on_error=False)  # This should fail
+assert_match(".*Unable to determine compiler version", p.out)
+
+print("SUCCESS")
