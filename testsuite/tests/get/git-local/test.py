@@ -19,6 +19,7 @@ compare(list(filter
          'libfoo_1.0.0_9ddda32b/alire',
          'libfoo_1.0.0_9ddda32b/alire.toml',
          'libfoo_1.0.0_9ddda32b/alire/alire.lock',
+         'libfoo_1.0.0_9ddda32b/alire/build_hash_inputs',
          'libfoo_1.0.0_9ddda32b/alire/complete_copy',
          'libfoo_1.0.0_9ddda32b/alire/config.toml',
          'libfoo_1.0.0_9ddda32b/b',

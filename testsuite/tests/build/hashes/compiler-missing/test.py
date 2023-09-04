@@ -12,6 +12,7 @@ from drivers.asserts import assert_match
 run_alr("config", "--set", "--global", "dependencies.shared", "true")
 
 # Init a crate without explicit compiler dependency
+# This does not fail because hashes are not computed until build time
 init_local_crate("xxx")
 run_alr("with", "libhello")
 

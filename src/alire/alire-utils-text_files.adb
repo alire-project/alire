@@ -56,6 +56,20 @@ package body Alire.Utils.Text_Files is
                    return access AAA.Strings.Vector
    is (This.Lines'Access);
 
+   ------------
+   -- Create --
+   ------------
+
+   function Create (Name : Any_Path) return File
+   is (Ada.Finalization.Limited_Controlled with
+       Length     => Name'Length,
+       Backup_Len => 0,
+       Name       => Name,
+       Backup     => False,
+       Backup_Dir => "",
+       Lines      => <>,
+       Orig       => <>);
+
    ----------
    -- Load --
    ----------

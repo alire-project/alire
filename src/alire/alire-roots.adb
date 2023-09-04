@@ -192,28 +192,30 @@ package body Alire.Roots is
 
       if Saved_Profiles then
          This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
-         This.Build_Hasher.Clear;
       end if;
 
       This.Load_Configuration;
       This.Configuration.Ensure_Complete;
       --  For proceeding to build, the configuration must be complete
 
-      --  Check if crate configuration should be re-generated. This is the old
-      --  behavior; for shared builds, config needs to be generated only once.
+      --  Ensure sources and configurations are up to date
 
-      if Builds.Sandboxed_Dependencies
-        and then This.Configuration.Must_Regenerate
-      then
-         This.Generate_Configuration;
+      if Builds.Sandboxed_Dependencies then
+         This.Generate_Configuration (Full => Force);
+         --  Will regenerate on demand only those changed
+
       elsif not Builds.Sandboxed_Dependencies then
-         This.Deploy_Dependencies;
          This.Sync_Builds;
          --  Changes in configuration may require new build dirs
-         This.Configuration.Generate_Config_Files (This, Release (This));
-         --  Generate the config for the root crate.
-         --  TODO: generate only when changed (same optimization as for
-         --  sandboxed dependencies).
+
+         This.Configuration.Generate_Config_Files (This,
+                                                   Release (This),
+                                                   Full => Force);
+         --  Generate the config for the root crate only, the previous sync
+         --  takes care of the rest.
+
+         This.Build_Hasher.Write_Inputs (This);
+         --  Now, after the corresponding config files are in place
       end if;
 
       if Export_Build_Env or else not Builds.Sandboxed_Dependencies then
@@ -497,13 +499,32 @@ package body Alire.Roots is
    -------------------
 
    function Configuration (This : in out Root)
-                           return Crate_Configuration.Global_Config
+                           return access Crate_Configuration.Global_Config
    is
    begin
       This.Load_Configuration;
 
-      return This.Configuration.all;
+      return This.Configuration;
    end Configuration;
+
+   ---------------------
+   -- Config_Outdated --
+   ---------------------
+
+   function Config_Outdated (This : in out Root;
+                             Name : Crate_Name)
+                             return Boolean
+   is
+      Unused : constant String := This.Build_Hash (Name);
+      --  Ensure hashes are computed
+      Current : constant Builds.Hashes.Variables :=
+                  This.Build_Hasher.Inputs (Name);
+      Stored  : constant Builds.Hashes.Variables :=
+                  Builds.Hashes.Stored_Inputs (This, Release (This, Name));
+      use type Builds.Hashes.Variables;
+   begin
+      return Current /= Stored;
+   end Config_Outdated;
 
    ------------------------
    -- Load_Configuration --
@@ -527,6 +548,7 @@ package body Alire.Roots is
    begin
       This.Load_Configuration;
       This.Configuration.Set_Build_Profile (Crate, Profile);
+      This.Build_Hasher.Clear;
    end Set_Build_Profile;
 
    ------------------------
@@ -568,13 +590,17 @@ package body Alire.Roots is
                & Key (I).As_String);
          end if;
       end loop;
+
+      This.Build_Hasher.Clear;
    end Set_Build_Profiles;
 
    ----------------------------
    -- Generate_Configuration --
    ----------------------------
 
-   procedure Generate_Configuration (This : in out Root) is
+   procedure Generate_Configuration (This : in out Root;
+                                     Full : Boolean)
+   is
       Guard : Directories.Guard (Directories.Enter (Path (This)))
         with Unreferenced;
       --  At some point inside the configuration generation process the config
@@ -582,7 +608,20 @@ package body Alire.Roots is
       --  which can't be directly used because of circularities.
    begin
       This.Load_Configuration;
-      This.Configuration.Generate_Config_Files (This);
+      This.Configuration.Generate_Config_Files (This, Full);
+
+      if This.Configuration.Is_Config_Complete then
+         --  For incomplete configs this is secundary, as builds cannot be
+         --  performed anyway.
+
+         if This.Build_Hasher.Is_Empty then
+            This.Build_Hasher.Compute (This);
+         end if;
+
+         This.Build_Hasher.Write_Inputs (This);
+         --  We commit hashes to disk after generating the configuration, as we
+         --  rely on these hash inputs to know when config must be regenerated.
+      end if;
    end Generate_Configuration;
 
    ------------------
@@ -801,11 +840,7 @@ package body Alire.Roots is
       --  Update/Create configuration files
 
       if Builds.Sandboxed_Dependencies then
-         This.Load_Configuration;
-         This.Generate_Configuration;
-         --  TODO: this should be made more granular to only generate
-         --  configurations of newly deployed build sources, since with the
-         --  new shared builds system configs do not change once created.
+         This.Generate_Configuration (Full => Force);
       end if;
 
       --  Check that the solution does not contain suspicious dependencies,
@@ -1343,23 +1378,31 @@ package body Alire.Roots is
                                 return Containers.Crate_Name_Sets.Set
    is
       Result : Containers.Crate_Name_Sets.Set;
-
-      procedure Filter (This     : in out Alire.Roots.Root;
-                        Solution : Solutions.Solution;
-                        State    : Solutions.Dependency_State)
-      is
-         pragma Unreferenced (This, Solution);
-      begin
-         if State.Has_Release and then not State.Is_Provided then
-            Result.Include (State.Crate);
-         end if;
-      end Filter;
-
    begin
-      This.Traverse (Filter'Access);
-      Result.Include (This.Name);
+      for Rel of This.Nonabstract_Releases loop
+         Result.Include (Rel.Name);
+      end loop;
+
       return Result;
    end Nonabstract_Crates;
+
+   --------------------------
+   -- Nonabstract_Releases --
+   --------------------------
+
+   function Nonabstract_Releases (This : in out Root)
+                                  return Releases.Containers.Release_Set
+   is
+      Result : Releases.Containers.Release_Set;
+   begin
+      for Rel of This.Solution.Releases loop
+         Result.Include (Rel);
+      end loop;
+
+      Result.Include (Release (This)); -- The root release
+
+      return Result;
+   end Nonabstract_Releases;
 
    ----------
    -- Path --
@@ -1652,8 +1695,8 @@ package body Alire.Roots is
 
       if (for some Rel of This.Solution.Releases =>
             This.Solution.State (Rel.Name).Is_Solved and then
-            not GNAT.OS_Lib.Is_Directory (This.Release_Base (Rel.Name,
-                                                             For_Deploy)))
+            not Directories.New_Completion
+              (This.Release_Base (Rel.Name, For_Deploy)).Is_Complete)
       then
          Trace.Detail
            ("Detected missing dependency sources, updating workspace...");
@@ -1830,7 +1873,7 @@ package body Alire.Roots is
 
          --  Update/Create configuration files
          if Builds.Sandboxed_Dependencies then
-            This.Generate_Configuration;
+            This.Generate_Configuration (Full => True);
          end if;
 
          Trace.Detail ("Update completed");

@@ -65,6 +65,9 @@ package body Alire.Roots.Editable is
          then
             Edited.Commit;
             Edited.Deploy_Dependencies;
+            if Builds.Sandboxed_Dependencies then
+               Edited.Generate_Configuration (Full => True);
+            end if;
          else
             Trace.Info ("No changes applied.");
          end if;

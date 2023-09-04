@@ -13,9 +13,6 @@ package body Alire.Builds.Hashes is
 
    package SHA renames Alire.Hashes.SHA256_Impl;
 
-   subtype Variables is AAA.Strings.Set;
-   --  We'll store all variables that affect a Release in a deterministic order
-
    -----------
    -- Clear --
    -----------
@@ -23,6 +20,7 @@ package body Alire.Builds.Hashes is
    procedure Clear (This : in out Hasher) is
    begin
       This.Hashes.Clear;
+      This.Inputs.Clear;
    end Clear;
 
    --------------
@@ -78,38 +76,8 @@ package body Alire.Builds.Hashes is
             end loop;
 
             This.Hashes.Insert (Rel.Name, SHA.Get_Digest (C));
+            This.Inputs.Insert (Rel.Name, Vars);
          end Compute_Hash;
-
-         ------------------
-         -- Write_Inputs --
-         ------------------
-
-         procedure Write_Inputs is
-            File : constant Absolute_Path :=
-                     Builds.Path
-                       / Rel.Base_Folder & "_" & This.Hashes (Rel.Name)
-                       / Paths.Working_Folder_Inside_Root
-                       / "build_hash_inputs";
-            use Directories;
-            use Utils.Text_Files;
-
-            Lines : AAA.Strings.Vector;
-         begin
-            --  First ensure we have a pristine file to work with
-            Delete_Tree (File);
-            Create_Tree (Parent (File));
-            Touch (File);
-
-            --  Now add the hashed contents for the record
-
-            for Var of Vars loop
-               Lines.Append (Var);
-            end loop;
-
-            Append_Lines (File,
-                          Lines,
-                          Backup => False);
-         end Write_Inputs;
 
          -----------------
          -- Add_Profile --
@@ -180,7 +148,7 @@ package body Alire.Builds.Hashes is
          procedure Add_Configuration is
          begin
             Crate_Configuration.Hashes.Add_From
-              (Config => Root.Configuration,
+              (Config => Root.Configuration.all,
                Rel    => Rel,
                Add    => Add'Access);
          end Add_Configuration;
@@ -190,10 +158,16 @@ package body Alire.Builds.Hashes is
 
          --  Add individual contributors to the hash input
          Add_Profile;       -- Build profile
-         Add_Externals;     -- GPR externals
-         Add_Environment;   -- Environment variables
-         Add_Compiler;      -- Compiler version
          Add_Configuration; -- Crate configuration variables
+
+         --  These are only relevant for shared dependencies, as they don't
+         --  appear in the contents of generated files. Not including them
+         --  allows things to work as they were for sandboxed dependencies.
+         if not Builds.Sandboxed_Dependencies then
+            Add_Externals;     -- GPR externals
+            Add_Environment;   -- Environment variables
+            Add_Compiler;      -- Compiler version
+         end if;
 
          --  Dependencies recursive hash? Since a crate can use a dependency
          --  config spec, it is possible in the worst case for a crate to
@@ -209,9 +183,6 @@ package body Alire.Builds.Hashes is
          --  Final computation
          Compute_Hash;
 
-         --  Write the hash input for the record
-         Write_Inputs;
-
          Trace.Debug ("   build hashing release complete");
       end Compute;
 
@@ -226,12 +197,60 @@ package body Alire.Builds.Hashes is
 
       Root.Configuration.Ensure_Complete;
 
-      for Rel of Root.Solution.Releases loop
-         if Root.Requires_Build_Sync (Rel) then
+      for Rel of Root.Nonabstract_Releases loop -- includes the root release
+         if Rel.Origin.Requires_Build then
             Compute (Rel);
          end if;
       end loop;
    end Compute;
+
+   ----------------------
+   -- Inputs_File_Name --
+   ----------------------
+
+   function Inputs_File_Name (Root : in out Roots.Root;
+                              Rel  : Releases.Release)
+                              return Absolute_Path
+   is (Root.Release_Base (Rel.Name, Roots.For_Build)
+       / Paths.Working_Folder_Inside_Root
+       / "build_hash_inputs");
+
+   ------------------
+   -- Write_Inputs --
+   ------------------
+
+   procedure Write_Inputs (This : Hasher;
+                           Root : in out Roots.Root)
+   is
+
+      ------------------
+      -- Write_Inputs --
+      ------------------
+
+      procedure Write_Inputs (Rel : Releases.Release) is
+         File : constant Absolute_Path := Inputs_File_Name (Root, Rel);
+         use Directories;
+         use Utils.Text_Files;
+      begin
+         --  First ensure we have a pristine file to work with
+         Delete_Tree (File);
+         Create_Tree (Parent (File));
+         Touch (File);
+
+         --  Now add the hashed contents for the record
+
+         Append_Lines (File,
+                       This.Inputs (Rel.Name).To_Vector,
+                       Backup => False);
+      end Write_Inputs;
+
+   begin
+      for Rel of Root.Nonabstract_Releases loop
+         if Rel.Origin.Requires_Build then
+            Write_Inputs (Rel);
+         end if;
+      end loop;
+   end Write_Inputs;
 
    ----------
    -- Hash --
@@ -241,5 +260,37 @@ package body Alire.Builds.Hashes is
                   Name : Crate_Name)
                   return String
    is (This.Hashes (Name));
+
+   ------------
+   -- Inputs --
+   ------------
+
+   function Inputs (This : Hasher;
+                   Name : Crate_Name)
+                   return Variables
+   is (This.Inputs (Name));
+
+   -------------------
+   -- Stored_Inputs --
+   -------------------
+
+   function Stored_Inputs (Root : in out Roots.Root;
+                           Rel  : Releases.Release)
+                           return Variables
+   is
+      Name : constant Absolute_Path := Inputs_File_Name (Root, Rel);
+   begin
+      if Directories.Is_File (Name) then
+         declare
+            File : Utils.Text_Files.File :=
+                     Utils.Text_Files.Load (Name);
+            Lines : constant AAA.Strings.Vector := File.Lines.all;
+         begin
+            return Lines.To_Set;
+         end;
+      else
+         return AAA.Strings.Empty_Set;
+      end if;
+   end Stored_Inputs;
 
 end Alire.Builds.Hashes;

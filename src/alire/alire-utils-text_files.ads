@@ -8,6 +8,8 @@ package Alire.Utils.Text_Files is
 
    type File (<>) is tagged limited private;
 
+   function Create (Name : Any_Path) return File;
+
    function Load (From       : Any_Path;
                   Backup     : Boolean := True;
                   Backup_Dir : Any_Path := "")
