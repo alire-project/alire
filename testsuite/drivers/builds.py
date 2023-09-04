@@ -6,7 +6,7 @@ from glob import glob
 import os
 from shutil import rmtree
 import subprocess
-from drivers.alr import alr_builds_dir, run_alr
+from drivers.alr import alr_builds_dir
 
 
 def clear_builds_dir() -> None:

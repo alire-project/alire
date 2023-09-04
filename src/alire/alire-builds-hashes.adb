@@ -5,6 +5,8 @@ with Alire.GPR;
 with Alire.Hashes.SHA256_Impl;
 with Alire.Paths;
 with Alire.Roots;
+with Alire.Solutions;
+with Alire.Dependencies.States;
 with Alire.Utils.Text_Files;
 
 package body Alire.Builds.Hashes is
@@ -75,8 +77,19 @@ package body Alire.Builds.Hashes is
                --  of consecutive entries.
             end loop;
 
-            This.Hashes.Insert (Rel.Name, SHA.Get_Digest (C));
-            This.Inputs.Insert (Rel.Name, Vars);
+            --  We can rarely reach here more than once for provided regular
+            --  releases, so we cannot simply insert once. Instead of including
+            --  blindly, we double-check things match.
+            if This.Hashes.Contains (Rel.Name)
+              and then This.Hashes (Rel.Name) /= SHA.Get_Digest (C)
+            then
+               raise Program_Error with
+                 "Conflicting build hashes for release "
+                 & Rel.Milestone.Image;
+            else
+               This.Hashes.Include (Rel.Name, SHA.Get_Digest (C));
+               This.Inputs.Include (Rel.Name, Vars);
+            end if;
          end Compute_Hash;
 
          -----------------
@@ -153,6 +166,30 @@ package body Alire.Builds.Hashes is
                Add    => Add'Access);
          end Add_Configuration;
 
+         ----------------------
+         -- Add_Dependencies --
+         ----------------------
+
+         procedure Add_Dependencies is
+            --  Since specs of dependencies may change due to config variables,
+            --  or sources selected depending on environment variables/GPR
+            --  externals, the safest course of action is to also include
+            --  dependency hashes in our own hash. For dependencies without
+            --  such things the hash won't change anyway.
+         begin
+            for Dep of Rel.Flat_Dependencies loop
+               for Target of Root.Solution.Releases loop
+                  if Target.Origin.Requires_Build
+                    and then Target.Satisfies (Dep)
+                  then
+                     Add ("dependency",
+                          Target.Milestone.Image,
+                          This.Hashes (Target.Name));
+                  end if;
+               end loop;
+            end loop;
+         end Add_Dependencies;
+
       begin
          Trace.Debug ("   build hashing: " & Rel.Milestone.TTY_Image);
 
@@ -167,23 +204,32 @@ package body Alire.Builds.Hashes is
             Add_Externals;     -- GPR externals
             Add_Environment;   -- Environment variables
             Add_Compiler;      -- Compiler version
+            Add_Dependencies;  -- Hash of dependencies
          end if;
-
-         --  Dependencies recursive hash? Since a crate can use a dependency
-         --  config spec, it is possible in the worst case for a crate to
-         --  require unique builds that include their dependencies hash
-         --  in their own hash. This is likely a corner case, but we can't
-         --  currently detect it. Two options are to alway err on the side of
-         --  caution, always including dependencies hashes, or to add some new
-         --  info in the manifest saying whose crates config affect the crate.
-         --  We could also enable this recursive hashing globally or per
-         --  crate...
-         --  TBD
 
          --  Final computation
          Compute_Hash;
 
          Trace.Debug ("   build hashing release complete");
+      end Compute;
+
+      -------------
+      -- Compute --
+      -------------
+
+      procedure Compute (unused_Root  : in out Roots.Root;
+                         Unused_Sol   : Solutions.Solution;
+                         State        : Dependencies.States.State)
+      is
+      begin
+         if State.Has_Release
+           and then State.Release.Origin.Requires_Build
+         then
+            --  We cannot filter out provided dependencies because all
+            --  dependencies may be fulfilled by a provided release that
+            --  doesn't appear otherwise (as non-provided).
+            Compute (State.Release);
+         end if;
       end Compute;
 
       Context : Environment.Context;
@@ -197,11 +243,7 @@ package body Alire.Builds.Hashes is
 
       Root.Configuration.Ensure_Complete;
 
-      for Rel of Root.Nonabstract_Releases loop -- includes the root release
-         if Rel.Origin.Requires_Build then
-            Compute (Rel);
-         end if;
-      end loop;
+      Root.Traverse (Compute'Access);
    end Compute;
 
    ----------------------
@@ -244,12 +286,24 @@ package body Alire.Builds.Hashes is
                        Backup => False);
       end Write_Inputs;
 
-   begin
-      for Rel of Root.Nonabstract_Releases loop
-         if Rel.Origin.Requires_Build then
-            Write_Inputs (Rel);
+      ------------------
+      -- Write_Inputs --
+      ------------------
+
+      procedure Write_Inputs (Unused_Root  : in out Roots.Root;
+                              Unused_Sol   : Solutions.Solution;
+                              State        : Dependencies.States.State)
+      is
+      begin
+         if State.Has_Release
+           and then State.Release.Origin.Requires_Build
+         then
+            Write_Inputs (State.Release);
          end if;
-      end loop;
+      end Write_Inputs;
+
+   begin
+      Root.Traverse (Write_Inputs'Access);
    end Write_Inputs;
 
    ----------
