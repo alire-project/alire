@@ -129,7 +129,7 @@ package body Alire.Builds.Hashes is
             Externals : constant Releases.Externals_Info := Rel.GPR_Externals;
          begin
             for Var of GPR.Name_Vector'(Externals.Declared
-                                        .Union (Externals.Modified))
+                                .Union (Externals.Modified))
               --  Externals modified but not declared are presumably for the
               --  benefit of another crate. It's unclear if these will affect
               --  the crate doing the setting, so we err on the side of

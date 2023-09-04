@@ -1,7 +1,7 @@
 with Ada.Containers;
 
 with Alire; use Alire;
-with Alire.Config;
+with Alire.Config.Builtins;
 with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
 
@@ -61,8 +61,10 @@ package body Alr.Commands.Edit is
       use GNAT.Strings;
       use Alire.Config;
 
+      package Builtins renames Alire.Config.Builtins;
+
       Editor_Cmd  : constant String :=
-        Alire.Config.DB.Get (Keys.Editor_Cmd, "gnatstudio -P ${GPR_FILE}");
+                      Builtins.Editor_Cmd.Get;
 
       Edit_Args : AAA.Strings.Vector := AAA.Strings.Split (Editor_Cmd, ' ');
    begin
@@ -72,7 +74,8 @@ package body Alr.Commands.Edit is
 
       if Edit_Args.Is_Empty then
          Reportaise_Command_Failed
-           ("No editor defined in config key '" & Keys.Editor_Cmd & "'.");
+           ("No editor defined in config key '"
+            & Builtins.Editor_Cmd.Key & "'.");
       end if;
 
       Cmd.Requires_Workspace;

@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.Config.Edit;
+with Alire.Config.Builtins;
 with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Index;
@@ -161,10 +161,8 @@ package body Alr.Commands.Get is
             Trace.Info ("Because --only was used, automatic dependency" &
                           " retrieval is disabled in this workspace:" &
                           " use `alr update` to apply dependency changes");
-            Alire.Config.Edit.Set_Boolean
-              (Alire.Config.Local,
-               Alire.Config.Keys.Update_Manually,
-               True);
+            Alire.Config.Builtins.Update_Manually_Only.Set (Alire.Config.Local,
+                                                            True);
 
             if not CLIC.User_Input.Not_Interactive then
                Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);

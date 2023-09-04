@@ -2,7 +2,7 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 
 with AAA.Strings;
 
-with Alire.Config;
+with Alire.Config.Builtins;
 with Alire.Dependencies;
 with Alire.Errors;
 with Alire.Milestones;
@@ -153,7 +153,7 @@ private
    -----------------------
 
    function Assistant_Enabled return Boolean
-   is (Config.DB.Get (Config.Keys.Toolchain_Assistant, Default => True));
+   is (Config.Builtins.Toolchain_Assistant.Get);
 
    ----------------------
    -- Tool_Is_External --
@@ -175,8 +175,8 @@ private
        then Tool_Key (GNAT_Crate, Kind)
        else CLIC.Config.Config_Key
          ((case Kind is
-             when For_Use => Config.Keys.Toolchain_Use,
-             when For_Is_External => Config.Keys.Toolchain_External)
+             when For_Use         => Config.Builtins.Toolchain_Use.Key,
+             when For_Is_External => Config.Builtins.Toolchain_External.Key)
           & "." & Crate.As_String));
 
    --------------------
