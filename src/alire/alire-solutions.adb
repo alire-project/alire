@@ -1507,7 +1507,7 @@ package body Alire.Solutions is
                        and then
                        not (for some Rel of Rels =>
                               Visited.Contains (Rel.Name)
-                              and Then Rel.provides (Rel_Dep.Crate)))
+                              and then Rel.Provides (Rel_Dep.Crate)))
                then
                   Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
                                  Dep.Release.Milestone.Image);
