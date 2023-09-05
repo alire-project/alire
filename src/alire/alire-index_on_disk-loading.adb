@@ -46,10 +46,6 @@ package body Alire.Index_On_Disk.Loading is
    --  metadata file doesn't exist, a full index load will be triggered and
    --  the file will be rebuilt.
 
-   procedure Invalidate_Providers (Indexes_Dir : Any_Path);
-   --  Whenever an index is added or updated, we must invalidate the cache on
-   --  disk containing crate virtual providers.
-
    procedure Save_Providers (Indexes_Dir : Any_Path);
    --  Write to disk the providers info already in memory (generated after a
    --  full load).
@@ -627,39 +623,5 @@ package body Alire.Index_On_Disk.Loading is
             Ada.Directories.Delete_File (Filename);
          end if;
    end Save_Providers;
-
-   ----------------
-   -- Update_All --
-   ----------------
-
-   function Update_All (Under : Absolute_Path) return Outcome is
-      Result  : Outcome;
-      Indexes : constant Set := Find_All (Under, Result);
-   begin
-      if not Result.Success then
-         return Result;
-      end if;
-
-      --  First, invalidate providers metadata as this may change with the
-      --  update.
-
-      Invalidate_Providers (Under);
-
-      --  Now update normally
-
-      for Index of Indexes loop
-         declare
-            Result : constant Outcome := Index.Update;
-         begin
-            if Result.Success then
-               Trace.Detail ("Updated successfully: " & Index.Origin);
-            else
-               return Result;
-            end if;
-         end;
-      end loop;
-
-      return Outcome_Success;
-   end Update_All;
 
 end Alire.Index_On_Disk.Loading;

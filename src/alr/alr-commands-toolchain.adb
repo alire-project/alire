@@ -454,6 +454,8 @@ package body Alr.Commands.Toolchain is
 
       if Cmd.S_Select then
 
+         Cmd.Auto_Update_Index;
+
          Alire.Toolchains.Detect_Externals;
 
          if Cmd.Local then
@@ -494,6 +496,8 @@ package body Alr.Commands.Toolchain is
          end loop;
 
       elsif Cmd.Install then
+
+         Cmd.Auto_Update_Index;
 
          Alire.Toolchains.Detect_Externals;
 

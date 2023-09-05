@@ -51,6 +51,20 @@ package Alire.Config.Builtins is
         "When unset or true, the community index will be added " &
         "automatically when required if no other index is configured.");
 
+   Index_Auto_Refresh : constant Builtin := New_Builtin
+     (Key  => "index.auto_refresh",
+      Kind => Cfg_Int,
+      Def  => "24", -- hours
+      Help =>
+        "Hours between automatic index refresh. Set to 0 to disable.");
+
+   Index_Last_Refresh : constant Builtin := New_Builtin
+     (Key    => "index.last_refresh",
+      Public => False,
+      Kind   => Cfg_Int,
+      Def    => "0", -- seconds since epoch
+      Help   => "Timestamp of last index auto-refresh (seconds)");
+
    Index_Host : constant Builtin := New_Builtin
      (Key  => "index.host",
       Kind => Cfg_String,

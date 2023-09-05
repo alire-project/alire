@@ -94,6 +94,8 @@ package body Alr.Commands.Search is
 
    begin
 
+      Cmd.Auto_Update_Index;
+
       --  First, simpler case of search into crates
 
       if Cmd.Crates then

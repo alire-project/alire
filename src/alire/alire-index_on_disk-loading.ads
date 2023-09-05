@@ -51,9 +51,6 @@ package Alire.Index_On_Disk.Loading is
    --  If no path for detection is given, default one is used.
    --  May raise Checked_Error. Loading twice the same crate is idempotent.
 
-   function Update_All (Under : Absolute_Path) return Outcome;
-   --  Find and update all indexes at given location
-
    function Add (Origin : URL;
                  Name   : String;
                  Under  : Absolute_Path;
@@ -69,6 +66,10 @@ package Alire.Index_On_Disk.Loading is
 
    procedure Drop_Index_Cache;
    --  Force detection of indexes on disk on next call to Find_All
+
+   procedure Invalidate_Providers (Indexes_Dir : Any_Path);
+   --  Whenever an index is added or updated, we must invalidate the cache on
+   --  disk containing crate virtual providers.
 
 private
 

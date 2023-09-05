@@ -12,6 +12,7 @@ with Alire.Config.Builtins;
 with Alire.Config.Edit;
 with Alire.Errors;
 with Alire.Index_On_Disk.Loading;
+with Alire.Index_On_Disk.Updates;
 with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Platforms.Current;
@@ -81,6 +82,16 @@ package body Alr.Commands is
 
    Version_Only : aliased Boolean := False;
    --  Just display the current version and exit
+
+   -----------------------
+   -- Auto_Update_Index --
+   -----------------------
+
+   procedure Auto_Update_Index (This : Command) is
+      pragma Unreferenced (This);
+   begin
+      Alire.Index_On_Disk.Updates.Auto_Update;
+   end Auto_Update_Index;
 
    ---------------
    -- Put_Error --
