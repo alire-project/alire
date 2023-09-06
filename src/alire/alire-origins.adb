@@ -669,6 +669,8 @@ package body Alire.Origins is
              Source_Image (This.Data.Src_Archive)
           elsif This.Data.Bin_Archive.Is_Value then
              Binary_Image (This.Data.Bin_Archive.As_Data)
+          elsif This.Data.Bin_Archive.Is_Empty then
+             "(unavailable on current platform)"
           else
              This.Data.Bin_Archive.Image_One_Line),
           when System         =>
