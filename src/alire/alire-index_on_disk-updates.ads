@@ -10,4 +10,7 @@ package Alire.Index_On_Disk.Updates is
      (Under : Absolute_Path := Config.Edit.Indexes_Directory) return Outcome;
    --  Find and update all indexes at given location
 
+   procedure Reset_Update_Time;
+   --  Store that NOW we have just updated our indices
+
 end Alire.Index_On_Disk.Updates;

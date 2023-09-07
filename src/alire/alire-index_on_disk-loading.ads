@@ -31,6 +31,10 @@ package Alire.Index_On_Disk.Loading is
    --  instead of proceeding with default behaviors, such as getting the
    --  community index.
 
+   function Index_Available (Under : Absolute_Path := Default_Path)
+                             return Boolean;
+   --  Says if there's any available index configured
+
    procedure Setup (From : Absolute_Path := Default_Path);
    --  If no index is configured, set up the default community index
 
