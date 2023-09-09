@@ -4,7 +4,6 @@ Check that index auto-update works as expected
 
 import os
 from drivers.alr import run_alr
-# from drivers.asserts import assert_eq, assert_match
 from drivers.helpers import content_of, lines_of
 
 CONFIG_FILE = os.path.join("alr-config", "config.toml")
