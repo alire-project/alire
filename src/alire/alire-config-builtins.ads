@@ -8,10 +8,10 @@ package Alire.Config.Builtins is
 
    Dependencies_Shared : constant Builtin := New_Builtin
      (Key  => "dependencies.shared",
-      Def  => False,
+      Def  => True,
       Help =>
         "When true, dependencies are downloaded and built in a shared "
-      & "location inside the global cache. When false (default), "
+      & "location inside the global cache. When false, "
       & "dependencies are sandboxed in each workspace.");
 
    Distribution_Disable_Detection : constant Builtin := New_Builtin
