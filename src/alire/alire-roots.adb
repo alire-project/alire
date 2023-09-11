@@ -4,7 +4,7 @@ with Alire.Builds;
 with Alire.Conditional;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
-with Alire.Environment;
+with Alire.Environment.Loading;
 with Alire.Errors;
 with Alire.Flags;
 with Alire.Install;
@@ -218,7 +218,7 @@ package body Alire.Roots is
    is
    begin
       return Context : Alire.Environment.Context do
-         Context.Load (This);
+         Alire.Environment.Loading.Load (Context, This);
       end return;
    end Build_Context;
 
@@ -1120,7 +1120,7 @@ package body Alire.Roots is
    procedure Export_Build_Environment (This : in out Root) is
       Context : Alire.Environment.Context;
    begin
-      Context.Load (This);
+      Alire.Environment.Loading.Load (Context, This);
       Context.Export;
    end Export_Build_Environment;
 
