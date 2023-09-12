@@ -230,7 +230,7 @@ package body Alr.Commands.Show is
          Rel : constant Alire.Releases.Release  :=
            (if Current
             then Cmd.Root.Release
-            else Query.Find (Name, Versions, Query_Policy));
+            else Cmd.Find_Target_Release (Name, Versions, Current));
       begin
          Put_Line ("---");
          Put_Line ("layout: crate");
