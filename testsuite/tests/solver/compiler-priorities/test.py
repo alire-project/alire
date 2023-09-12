@@ -37,13 +37,13 @@ init_local_crate("xxx")
 
 # Check that a generic dependency results in the external being used
 alr_with("gnat")
-match_solution(f"gnat={version} (gnat_external) (installed)", escape=True)
+match_solution(f"gnat={version} (gnat_external)", escape=True)
 
 # Check that adding a second dependency on native packaged compiler is honored.
 # Both dependencies should appear in the solution.
 alr_with("gnat_native")
-match_solution("gnat=8888.0.0 (gnat_native) (installed)", escape=True)
-match_solution("gnat_native=8888.0.0 (installed)", escape=True)
+match_solution("gnat=8888.0.0 (gnat_native)", escape=True)
+match_solution("gnat_native=8888.0.0", escape=True)
 
 # The previous dependency also should have caused the installation of the
 # native compiler as an available compiler, which we will check:
@@ -67,7 +67,7 @@ assert_match(".*gnat_cross_1.*9999.*Available.*",
 # Depend on any gnat. Since no default is selected, the external one is used,
 # even if other installed compilers are newer (cross_2=9999)
 alr_with("gnat")
-match_solution(f"gnat={version} (gnat_external) (installed)", escape=True)
+match_solution(f"gnat={version} (gnat_external)", escape=True)
 
 # Depend on any gnat but the externally available. Since we have gnat_native=8888
 # and gnat_cross_1=9999, normal version comparison would select the cross
@@ -95,7 +95,7 @@ match_solution("gnat=8888.0.0 (gnat_native)", escape=True)
 run_alr("config", "--global",
         "--set", "toolchain.use.gnat", "gnat_cross_1=9999")
 run_alr("update")
-match_solution("gnat=9999.0.0 (gnat_cross_1) (installed)", escape=True)
+match_solution("gnat=9999.0.0 (gnat_cross_1)", escape=True)
 
 # Check that a targeted compiler is retrieved when needed. Note that another
 # cross-compiler is still selected as default, but since we need a different
@@ -103,11 +103,11 @@ match_solution("gnat=9999.0.0 (gnat_cross_1) (installed)", escape=True)
 
 init_local_crate("zzz")
 alr_with("gnat")  # Will be solved with the selected cross compiler 1
-match_solution("gnat=9999.0.0 (gnat_cross_1) (installed)", escape=True)
+match_solution("gnat=9999.0.0 (gnat_cross_1)", escape=True)
 
 alr_with("gnat_cross_2")
 # Now, this compiler should appear in the solution and be available, as it
 # overrides the preferred compiler
-match_solution("gnat_cross_2=1.0.0 (installed)", escape=True)
+match_solution("gnat_cross_2=1.0.0", escape=True)
 
 print('SUCCESS')

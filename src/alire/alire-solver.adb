@@ -257,7 +257,7 @@ package body Alire.Solver is
       --  to select the solver behavior (e.g. stop after the first complete
       --  solution is found).
 
-      Installed : constant Releases.Containers.Release_Set :=
+      Tools : constant Releases.Containers.Release_Set :=
                                   Toolchains.Available
                                     (Detect_Externals =>
                                         Options.Detecting = Detect);
@@ -396,8 +396,7 @@ package body Alire.Solver is
          ------------------
 
          procedure Expand_Value (Dep          : Dependencies.Dependency;
-                                 Raw_Dep      : Dependencies.Dependency;
-                                 Allow_Shared : Boolean) is
+                                 Raw_Dep      : Dependencies.Dependency) is
             --  Dep is the unique dependency in the solution that aglutinates
             --  all dependencies on the same crate that have been seen to date.
             --  Raw_Dep, instead, is the simple dependency that is being tested
@@ -509,11 +508,11 @@ package body Alire.Solver is
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Installed.Contains (R))'Image
+                       (Tools.Contains (R))'Image
                      & " for " & R.Milestone.TTY_Image
                      & " due to installed compiler availability.");
 
-                  return Installed.Contains (R);
+                  return Tools.Contains (R);
 
                else
 
@@ -530,10 +529,8 @@ package body Alire.Solver is
             -----------
 
             procedure Check (R         : Release;
-                             Is_Shared : Boolean;
                              Is_Reused : Boolean)
             is
-               use all type Origins.Kinds;
             begin
 
                --  Special compiler checks are hardcoded when the dependency is
@@ -614,7 +611,6 @@ package body Alire.Solver is
                        ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
                           " to satisfy " & Dep.TTY_Image &
                         (if Is_Reused then " with REUSED" else "") &
-                        (if Is_Shared then " with INSTALLED" else "") &
                         (if not R.Provides.Is_Empty
                            then " also providing " & R.Provides.Image_One_Line
                            else "") &
@@ -632,10 +628,7 @@ package body Alire.Solver is
                               Solution  => Solution.Including
                                 (R, Props,
                                  For_Dependency =>
-                                   Optional.Crate_Names.Unit (Dep.Crate),
-                                 Shared         =>
-                                   Is_Shared or else
-                                 R.Origin.Kind = Binary_Archive)));
+                                   Optional.Crate_Names.Unit (Dep.Crate))));
                   end;
                end if;
             end Check;
@@ -741,7 +734,7 @@ package body Alire.Solver is
 
                      Trace.Debug ("SOLVER short-cutting due to version pin"
                                   & " with valid release in index");
-                     Check (Release, Is_Shared => False, Is_Reused => False);
+                     Check (Release, Is_Reused => False);
                   end loop;
 
                      --  There may be no satisfying releases, or even so the
@@ -787,22 +780,6 @@ package body Alire.Solver is
             --  solver from recursive to priority queue (I guess we eventually
             --  will have to), we should do this globally since this is
             --  information common to all search states.
-
-            ------------------
-            -- Check_Shared --
-            ------------------
-
-            procedure Check_Shared is
-            begin
-
-               --  Solve with all installed dependencies that satisfy it
-
-               for R of reverse Installed.Satisfying (Dep) loop
-                  Satisfiable := True;
-                  Check (R, Is_Shared => True, Is_Reused => False);
-               end loop;
-
-            end Check_Shared;
 
             use type Alire.Dependencies.Dependency;
 
@@ -893,24 +870,11 @@ package body Alire.Solver is
                for In_Sol of Solution.Dependencies_Providing (Dep.Crate) loop
                   if In_Sol.Has_Release then
                      Check (In_Sol.Release,
-                            Is_Shared =>
-                              In_Sol.Is_Shared,
                             Is_Reused => True);
                   end if;
                end loop;
 
                return;
-
-            end if;
-
-            if Allow_Shared then
-
-               --  There is a shared release we can use for this dependency; we
-               --  prefer this option first. If more solutions than the first
-               --  complete one are sought, we can still try without the shared
-               --  release.
-
-               Check_Shared;
 
             end if;
 
@@ -959,9 +923,9 @@ package body Alire.Solver is
                           (R.Satisfies (Dep)
                            and then
                                (Dep.Crate /= GNAT_Crate or else
-                                Installed.Contains (R)));
+                                Tools.Contains (R)));
 
-                        Check (R, Is_Shared => False, Is_Reused => False);
+                        Check (R, Is_Reused => False);
                      end Consider;
                   begin
                      Trace.Debug ("SOLVER: considering"
@@ -1191,10 +1155,10 @@ package body Alire.Solver is
                               --  Add or merge dependency
                              .Dependency (State.Target.Value.Crate),
                               --  And use it in expansion
-               Raw_Dep      => State.Target.Value,
+               Raw_Dep      => State.Target.Value
                               --  We also pass the plain dependency for the
                               --  Seen collection inside the search state.
-               Allow_Shared => Options.Sharing = Allow_Shared);
+              );
 
          elsif State.Target.Is_Vector then
             if State.Target.Conjunction = Anded then
@@ -1362,7 +1326,6 @@ package body Alire.Solver is
                        Exhaustive   => Options.Exhaustive,
                        Detecting    => Options.Detecting,
                        Hinting      => Options.Hinting,
-                       Sharing      => Options.Sharing,
                        Timeout      => Options.Timeout,
                        Timeout_More => Options.Timeout_More,
                        Elapsed      => Timer.Elapsed,
