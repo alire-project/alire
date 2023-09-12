@@ -1,6 +1,6 @@
 with Alire.Crate_Configuration.Hashes;
 with Alire.Directories;
-with Alire.Environment;
+with Alire.Environment.Loading;
 with Alire.GPR;
 with Alire.Hashes.SHA256_Impl;
 with Alire.Paths;
@@ -249,7 +249,7 @@ package body Alire.Builds.Hashes is
       Trace.Debug ("build hashing root " & Root.Path);
       This.Hashes.Clear;
 
-      Environment.Load (Context, Root, For_Hashing => True);
+      Environment.Loading.Load (Context, Root, For_Hashing => True);
       Env := Context.Get_All;
 
       Root.Configuration.Ensure_Complete;
