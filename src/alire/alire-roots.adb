@@ -130,13 +130,24 @@ package body Alire.Roots is
       begin
 
          if not State.Has_Release then
-            Put_Info (State.As_Dependency.TTY_Image & ": no build needed.");
+            Put_Info (State.As_Dependency.TTY_Image
+                      & " has no release, build skipped.", Detail);
             return;
          end if;
 
          declare
             Release : constant Releases.Release := State.Release;
          begin
+
+            --  Skip releases that have no deployment location and hence can't
+            --  run actions.
+            if not Release.Origin.Is_Index_Provided then
+               Put_Info
+                 ("Skipping actions and build of "
+                  & Release.Milestone.TTY_Image
+                  & ": origin is system/external", Detail);
+               return;
+            end if;
 
             --  Run post-fetch, it will be skipped if already ran
             Properties.Actions.Executor.Execute_Actions
@@ -151,7 +162,13 @@ package body Alire.Roots is
                Properties.Actions.Pre_Build);
 
             --  Actual build
-            Call_Gprbuild (Release);
+            if Release.Origin.Requires_Build then
+               Call_Gprbuild (Release);
+            else
+               Put_Info
+                 ("Skipping build of " & Release.Milestone.TTY_Image
+                  & ": release has no sources.", Detail);
+            end if;
 
             --  Post-build must run always
             Properties.Actions.Executor.Execute_Actions
