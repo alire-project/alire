@@ -130,8 +130,8 @@ package body Alire.Roots is
       begin
 
          if not State.Has_Release then
-            Put_Info (State.As_Dependency.TTY_Image
-                      & " has no release, build skipped.", Detail);
+            Put_Info ("Skipping build of " & State.As_Dependency.TTY_Image
+                      & ": not a release", Detail);
             return;
          end if;
 
@@ -198,24 +198,15 @@ package body Alire.Roots is
 
       if not Builds.Sandboxed_Dependencies then
          This.Sync_Builds;
-         --  Changes in configuration may require new build dirs
-
-         This.Configuration.Generate_Config_Files (This,
-                                                   Release (This),
-                                                   Full => Force);
-         --  Generate the config for the root crate only, the previous sync
-         --  takes care of the rest.
-
-         This.Build_Hasher.Write_Inputs (This);
-         --  Now, after the corresponding config files are in place
+         --  Changes in configuration may require new build dirs.
       end if;
 
-      --  Ensure configurations are written to disk
+      --  Ensure configurations are in place and up-to-date
 
       This.Generate_Configuration (Full => Force);
-      --  Will regenerate on demand only those changed. This is needed even
-      --  for shared builds, as linked dependencies don't require a sync, but
-      --  require config generation.
+      --  Will regenerate on demand only those changed. For shared
+      --  dependencies, will also generate any missing configs not generated
+      --  during sync, such as for linked releases and the root release.
 
       This.Export_Build_Environment;
 
@@ -838,9 +829,6 @@ package body Alire.Roots is
             end if;
          end;
       end Sync_Release;
-
-      Unused_Root_Hash : constant String := This.Build_Hash (This.Name);
-      --  Force build hash compu
 
    begin
       --  If no dependency exists, or is "regular" (has a hash), the root might
