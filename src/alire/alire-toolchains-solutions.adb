@@ -58,8 +58,7 @@ package body Alire.Toolchains.Solutions is
                  (Target           => Tool_Milestone (Tool),
                   Detect_Externals => Tool_Is_External (Tool)),
                Env            => Root.Platform_Properties,
-               Add_Dependency => True,
-               Shared         => True);
+               Add_Dependency => True);
          else
             Trace.Debug ("Toolchain environment: tool not in solution nor "
                          & "defined by the user: " & Tool.TTY_Image);

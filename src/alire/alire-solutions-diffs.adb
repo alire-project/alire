@@ -22,7 +22,6 @@ package body Alire.Solutions.Diffs is
       Unpinned,   -- A release being unpinned
       Unchanged,  -- An unchanged dependency/release
       Missing,    -- A missing dependency
-      Shared,     -- A release used from the shared installed releases
       Binary      -- A binary, system or external release
      );
 
@@ -42,7 +41,6 @@ package body Alire.Solutions.Diffs is
              when Unpinned   => TTY.Emph  (U ("🎈")), -- alts: 𐩒🎈
              when Unchanged  => TTY.OK    (U ("=")),
              when Missing    => TTY.Error (U ("❗")), -- alts: ⚠️❗‼️
-             when Shared     => TTY.Emph  (U ("♻️ ")), -- alts: ♻♻️♼🫴
              when Binary     => TTY.Warn  (U ("📦")))
        else
          (case Change is
@@ -55,7 +53,6 @@ package body Alire.Solutions.Diffs is
              when Unpinned   => U ("o"),
              when Unchanged  => U ("="),
              when Missing    => U ("!"),
-             when Shared     => U ("i"),
              when Binary     => U ("b")
          ));
 
@@ -178,25 +175,6 @@ package body Alire.Solutions.Diffs is
             Add_Change (Chg, Icon (Added), TTY.OK ("solved"));
          end if;
       end Fulfil_Change;
-
-      --------------------
-      -- Sharing_Change --
-      --------------------
-
-      procedure Sharing_Change is
-      begin
-         if (not Has_Former or else not Former.Is_Shared)
-           and then Has_Latter and then Latter.Is_Shared
-         then
-            Add_Change (Chg, Icon (Shared), TTY.Emph ("installed"));
-
-         elsif Has_Former and then Former.Is_Shared
-           and then Has_Latter and then not Latter.Is_Shared
-         then
-            Add_Change (Chg, "", TTY.Emph ("local"));
-
-         end if;
-      end Sharing_Change;
 
       --------------------------
       -- transitivity_changed --
@@ -368,8 +346,6 @@ package body Alire.Solutions.Diffs is
       Pinned_Or_Unpinned;
 
       Fulfil_Change;
-
-      Sharing_Change;
 
       Provider_Change;
 
