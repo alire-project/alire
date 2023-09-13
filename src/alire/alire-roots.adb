@@ -194,13 +194,9 @@ package body Alire.Roots is
       This.Configuration.Ensure_Complete;
       --  For proceeding to build, the configuration must be complete
 
-      --  Ensure sources and configurations are up to date
+      --  Ensure sources are up to date
 
-      if Builds.Sandboxed_Dependencies then
-         This.Generate_Configuration (Full => Force);
-         --  Will regenerate on demand only those changed
-
-      elsif not Builds.Sandboxed_Dependencies then
+      if not Builds.Sandboxed_Dependencies then
          This.Sync_Builds;
          --  Changes in configuration may require new build dirs
 
@@ -213,6 +209,13 @@ package body Alire.Roots is
          This.Build_Hasher.Write_Inputs (This);
          --  Now, after the corresponding config files are in place
       end if;
+
+      --  Ensure configurations are written to disk
+
+      This.Generate_Configuration (Full => Force);
+      --  Will regenerate on demand only those changed. This is needed even
+      --  for shared builds, as linked dependencies don't require a sync, but
+      --  require config generation.
 
       This.Export_Build_Environment;
 
@@ -836,10 +839,29 @@ package body Alire.Roots is
          end;
       end Sync_Release;
 
+      Unused_Root_Hash : constant String := This.Build_Hash (This.Name);
+      --  Force build hash compu
+
    begin
+      --  If no dependency exists, or is "regular" (has a hash), the root might
+      --  remain unhashed, which causes problems later on, so just in case
+      --  compute all hashes now.
+      This.Compute_Build_Hashes;
+
       --  Visit dependencies in safe order
       This.Traverse (Doing => Sync_Release'Access);
    end Sync_Builds;
+
+   --------------------------
+   -- Compute_Build_Hashes --
+   --------------------------
+
+   procedure Compute_Build_Hashes (This : in out Root) is
+      Unused_Root_Hash : constant String := This.Build_Hash (This.Name);
+      --  This triggers hash computation for all releases in the Root
+   begin
+      null;
+   end Compute_Build_Hashes;
 
    -----------------------------
    -- Sync_Pins_From_Manifest --

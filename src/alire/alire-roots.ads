@@ -431,4 +431,7 @@ private
    procedure Sync_Builds (This : in out Root);
    --  Sync from vault to final build location, and generate config
 
+   procedure Compute_Build_Hashes (This : in out Root);
+   --  Trigger computation of build hashes
+
 end Alire.Roots;

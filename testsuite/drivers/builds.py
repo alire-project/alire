@@ -6,7 +6,14 @@ from glob import glob
 import os
 from shutil import rmtree
 import subprocess
-from drivers.alr import alr_builds_dir
+from drivers.alr import alr_builds_dir, run_alr
+
+
+def enable_shared() -> None:
+    """
+    Enable shared builds
+    """
+    run_alr("config", "--global", "--set", "dependencies.shared", "true")
 
 
 def clear_builds_dir() -> None:
