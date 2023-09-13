@@ -18,19 +18,19 @@ init_local_crate("xxx")
 alr_with("gnat*")
 
 # Will appear in the solution as generic fulfilled by the preferred compiler
-match_solution("gnat=8888.0.0 (gnat_native) (installed)", escape=True)
+match_solution("gnat=8888.0.0 (gnat_native)", escape=True)
 
 # Selecting another default will cause a corresponding change in the solution
 run_alr("config", "--set", "toolchain.use.gnat", "gnat_cross_2=1")
 run_alr("update")
-match_solution("gnat=1.0.0 (gnat_cross_2) (installed)", escape=True)
+match_solution("gnat=1.0.0 (gnat_cross_2)", escape=True)
 
 # Adding another incompatible compiler dependency should result in overriding
 # the configured one
 alr_with("gnat_cross_1")
 
 # Both dependencies will appear in the solution, matching the same crate
-match_solution("gnat=9999.0.0 \(gnat_cross_1\) \(installed\).*"
-               "gnat_cross_1=9999.0.0 \(installed\)")
+match_solution("gnat=9999.0.0 \(gnat_cross_1\).*"
+               "gnat_cross_1=9999.0.0")
 
 print('SUCCESS')

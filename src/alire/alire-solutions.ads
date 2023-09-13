@@ -97,8 +97,7 @@ package Alire.Solutions is
       Release        : Alire.Releases.Release;
       Env            : Properties.Vector;
       For_Dependency : Optional.Crate_Name := Optional.Crate_Names.Empty;
-      Add_Dependency : Boolean := False;
-      Shared         : Boolean := False)
+      Add_Dependency : Boolean := False)
       return Solution
      with Pre =>
        Add_Dependency xor

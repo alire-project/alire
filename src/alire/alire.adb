@@ -1,5 +1,6 @@
 with AAA.Debug;
 
+with Alire.Environment;
 with Alire.Errors;
 with Alire.Warnings;
 with Alire.Utils.TTY;
@@ -76,7 +77,7 @@ package body Alire is
       Log (Exception_Information (E), Level);
       Log ("--->8--- Exception dump end ----->8---", Level);
 
-      if Log_Debug then
+      if Log_Debug or else Environment.Traceback_Enabled then
          Err_Log (Exception_Name (E));
          Err_Log (Full_Msg);
          Err_Log (Exception_Information (E));

@@ -9,7 +9,12 @@ from drivers import builds
 from drivers.alr import (alr_builds_dir, alr_vault_dir, alr_with,
                          alr_workspace_cache, init_local_crate, run_alr)
 from drivers.asserts import assert_contents, assert_file_exists
-from drivers.helpers import lines_of
+from drivers.helpers import contents, lines_of, neutral_path
+
+
+def check_in(file : str, expected : str) -> bool:
+    assert file in expected, f"Missing file '{file}' in\n{expected}"
+
 
 vault_dir = alr_vault_dir()
 build_dir = alr_builds_dir()
@@ -46,21 +51,12 @@ assert len(glob.glob(os.path.join(build_dir, "hello_1.0.1_filesystem_*"))) == 0,
 run_alr("build")
 base = builds.find_dir("hello_1.0.1_filesystem")
 
-assert_contents(base,
-                [f'{base}/alire',
-                 f'{base}/alire.toml',
-                 f'{base}/alire/build_hash_inputs',
-                 f'{base}/alire/flags',
-                 f'{base}/alire/flags/complete_copy',
-                 f'{base}/alire/flags/post_fetch_done',
-                 f'{base}/config',
-                 f'{base}/config/hello_config.ads',
-                 f'{base}/config/hello_config.gpr',
-                 f'{base}/config/hello_config.h',
-                 f'{base}/hello.gpr',
-                 f'{base}/obj',
-                 f'{base}/src',
-                 f'{base}/src/hello.adb'])
+# There's too much object files and the like, check a few critical files:
+files = contents(base)  # This returns "normalized" paths (with '/' separators)
+nbase = neutral_path(base)
+check_in(f'{nbase}/config/hello_config.ads', files)     # config was generated
+check_in(f'{nbase}/alire/flags/post_fetch_done', files) # actions were run
+check_in(f'{nbase}/obj/b__hello.ads', files)            # build took place
 
 # And that the crate usual cache dir doesn't exist
 assert not os.path.exists(alr_workspace_cache())

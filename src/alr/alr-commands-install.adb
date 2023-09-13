@@ -63,8 +63,7 @@ package body Alr.Commands.Install is
                   & " is already installed, use " & TTY.Terminal ("--force")
                   & " to reinstall");
             when New_Install | Reinstall | Replace =>
-               Cmd.Root.Install (Prefix     => Prefix,
-                                 Export_Env => True);
+               Cmd.Root.Install (Prefix => Prefix);
          end case;
 
       else

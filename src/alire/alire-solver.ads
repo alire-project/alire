@@ -57,10 +57,6 @@ package Alire.Solver is
    --  releases will be used normally; otherwise a crate with only externals
    --  will always cause failure.
 
-   type Sharing_Policies is (Allow_Shared, Only_Local);
-   --  * Allow_Shared: crates in the shared config can appear in solutions.
-   --  * Only_Local: only crates in the local workspace will be used.
-
    type Timeout_Policies is
      (Ask,      -- Normal interaction with user
       Stop,     -- Abort at first timeout
@@ -134,7 +130,6 @@ package Alire.Solver is
       --  only the given Completeness is used.
       Detecting    : Detection_Policies    := Detect;
       Hinting      : Hinting_Policies      := Hint;
-      Sharing      : Sharing_Policies      := Allow_Shared;
       On_Timeout   : Timeout_Policies      := Ask;
 
       Timeout      : Duration              := 5.0;

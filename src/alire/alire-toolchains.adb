@@ -191,7 +191,7 @@ package body Alire.Toolchains is
          --  whole system. We only offer external compilers detected in the
          --  environment.)
 
-         --  Deploy as a shared install unless external
+         --  Deploy to toolchains location unless external
 
          if Release.Origin.Is_Index_Provided then
             Toolchains.Deploy (Release);
@@ -503,7 +503,7 @@ package body Alire.Toolchains is
          Stop := False;
          if Kind (Item) = Directory then
             if Exists (Full_Name (Item) / Paths.Crate_File_Name) then
-               Trace.Debug ("Detected shared release at "
+               Trace.Debug ("Detected toolchain release at "
                             & TTY.URL (Full_Name (Item)));
 
                Result.Include
@@ -512,12 +512,13 @@ package body Alire.Toolchains is
                      Source    => Manifest.Index,
                      Strict    => True));
             else
-               Warnings.Warn_Once ("Unexpected folder in shared crates path: "
-                                   & TTY.URL (Full_Name (Item)));
+               Warnings.Warn_Once
+                 ("Unexpected folder in toolchain crates path: "
+                  & TTY.URL (Full_Name (Item)));
             end if;
 
          else
-            Warnings.Warn_Once ("Unexpected file in shared crates path: "
+            Warnings.Warn_Once ("Unexpected file in toolchain crates path: "
                                 & TTY.URL (Full_Name (Item)));
          end if;
       end Detect;

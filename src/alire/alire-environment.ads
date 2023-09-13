@@ -2,7 +2,6 @@ with Ada.Strings.Unbounded;
 
 with Alire.Properties;
 with Alire.Platforms;
-limited with Alire.Roots.Editable;
 
 private with Ada.Strings.Unbounded.Hash;
 private with Ada.Containers.Vectors;
@@ -10,13 +9,18 @@ private with Ada.Containers.Hashed_Maps;
 private with Alire.Properties.Environment;
 private with Ada.Containers.Generic_Array_Sort;
 
-package Alire.Environment is
+package Alire.Environment with Preelaborate is
 
    Config : constant String := "ALR_CONFIG";
    --  Folder where current alr will look for configuration
 
    Testsuite : constant String := "ALR_TESTSUITE";
    --  If defined, we are running under the testsuite harness
+
+   Traceback : constant String := "ALR_TRACEBACK_ENABLED";
+   --  If set to True/1, dump unexpected exceptions to console (same as `-d`)
+
+   function Traceback_Enabled return Boolean;
 
    type Context is tagged limited private;
 
@@ -28,16 +32,6 @@ package Alire.Environment is
 
    procedure Prepend (This : in out Context; Name, Value, Origin : String);
    --  Prepend a value to a variable in the context
-
-   procedure Load (This        : in out Context;
-                   Root        : in out Alire.Roots.Root;
-                   For_Hashing : Boolean := False);
-   --  Load the environment variables of a releases found in the workspace
-   --  Solution (GPR_PROJECT_PATH and custom variables) in the context. If
-   --  For_Hashing, skip or mock actions that require the build hash which is
-   --  part of the build path. We use this to gather all configuration when
-   --  paths aren't yet known (as they depend on the hash that is computed
-   --  from the configuration which will become itself part of the path).
 
    procedure Export (This : Context);
    --  Export the environment variables built from the variables previously
@@ -110,12 +104,5 @@ private
    end record;
 
    procedure Add (This : in out Context; Name : String; Action : Env_Action);
-
-   procedure Load (This            : in out Context;
-                   Root            : in out Roots.Editable.Root;
-                   Crate           : Crate_Name;
-                   For_Hashing     : Boolean := False);
-   --  Load the environment variables of a release (GPR_PROJECT_PATH and custom
-   --  variables) in the context. See note in previous Load about For_Hashing.
 
 end Alire.Environment;

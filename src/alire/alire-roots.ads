@@ -255,7 +255,6 @@ package Alire.Roots is
 
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
-                   Export_Build_Env : Boolean;
                    Build_All_Deps   : Boolean := False;
                    Saved_Profiles   : Boolean := True)
                    return Boolean;
@@ -287,7 +286,6 @@ package Alire.Roots is
      (This           : in out Root;
       Prefix         : Absolute_Path;
       Build          : Boolean := True;
-      Export_Env     : Boolean := True;
       Print_Solution : Boolean := True);
    --  Call gprinstall on the releases in solution using --prefix=Prefix
 
