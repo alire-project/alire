@@ -58,7 +58,6 @@ package body Alire.Dependencies.States is
       Pinned       : constant String := "pinned";
       Reason       : constant String := "reason";
       Release      : constant String := "release";
-      Shared       : constant String := "shared";
       Transitivity : constant String := "transitivity";
       Versions     : constant String := "versions";
 
@@ -124,8 +123,6 @@ package body Alire.Dependencies.States is
                           "release: " & (+Crate)),
                        Manifest.Index,
                        Strict => False)); -- because it may come from elsewhere
-               Data.Shared :=
-                 From.Checked_Pop (Keys.Shared, TOML_Boolean).As_Boolean;
          end case;
 
          return Data;
@@ -194,9 +191,6 @@ package body Alire.Dependencies.States is
                  (Keys.Release,
                   This.Fulfilled.Release.Constant_Reference.To_TOML
                     (Manifest.Index));
-               Table.Set
-                 (Keys.Shared,
-                  Create_Boolean (This.Fulfilled.Shared));
          end case;
       end To_TOML;
 

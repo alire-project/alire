@@ -39,14 +39,14 @@ alr_with("gnat")
 
 # gnat x gnat results in the external available compiler being used, preferred
 # over the native also available compiler (but not selected)
-match_solution(f"gnat={version} (gnat_external) (installed)",
+match_solution(f"gnat={version} (gnat_external)",
                escape=True)
 
 # If we add a precise dependency on e.g. the installed native compiler, this
 # should override the external compiler
 alr_with("gnat_native")
-match_solution("gnat=8888.0.0 (gnat_native) (installed)", escape=True)
-match_solution("gnat_native=8888.0.0 (installed)", escape=True)
+match_solution("gnat=8888.0.0 (gnat_native)", escape=True)
+match_solution("gnat_native=8888.0.0", escape=True)
 
 # Let us swap the generic dependency with a targeted dependency, starting from
 # scratch
@@ -57,8 +57,8 @@ run_alr("with", "--use=../dep_targeted")
 alr_with("gnat")
 
 # In this case the only possible solution is with the targeted compiler
-match_solution("gnat=" + e("8888.0.0 (gnat_native) (installed)") + ".*" +
-               "gnat_native=" + e("8888.0.0 (installed)") + ".*")
+match_solution("gnat=" + e("8888.0.0 (gnat_native)") + ".*" +
+               "gnat_native=" + e("8888.0.0") + ".*")
 
 # Second, we check a root targeted gnat with both dependencies
 
@@ -69,8 +69,8 @@ alr_with("gnat_native")
 
 # In this case the only possible solution is with the targeted compiler. The
 # Generic dependency also appears, coming from the dep_generic crate
-match_solution("gnat=" + e("8888.0.0 (gnat_native) (installed)") + ".*" +
-               "gnat_native=" + e("8888.0.0 (installed)") + ".*")
+match_solution("gnat=" + e("8888.0.0 (gnat_native)") + ".*" +
+               "gnat_native=" + e("8888.0.0") + ".*")
 
 # Last combination is targeted x targeted
 os.chdir("..")
@@ -80,7 +80,7 @@ alr_with("gnat_native")
 
 # In this case the only possible solution is with the targeted compiler. The
 # generic dependency no longer exists, as nobody requested a generic gnat.
-match_solution("gnat_native=" + e("8888.0.0 (installed)") + ".*")
+match_solution("gnat_native=" + e("8888.0.0") + ".*")
 p = run_alr("with", "--solve")
 assert "gnat=" not in p.out, "Unexpected output"
 

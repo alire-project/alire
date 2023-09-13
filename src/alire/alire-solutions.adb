@@ -429,8 +429,7 @@ package body Alire.Solutions is
       Release        : Alire.Releases.Release;
       Env            : Properties.Vector;
       For_Dependency : Optional.Crate_Name := Optional.Crate_Names.Empty;
-      Add_Dependency : Boolean := False;
-      Shared         : Boolean := False)
+      Add_Dependency : Boolean := False)
       return Solution
    is
       Dep_Name : constant Crate_Name := (if Add_Dependency
@@ -459,8 +458,7 @@ package body Alire.Solutions is
             Result.Dependencies :=
               Result.Dependencies.Including
                 (Result.State (Dep_Name).Solving
-                   (Release.Whenever (Env),
-                    Shared => Shared));
+                   (Release.Whenever (Env)));
             --  TODO: remove this Whenever once dynamic expr can be exported
          elsif Result.State (Dep_Name).Is_Hinted then
             Result := Result.Hinting (Result.State (Dep_Name).As_Dependency);
@@ -484,7 +482,7 @@ package body Alire.Solutions is
                Result.Dependencies :=
                  Result.Dependencies.Including
                    (This.State (Dep.Crate)
-                        .Solving (Release.Whenever (Env), Shared => Shared));
+                        .Solving (Release.Whenever (Env)));
             end if;
          end loop;
 
@@ -743,8 +741,6 @@ package body Alire.Solutions is
                      else "")
                   & (if Dep.Is_Pinned or else Dep.Is_Linked
                      then TTY.Emph (" (pinned)")
-                     elsif Dep.Is_Shared
-                     then TTY.Emph (" (installed)")
                      else "")
                   & (if Detailed
                      then " (origin: "
@@ -1466,10 +1462,10 @@ package body Alire.Solutions is
    begin
 
       --  Visit first dependencies that do not have releases (and hence no
-      --  dependencies) or that are preinstalled.
+      --  dependencies).
 
       for Dep of This.Dependencies loop
-         if not Dep.Has_Release or else Dep.Is_Shared then
+         if not Dep.Has_Release then
             Visit (Dep);
          end if;
       end loop;

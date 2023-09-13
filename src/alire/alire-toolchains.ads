@@ -125,8 +125,8 @@ package Alire.Toolchains is
    --  Constraint_Error if not among Available.
 
    function Path return Any_Path;
-   --  Returns the base folder in which all shared releases live, defaults to
-   --  <cache>/toolchains
+   --  Returns the base folder in which all toolchain releases live, defaults
+   --  to <cache>/toolchains
 
    procedure Deploy (Release  : Releases.Release;
                      Location : Any_Path := Path);
@@ -139,7 +139,7 @@ package Alire.Toolchains is
      or else raise Checked_Error with
        Errors.Set ("Requested release is not installed: "
                    & Release.Milestone.TTY_Image);
-   --  Remove a release from the shared location for the configuration
+   --  Remove a release from the toolchains location for the configuration
 
    procedure Remove
      (Target : Milestones.Milestone;
