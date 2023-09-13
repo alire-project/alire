@@ -39,7 +39,6 @@ package body Alire.Roots is
 
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
-                   Export_Build_Env : Boolean;
                    Build_All_Deps   : Boolean := False;
                    Saved_Profiles   : Boolean := True)
                    return Boolean
@@ -198,9 +197,7 @@ package body Alire.Roots is
          --  Now, after the corresponding config files are in place
       end if;
 
-      if Export_Build_Env or else not Builds.Sandboxed_Dependencies then
-         This.Export_Build_Environment;
-      end if;
+      This.Export_Build_Environment;
 
       This.Traverse (Build_Single_Release'Access);
 
@@ -235,7 +232,15 @@ package body Alire.Roots is
          This.Build_Hasher.Compute (This);
       end if;
 
-      return This.Build_Hasher.Hash (Name);
+      if This.Build_Hasher.Contains (Name) then
+         return This.Build_Hasher.Hash (Name);
+      else
+         Trace.Error
+           ("Requested build hash of release " & Name.As_String
+            & " not among solution states:");
+         This.Solution.Print_States ("   ", Error);
+         raise Program_Error;
+      end if;
    end Build_Hash;
 
    --------------
@@ -253,7 +258,6 @@ package body Alire.Roots is
      (This           : in out Root;
       Prefix         : Absolute_Path;
       Build          : Boolean := True;
-      Export_Env     : Boolean := True;
       Print_Solution : Boolean := True)
    is
       use AAA.Strings;
@@ -411,12 +415,11 @@ package body Alire.Roots is
 
       if Build then
          Assert (This.Build (Cmd_Args         => AAA.Strings.Empty_Vector,
-                             Export_Build_Env => Export_Env,
                              Build_All_Deps   => True),
                  Or_Else => "Build failed, cannot perform installation");
       end if;
 
-      if Export_Env then
+      if not Build then
          This.Export_Build_Environment;
       end if;
 
@@ -744,37 +747,11 @@ package body Alire.Roots is
 
    begin
 
-      --  Prepare environment for any post-fetch actions. This must be done
-      --  after the lockfile on disk is written, since the root will read
-      --  dependencies from there. Post-fetch may happen even with shared
-      --  builds for linked and binary dependencies.
-
-      if Builds.Sandboxed_Dependencies then
-         This.Export_Build_Environment;
-      else
-         null;
-         --  When using shared dependencies we have a conflict between crates
-         --  "in-place" (without syncing, e.g. links/binaries), which should
-         --  have its post-fetch run immediately, and regular crates, which
-         --  get the post-fetch run after sync. Since the complete environment
-         --  cannot be known for the former until build time (as config could
-         --  be incomplete otherwise), we need to delay post-fetch for all
-         --  crates to build time, in a follow-up PR. Meanwhile, in some corner
-         --  cases post-fetch could fail when using shared deps (in-place
-         --  crates with a post-fetch that relies on the environment).
-
-         --  TODO: delay post-fetch for binary/linked crates to the build
-         --  moment too. Do this for both sandboxed/shared, for the sake
-         --  of simplicity?
-      end if;
-
-      --  Visit dependencies in a safe order to be fetched, and their actions
-      --  ran
+      --  Visit dependencies in a safe order to be fetched
 
       This.Traverse (Doing => Deploy_Release'Access);
 
-      --  Show hints for missing externals to the user after all the noise of
-      --  dependency post-fetch compilations.
+      --  Show hints for missing externals to the user
 
       This.Solution.Print_Hints (This.Environment);
 
@@ -843,9 +820,6 @@ package body Alire.Roots is
       end Sync_Release;
 
    begin
-      --  Prepare environment for any post-fetch actions
-      This.Export_Build_Environment;
-
       --  Visit dependencies in safe order
       This.Traverse (Doing => Sync_Release'Access);
    end Sync_Builds;

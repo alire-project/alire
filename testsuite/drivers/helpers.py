@@ -256,6 +256,12 @@ def replace_in_file(filename : str, old : str, new : str):
         file.write(old_contents.replace(old, new))
 
 
+def neutral_path(path : str) -> str:
+    """
+    Return a path with all separators replaced by '/'.
+    """
+    return path.replace('\\', '/')
+
 class FileLock():
     """
     A filesystem-level lock for tests executed from different threads but
