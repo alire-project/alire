@@ -1433,6 +1433,7 @@ package body Alire.Solutions is
       Root  : Alire.Releases.Containers.Optional :=
         Alire.Releases.Containers.Optional_Releases.Empty)
    is
+      Rels    : constant Release_Map := This.Releases;
       Pending : State_Map := This.Dependencies;
       Visited : Containers.Crate_Name_Sets.Set;
       Round   : Natural := 0;
@@ -1485,16 +1486,24 @@ package body Alire.Solutions is
 
             for Dep of Pending loop
 
-               if not Dep.Is_Solved then
-                  Trace.Debug ("Round" & Round'Img & ": NOOP "
+               if Dep.Is_Missing then
+                  --  This leaves solved/linked to visit
+                  Trace.Debug ("Round" & Round'Img & ": VISIT ready (missing) "
                                & Dep.Release.Milestone.Image);
 
                   To_Remove.Insert (Dep.Crate, Dep);
 
                elsif
+                 --  Some dependency is still unvisited, either under its own
+                 --  name or through some alias. These nested fors may merit
+                 --  optimization in the future?
                  (for some Rel_Dep of Dep.Release.Flat_Dependencies
                     (Alire.Root.Platform_Properties) =>
-                        not Visited.Contains (Rel_Dep.Crate))
+                       not Visited.Contains (Rel_Dep.Crate)
+                       and then
+                       not (for some Rel of Rels =>
+                              Visited.Contains (Rel.Name)
+                              and then Rel.Provides (Rel_Dep.Crate)))
                then
                   Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
                                  Dep.Release.Milestone.Image);
