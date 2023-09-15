@@ -36,9 +36,8 @@ $ ./run.py
 ```
 
 # Creating tests
-All tests are based on running a Python script. This script can be launched in
-one of three ways, depending on the chosen test driver:
+All tests are based on running a Python script. There are three test drivers:
 
-- `python-script`: plain hosted configuration, shared builds disabled.
-- `shared-build`: as previous, with shared builds enabled.
-- `docker-wrapper`: the test is run in a pristine docker Ubuntu image.
+- `python-script`: run in host in sandboxed build mode
+- `shared-build`: run in host in shared build mode
+- `docker-wrapper`: run in a pristine docker Ubuntu image in shared build mode

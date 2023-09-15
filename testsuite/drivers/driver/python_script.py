@@ -1,7 +1,9 @@
+import copy
 import os
+import shutil
 import sys
 
-from drivers.alr import prepare_env, prepare_indexes
+from drivers.alr import prepare_env, prepare_indexes, run_alr
 from e3.testsuite.driver.classic import (ClassicTestDriver,
                                          TestAbortWithFailure,
                                          TestSkip)
@@ -25,9 +27,10 @@ class PythonScriptDriver(ClassicTestDriver):
         return None
 
     def prepare(self) -> dict:
+        # prepare a private environment for Python scripts to run "alr".
+
         env = dict(os.environ)
 
-        # prepare a private environment for Python scripts to run "alr".
         config_dir = os.path.join(self.test_env['working_dir'],
                                   'alr-config')
         prepare_env(config_dir, env)
@@ -56,12 +59,9 @@ class PythonScriptDriver(ClassicTestDriver):
                           env=env,
                           cwd=self.test_env['working_dir'])
 
-    def run(self):
-        env = self.prepare()
 
-        p = self.run_script(env)
-
-        # Check that the last line in stdout is "SUCCESS" or "SKIP"
+    def check_result(self, p):
+        # Check that the test output is proper (no missing status)
         out_lines = p.out.splitlines()
         if out_lines and out_lines[-1] == 'SUCCESS':
             pass
@@ -70,3 +70,69 @@ class PythonScriptDriver(ClassicTestDriver):
         else:
             self.result.log += 'missing SUCCESS output line'
             raise TestAbortWithFailure('missing SUCCESS output line')
+
+
+    def save_working_dir(self):
+        files = []
+
+        # Store the names of files in the working directory
+        for f in os.listdir(self.test_env['working_dir']):
+            files.append(f)
+
+        return files
+
+
+    def restore_working_dir(self, files):
+        # Restore the working directory to its initial state, by deleting
+        # anything not in the list of saved files
+
+        # Iterate over files
+        for f in os.listdir(self.test_env['working_dir']):
+            if f in files:
+                continue
+            path = os.path.join(self.test_env['working_dir'], f)
+            if os.path.isfile(path):
+                os.remove(path)
+            else:
+                shutil.rmtree(path)
+
+
+    def run(self):
+        # Run the test itself. Depending on the build mode, it may be run
+        # twice.
+        DEFAULT_MODE = "both"
+
+        pristine_env = self.prepare()
+
+        # Obtain the build mode for the test
+        mode = self.test_env.get('build_mode',
+                                 self.test_env.get('build-mode',
+                                                   DEFAULT_MODE))
+        # One of 'shared', 'sandboxed', or 'both'
+
+        # If mode is "both", track original files for later
+        if mode == "both":
+            test_files = self.save_working_dir()
+
+        # First run with shared builds disabled
+
+        if mode in ["sandboxed", "both"]:
+            self.result.log.log += "Build mode: SANDBOXED\n"
+            p = self.run_script(copy.deepcopy(pristine_env))
+            self.check_result(p)
+
+        # Second run with shared builds enabled
+
+        # Start by cleaning up anything the 1st run may have left behind
+        if mode == "both":
+            self.restore_working_dir(test_files)
+
+        if mode in ["shared", "both"]:
+            self.result.log.log += "Build mode: SHARED\n"
+            # Activate shared builds. Using "-c" is needed as the environment
+            # still isn't activated at the driver script level.
+            run_alr("-c", pristine_env["ALR_CONFIG"],
+                    "config", "--global", "--set",
+                    "dependencies.shared", "true")
+            p = self.run_script(copy.deepcopy(pristine_env))
+            self.check_result(p)

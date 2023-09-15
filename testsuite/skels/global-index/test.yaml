@@ -1,3 +1,5 @@
 driver: python-script
+build_mode: both  # one of shared, sandboxed, both (default)
 indexes:
-    basic_index: {}
+    basic_index:
+        in_fixtures: true

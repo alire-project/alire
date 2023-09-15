@@ -1,4 +1,5 @@
 driver: python-script
+build_mode: both  # one of shared, sandboxed, both (default)
 indexes:
     my_index:
         in_fixtures: false
