@@ -56,7 +56,7 @@ package body Alire.Solutions is
 
    function Contains_Release (This  : Solution;
                               Crate : Crate_Name) return Boolean
-   is (This.Depends_On (Crate) and then This.State (Crate).Is_Solved);
+   is (This.Depends_On (Crate) and then This.State (Crate).Has_Release);
 
    ----------------
    -- Dependency --

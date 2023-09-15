@@ -134,8 +134,7 @@ package body Alr.Commands.Run is
          --  COMPILATION  --
          if not Cmd.No_Compile then
             if not Commands.Build.Execute (Cmd,
-                                           Args => AAA.Strings.Empty_Vector,
-                                           Export_Build_Env => True)
+                                           Args => AAA.Strings.Empty_Vector)
             then
                Reportaise_Command_Failed ("Build failed");
             end if;

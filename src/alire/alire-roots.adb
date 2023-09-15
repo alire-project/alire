@@ -130,13 +130,24 @@ package body Alire.Roots is
       begin
 
          if not State.Has_Release then
-            Put_Info (State.As_Dependency.TTY_Image & ": no build needed.");
+            Put_Info ("Skipping build of " & State.As_Dependency.TTY_Image
+                      & ": not a release", Detail);
             return;
          end if;
 
          declare
             Release : constant Releases.Release := State.Release;
          begin
+
+            --  Skip releases that have no deployment location and hence can't
+            --  run actions.
+            if not Release.Origin.Is_Index_Provided then
+               Put_Info
+                 ("Skipping actions and build of "
+                  & Release.Milestone.TTY_Image
+                  & ": origin is system/external", Detail);
+               return;
+            end if;
 
             --  Run post-fetch, it will be skipped if already ran
             Properties.Actions.Executor.Execute_Actions
@@ -151,7 +162,13 @@ package body Alire.Roots is
                Properties.Actions.Pre_Build);
 
             --  Actual build
-            Call_Gprbuild (Release);
+            if Release.Origin.Requires_Build then
+               Call_Gprbuild (Release);
+            else
+               Put_Info
+                 ("Skipping build of " & Release.Milestone.TTY_Image
+                  & ": release has no sources.", Detail);
+            end if;
 
             --  Post-build must run always
             Properties.Actions.Executor.Execute_Actions
@@ -177,25 +194,19 @@ package body Alire.Roots is
       This.Configuration.Ensure_Complete;
       --  For proceeding to build, the configuration must be complete
 
-      --  Ensure sources and configurations are up to date
+      --  Ensure sources are up to date
 
-      if Builds.Sandboxed_Dependencies then
-         This.Generate_Configuration (Full => Force);
-         --  Will regenerate on demand only those changed
-
-      elsif not Builds.Sandboxed_Dependencies then
+      if not Builds.Sandboxed_Dependencies then
          This.Sync_Builds;
-         --  Changes in configuration may require new build dirs
-
-         This.Configuration.Generate_Config_Files (This,
-                                                   Release (This),
-                                                   Full => Force);
-         --  Generate the config for the root crate only, the previous sync
-         --  takes care of the rest.
-
-         This.Build_Hasher.Write_Inputs (This);
-         --  Now, after the corresponding config files are in place
+         --  Changes in configuration may require new build dirs.
       end if;
+
+      --  Ensure configurations are in place and up-to-date
+
+      This.Generate_Configuration (Full => Force);
+      --  Will regenerate on demand only those changed. For shared
+      --  dependencies, will also generate any missing configs not generated
+      --  during sync, such as for linked releases and the root release.
 
       This.Export_Build_Environment;
 
@@ -820,9 +831,25 @@ package body Alire.Roots is
       end Sync_Release;
 
    begin
+      --  If no dependency exists, or is "regular" (has a hash), the root might
+      --  remain unhashed, which causes problems later on, so just in case
+      --  compute all hashes now.
+      This.Compute_Build_Hashes;
+
       --  Visit dependencies in safe order
       This.Traverse (Doing => Sync_Release'Access);
    end Sync_Builds;
+
+   --------------------------
+   -- Compute_Build_Hashes --
+   --------------------------
+
+   procedure Compute_Build_Hashes (This : in out Root) is
+      Unused_Root_Hash : constant String := This.Build_Hash (This.Name);
+      --  This triggers hash computation for all releases in the Root
+   begin
+      null;
+   end Compute_Build_Hashes;
 
    -----------------------------
    -- Sync_Pins_From_Manifest --

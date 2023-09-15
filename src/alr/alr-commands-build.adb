@@ -88,9 +88,7 @@ package body Alr.Commands.Build is
 
       --  And redirect to actual execution procedure
 
-      if not Execute (Cmd, Args,
-                      Export_Build_Env => True)
-      then
+      if not Execute (Cmd, Args) then
          Reportaise_Command_Failed ("Compilation failed.");
       end if;
    end Execute;
@@ -100,8 +98,7 @@ package body Alr.Commands.Build is
    -------------
 
    function Execute (Cmd              : in out Commands.Command'Class;
-                     Args             :        AAA.Strings.Vector;
-                     Export_Build_Env :        Boolean)
+                     Args             :        AAA.Strings.Vector)
                      return Boolean
    is
    begin
@@ -115,7 +112,6 @@ package body Alr.Commands.Build is
          Timer : Stopwatch.Instance;
       begin
          if Cmd.Root.Build (Args,
-                            Export_Build_Env,
                             Saved_Profiles => Cmd not in Build.Command'Class)
            --  That is, we apply the saved profiles unless the user is
            --  explicitly invoking `alr build`.
