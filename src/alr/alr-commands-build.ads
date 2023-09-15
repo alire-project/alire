@@ -20,9 +20,8 @@ package Alr.Commands.Build is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector);
 
-   function Execute (Cmd              : in out Commands.Command'Class;
-                     Args             :        AAA.Strings.Vector;
-                     Export_Build_Env :        Boolean)
+   function Execute (Cmd  : in out Commands.Command'Class;
+                     Args :        AAA.Strings.Vector)
                      return Boolean;
    --  Returns True if compilation succeeded. For invocations after some other
    --  command that already has set up the build environment we need to avoid

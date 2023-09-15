@@ -188,8 +188,8 @@ package Alire.Solutions is
 
    function Contains_Release (This  : Solution;
                               Crate : Crate_Name) return Boolean;
-   --  Say if Crate is among the solved releases for this solution. It will
-   --  return False if the solution does not even depend on Crate.
+   --  Say if Crate is among the releases (solved or linked) for this solution.
+   --  It will return False if the solution does not even depend on Crate.
 
    function Crates (This : Solution) return Name_Set;
    --  Dependency name closure, independent of the status in the solution, as

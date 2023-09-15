@@ -45,23 +45,23 @@ jobs:
     # We can start using the alr we just built
 
     - name: Update dependencies
-      run: ./bin/alr -n update
+      run: ./bin/alr -d -n update
 
     - name: Show dependencies/pins
-      run: ./bin/alr -n -q with --solve || ./bin/alr -n -v -d with --solve
+      run: ./bin/alr -d -n -q with --solve || ./bin/alr -n -v -d with --solve
 
     - name: Show build environment, with debug fallback
-      run: ./bin/alr -n printenv || ./bin/alr -n -v -d printenv
+      run: ./bin/alr -d -n printenv || ./bin/alr -n -v -d printenv
 
     - shell: bash
       run: mv ./bin ./bin-old
       # Windows doesn't allow to replace a running exe so the next command fails otherwise
 
     - name: SELF-BUILD
-      run: ./bin-old/alr -n build
+      run: ./bin-old/alr -d -n build
 
     - name: Show built version
-      run: ./bin/alr -n version
+      run: ./bin/alr -d -n version
 
     # Run the testsuite with the just build alr. The testsuite picks the proper
     # alr in the ./bin/alr location.

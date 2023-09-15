@@ -142,7 +142,9 @@ package Alire.Roots is
    function Requires_Build_Sync (This : in out Root;
                                  Rel  : Releases.Release)
                                  return Boolean
-     with Pre => This.Solution.Contains_Release (Rel.Name);
+     with Pre =>
+       This.Solution.Contains_Release (Rel.Name) or else
+       raise Program_Error with "Release not in solution: " & Rel.Name_Str;
    --  Says if the release requires a build copy taking into account everything
 
    function Nonabstract_Crates (This : in out Root)
@@ -428,5 +430,8 @@ private
 
    procedure Sync_Builds (This : in out Root);
    --  Sync from vault to final build location, and generate config
+
+   procedure Compute_Build_Hashes (This : in out Root);
+   --  Trigger computation of build hashes
 
 end Alire.Roots;
