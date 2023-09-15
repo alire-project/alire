@@ -40,6 +40,11 @@ package body Alire.Crate_Configuration is
 
    subtype Crate_Name_Set is Containers.Crate_Name_Sets.Set;
 
+   procedure Make_Switches_Map (This     : in out Global_Config;
+                                Root     : in out Alire.Roots.Root;
+                                Rel_Vect : Crate_Name_Set);
+   --  Prepare the list of switches that apply to a release
+
    --  The Host info types below could be Enums instead of Strings. This would
    --  have the advantage of providing users the entire list of potential
    --  values. However, using enums in Ada would have a very high risk of
@@ -88,6 +93,23 @@ package body Alire.Crate_Configuration is
                            Crate : Crate_Name)
                            return Utils.Switches.Profile_Kind
    is (This.Profile_Map (Crate));
+
+   --------------------
+   -- Build_Switches --
+   --------------------
+
+   function Build_Switches (This  : in out Global_Config;
+                            Root  : in out Roots.Root;
+                            Crate : Crate_Name)
+                            return Utils.Switches.Switch_List
+   is
+   begin
+      --  Ensure they're up to date
+      Make_Switches_Map (This, Root,
+                         Containers.Crate_Name_Sets.To_Set (Crate));
+
+      return This.Switches_Map (Crate);
+   end Build_Switches;
 
    -----------------------
    -- Build_Profile_Key --

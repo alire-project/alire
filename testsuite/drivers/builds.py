@@ -16,6 +16,17 @@ def enable_shared() -> None:
     run_alr("config", "--global", "--set", "dependencies.shared", "true")
 
 
+def are_shared() -> bool:
+    """
+    Return True if shared builds are enabled
+    """
+    try:
+        return run_alr("config", "--global", "--get",
+                       "dependencies.shared").out.strip().lower() == "true"
+    except:
+        return False
+
+
 def clear_builds_dir() -> None:
     """
     Clear the shared build directory
@@ -54,6 +65,13 @@ def path() -> str:
     Return the path to the shared build directory.
     """
     return alr_builds_dir()
+
+
+def vault_path() -> str:
+    """
+    Return the path to the read-only release vault.
+    """
+    return os.path.join(path(), "..", "releases")
 
 
 def sync() -> None:

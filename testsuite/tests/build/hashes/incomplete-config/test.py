@@ -3,13 +3,8 @@ Test that a crate with incomplete config (values without defaults) cannot be
 built/hashed
 """
 
-import shutil
-from drivers.alr import alr_with, external_compiler_version, init_local_crate, run_alr
-from drivers.builds import find_hash, hash_input
-from drivers.asserts import assert_eq, assert_match
-from drivers import builds
-
-run_alr("config", "--set", "--global", "dependencies.shared", "true")
+from drivers.alr import alr_with, init_local_crate, run_alr
+from drivers.builds import hash_input
 
 init_local_crate()
 alr_with("libhello=0.9")

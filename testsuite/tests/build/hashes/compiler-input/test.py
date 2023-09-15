@@ -23,9 +23,6 @@ def check_hash(signature: str) -> None:
 # Disable compiler selection, so the external is used
 run_alr("toolchain", "--disable-assistant")
 
-# Enable shared dependencies
-run_alr("config", "--set", "--global", "dependencies.shared", "true")
-
 # Init a crate without explicit compiler dependency
 init_local_crate("xxx")
 alr_with("crate_real")  # A regular crate in the index

@@ -46,6 +46,14 @@ package Alire.Crate_Configuration is
                            return Utils.Switches.Profile_Kind
      with Pre => This.Is_Valid;
 
+   function Build_Switches (This  : in out Global_Config;
+                            Root  : in out Roots.Root;
+                            Crate : Crate_Name)
+                            return Utils.Switches.Switch_List
+     with Pre => This.Is_Valid;
+   --  The exact switches that apply to a crate (the ones that will be written
+   --  to their config .gpr files)
+
    function Is_Default_Profile (This  : Global_Config;
                                 Crate : Crate_Name)
                                 return Boolean;

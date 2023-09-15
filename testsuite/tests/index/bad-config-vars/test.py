@@ -42,9 +42,11 @@ def check_ok(var_def):
    p = run_alr('show', 'hello_world',
                complain_on_error=True, debug=False, quiet=True)
 
-
-os.remove(os.path.join("my_index", "index", "he", "hello_world",
-                       ".gitignore"))
+try:
+    os.remove(os.path.join("my_index", "index", "he", "hello_world",
+                        ".gitignore"))
+except:
+    pass  # Will have been removed by 1st test run
 
 check_error('var1=["plop"]', 'variable definition must be a table')
 check_error('var1={}', "configuration.variables.var1:")

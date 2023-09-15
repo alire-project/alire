@@ -1,4 +1,4 @@
 driver: python-script
 indexes:
-    solver_index:
-        in_fixtures: true
+    solver_index: {}
+    compiler_only_index: {}

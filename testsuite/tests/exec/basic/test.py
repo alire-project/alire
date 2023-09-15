@@ -27,9 +27,16 @@ p = run_alr('exec', '--', 'sh', '-c',
             ' alire context:" ${GPR_PROJECT_PATH}',
             quiet=False) # -q will hide the output of the exec command
 
-assert_match('.* GPR_PROJECT_PATH from alire context.*'
-             'hello_[0-9\.]*_filesystem.*'
-             'libhello_[0-9\.]*_filesystem.*',
+# These may appear in both orders depending on the cache location
+try:
+    assert_match('.* GPR_PROJECT_PATH from alire context.*'
+                'hello_[0-9\.]*_filesystem.*'
+                'libhello_[0-9\.]*_filesystem.*',
+                p.out, flags=re.S)
+except:
+    assert_match('.* GPR_PROJECT_PATH from alire context.*'
+             'libhello_[0-9\.]*_filesystem.*'
+             'hello_[0-9\.]*_filesystem.*',
              p.out, flags=re.S)
 
 print('SUCCESS')

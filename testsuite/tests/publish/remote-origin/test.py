@@ -56,4 +56,7 @@ copyfile(os.path.join("alire", "releases", "xxx-0.1.0-dev.toml"),
 p = run_alr("search", "--crates")
 assert "xxx" in p.out, "Crate not found in index contents"
 
+# Remove the index for the next test
+run_alr("index", "--del", "my_index")
+
 print('SUCCESS')

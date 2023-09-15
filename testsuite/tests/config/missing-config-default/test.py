@@ -30,9 +30,12 @@ assert p.status != 0, "Get with build should have failed"
 assert_match('.*Configuration variables without a default remain unset\n',
              p.out)
 
-# Get without build must succeed with the missing values as warnings
+# Get without build succeeds as no config is needed yet
 p = run_alr("get", "hello=1.0.0", quiet=False)
 
+# Building must fail and complaint about missing variables
+os.chdir(glob("hello_1.0.0_*")[0])
+p = run_alr("build", complain_on_error=False, quiet=False)
 assert_match('.*Configuration variable \'hello.var1\' not set and has no default value.\n'
              '.*Configuration variable \'hello.var2\' not set and has no default value.\n'
              '.*Configuration variable \'hello.var3\' not set and has no default value.\n'
@@ -43,17 +46,7 @@ assert_match('.*Configuration variable \'hello.var1\' not set and has no default
              '.*Configuration variable \'libhello.var3\' not set and has no default value.\n'
              '.*Configuration variable \'libhello.var4\' not set and has no default value.\n'
              '.*Configuration variable \'libhello.var5\' not set and has no default value.\n'
-             '.*Skipping generation of incomplete configuration files for crate hello\n'
-             '.*Skipping generation of incomplete configuration files for crate libhello\n'
-             '\n'
-             'hello=1.0.0 successfully retrieved.',
-             p.out)
-
-# Attempting to build now should fail
-os.chdir(glob("hello_1.0.0_*")[0])
-p = run_alr("build", complain_on_error=False)
-assert p.status != 0, "Build should have failed"
-assert_match('.*Configuration variables without a default remain unset\n',
+             '.*Configuration variables without a default remain unset\n',
              p.out)
 
 # Verify that providing the values in the manifest allows the build to work
