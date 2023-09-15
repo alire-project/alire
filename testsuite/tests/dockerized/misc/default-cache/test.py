@@ -5,6 +5,7 @@ it should.
 
 import os
 
+from drivers import builds
 from drivers.alr import alr_with, init_local_crate, run_alr
 from drivers.helpers import contents
 
@@ -26,7 +27,7 @@ assert \
 # First, prevent an attempt at downloading a real compiler
 run_alr("toolchain", "--disable-assistant")
 
-run_alr("config", "--global", "--set", "dependencies.shared", "true")
+builds.enable_shared()  # Enabled here as we are using the Docker driver
 alr_with("crate_real")  # This release will go in the cache
 
 # Read-only vault

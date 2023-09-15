@@ -1,4 +1,4 @@
-driver: python-script
+driver: shared-build
 indexes:
     basic_index:
         in_fixtures: true

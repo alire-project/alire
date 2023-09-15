@@ -11,7 +11,6 @@ from drivers.asserts import assert_eq, assert_match
 from drivers import builds
 from drivers.helpers import content_of
 
-run_alr("config", "--set", "--global", "dependencies.shared", "true")
 init_local_crate()
 alr_with("hello")
 

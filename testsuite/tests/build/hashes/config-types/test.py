@@ -7,8 +7,6 @@ from drivers.builds import find_hash, hash_input
 from drivers.asserts import assert_eq
 from drivers import builds
 
-run_alr("config", "--set", "--global", "dependencies.shared", "true")
-
 init_local_crate()
 alr_with("hello=1.0.1")
 builds.sync()

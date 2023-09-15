@@ -9,24 +9,24 @@ interpreter with the e3-core and e3-testsuite packages (from PyPI) installed.
 
 from __future__ import absolute_import, print_function
 
-from argparse import ArgumentTypeError
-import sys
 import os.path
+import sys
+from argparse import ArgumentTypeError
 
 import e3.testsuite
 import e3.testsuite.driver
-from e3.testsuite.result import TestStatus
-
-from drivers.helpers import on_windows
-from drivers.driver.python_script import PythonScriptDriver
 from drivers.driver.docker_wrapper import DockerWrapperDriver
+from drivers.driver.python_script import PythonScriptDriver
+from drivers.driver.shared_build import SharedBuildDriver
+from drivers.helpers import on_windows
 
 
 class Testsuite(e3.testsuite.Testsuite):
     tests_subdir = 'tests'
     test_driver_map = {
         'python-script': PythonScriptDriver,
-        'docker-wrapper': DockerWrapperDriver
+        'docker-wrapper': DockerWrapperDriver,
+        'shared-build': SharedBuildDriver
         }
 
     def add_options(self, parser):

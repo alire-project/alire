@@ -9,8 +9,6 @@ from drivers.asserts import assert_match
 # The index in this test has no compilers configured; hence we cannot locate
 # even the default external compiler.
 
-run_alr("config", "--set", "--global", "dependencies.shared", "true")
-
 # Init a crate without explicit compiler dependency
 # This does not fail because hashes are not computed until build time
 init_local_crate("xxx")

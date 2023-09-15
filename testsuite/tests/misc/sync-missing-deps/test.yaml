@@ -1,3 +1,4 @@
 driver: python-script
+shared-builds: false # Explicitly enabled in test when needed
 indexes:
     basic_index: {}

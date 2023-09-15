@@ -14,7 +14,8 @@ class PythonScriptDriver(ClassicTestDriver):
     This test driver runs a Python script. For a testcase to succeeds, the
     script expects it to exit with status code 0, its standard error stream to
     be empty and its standard output stream to end with a line that contains
-    "SUCCESS". Anything else results in the test failing.
+    "SUCCESS". If a test must be skipped, it should print "SKIP: <reason>".
+    Anything else results in the test failing.
     """
 
     # This is a workaround for Windows, where attempting to use rlimit by e3-core
@@ -23,7 +24,7 @@ class PythonScriptDriver(ClassicTestDriver):
     def default_process_timeout(self):
         return None
 
-    def run(self):
+    def prepare(self) -> dict:
         env = dict(os.environ)
 
         # prepare a private environment for Python scripts to run "alr".
@@ -45,11 +46,20 @@ class PythonScriptDriver(ClassicTestDriver):
             path_for_drivers, os.path.pathsep, python_path
         ) if python_path else path_for_drivers
 
+        return env
+
+
+    def run_script(self, env):
         # Run the Python script with the current interpreter. check_call aborts
         # the test if the interpreter exits with non-zero status code.
-        p = self.shell([sys.executable, 'test.py'],
-                       env=env,
-                       cwd=self.test_env['working_dir'])
+        return self.shell([sys.executable, 'test.py'],
+                          env=env,
+                          cwd=self.test_env['working_dir'])
+
+    def run(self):
+        env = self.prepare()
+
+        p = self.run_script(env)
 
         # Check that the last line in stdout is "SUCCESS" or "SKIP"
         out_lines = p.out.splitlines()
