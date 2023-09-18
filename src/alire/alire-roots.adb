@@ -778,11 +778,10 @@ package body Alire.Roots is
 
       This.Solution.Print_Hints (This.Environment);
 
-      --  Update/Create configuration files
-
-      if Builds.Sandboxed_Dependencies then
-         This.Generate_Configuration (Full => Force);
-      end if;
+      --  For sandboxed deps we could already generate config files, but for
+      --  shared builds we cannot yet until we are sure the configuration is
+      --  complete. To have the same behavior in both cases, we also delay
+      --  configuration generation to build time for sandboxed dependencies.
 
       --  Check that the solution does not contain suspicious dependencies,
       --  taking advantage that this procedure is called whenever a change
