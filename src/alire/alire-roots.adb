@@ -33,6 +33,42 @@ package body Alire.Roots is
 
    use type UString;
 
+   -------------------
+   -- Build_Prepare --
+   -------------------
+   --  All preparations but the building step itself. This will require
+   --  complete configuration, and will leave all files on disk as if an
+   --  actual build were attempted.
+   procedure Build_Prepare (This           : in out Root;
+                            Saved_Profiles : Boolean) is
+   begin
+      --  Check whether we should override configuration with the last one used
+      --  and stored on disk. Since the first time the one from disk will be be
+      --  empty, we may still have to generate files in the next step.
+
+      if Saved_Profiles then
+         This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
+      end if;
+
+      This.Load_Configuration;
+      This.Configuration.Ensure_Complete;
+      --  For proceeding to build, the configuration must be complete
+
+      --  Ensure sources are up to date
+
+      if not Builds.Sandboxed_Dependencies then
+         This.Sync_Builds;
+         --  Changes in configuration may require new build dirs.
+      end if;
+
+      --  Ensure configurations are in place and up-to-date
+
+      This.Generate_Configuration (Full => Force);
+      --  Will regenerate on demand only those changed. For shared
+      --  dependencies, will also generate any missing configs not generated
+      --  during sync, such as for linked releases and the root release.
+   end Build_Prepare;
+
    -----------
    -- Build --
    -----------
@@ -182,31 +218,7 @@ package body Alire.Roots is
 
    begin
 
-      --  Check whether we should override configuration with the last one used
-      --  and stored on disk. Since the first time the one from disk will be be
-      --  empty, we may still have to generate files in the next step.
-
-      if Saved_Profiles then
-         This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
-      end if;
-
-      This.Load_Configuration;
-      This.Configuration.Ensure_Complete;
-      --  For proceeding to build, the configuration must be complete
-
-      --  Ensure sources are up to date
-
-      if not Builds.Sandboxed_Dependencies then
-         This.Sync_Builds;
-         --  Changes in configuration may require new build dirs.
-      end if;
-
-      --  Ensure configurations are in place and up-to-date
-
-      This.Generate_Configuration (Full => Force);
-      --  Will regenerate on demand only those changed. For shared
-      --  dependencies, will also generate any missing configs not generated
-      --  during sync, such as for linked releases and the root release.
+      This.Build_Prepare (Saved_Profiles => Saved_Profiles);
 
       This.Export_Build_Environment;
 
@@ -1716,6 +1728,11 @@ package body Alire.Roots is
       begin
          This.Traverse (Removing_Post_Fetch_Flag'Access);
       end;
+
+      --  Regenerate config files to avoid the unintuitive behavior that after
+      --  an update they may still not exist (or use old switches).
+
+      This.Build_Prepare (Saved_Profiles => True);
    end Update;
 
    --------------------
