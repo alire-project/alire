@@ -226,7 +226,9 @@ package body Alire.Builds.Hashes is
             --  In the root crate we can skip compiler detection, as it has no
             --  bearing on the hash or config regeneration. This allows most
             --  operations in a crate without dependencies to succeed even in
-            --  absence of a configured compiler.
+            --  absence of a configured compiler. Note that for linked crates,
+            --  even if they don't have a proper build dir, the hash is
+            --  important for dependents.
             if not Root.Is_Root_Release (Rel.Name) then
                Add_Compiler;   -- Compiler version
             end if;

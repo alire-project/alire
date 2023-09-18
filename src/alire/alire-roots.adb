@@ -1443,7 +1443,7 @@ package body Alire.Roots is
                      return This.Release_Parent (Rel,
                                                  For_Deploy) / Rel.Base_Folder;
                   when For_Build =>
-                     return Builds.Path (This, Rel);
+                     return Builds.Path (This, Rel, Subdir => True);
                end case;
             end if;
          end;

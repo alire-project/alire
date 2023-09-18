@@ -73,28 +73,48 @@ class PythonScriptDriver(ClassicTestDriver):
 
 
     def save_working_dir(self):
-        files = []
+        # Save the working directory state for later restoration.
 
-        # Store the names of files in the working directory
-        for f in os.listdir(self.test_env['working_dir']):
-            files.append(f)
+        base = self.test_env['working_dir']
+        orig_name = ".orig"
+        orig = os.path.join(base, orig_name)
 
-        return files
-
-
-    def restore_working_dir(self, files):
-        # Restore the working directory to its initial state, by deleting
-        # anything not in the list of saved files
-
-        # Iterate over files
-        for f in os.listdir(self.test_env['working_dir']):
-            if f in files:
+        # Save the original files under ".orig" folder
+        os.mkdir(orig)
+        for f in os.listdir(base):
+            if f == orig_name:
                 continue
-            path = os.path.join(self.test_env['working_dir'], f)
+            path = os.path.join(base, f)
             if os.path.isfile(path):
-                os.remove(path)
+                shutil.copy(path, orig)
             else:
-                shutil.rmtree(path)
+                shutil.copytree(path, os.path.join(orig, f))
+
+
+    def restore_working_dir(self):
+        # Restore the working directory to its initial state, by deleting
+        # everything and copying originals back from .orig dir
+
+        base = self.test_env['working_dir']
+        orig_name = ".orig"
+
+        # Delete anything not called ".orig"
+        for f in os.listdir(base):
+            if f != orig_name:
+                path = os.path.join(base, f)
+                if os.path.isfile(path):
+                    os.remove(path)
+                else:
+                    shutil.rmtree(path)
+
+        # Restore the original files
+        orig = os.path.join(base, orig_name)
+        for f in os.listdir(orig):
+            path = os.path.join(orig, f)
+            if os.path.isfile(path):
+                shutil.copy(path, base)
+            else:
+                shutil.copytree(path, os.path.join(base, f))
 
 
     def run(self):
@@ -112,7 +132,7 @@ class PythonScriptDriver(ClassicTestDriver):
 
         # If mode is "both", track original files for later
         if mode == "both":
-            test_files = self.save_working_dir()
+            self.save_working_dir()
 
         # First run with shared builds disabled
 
@@ -125,7 +145,7 @@ class PythonScriptDriver(ClassicTestDriver):
 
         # Start by cleaning up anything the 1st run may have left behind
         if mode == "both":
-            self.restore_working_dir(test_files)
+            self.restore_working_dir()
 
         if mode in ["shared", "both"]:
             self.result.log.log += "Build mode: SHARED\n"

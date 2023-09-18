@@ -67,6 +67,13 @@ def path() -> str:
     return alr_builds_dir()
 
 
+def vault_path() -> str:
+    """
+    Return the path to the read-only release vault.
+    """
+    return os.path.join(path(), "..", "releases")
+
+
 def sync() -> None:
     """
     Sync the shared build directory

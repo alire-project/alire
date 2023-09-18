@@ -39,8 +39,11 @@ package Alire.Builds is
    --  Location of shared builds
 
    function Path (Root    : in out Roots.Root;
-                  Release : Releases.Release)
+                  Release : Releases.Release;
+                  Subdir  : Boolean)
                   return Absolute_Path;
-   --  Computes the complete path in which the release is going to be built
+   --  Computes the complete path in which the release is going to be built.
+   --  If Subdir and Release is in monorepo, include the extra path inside the
+   --  monorepo. Has no effect for ordinary releases.
 
 end Alire.Builds;
