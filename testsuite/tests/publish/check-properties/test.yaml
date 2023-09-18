@@ -1,4 +1,5 @@
 driver: python-script
+build_mode: sandboxed
 indexes:
     basic_index:
         in_fixtures: true

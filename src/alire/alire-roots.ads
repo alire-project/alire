@@ -179,6 +179,11 @@ package Alire.Roots is
                              return Boolean;
    --  Say if a state during Traverse is the Root release itself
 
+   function Is_Root_Release (This : in out Root;
+                             Name : Crate_Name)
+                             return Boolean;
+   --  Say if the root release matches the given name
+
    procedure Sync_From_Manifest (This     : in out Root;
                                  Silent   : Boolean;
                                  Interact : Boolean;

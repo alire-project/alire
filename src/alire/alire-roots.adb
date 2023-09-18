@@ -1603,6 +1603,15 @@ package body Alire.Roots is
                              return Boolean
    is (Dep.Has_Release and then Dep.Crate = This.Release.Reference.Name);
 
+   ---------------------
+   -- Is_Root_Release --
+   ---------------------
+
+   function Is_Root_Release (This : in out Root;
+                             Name : Crate_Name)
+                             return Boolean
+   is (This.Release.Reference.Name = Name);
+
    ------------------------
    -- Sync_From_Manifest --
    ------------------------

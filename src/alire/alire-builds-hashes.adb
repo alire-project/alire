@@ -222,7 +222,15 @@ package body Alire.Builds.Hashes is
          if not Builds.Sandboxed_Dependencies then
             Add_Externals;     -- GPR externals
             Add_Environment;   -- Environment variables
-            Add_Compiler;      -- Compiler version
+
+            --  In the root crate we can skip compiler detection, as it has no
+            --  bearing on the hash or config regeneration. This allows most
+            --  operations in a crate without dependencies to succeed even in
+            --  absence of a configured compiler.
+            if not Root.Is_Root_Release (Rel.Name) then
+               Add_Compiler;   -- Compiler version
+            end if;
+
             Add_Dependencies;  -- Hash of dependencies
          end if;
 
