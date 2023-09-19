@@ -1,4 +1,5 @@
-driver: shared-build
+driver: python-script
+build_mode: shared
 indexes:
     toolchain_index:
         in_fixtures: true

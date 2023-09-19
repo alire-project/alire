@@ -95,6 +95,14 @@ class PythonScriptDriver(ClassicTestDriver):
         # Restore the working directory to its initial state, by deleting
         # everything and copying originals back from .orig dir
 
+        def make_writable(path):
+            # Make everything inside a directory writable recursively
+            for root, dirs, files in os.walk(path):
+                for d in dirs:
+                    os.chmod(os.path.join(root, d), 0o777)
+                for f in files:
+                    os.chmod(os.path.join(root, f), 0o666)
+
         base = self.test_env['working_dir']
         orig_name = ".orig"
 
@@ -105,6 +113,8 @@ class PythonScriptDriver(ClassicTestDriver):
                 if os.path.isfile(path):
                     os.remove(path)
                 else:
+                    # Git marks some files read-only, so make them writable
+                    make_writable(path)
                     shutil.rmtree(path)
 
         # Restore the original files

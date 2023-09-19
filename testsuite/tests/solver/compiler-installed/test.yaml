@@ -1,7 +1,4 @@
 driver: python-script
-build_mode: sandboxed
-# This test can't be run twice as it alters the environment in ways too complex
-# to restore to the initial status. Instead we use a separate copy of the test.
 indexes:
     toolchain_index:
         in_fixtures: true

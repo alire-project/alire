@@ -1,3 +1,4 @@
-driver: shared-build
+driver: python-script
+build_mode: shared
 indexes:
     build_hash_index: {}

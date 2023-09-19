@@ -2,15 +2,15 @@
 Test pre-build/post-build/post-fetch executions in a crate that is a dependency
 """
 
-from drivers import builds
-from drivers.alr import run_alr, init_local_crate, add_action, alr_with
-from drivers.asserts import assert_match
-from drivers.helpers import compare, contents, on_windows
+import os
 from glob import glob
 from pathlib import Path
 from shutil import rmtree
 
-import os
+from drivers import builds
+from drivers.alr import alr_with, init_local_crate, run_alr
+from drivers.asserts import assert_match
+from drivers.helpers import contents, neutral_path
 
 
 def check_expected(expected, path):
@@ -81,9 +81,9 @@ alr_with("hello_world")
 run_alr("update")
 # Test all triggers
 if builds.are_shared():
-    base = builds.find_dir("hello_world")
+    base = neutral_path(builds.find_dir("hello_world"))
 else:
-    base = glob("./alire/cache/dependencies/hello*")[0].replace('\\', '/')
+    base = neutral_path(glob("./alire/cache/dependencies/hello*")[0])
 do_checks(base)
 
 # Repeat tests, for a crate that has been added as a linked dependency

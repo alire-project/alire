@@ -38,6 +38,6 @@ $ ./run.py
 # Creating tests
 All tests are based on running a Python script. There are three test drivers:
 
-- `python-script`: run in host in sandboxed build mode
-- `shared-build`: run in host in shared build mode
-- `docker-wrapper`: run in a pristine docker Ubuntu image in shared build mode
+- `python-script`: run in host in both sandboxed and shared build mode.
+    - The build mode can be narrowed down with the `build_mode` attribute.
+- `docker-wrapper`: run in a pristine docker Ubuntu image in shared build mode.

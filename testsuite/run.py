@@ -17,7 +17,6 @@ import e3.testsuite
 import e3.testsuite.driver
 from drivers.driver.docker_wrapper import DockerWrapperDriver
 from drivers.driver.python_script import PythonScriptDriver
-from drivers.driver.shared_build import SharedBuildDriver
 from drivers.helpers import on_windows
 
 
@@ -25,8 +24,7 @@ class Testsuite(e3.testsuite.Testsuite):
     tests_subdir = 'tests'
     test_driver_map = {
         'python-script': PythonScriptDriver,
-        'docker-wrapper': DockerWrapperDriver,
-        'shared-build': SharedBuildDriver
+        'docker-wrapper': DockerWrapperDriver
         }
 
     def add_options(self, parser):
