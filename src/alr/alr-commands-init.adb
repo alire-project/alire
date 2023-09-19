@@ -368,7 +368,7 @@ package body Alr.Commands.Init is
                      Info.Name := To_Unbounded_String (Tentative_Name);
                      exit;
                   else
-                     Ada.Text_IO.Put_Line
+                     Put_Line
                        ("Invalid crate name '"
                         & Tentative_Name & "': "
                         & Alire.Error_In_Name (Tentative_Name));
@@ -406,13 +406,13 @@ package body Alr.Commands.Init is
       if SPDX.Valid (SP) then
          return True;
       else
-         Ada.Text_IO.Put_Line
+         Put_Line
            ("Invalid SPDX license expression '" & Str
             & "': " & SPDX.Error (SP));
-         Ada.Text_IO.Put_Line
+         Put_Line
            ("SPDX expression expected (https://spdx.org/licenses/).");
-         Ada.Text_IO.Put_Line ("(Use 'custom-' prefix for custom"
-                               & " license identifier)");
+         Put_Line ("(Use 'custom-' prefix for custom"
+                   & " license identifier)");
 
          return False;
       end if;
@@ -487,9 +487,9 @@ package body Alr.Commands.Init is
    function Description_Validation (Str : String) return Boolean is
    begin
       if Str'Length > Alire.Max_Description_Length then
-         Ada.Text_IO.Put_Line ("Description too long:"
-                               & Str'Length'Img & " (max"
-                               & Alire.Max_Description_Length'Img & ")");
+         Put_Line ("Description too long:"
+                   & Str'Length'Img & " (max"
+                   & Alire.Max_Description_Length'Img & ")");
          return False;
       else
          return True;
@@ -527,7 +527,7 @@ package body Alr.Commands.Init is
                Tag_Error : constant String := Alire.Utils.Error_In_Tag (Elt);
             begin
                if Tag_Error /= "" then
-                  Ada.Text_IO.Put_Line (Tag_Error);
+                  Put_Line (Tag_Error);
                   Tags_Ok := False;
                end if;
             end;
