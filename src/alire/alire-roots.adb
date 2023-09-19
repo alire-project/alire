@@ -37,8 +37,10 @@ package body Alire.Roots is
    -- Build_Prepare --
    -------------------
    --  All preparations but the building step itself. This will require
-   --  complete configuration, and will leave all files on disk as if an
-   --  actual build were attempted.
+   --  complete configuration, and will leave all files on disk as if an actual
+   --  build were attempted. May optionally use saved profiles from the command
+   --  line (instead of manifests) and force full regeneration (for example,
+   --  during `alr update`)
    procedure Build_Prepare (This           : in out Root;
                             Saved_Profiles : Boolean) is
    begin
@@ -1740,7 +1742,7 @@ package body Alire.Roots is
       --  Regenerate config files to avoid the unintuitive behavior that after
       --  an update they may still not exist (or use old switches).
 
-      This.Build_Prepare (Saved_Profiles => True);
+      This.Build_Prepare (Saved_Profiles => False);
    end Update;
 
    --------------------

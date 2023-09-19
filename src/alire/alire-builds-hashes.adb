@@ -104,6 +104,27 @@ package body Alire.Builds.Hashes is
                  Root.Configuration.Build_Profile (Rel.Name)'Image);
          end Add_Profile;
 
+         ------------------
+         -- Add_Switches --
+         ------------------
+
+         procedure Add_Switches is
+            --  List the exact switches used for compilation due to Alire, as
+            --  any changes in those will require regen of configuration files.
+            --  We add a single entry, alphabetically sorted.
+            Switches : AAA.Strings.Set;
+            Config   : Crate_Configuration.Global_Config :=
+                         Root.Configuration.all;
+         begin
+            for Switch of Config.Build_Switches (Root, Rel.Name)
+            loop
+               Switches.Include (Switch);
+            end loop;
+            Add ("switches",
+                 Rel.Name.As_String,
+                 Switches.To_Vector.Flatten (","));
+         end Add_Switches;
+
          -------------------
          -- Add_Externals --
          -------------------
@@ -214,6 +235,7 @@ package body Alire.Builds.Hashes is
 
          --  Add individual contributors to the hash input
          Add_Profile;       -- Build profile
+         Add_Switches;      -- Exact list of build switches
          Add_Configuration; -- Crate configuration variables
 
          --  These are only relevant for shared dependencies, as they don't
