@@ -36,13 +36,10 @@ package body Alire.Roots is
    -------------------
    -- Build_Prepare --
    -------------------
-   --  All preparations but the building step itself. This will require
-   --  complete configuration, and will leave all files on disk as if an actual
-   --  build were attempted. May optionally use saved profiles from the command
-   --  line (instead of manifests) and force full regeneration (for example,
-   --  during `alr update`)
+
    procedure Build_Prepare (This           : in out Root;
-                            Saved_Profiles : Boolean) is
+                            Saved_Profiles : Boolean;
+                            Force_Regen    : Boolean) is
    begin
       --  Check whether we should override configuration with the last one used
       --  and stored on disk. Since the first time the one from disk will be be
@@ -65,7 +62,7 @@ package body Alire.Roots is
 
       --  Ensure configurations are in place and up-to-date
 
-      This.Generate_Configuration (Full => Force);
+      This.Generate_Configuration (Full => Force or else Force_Regen);
       --  Will regenerate on demand only those changed. For shared
       --  dependencies, will also generate any missing configs not generated
       --  during sync, such as for linked releases and the root release.
@@ -220,7 +217,8 @@ package body Alire.Roots is
 
    begin
 
-      This.Build_Prepare (Saved_Profiles => Saved_Profiles);
+      This.Build_Prepare (Saved_Profiles => Saved_Profiles,
+                          Force_Regen    => False);
 
       This.Export_Build_Environment;
 
@@ -1742,7 +1740,8 @@ package body Alire.Roots is
       --  Regenerate config files to avoid the unintuitive behavior that after
       --  an update they may still not exist (or use old switches).
 
-      This.Build_Prepare (Saved_Profiles => False);
+      This.Build_Prepare (Saved_Profiles => False,
+                          Force_Regen    => True);
    end Update;
 
    --------------------
@@ -1871,11 +1870,6 @@ package body Alire.Roots is
 
          This.Set (Solution => Needed);
          This.Deploy_Dependencies;
-
-         --  Update/Create configuration files
-         if Builds.Sandboxed_Dependencies then
-            This.Generate_Configuration (Full => True);
-         end if;
 
          Trace.Detail ("Update completed");
       end;

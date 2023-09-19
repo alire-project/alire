@@ -2,4 +2,4 @@ driver: python-script
 indexes:
     my_index:
         in_fixtures: false
-    compiler_index_only: {}
+    compiler_only_index: {}

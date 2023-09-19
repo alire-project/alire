@@ -3,8 +3,8 @@ Publish a doubly-nested crate: ./gitrepo/parent/child and test using it
 """
 
 import os
-import shutil
 
+from drivers import builds
 from drivers.alr import run_alr, init_local_crate, alr_with, alr_publish
 from drivers.helpers import init_git_repo
 from subprocess import run
@@ -46,9 +46,12 @@ assert os.path.isdir(os.path.join(f"monoproject_{commit[:8]}",
 init_local_crate("top")
 alr_with("mychild")
 run_alr("build")
-assert os.path.isdir(os.path.join("alire", "cache", "dependencies",
-                                  f"monoproject_{commit[:8]}",
-                                  "myparent", "mychild")), \
+if builds.are_shared():
+    path = builds.find_dir("monoproject")
+else:
+    path = os.path.join("alire", "cache", "dependencies",
+                        f"monoproject_{commit[:8]}")
+assert os.path.isdir(os.path.join(path, "myparent", "mychild")), \
     "Expected directory does not exist"
 
 # Verify that "with"ing the parent does not result in a new checkout

@@ -283,6 +283,15 @@ package Alire.Roots is
                         return String;
    --  Returns the build hash of a crate if the solution; computes on demand.
 
+   procedure Build_Prepare (This           : in out Root;
+                            Saved_Profiles : Boolean;
+                            Force_Regen    : Boolean);
+   --  Perform all preparations but the building step itself. This will require
+   --  complete configuration, and will leave all files on disk as if an actual
+   --  build were attempted. May optionally use saved profiles from the command
+   --  line (instead of manifests) and force full regeneration (for example,
+   --  during `alr update`)
+
    function Config_Outdated (This : in out Root;
                              Name : Crate_Name)
                              return Boolean;

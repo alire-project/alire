@@ -160,6 +160,10 @@ package body Alr.Commands.Action is
          Reportaise_Wrong_Arguments ("Invalid action: " & Arg);
       end if;
 
+      --  Ensure that all directories are ready
+      Cmd.Root.Build_Prepare (Saved_Profiles => False,
+                              Force_Regen    => False);
+
       Cmd.Root.Traverse (Doing => Run_One'Access);
       if not Some_Output then
          Put_Line ("No actions to run.");

@@ -1,4 +1,3 @@
 driver: shared-build
 indexes:
-    basic_index:
-        in_fixtures: true
+    basic_no_compiler_index: {}

@@ -44,7 +44,7 @@ run_alr("build", complain_on_error=False)
 # We hardcode this hash so we detect unwilling changes to our hashing scheme.
 # Every time this hash changes we must know the reason (changes in the hashing
 # procedures)
-hash = "cc2adb8312e543d98d36736d6220023a47a4508f547109334ee36916280e73ac"
+hash = "0774083df8ff003084c32cabdec6090a58b41c6be317cec0475df5eacbca0d23"
 assert \
     os.path.isdir(f"{base}/builds/crate_real_1.0.0_filesystem_{hash}"), \
     f"Shared build not found at the expected location: f{contents(base)}"

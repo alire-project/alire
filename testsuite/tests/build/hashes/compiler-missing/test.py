@@ -12,9 +12,15 @@ from drivers.asserts import assert_match
 # Init a crate without explicit compiler dependency
 # This does not fail because hashes are not computed until build time
 init_local_crate("xxx")
+
+# A standalone crate can be built because the compiler isn't used for the root
+# crate hash inputs
+run_alr("build")
+
+# Adding a dependency works because this doen't yet trigger an update/build
 run_alr("with", "libhello")
 
-# The build fails because we cannot compute the build hash without a compiler
+# The build fails because we cannot compute the dependency hash without a compiler
 p = run_alr("build", complain_on_error=False)
 assert_match(".*Unable to determine compiler version", p.out)
 

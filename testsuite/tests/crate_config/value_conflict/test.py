@@ -9,7 +9,7 @@ from drivers.asserts import assert_match
 import os
 import platform
 
-p = run_alr('get', 'hello_world', complain_on_error=False)
+p = run_alr('get', '--build', 'hello_world', complain_on_error=False)
 assert p.status != 0, "alr should have errored"
 
 print(p.out)

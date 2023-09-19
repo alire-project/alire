@@ -1,4 +1,4 @@
 driver: python-script
-shared-builds: false # Explicitly enabled in test when needed
+build_mode: sandboxed
 indexes:
     basic_index: {}

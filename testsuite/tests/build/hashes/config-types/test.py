@@ -25,6 +25,7 @@ assert_eq(
     'external:HELLO_LIBRARY_TYPE=default\n'
     'external:LIBRARY_TYPE=default\n'
     'profile:hello=RELEASE\n'
+    'switches:hello=-O3,-fdata-sections,-ffunction-sections,-gnatW8,-gnatn\n'
     f'version:gnat_external={external_compiler_version()}\n',
     hash_input("hello"))
 
