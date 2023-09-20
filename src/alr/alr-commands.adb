@@ -79,6 +79,9 @@ package body Alr.Commands is
    No_TTY : aliased Boolean := False;
    --  Used to disable control characters in output
 
+   Markdown_Help : aliased Boolean := False;
+   --  Used to enable help display in markdown format
+
    Version_Only : aliased Boolean := False;
    --  Just display the current version and exit
 
@@ -156,6 +159,12 @@ package body Alr.Commands is
                      No_TTY'Access,
                      Long_Switch => "--no-tty",
                      Help        => "Disables control characters in output");
+
+      Define_Switch (Config,
+                     Markdown_Help'Access,
+                     Long_Switch => "--markdown",
+                     Help        =>
+                       "Enables output of markdown format for help");
 
       Define_Switch (Config,
                      Prefer_Oldest'Access,
@@ -452,7 +461,11 @@ package body Alr.Commands is
       end if;
 
       if No_TTY then
-         CLIC.TTY.Force_Disable_TTY;
+         CLIC.Formatter.Force_Disable_TTY;
+      end if;
+
+      if Markdown_Help then
+         CLIC.Formatter.Enable_Markdown;
       end if;
 
       --  Use CLIC.TTY selection/detection of TTY

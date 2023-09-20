@@ -6,6 +6,7 @@ with Alire.Solver;
 with Alire.Version;
 
 with CLIC.Subcommand;
+with CLIC.Formatter;
 
 private with GNAT.IO;
 private with CLIC.Subcommand.Instance;
@@ -143,11 +144,11 @@ private
       Put_Error           => Put_Error,
       Error_Exit          => OS_Lib.Bailout,
       Set_Global_Switches => Set_Global_Switches,
-      TTY_Chapter         => Alire.TTY.Bold,
-      TTY_Description     => Alire.TTY.Description,
-      TTY_Version         => Alire.TTY.Version,
-      TTY_Underline       => Alire.TTY.Underline,
-      TTY_Emph            => Alire.TTY.Emph);
+      TTY_Chapter         => CLIC.Formatter.Chapter,
+      TTY_Description     => CLIC.Formatter.Description,
+      TTY_Version         => CLIC.Formatter.Version,
+      TTY_Underline       => CLIC.Formatter.Underline,
+      TTY_Emph            => CLIC.Formatter.Emph);
 
    Unset : constant String := "unset";
    --  Canary for when a string switch is given without value
