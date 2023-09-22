@@ -6,6 +6,15 @@ package Alire.Config.Builtins is
    -- Builtins --
    --------------
 
+   --  DEPENDENCIES
+
+   Dependencies_Git_Keep_Repository : constant Builtin := New_Builtin
+     (Key  => "dependencies.git.keep_repository",
+      Def  => False,
+      Help =>
+        "When true, git origins are a proper git repository after deployment. "
+      & "Otherwise they are deployed as a plain directory.");
+
    Dependencies_Shared : constant Builtin := New_Builtin
      (Key  => "dependencies.shared",
       Def  => False,
