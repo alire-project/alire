@@ -452,7 +452,7 @@ package body Alr.Commands is
       end if;
 
       if No_TTY then
-         CLIC.TTY.Force_Disable_TTY;
+         CLIC.Formatter.Force_Disable_TTY;
       end if;
 
       --  Use CLIC.TTY selection/detection of TTY
