@@ -2,10 +2,7 @@
 Retrieve a release from a local git repository
 """
 
-from glob import glob
-
-from drivers.alr import run_alr
-from drivers.asserts import assert_match
+from drivers.alr import alr_with, init_local_crate, run_alr
 from drivers.helpers import compare, contents
 
 # Get the release
@@ -35,6 +32,11 @@ compare(list(filter
          'libfoo_1.0.0_9ddda32b/config/libfoo_config.gpr',
          'libfoo_1.0.0_9ddda32b/config/libfoo_config.h'
          ])
+
+
+# Use release as dependency
+init_local_crate()
+alr_with("libfoo") # Should succeed
 
 
 print('SUCCESS')
