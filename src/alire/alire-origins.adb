@@ -402,8 +402,10 @@ package body Alire.Origins is
       Scheme      : constant URI.Schemes := URI.Scheme (URL);
       Transformed : constant Alire.URL := VCSs.Git.Transform_To_Public (URL);
       VCS_URL : constant String :=
-                  (if Contains (URL, "file:") then
-                      Tail (URL, ':') -- Remove file: that confuses git
+                  (if Contains (URL, "+file://") then
+                      Tail (URL, '+') -- strip the VCS proto only
+                   elsif Contains (URL, "+file:") then
+                      Tail (URL, ':') -- Remove file: w.o. // that confuses git
                    elsif Has_Prefix (URL, "git@") and then
                       Transformed /= URL -- known and transformable
                    then
