@@ -11,7 +11,7 @@ assert_match(".*The origin must be a definitive remote location.*", p.out)
 
 # Bad combo, explicit file + commit
 p = run_alr("publish", "file:/fake.zip", "deadbeef", complain_on_error=False)
-assert_match(".*Expected a VCS origin but got.*", p.out)
+assert_match(".*unknown VCS URL", p.out)
 
 # Bad combo, implicit file + commit
 p = run_alr("publish", "fake.zip", "deadbeef", complain_on_error=False)
