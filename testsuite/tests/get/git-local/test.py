@@ -33,10 +33,8 @@ compare(list(filter
          'libfoo_1.0.0_9ddda32b/config/libfoo_config.h'
          ])
 
-
-# Use release as dependency
+# Check as dependency
 init_local_crate()
-alr_with("libfoo") # Should succeed
-
+run_alr("with", "libfoo")  # should succeed
 
 print('SUCCESS')
