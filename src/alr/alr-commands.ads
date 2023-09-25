@@ -147,7 +147,8 @@ private
       TTY_Description     => Alire.TTY.Description,
       TTY_Version         => Alire.TTY.Version,
       TTY_Underline       => Alire.TTY.Underline,
-      TTY_Emph            => Alire.TTY.Emph);
+      TTY_Emph            => Alire.TTY.Emph,
+      Global_Options_In_Subcommand_Help => False);
 
    Unset : constant String := "unset";
    --  Canary for when a string switch is given without value
