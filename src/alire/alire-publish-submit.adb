@@ -248,7 +248,9 @@ package body Alire.Publish.Submit is
         (From   => Index.Community_Host
          / User_Info.User_GitHub_Login
          / Index.Community_Repo_Name,
-         Into   => Local_Repo_Path).Assert;
+         Into   => Local_Repo_Path,
+         Branch => "",
+         Depth  => 1).Assert;
 
       --  We can reuse the pull logic now to set up the local branch
       Pull;
