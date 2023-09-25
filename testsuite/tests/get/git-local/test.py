@@ -2,10 +2,7 @@
 Retrieve a release from a local git repository
 """
 
-from glob import glob
-
-from drivers.alr import init_local_crate, run_alr
-from drivers.asserts import assert_match
+from drivers.alr import alr_with, init_local_crate, run_alr
 from drivers.helpers import compare, contents
 
 # Get the release
