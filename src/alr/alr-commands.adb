@@ -2,7 +2,6 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Environment_Variables;
-with Ada.Text_IO; use Ada.Text_IO;
 
 with CLIC.TTY;
 with CLIC.User_Input;

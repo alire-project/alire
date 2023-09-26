@@ -7,7 +7,7 @@ with Alire.Version;
 
 with CLIC.Subcommand;
 
-private with Ada.Text_IO;
+private with GNAT.IO;
 private with CLIC.Subcommand.Instance;
 
 private with Alr.OS_Lib; -- For the benefit of many child packages that use it
@@ -122,11 +122,14 @@ private
 
    --  Common generalities
 
-   procedure New_Line (Spacing : Ada.Text_IO.Positive_Count := 1)
-   renames Ada.Text_IO.New_Line;
+   procedure New_Line (Spacing : Positive := 1)
+   renames GNAT.IO.New_Line;
 
    procedure Put_Line (S : String)
-   renames Ada.Text_IO.Put_Line;
+   renames GNAT.IO.Put_Line;
+
+   procedure Put (S : String)
+   renames GNAT.IO.Put;
 
    procedure Put_Error (Str : String);
    procedure Set_Global_Switches
@@ -135,8 +138,8 @@ private
    package Sub_Cmd is new CLIC.Subcommand.Instance
      (Main_Command_Name   => "alr",
       Version             => Alire.Version.Current,
-      Put                 => Ada.Text_IO.Put,
-      Put_Line            => Ada.Text_IO.Put_Line,
+      Put                 => GNAT.IO.Put,
+      Put_Line            => GNAT.IO.Put_Line,
       Put_Error           => Put_Error,
       Error_Exit          => OS_Lib.Bailout,
       Set_Global_Switches => Set_Global_Switches,
@@ -144,7 +147,8 @@ private
       TTY_Description     => Alire.TTY.Description,
       TTY_Version         => Alire.TTY.Version,
       TTY_Underline       => Alire.TTY.Underline,
-      TTY_Emph            => Alire.TTY.Emph);
+      TTY_Emph            => Alire.TTY.Emph,
+      Global_Options_In_Subcommand_Help => False);
 
    Unset : constant String := "unset";
    --  Canary for when a string switch is given without value

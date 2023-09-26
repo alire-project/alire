@@ -19,6 +19,9 @@ package Alire.VCSs.Git is
    --  This is actually returned by e.g. `git worktree`, even if it could be a
    --  real commit. I guess the chances are deemed too low.
 
+   function Git_Dir return Any_Path;
+   --  ".git" unless overridden by GIT_DIR
+
    type VCS (<>) is new VCSs.VCS with private;
 
    function Handler return VCS;
@@ -44,6 +47,8 @@ package Alire.VCSs.Git is
                    From : URL;
                    Into : Directory_Path)
                    return Outcome;
+   --  Make a shallow clone of the given URL (that may include '#commit). For
+   --  more precise control, use the following Clone signature.
 
    not overriding
    function Clone (This   : VCS;

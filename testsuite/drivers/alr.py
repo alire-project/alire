@@ -531,6 +531,13 @@ def alr_builds_dir() -> str:
     return os.path.join(alr_config_dir(), "cache", "builds")
 
 
+def crate_dirname(crate):
+    """
+    Return the deployment dir of a crate, obtained with `alr get --dirname`
+    """
+    return run_alr("get", "--dirname", crate).out.strip()
+
+
 def external_compiler_version() -> str:
     """
     Return the version of the external compiler
