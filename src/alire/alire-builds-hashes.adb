@@ -104,6 +104,27 @@ package body Alire.Builds.Hashes is
                  Root.Configuration.Build_Profile (Rel.Name)'Image);
          end Add_Profile;
 
+         ------------------
+         -- Add_Switches --
+         ------------------
+
+         procedure Add_Switches is
+            --  List the exact switches used for compilation due to Alire, as
+            --  any changes in those will require regen of configuration files.
+            --  We add a single entry, alphabetically sorted.
+            Switches : AAA.Strings.Set;
+            Config   : Crate_Configuration.Global_Config :=
+                         Root.Configuration.all;
+         begin
+            for Switch of Config.Build_Switches (Root, Rel.Name)
+            loop
+               Switches.Include (Switch);
+            end loop;
+            Add ("switches",
+                 Rel.Name.As_String,
+                 Switches.To_Vector.Flatten (","));
+         end Add_Switches;
+
          -------------------
          -- Add_Externals --
          -------------------
@@ -214,6 +235,7 @@ package body Alire.Builds.Hashes is
 
          --  Add individual contributors to the hash input
          Add_Profile;       -- Build profile
+         Add_Switches;      -- Exact list of build switches
          Add_Configuration; -- Crate configuration variables
 
          --  These are only relevant for shared dependencies, as they don't
@@ -222,7 +244,17 @@ package body Alire.Builds.Hashes is
          if not Builds.Sandboxed_Dependencies then
             Add_Externals;     -- GPR externals
             Add_Environment;   -- Environment variables
-            Add_Compiler;      -- Compiler version
+
+            --  In the root crate we can skip compiler detection, as it has no
+            --  bearing on the hash or config regeneration. This allows most
+            --  operations in a crate without dependencies to succeed even in
+            --  absence of a configured compiler. Note that for linked crates,
+            --  even if they don't have a proper build dir, the hash is
+            --  important for dependents.
+            if not Root.Is_Root_Release (Rel.Name) then
+               Add_Compiler;   -- Compiler version
+            end if;
+
             Add_Dependencies;  -- Hash of dependencies
          end if;
 

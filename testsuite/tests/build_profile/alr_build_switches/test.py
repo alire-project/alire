@@ -71,13 +71,13 @@ run_alr('build', '--release')
 check_config_changed()
 check_config(bin_config, 'release')
 
-# Alr with will re-generate the crate config and default to DEVELOPMENT
+# Alr with does not touch config, that happens at build time
 alr_with('lib_1', path='../lib_1')
+check_config_not_changed()
+
+# Build with default profile, the config should change and revert to development
+run_alr('build')
 check_config_changed()
 check_config(bin_config, 'development')
-
-# Build with default profile, the config should not change
-run_alr('build')
-check_config_not_changed()
 
 print('SUCCESS')

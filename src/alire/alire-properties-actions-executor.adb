@@ -143,7 +143,8 @@ package body Alire.Properties.Actions.Executor is
       end if;
 
       for Act of Release.On_Platform_Actions (Env, Now) loop
-         Trace.Detail ("Running action: " & Act.Image);
+         Trace.Detail ("Running action: " & Act.Image
+                       & " (cwd:" & Directories.Current & ")");
          Execute_Run (This       => Runners.Run (Act),
                       Capture    => Capture,
                       Err_To_Out => Err_To_Out,

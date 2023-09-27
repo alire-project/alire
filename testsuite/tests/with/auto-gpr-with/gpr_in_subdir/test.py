@@ -20,6 +20,11 @@ os.chdir(glob('myhello*')[0])
 run_alr('with', 'libhello')
 run_alr('with', 'gpr_in_subdir')
 
+# In shared mode, a "with" won't generate config files yet (which is desirable
+# in case the withed crate has configuration variables without defaults). So we
+# need to trigger the generation of the config files.
+run_alr("update")
+
 check_line_in('config/myhello_config.gpr', 'with "libhello.gpr";')
 
 # When the crate declares a project file: `dir1/dir2/dir3/prj.gpr`, the with

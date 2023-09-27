@@ -11,7 +11,6 @@ from drivers.asserts import assert_eq, assert_match
 from drivers import builds
 from drivers.helpers import content_of
 
-run_alr("config", "--set", "--global", "dependencies.shared", "true")
 init_local_crate()
 alr_with("hello")
 
@@ -45,6 +44,11 @@ assert_eq(
     'external:TEST_GPR_EXTERNAL=gpr_ext_B\n' # declared set GPR external
     'external:TEST_UNDECLARED=used_by_another_crate\n' # modified GPR external
     'profile:libhello=VALIDATION\n'          # build profile
+    'switches:libhello=-O3,-fdata-sections,-ffunction-sections,-g,-gnatVa,'
+    '-gnatW8,-gnata,-gnatn,-gnato,-gnatw.X,-gnatwa,-gnatwe,-gnaty-d,-gnaty3,'
+    '-gnatyA,-gnatyB,-gnatyI,-gnatyO,-gnatyS,-gnatya,-gnatyb,-gnatyc,-gnatye,'
+    '-gnatyf,-gnatyh,-gnatyi,-gnatyk,-gnatyl,-gnatym,-gnatyn,-gnatyp,-gnatyr,'
+    '-gnatyt,-gnatyu,-gnatyx\n'
     f'version:gnat_external={external_compiler_version()}\n',
                                              # compiler version
     hash_input("libhello"))
@@ -63,6 +67,11 @@ assert_eq(
     'external:HELLO_LIBRARY_TYPE=default\n'
     'external:LIBRARY_TYPE=default\n'
     'profile:hello=VALIDATION\n'
+    'switches:hello=-O3,-fdata-sections,-ffunction-sections,-g,-gnatVa,'
+    '-gnatW8,-gnata,-gnatn,-gnato,-gnatw.X,-gnatwa,-gnatwe,-gnaty-d,-gnaty3,'
+    '-gnatyA,-gnatyB,-gnatyI,-gnatyO,-gnatyS,-gnatya,-gnatyb,-gnatyc,-gnatye,'
+    '-gnatyf,-gnatyh,-gnatyi,-gnatyk,-gnatyl,-gnatym,-gnatyn,-gnatyp,-gnatyr,'
+    '-gnatyt,-gnatyu,-gnatyx\n'
     f'version:gnat_external={external_compiler_version()}\n',
     hash_input("hello"))
 
@@ -74,7 +83,11 @@ assert_eq(
     'external:LIBRARY_TYPE=default\n'
     'external:XXX_LIBRARY_TYPE=default\n'
     'profile:xxx=VALIDATION\n'
-    f'version:gnat_external={external_compiler_version()}\n',
+    'switches:xxx=-O3,-fdata-sections,-ffunction-sections,-g,-gnatVa,'
+    '-gnatW8,-gnata,-gnatn,-gnato,-gnatw.X,-gnatwa,-gnatwe,-gnaty-d,-gnaty3,'
+    '-gnatyA,-gnatyB,-gnatyI,-gnatyO,-gnatyS,-gnatya,-gnatyb,-gnatyc,-gnatye,'
+    '-gnatyf,-gnatyh,-gnatyi,-gnatyk,-gnatyl,-gnatym,-gnatyn,-gnatyp,-gnatyr,'
+    '-gnatyt,-gnatyu,-gnatyx\n',
     content_of(os.path.join("alire", "build_hash_inputs"))
 )
 

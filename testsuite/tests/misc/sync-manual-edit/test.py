@@ -5,6 +5,7 @@ other commands that require a valid workspace
 
 import os.path
 
+from drivers import builds
 from drivers.alr import run_alr, alr_touch_manifest
 from shutil import rmtree
 # from drivers.asserts import assert_eq, assert_match
@@ -31,7 +32,10 @@ for cmd in ['build', 'pin', 'run', 'show', 'with', 'printenv']:
     run_alr(cmd)
 
     # Check dependency folder is at the expected location:
-    assert os.path.isdir(target), "Directory missing at expected location"
+    if builds.are_shared():
+        assert builds.find_dir("libhello")
+    else:
+        assert os.path.isdir(target), "Directory missing at expected location"
 
     # Go back up and clean up for next command
     os.chdir("..")

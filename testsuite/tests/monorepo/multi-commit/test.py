@@ -5,12 +5,11 @@ crate must not cause trouble.
 """
 
 import os
-import shutil
-
-from drivers.alr import run_alr, init_local_crate, alr_with, alr_publish
-from drivers.helpers import init_git_repo, on_windows, commit_all
-# from drivers.asserts import assert_eq, assert_match
 from subprocess import run
+
+from drivers import builds
+from drivers.alr import alr_publish, alr_with, init_local_crate, run_alr
+from drivers.helpers import commit_all, init_git_repo, on_windows
 
 # We create a repository with two nested crates that will act as the upstream
 # remote repository:
@@ -50,24 +49,36 @@ alr_with("crate1")
 alr_with("crate2")
 run_alr("build")
 
+
+def release_base(commit: str) -> str:
+    if builds.are_shared():
+        return builds.find_dir(f"monoproject_{commit[:8]}")
+    else:
+        return os.path.join("alire", "cache", "dependencies",
+                            f"monoproject_{commit[:8]}")
+
+
 assert os.path.isfile(os.path.join(
-    "alire", "cache", "dependencies",
-    f"monoproject_{commit1[:8]}", "crate1", "bin",
+    release_base(commit1), "crate1", "bin",
     f"crate1{'.exe' if on_windows() else ''}")), \
     "Expected binary does not exist"
 assert os.path.isfile(os.path.join(
-    "alire", "cache", "dependencies",
-    f"monoproject_{commit2[:8]}", "crate2", "bin",
+    release_base(commit2), "crate2", "bin",
     f"crate2{'.exe' if on_windows() else ''}")), \
     "Expected binary does not exist"
 
 # Also that the info files are there
+if builds.are_shared():
+    deps_dir = builds.vault_path()
+else:
+    deps_dir = os.path.join("alire", "cache", "dependencies")
+
 assert os.path.isfile(os.path.join(
-    "alire", "cache", "dependencies",
+    deps_dir,
     f"crate1_0.1.0_in_monoproject_{commit1[:8]}")), \
-    "Expected info file does not exist"
+    f"Expected info file does not exist"
 assert os.path.isfile(os.path.join(
-    "alire", "cache", "dependencies",
+    deps_dir,
     f"crate2_0.1.0_in_monoproject_{commit2[:8]}")), \
     "Expected info file does not exist"
 

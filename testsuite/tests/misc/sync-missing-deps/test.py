@@ -7,6 +7,7 @@ from shutil import rmtree
 
 from drivers.alr import run_alr
 from drivers.builds import find_hash
+from drivers import builds
 
 # Create a new project and set up dependencies
 run_alr('init', '--bin', 'xxx')
@@ -24,7 +25,7 @@ assert os.path.isdir(target), "Directory missing at expected location"
 for round in range(2):
     if round == 2:
         # Prepare same test for shared dependencies
-        run_alr("config", "--set", "--global", "dependencies.shared", "true")
+        builds.enable_shared()
         run_alr("update")
         target = f"builds.path()/hello_1.0.1_filesystem_{find_hash('hello')}"
 
