@@ -5,6 +5,7 @@ Verify the proper "ungitting" of git origins
 import os
 import shutil
 
+from drivers import builds
 from drivers.alr import alr_with, crate_dirname, init_local_crate, run_alr
 from drivers.asserts import assert_file_exists
 
@@ -26,9 +27,13 @@ for wanted in [False, True]:
     init_local_crate()
     alr_with("libfoo")
 
-    assert_file_exists(os.path.join("alire", "cache", "dependencies",
-                                    foo_dir, ".git"),
-                       wanted=wanted)
+    if builds.are_shared():
+        assert_file_exists(os.path.join(builds.vault_path(), foo_dir, ".git"),
+                           wanted=False)
+    else:
+        assert_file_exists(os.path.join("alire", "cache", "dependencies",
+                                        foo_dir, ".git"),
+                        wanted=wanted)
 
     if not wanted:
         # Enable for next round
