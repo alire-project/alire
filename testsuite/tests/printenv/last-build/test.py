@@ -23,12 +23,19 @@ hash_devel = builds.find_hash("libhello")
 
 assert hash_release != hash_devel, "Hashes should be different"
 
-# Check default printenv behavior
+# Check default printenv behavior, which is to repeat last build settings
 p = run_alr("printenv")
-assert_match(f".*LIBHELLO_ALIRE_PREFIX=[^\n]*{hash_release}", p.out)
+assert_match(f".*LIBHELLO_ALIRE_PREFIX=[^\n]*{hash_devel}", p.out)
 
-# Check printenv --last-build behavior
+# Check printenv --last-build behaviors
+
 p = run_alr("printenv", "--last-build")
 assert_match(f".*LIBHELLO_ALIRE_PREFIX=[^\n]*{hash_devel}", p.out)
+
+p = run_alr("printenv", "--last-build=true")
+assert_match(f".*LIBHELLO_ALIRE_PREFIX=[^\n]*{hash_devel}", p.out)
+
+p = run_alr("printenv", "--last-build=false")
+assert_match(f".*LIBHELLO_ALIRE_PREFIX=[^\n]*{hash_release}", p.out)
 
 print("SUCCESS")

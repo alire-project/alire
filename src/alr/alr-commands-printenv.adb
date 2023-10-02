@@ -4,6 +4,8 @@ with Alire.Platforms;
 
 package body Alr.Commands.Printenv is
 
+   Last_Build_Switch : constant String := "--last-build";
+
    -------------
    -- Execute --
    -------------
@@ -30,7 +32,7 @@ package body Alr.Commands.Printenv is
 
       Cmd.Requires_Workspace;
 
-      if Cmd.Last_Build then
+      if To_Boolean (Cmd.Last_Build, "--last-build", True) then
          Cmd.Root.Set_Build_Profiles
            (Alire.Crate_Configuration.Last_Build_Profiles);
       end if;
@@ -97,8 +99,9 @@ package body Alr.Commands.Printenv is
                      "Use a Windows CMD shell format for the export");
       Define_Switch (Config,
                      Cmd.Last_Build'Access,
-                     "", "--last-build",
-                     "Use last build profiles instead of manifest profiles");
+                     "", Last_Build_Switch & "?",
+                     "Use last build profiles (default) or manifest profiles",
+                     Argument => "=BOOLEAN");
    end Setup_Switches;
 
 end Alr.Commands.Printenv;

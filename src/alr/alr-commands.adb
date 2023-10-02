@@ -579,6 +579,31 @@ package body Alr.Commands is
       Cmd.Optional_Root := Alire.Roots.Optional.Outcome_Success (Root);
    end Set;
 
+   ----------------
+   -- To_Boolean --
+   ----------------
+
+   function To_Boolean (Image   : GNAT_String;
+                        Switch  : String;
+                        Default : Boolean)
+                        return Boolean
+   is
+   begin
+      if Image in null or else Image.all = "" or else Image.all = Unset then
+         return Default;
+      elsif Is_Boolean (Image.all) then
+         return Boolean'Value (Image.all);
+      elsif Image (Image'First) = '=' then
+         return To_Boolean (new String'(Image (Image'First + 1 .. Image'Last)),
+                            Switch  => Switch,
+                            Default => Default);
+      else
+         Reportaise_Wrong_Arguments
+           ("Value for switch " & Switch & " is not a proper boolean: "
+            & Image.all);
+      end if;
+   end To_Boolean;
+
 begin
 
    -- Commands --
