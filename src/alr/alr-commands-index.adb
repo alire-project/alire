@@ -53,7 +53,6 @@ package body Alr.Commands.Index is
    begin
       if not Result.Success then
          Reportaise_Command_Failed (Alire.Message (Result));
-         return;
       end if;
 
       --  Find matching index and delete
@@ -159,7 +158,6 @@ package body Alr.Commands.Index is
    begin
       if not Result.Success then
          Reportaise_Command_Failed (Alire.Message (Result));
-         return;
       end if;
 
       Table
