@@ -99,8 +99,16 @@ package body Alire.Index_On_Disk.Updates is
                Busy : constant Simple_Logging.Ongoing
                  := Simple_Logging.Activity ("Updating index")
                  with Unreferenced;
+               Result : constant Outcome := Update_All (Under);
             begin
-               Update_All (Under).Assert;
+               if not Result.Success then
+                  Put_Warning
+                    ("Index auto-refresh failed, will try again in"
+                     & Wait'Image & "h");
+                  Put_Warning
+                    ("Error information: " & Message (Result));
+                  Reset_Update_Time;
+               end if;
             end;
          else
             Trace.Debug ("Index auto-refresh not needed:" & Hours_Elapsed'Image
