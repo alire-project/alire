@@ -296,6 +296,12 @@ package body Alr.Commands.Show is
             else Alire.Dependencies.From_String
               (Cmd.Root.Release.Milestone.Image));
       begin
+
+         --  Update if asked about remote crates
+         if Args.Count = 1 then
+            Cmd.Auto_Update_Index;
+         end if;
+
          if Args.Count = 1 and then
            not Alire.Index.Exists (Allowed.Crate,
                                    Opts => (Detect_Externals => Cmd.Detect,

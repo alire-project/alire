@@ -105,8 +105,8 @@ class DockerWrapperDriver(ClassicTestDriver):
         # Run our things
         try:
             container = get_client().containers.run(
-                # Regular image launching
-                image=TAG, tty=True, stdin_open=True, detach=True,
+                # Regular image launching (priviledged to allow unshare)
+                image=TAG, tty=True, stdin_open=True, detach=True, privileged=True,
 
                 # Pass the test environment to the container as JSON
                 environment={"ALIRE_TEST_ENV": json.dumps(self.test_env)},

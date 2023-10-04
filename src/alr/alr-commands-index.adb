@@ -3,11 +3,13 @@ with AAA.Table_IO;
 with Alire.Config.Edit;
 with Alire.Index;
 with Alire.Index_On_Disk.Loading;
+with Alire.Index_On_Disk.Updates;
 with Alire.Utils;
 
 package body Alr.Commands.Index is
 
-   package Index_Load renames Alire.Index_On_Disk.Loading;
+   package Index_Load    renames Alire.Index_On_Disk.Loading;
+   package Index_Updates renames Alire.Index_On_Disk.Updates;
 
    --  Forward declarations
 
@@ -291,7 +293,7 @@ package body Alr.Commands.Index is
 
    procedure Update_All is
       Result : constant Alire.Outcome :=
-                 Index_Load.Update_All
+                 Index_Updates.Update_All
                    (Alire.Config.Edit.Indexes_Directory);
    begin
       if not Result.Success then

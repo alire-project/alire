@@ -47,6 +47,8 @@ package body Alr.Commands.Publish is
            ("Given switches cannot be simultaneously set");
       end if;
 
+      Cmd.Auto_Update_Index;
+
       if Cmd.Print_Trusted then
          Alire.Publish.Print_Trusted_Sites;
 

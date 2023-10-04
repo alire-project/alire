@@ -41,6 +41,8 @@ package body Alr.Commands.Update is
 
       if Cmd.Online then
          Index.Update_All;
+      else
+         Cmd.Auto_Update_Index;
       end if;
 
       Cmd.Root.Update (Parse_Allowed,

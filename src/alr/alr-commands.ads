@@ -152,6 +152,8 @@ private
       TTY_Emph            => Alire.TTY.Emph,
       Global_Options_In_Subcommand_Help => False);
 
+   procedure Auto_Update_Index (This : Command);
+
    Unset : constant String := "unset";
    --  Canary for when a string switch is given without value
 

@@ -16,6 +16,14 @@ package body Alire.Config is
    function Get (This : Builtin_Option) return Boolean
    is (DB.Get (+This.Key, Boolean'Value (+This.Def)));
 
+   ---------
+   -- Get --
+   ---------
+
+   function Get (This : Builtin_Option) return Config_Int
+   is (Config_Int'Value
+       (DB.Get_As_String (+This.Key, +This.Def)));
+
    -----------------
    -- Set_Locally --
    -----------------
@@ -56,6 +64,18 @@ package body Alire.Config is
    is
    begin
       Edit.Set_Boolean (Level, +This.Key, Value);
+   end Set;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (This  : Builtin_Option;
+                  Level : Config.Level;
+                  Value : Config_Int)
+   is
+   begin
+      Edit.Set (Level, +This.Key, Value'Image, This.Check);
    end Set;
 
    -----------

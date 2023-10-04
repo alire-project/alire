@@ -307,12 +307,14 @@ package body Alr.Commands.Withing is
             if Cmd.URL.all /= "" then
                Cmd.Add_With_Pin (New_Root, Args);
             else
+               Cmd.Auto_Update_Index;
                Add (New_Root, Args);
             end if;
 
          elsif Cmd.Del then
             Del (New_Root, Args);
          elsif Cmd.From then
+            Cmd.Auto_Update_Index;
             From (New_Root, Args);
          else
             raise Program_Error with "List should have already happened";
