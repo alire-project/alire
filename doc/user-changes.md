@@ -37,6 +37,18 @@ following inputs for a given release:
 - Vaue of `LIBRARY_TYPE` and `<CRATE>_LIBRARY_TYPE` variables.
 - Hash of dependencies
 
+### Automatic index updates
+
+PR [#1447](https://github.com/alire-project/alire/pull/1447)
+
+A new configuration option, `index.auto_update`, allows setting the refresh
+period of indexes. It defaults to 24 hours and the user will be asked the first
+time to allow automatic updates. Setting this option to 0 will also disable
+automatic updates.
+
+When enabled, updates may happen before executing commands that rely on
+indexes: `get`, `search`, `with`, etc.
+
 ### Deprecation of `dependencies.dir` in favor of `dependencies.shared`
 
 PR [#1419](https://github.com/alire-project/alire/pull/1419)

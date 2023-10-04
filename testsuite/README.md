@@ -34,3 +34,10 @@ $ pip install e3-testsuite
 # made it available with your PATH):
 $ ./run.py
 ```
+
+# Creating tests
+All tests are based on running a Python script. There are three test drivers:
+
+- `python-script`: run in host in both sandboxed and shared build mode.
+    - The build mode can be narrowed down with the `build_mode` attribute.
+- `docker-wrapper`: run in a pristine docker Ubuntu image in shared build mode.

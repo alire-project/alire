@@ -179,6 +179,11 @@ package Alire.Roots is
                              return Boolean;
    --  Say if a state during Traverse is the Root release itself
 
+   function Is_Root_Release (This : in out Root;
+                             Name : Crate_Name)
+                             return Boolean;
+   --  Say if the root release matches the given name
+
    procedure Sync_From_Manifest (This     : in out Root;
                                  Silent   : Boolean;
                                  Interact : Boolean;
@@ -277,6 +282,15 @@ package Alire.Roots is
                         Name : Crate_Name)
                         return String;
    --  Returns the build hash of a crate if the solution; computes on demand.
+
+   procedure Build_Prepare (This           : in out Root;
+                            Saved_Profiles : Boolean;
+                            Force_Regen    : Boolean);
+   --  Perform all preparations but the building step itself. This will require
+   --  complete configuration, and will leave all files on disk as if an actual
+   --  build were attempted. May optionally use saved profiles from the command
+   --  line (instead of manifests) and force full regeneration (for example,
+   --  during `alr update`)
 
    function Config_Outdated (This : in out Root;
                              Name : Crate_Name)

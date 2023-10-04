@@ -96,7 +96,6 @@ package body Alr.Commands.Edit is
                Reportaise_Command_Failed
                  ("'" & Exec & "' not available or not in PATH.");
             end if;
-            return;
          end if;
       end;
 

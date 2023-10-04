@@ -5,6 +5,7 @@ with Alire.Config.Builtins;
 with Alire.Config.Edit;
 with Alire.Containers;
 with Alire.Index;
+with Alire.Index_On_Disk.Updates;
 with Alire.Platforms.Current;
 with Alire.Provides;
 with Alire.TOML_Adapters;
@@ -45,10 +46,6 @@ package body Alire.Index_On_Disk.Loading is
    --  Load crate providers for all indexes (unless already loaded). If this
    --  metadata file doesn't exist, a full index load will be triggered and
    --  the file will be rebuilt.
-
-   procedure Invalidate_Providers (Indexes_Dir : Any_Path);
-   --  Whenever an index is added or updated, we must invalidate the cache on
-   --  disk containing crate virtual providers.
 
    procedure Save_Providers (Indexes_Dir : Any_Path);
    --  Write to disk the providers info already in memory (generated after a
@@ -196,6 +193,22 @@ package body Alire.Index_On_Disk.Loading is
                             Result,
                             Cached => False);
       use Sets;
+
+      ------------------
+      -- Actually_Add --
+      ------------------
+
+      function Actually_Add (Before : String := "") return Outcome is
+      begin
+         Updates.Reset_Update_Time;
+
+         return Add (Origin => Alire.Index.Community_Repo &
+                       "#" & Alire.Index.Community_Branch,
+                     Name   => Alire.Index.Community_Name,
+                     Under  => Config.Edit.Indexes_Directory,
+                     Before => Before);
+      end Actually_Add;
+
    begin
       if not Config.Builtins.Index_Auto_Community.Get then
          Warnings.Warn_Once
@@ -212,13 +225,9 @@ package body Alire.Index_On_Disk.Loading is
             Trace.Debug ("Index was already set, deleting and re-adding...");
             Assert (Indexes (I).Delete);
 
-            return Add (Origin => Alire.Index.Community_Repo &
-                          "#" & Alire.Index.Community_Branch,
-                        Name   => Alire.Index.Community_Name,
-                        Under  => Config.Edit.Indexes_Directory,
-                        Before => (if Has_Element (Next (I))
-                                   then Indexes (Next (I)).Name
-                                   else ""));
+            return Actually_Add (Before => (if Has_Element (Next (I))
+                                            then Indexes (Next (I)).Name
+                                            else ""));
          end if;
       end loop;
 
@@ -228,10 +237,7 @@ package body Alire.Index_On_Disk.Loading is
       --  Reset cache so next detection finds the new index
 
       Trace.Debug ("Index was not set, adding it...");
-      return Add (Origin => Alire.Index.Community_Repo &
-                    "#" & Alire.Index.Community_Branch,
-                  Name   => Alire.Index.Community_Name,
-                  Under  => Config.Edit.Indexes_Directory);
+      return Actually_Add;
    exception
       when E : Checked_Error =>
          return Outcome_From_Exception (E);
@@ -371,6 +377,20 @@ package body Alire.Index_On_Disk.Loading is
 
       return Indexes;
    end Find_All;
+
+   ---------------------
+   -- Index_Available --
+   ---------------------
+
+   function Index_Available (Under : Absolute_Path := Default_Path)
+                             return Boolean
+   is
+      Result  : Outcome;
+      Index   : constant Set := Find_All (Under, Result);
+   begin
+      Result.Assert;
+      return not Index.Is_Empty;
+   end Index_Available;
 
    ----------
    -- Load --
@@ -627,39 +647,5 @@ package body Alire.Index_On_Disk.Loading is
             Ada.Directories.Delete_File (Filename);
          end if;
    end Save_Providers;
-
-   ----------------
-   -- Update_All --
-   ----------------
-
-   function Update_All (Under : Absolute_Path) return Outcome is
-      Result  : Outcome;
-      Indexes : constant Set := Find_All (Under, Result);
-   begin
-      if not Result.Success then
-         return Result;
-      end if;
-
-      --  First, invalidate providers metadata as this may change with the
-      --  update.
-
-      Invalidate_Providers (Under);
-
-      --  Now update normally
-
-      for Index of Indexes loop
-         declare
-            Result : constant Outcome := Index.Update;
-         begin
-            if Result.Success then
-               Trace.Detail ("Updated successfully: " & Index.Origin);
-            else
-               return Result;
-            end if;
-         end;
-      end loop;
-
-      return Outcome_Success;
-   end Update_All;
 
 end Alire.Index_On_Disk.Loading;

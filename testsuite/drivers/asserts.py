@@ -104,11 +104,14 @@ def assert_installed(prefix : str, milestones : List[str]):
               p.out)
 
 
-def assert_file_exists(path : str):
+def assert_file_exists(path : str, wanted : bool = True):
     """
     Check that a file exists
     """
-    assert os.path.exists(path), f"Missing expected file {path}"
+    if wanted:
+        assert os.path.exists(path), f"Missing expected file {path}"
+    else:
+        assert not os.path.exists(path), f"Unexpected file {path}"
 
 
 def assert_in_file(path : str, expected : str):

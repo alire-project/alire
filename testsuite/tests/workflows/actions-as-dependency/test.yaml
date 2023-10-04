@@ -1,4 +1,6 @@
 driver: python-script
+build_mode: shared
 indexes:
     my_index:
         in_fixtures: false
+    compiler_only_index: {}

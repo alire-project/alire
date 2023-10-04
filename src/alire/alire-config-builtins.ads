@@ -6,6 +6,15 @@ package Alire.Config.Builtins is
    -- Builtins --
    --------------
 
+   --  DEPENDENCIES
+
+   Dependencies_Git_Keep_Repository : constant Builtin := New_Builtin
+     (Key  => "dependencies.git.keep_repository",
+      Def  => False,
+      Help =>
+        "When true, git origins are a proper git repository after deployment. "
+      & "Otherwise they are deployed as a plain directory.");
+
    Dependencies_Shared : constant Builtin := New_Builtin
      (Key  => "dependencies.shared",
       Def  => True,
@@ -41,6 +50,26 @@ package Alire.Config.Builtins is
       Help =>
         "When unset or true, the community index will be added " &
         "automatically when required if no other index is configured.");
+
+   Index_Auto_Update : constant Builtin := New_Builtin
+     (Key  => "index.auto_update",
+      Kind => Cfg_Int,
+      Def  => "24", -- hours
+      Help =>
+        "Hours between automatic index refresh. Set to 0 to disable.");
+
+   Index_Auto_Update_Asked : constant Builtin := New_Builtin
+     (Key    => "index.auto_update_asked",
+      Def    => False,
+      Public => False,
+      Help   => "First time we must autoupdate, we ask the user to approve");
+
+   Index_Last_Update : constant Builtin := New_Builtin
+     (Key    => "index.last_update",
+      Public => False,
+      Kind   => Cfg_Int,
+      Def    => "0", -- seconds since epoch
+      Help   => "Timestamp of last index auto-refresh (seconds)");
 
    Index_Host : constant Builtin := New_Builtin
      (Key  => "index.host",

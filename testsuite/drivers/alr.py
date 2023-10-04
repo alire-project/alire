@@ -63,6 +63,10 @@ def prepare_env(config_dir, env):
     run_alr("-c", config_dir, "config", "--global",
             "--set", "dependencies.shared", "false")
 
+    # Disable index auto-updates, which is not expected by most tests
+    run_alr("-c", config_dir, "config", "--global",
+            "--set", "index.auto_update", "0")
+
     # If distro detection is disabled via environment, configure so in alr
     if "ALIRE_DISABLE_DISTRO" in env:
         if env["ALIRE_DISABLE_DISTRO"] == "true":
@@ -529,6 +533,13 @@ def alr_builds_dir() -> str:
     Return the path to the builds directory
     """
     return os.path.join(alr_config_dir(), "cache", "builds")
+
+
+def crate_dirname(crate):
+    """
+    Return the deployment dir of a crate, obtained with `alr get --dirname`
+    """
+    return run_alr("get", "--dirname", crate).out.strip()
 
 
 def external_compiler_version() -> str:

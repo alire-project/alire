@@ -30,7 +30,11 @@ package body Alire.Builds is
    is
       Src    : constant Absolute_Path := Paths.Vault.Path
                                             / Release.Deployment_Folder;
-      Dst    : constant Absolute_Path := Builds.Path (Root, Release);
+      Dst    : constant Absolute_Path := Builds.Path (Root,
+                                                      Release,
+                                                      Subdir => False);
+      --  In case of monorepo, the first time the repo is deployed, it will be
+      --  synced in its entirety.
       Synced : Flags.Flag := Flags.Complete_Copy (Dst);
    begin
       Was_There := False;
@@ -87,11 +91,21 @@ package body Alire.Builds is
    ----------
 
    function Path (Root    : in out Roots.Root;
-                  Release : Releases.Release)
+                  Release : Releases.Release;
+                  Subdir  : Boolean)
                   return Absolute_Path
-   is (Builds.Path
-       / (Release.Deployment_Folder
-         & "_"
-         & Root.Build_Hash (Release.Name)));
+   is
+      Base : constant Absolute_Path :=
+               Builds.Path
+                 / (Release.Deployment_Folder
+                    & "_"
+                    & Root.Build_Hash (Release.Name));
+   begin
+      if Subdir and then Release.Origin.Is_Monorepo then
+         return Base / Release.Origin.Subdir;
+      else
+         return Base;
+      end if;
+   end Path;
 
 end Alire.Builds;

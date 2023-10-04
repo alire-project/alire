@@ -24,7 +24,6 @@ package body Alr.Commands.Run is
 
    procedure Check_Report (Cmd      : in out Command;
                            Exe_Name : String) is
-      use Ada.Text_IO;
 
       Found_At : constant AAA.Strings.Vector :=
         Files.Locate_File_Under (Cmd.Root.Path,

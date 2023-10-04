@@ -2,7 +2,6 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Environment_Variables;
-with Ada.Text_IO; use Ada.Text_IO;
 
 with CLIC.TTY;
 with CLIC.User_Input;
@@ -13,6 +12,7 @@ with Alire.Config.Builtins;
 with Alire.Config.Edit;
 with Alire.Errors;
 with Alire.Index_On_Disk.Loading;
+with Alire.Index_On_Disk.Updates;
 with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Platforms.Current;
@@ -82,6 +82,16 @@ package body Alr.Commands is
 
    Version_Only : aliased Boolean := False;
    --  Just display the current version and exit
+
+   -----------------------
+   -- Auto_Update_Index --
+   -----------------------
+
+   procedure Auto_Update_Index (This : Command) is
+      pragma Unreferenced (This);
+   begin
+      Alire.Index_On_Disk.Updates.Auto_Update;
+   end Auto_Update_Index;
 
    ---------------
    -- Put_Error --
@@ -579,6 +589,31 @@ package body Alr.Commands is
    begin
       Cmd.Optional_Root := Alire.Roots.Optional.Outcome_Success (Root);
    end Set;
+
+   ----------------
+   -- To_Boolean --
+   ----------------
+
+   function To_Boolean (Image   : GNAT_String;
+                        Switch  : String;
+                        Default : Boolean)
+                        return Boolean
+   is
+   begin
+      if Image in null or else Image.all = "" or else Image.all = Unset then
+         return Default;
+      elsif Is_Boolean (Image.all) then
+         return Boolean'Value (Image.all);
+      elsif Image (Image'First) = '=' then
+         return To_Boolean (new String'(Image (Image'First + 1 .. Image'Last)),
+                            Switch  => Switch,
+                            Default => Default);
+      else
+         Reportaise_Wrong_Arguments
+           ("Value for switch " & Switch & " is not a proper boolean: "
+            & Image.all);
+      end if;
+   end To_Boolean;
 
 begin
 

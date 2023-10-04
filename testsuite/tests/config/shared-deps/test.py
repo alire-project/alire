@@ -19,9 +19,6 @@ def check_in(file : str, expected : str) -> bool:
 vault_dir = alr_vault_dir()
 build_dir = alr_builds_dir()
 
-# Enable shared builds
-run_alr("config", "--global", "--set", "dependencies.shared", "true")
-
 # Create a crate with a dependency
 init_local_crate()
 alr_with("hello")

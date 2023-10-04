@@ -23,6 +23,9 @@ def check_traceback():
 # By default (no `-d` or ALR_TRACEBACK_ENABLED) we don't get a backtrace
 
 check_no_traceback()
+
+# Explicit disable
+
 for val in ["", "0", "false", "no"]:
     os.environ['ALR_TRACEBACK_ENABLED'] = val
     check_no_traceback()

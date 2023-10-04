@@ -28,7 +28,7 @@ else:
     expected_gpr_path = '.*/libhello_0.9.0_filesystem'
 
 # Check the printenv output
-assert_match('warn: Generating possibly incomplete environment'
+assert_match('.*warn: Generating possibly incomplete environment'
              ' because of missing dependencies\n'
              # Note: this warning is via stderr so it's OK
              '.*'
