@@ -15,6 +15,8 @@ package Alire.Config is
    --  Ordering is important, as Globals are loaded first and overridden by any
    --  Local definition loaded later.
 
+   subtype Config_Int is Long_Long_Integer;
+
    ---------------
    -- Built-ins --
    ---------------
@@ -41,6 +43,7 @@ package Alire.Config is
 
    function Get (This : Builtin_Option) return String;
    function Get (This : Builtin_Option) return Boolean;
+   function Get (This : Builtin_Option) return Config_Int;
 
    procedure Set_Locally (This : Builtin_Option; Value : String);
 
@@ -53,6 +56,10 @@ package Alire.Config is
    procedure Set (This  : Builtin_Option;
                   Level : Config.Level;
                   Value : Boolean);
+
+   procedure Set (This  : Builtin_Option;
+                  Level : Config.Level;
+                  Value : Config_Int);
 
    procedure Unset (This  : Builtin_Option;
                     Level : Config.Level);

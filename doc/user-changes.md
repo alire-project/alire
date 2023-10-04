@@ -6,6 +6,18 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### Automatic index updates
+
+PR [#1447](https://github.com/alire-project/alire/pull/1447)
+
+A new configuration option, `index.auto_update`, allows setting the refresh
+period of indexes. It defaults to 24 hours and the user will be asked the first
+time to allow automatic updates. Setting this option to 0 will also disable
+automatic updates.
+
+When enabled, updates may happen before executing commands that rely on
+indexes: `get`, `search`, `with`, etc.
+
 ### Enable shared dependencies by default
 
 PR [#1449](https://github.com/alire-project/alire/pull/1449)

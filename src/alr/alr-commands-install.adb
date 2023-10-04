@@ -54,36 +54,41 @@ package body Alr.Commands.Install is
 
          Alire.Install.Info (Prefix);
 
-      elsif Args.Is_Empty then
+      else
 
-         case Alire.Install.Check_Conflicts (Prefix, Cmd.Root.Release) is
+         Cmd.Auto_Update_Index;
+
+         if Args.Is_Empty then
+
+            case Alire.Install.Check_Conflicts (Prefix, Cmd.Root.Release) is
             when Skip =>
                Trace.Info
                  (Cmd.Root.Release.Milestone.TTY_Image
                   & " is already installed, use " & TTY.Terminal ("--force")
                   & " to reinstall");
             when New_Install | Reinstall | Replace =>
-               Cmd.Root.Install (Prefix => Prefix);
-         end case;
+               Cmd.Root.Install (Prefix     => Prefix);
+            end case;
 
-      else
+         else
 
-         --  Install every given dependency
+            --  Install every given dependency
 
-         declare
-            Deps : Alire.Dependencies.Containers.List;
-         begin
-            for Img of Args loop
-               Deps.Append (Alire.Dependencies.From_String (Img));
-            end loop;
+            declare
+               Deps : Alire.Dependencies.Containers.List;
+            begin
+               for Img of Args loop
+                  Deps.Append (Alire.Dependencies.From_String (Img));
+               end loop;
 
-            Alire.Install.Add (Prefix, Deps);
-         end;
+               Alire.Install.Add (Prefix, Deps);
+            end;
 
-         Alire.Put_Success ("Install to " & TTY.URL (Prefix)
-                            & " finished successfully in "
-                            & TTY.Bold (Timer.Image) & " seconds.");
+            Alire.Put_Success ("Install to " & TTY.URL (Prefix)
+                               & " finished successfully in "
+                               & TTY.Bold (Timer.Image) & " seconds.");
 
+         end if;
       end if;
    end Execute;
 
@@ -136,8 +141,7 @@ package body Alr.Commands.Install is
                      Cmd.Prefix'Access,
                      "", "--prefix=",
                      "Override installation prefix (default is "
-                     & TTY.URL ("${HOME}/" &
-                         Alire.Install.Default_Prefix_Basename) & ")");
+                     & TTY.URL ("${CRATE_ROOT}/alire/prefix)") & ")");
 
       Define_Switch (Config,
                      Cmd.Info'Access,

@@ -31,6 +31,9 @@ class PythonScriptDriver(ClassicTestDriver):
 
         env = dict(os.environ)
 
+        # disable traceback from parent environment if it existed
+        env.pop('ALR_TRACEBACK_ENABLED', None)
+
         config_dir = os.path.join(self.test_env['working_dir'],
                                   'alr-config')
         prepare_env(config_dir, env)
