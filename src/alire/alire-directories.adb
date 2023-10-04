@@ -3,6 +3,7 @@ with AAA.Directories;
 with Ada.Exceptions;
 with Ada.Numerics.Discrete_Random;
 with Ada.Real_Time;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 with Alire.OS_Lib.Subprocess;
@@ -11,7 +12,11 @@ with Alire.Platforms.Current;
 with Alire.Platforms.Folders;
 with Alire.VFS;
 
+with GNAT.String_Hash;
+
 with GNATCOLL.VFS;
+
+with Interfaces;
 
 with SI_Units.Binary;
 
@@ -527,6 +532,40 @@ package body Alire.Directories is
    Epoch : constant Ada.Real_Time.Time :=
              Ada.Real_Time.Time_Of (0, Ada.Real_Time.To_Time_Span (0.0));
 
+   -------------
+   -- Counter --
+   -------------
+
+   protected Counter is
+      procedure Get (Value : out Interfaces.Unsigned_32);
+   private
+      Next : Interfaces.Unsigned_32 := 0;
+   end Counter;
+
+   protected body Counter is
+      procedure Get (Value : out Interfaces.Unsigned_32) is
+         use type Interfaces.Unsigned_32;
+      begin
+         Value := Next;
+         Next  := Next + 1;
+      end Get;
+   end Counter;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next return String is
+      Val : Interfaces.Unsigned_32;
+   begin
+      Counter.Get (Val);
+      return Val'Image;
+   end Next;
+
+   ---------------
+   -- Temp_Name --
+   ---------------
+
    function Temp_Name (Length : Positive := 8) return String is
       subtype Valid_Character is Character range 'a' .. 'z';
       package Char_Random is new
@@ -535,8 +574,11 @@ package body Alire.Directories is
 
       --  The default random seed has a granularity of 1 second, which is not
       --  enough when we run our tests with high parallelism. Increasing the
-      --  resolution to nanoseconds should be enough? At least I couldn't
-      --  reproduce the errors once this is added.
+      --  resolution to nanoseconds is less collision-prone. On top, we add
+      --  the current working directory path to the hash input, which should
+      --  disambiguate even further for our most usual case which is during
+      --  testsuite execution, and a counter to avoid clashes in the same
+      --  process.
 
       --  It would be safer to use an atomic OS call that returns a unique file
       --  name, but we would need native versions for all OSes we support and
@@ -550,18 +592,23 @@ package body Alire.Directories is
       --  This gives us an image without loss of precision and without
       --  having to be worried about overflows
 
-      function "mod" (X, Y : Long_Long_Float) return Long_Long_Float
-      is (X - Y * Long_Long_Float'Floor (X / Y));
+      type Hash_Type is mod 2 ** 32;
+      pragma Compile_Time_Error (Hash_Type'Size > Integer'Size,
+                                 "Hash_Type is too large");
 
-      Seed : constant Integer :=
-               Integer
-                 (Long_Long_Float'Value (Nano)
-                  mod Long_Long_Float (Integer'Last));
-      --  We get the remainder of these two which has to fit into Integer
+      function Hash is new GNAT.String_Hash.Hash
+        (Char_Type => Character,
+         Key_Type  => String,
+         Hash_Type => Hash_Type);
+
+      function To_Integer is new Ada.Unchecked_Conversion (Hash_Type, Integer);
+      --  Ensure unsigned -> signed conversion doesn't bite us
+
+      Seed : constant Hash_Type := Hash (Nano & " at " & Current & "#" & Next);
 
    begin
 
-      Char_Random.Reset (Gen, Seed);
+      Char_Random.Reset (Gen, To_Integer (Seed));
 
       return Result : String (1 .. Length + 4) do
          Result (1 .. 4) := "alr-";
