@@ -380,12 +380,9 @@ package body Alire.Properties.Configurations is
             declare
                Str : constant String := Val.As_String;
             begin
-               for Index in 1 .. This.Values.Length loop
-                  if This.Values.Item (Index).As_String = Str then
-                     return True;
-                  end if;
-               end loop;
-               return False;
+               return
+                 (for some Index in 1 .. This.Values.Length =>
+                    This.Values.Item (Index).As_String = Str);
             end;
 
          when Real =>

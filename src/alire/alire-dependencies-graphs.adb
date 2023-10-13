@@ -72,13 +72,7 @@ package body Alire.Dependencies.Graphs is
                               return Boolean
    is
    begin
-      for Dep of This loop
-         if +Dep.Dependent = Crate then
-            return True;
-         end if;
-      end loop;
-
-      return False;
+      return (for some Dep of This => +Dep.Dependent = Crate);
    end Has_Dependencies;
 
    -----------
