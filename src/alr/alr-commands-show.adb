@@ -362,6 +362,7 @@ package body Alr.Commands.Show is
        .New_Line
        .Append ("The " & Formatter.Terminal ("--dependents")
                 & " switch accepts these values:")
+       .New_Line
        .Append ("* " & Formatter.Terminal ("direct")
          & " (default) shows direct dependents.")
        .Append ("* " & Formatter.Terminal ("all")
