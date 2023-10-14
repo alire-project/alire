@@ -362,12 +362,12 @@ package body Alr.Commands.Show is
        .New_Line
        .Append ("The " & Formatter.Terminal ("--dependents")
                 & " switch accepts these values:")
-       .Append ("   * " & Formatter.Terminal ("direct")
+       .Append ("* " & Formatter.Terminal ("direct")
          & " (default) shows direct dependents.")
-       .Append ("   * " & Formatter.Terminal ("all")
+       .Append ("* " & Formatter.Terminal ("all")
          & " shows all dependents, including indirect ones, "
          & "and all dependency chains.")
-       .Append ("   * " & Formatter.Terminal ("shortest")
+       .Append ("* " & Formatter.Terminal ("shortest")
          & " shows all dependents, including "
          & "indirect ones, but only once, and a shortest-length chain.")
        .New_Line
