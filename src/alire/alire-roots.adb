@@ -33,6 +33,41 @@ package body Alire.Roots is
 
    use type UString;
 
+   -------------------
+   -- Build_Prepare --
+   -------------------
+
+   procedure Build_Prepare (This           : in out Root;
+                            Saved_Profiles : Boolean;
+                            Force_Regen    : Boolean) is
+   begin
+      --  Check whether we should override configuration with the last one used
+      --  and stored on disk. Since the first time the one from disk will be be
+      --  empty, we may still have to generate files in the next step.
+
+      if Saved_Profiles then
+         This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
+      end if;
+
+      This.Load_Configuration;
+      This.Configuration.Ensure_Complete;
+      --  For proceeding to build, the configuration must be complete
+
+      --  Ensure sources are up to date
+
+      if not Builds.Sandboxed_Dependencies then
+         This.Sync_Builds;
+         --  Changes in configuration may require new build dirs.
+      end if;
+
+      --  Ensure configurations are in place and up-to-date
+
+      This.Generate_Configuration (Full => Force or else Force_Regen);
+      --  Will regenerate on demand only those changed. For shared
+      --  dependencies, will also generate any missing configs not generated
+      --  during sync, such as for linked releases and the root release.
+   end Build_Prepare;
+
    -----------
    -- Build --
    -----------
@@ -182,31 +217,8 @@ package body Alire.Roots is
 
    begin
 
-      --  Check whether we should override configuration with the last one used
-      --  and stored on disk. Since the first time the one from disk will be be
-      --  empty, we may still have to generate files in the next step.
-
-      if Saved_Profiles then
-         This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
-      end if;
-
-      This.Load_Configuration;
-      This.Configuration.Ensure_Complete;
-      --  For proceeding to build, the configuration must be complete
-
-      --  Ensure sources are up to date
-
-      if not Builds.Sandboxed_Dependencies then
-         This.Sync_Builds;
-         --  Changes in configuration may require new build dirs.
-      end if;
-
-      --  Ensure configurations are in place and up-to-date
-
-      This.Generate_Configuration (Full => Force);
-      --  Will regenerate on demand only those changed. For shared
-      --  dependencies, will also generate any missing configs not generated
-      --  during sync, such as for linked releases and the root release.
+      This.Build_Prepare (Saved_Profiles => Saved_Profiles,
+                          Force_Regen    => False);
 
       This.Export_Build_Environment;
 
@@ -766,11 +778,10 @@ package body Alire.Roots is
 
       This.Solution.Print_Hints (This.Environment);
 
-      --  Update/Create configuration files
-
-      if Builds.Sandboxed_Dependencies then
-         This.Generate_Configuration (Full => Force);
-      end if;
+      --  For sandboxed deps we could already generate config files, but for
+      --  shared builds we cannot yet until we are sure the configuration is
+      --  complete. To have the same behavior in both cases, we also delay
+      --  configuration generation to build time for sandboxed dependencies.
 
       --  Check that the solution does not contain suspicious dependencies,
       --  taking advantage that this procedure is called whenever a change
@@ -1431,7 +1442,7 @@ package body Alire.Roots is
                      return This.Release_Parent (Rel,
                                                  For_Deploy) / Rel.Base_Folder;
                   when For_Build =>
-                     return Builds.Path (This, Rel);
+                     return Builds.Path (This, Rel, Subdir => True);
                end case;
             end if;
          end;
@@ -1591,6 +1602,15 @@ package body Alire.Roots is
                              return Boolean
    is (Dep.Has_Release and then Dep.Crate = This.Release.Reference.Name);
 
+   ---------------------
+   -- Is_Root_Release --
+   ---------------------
+
+   function Is_Root_Release (This : in out Root;
+                             Name : Crate_Name)
+                             return Boolean
+   is (This.Release.Reference.Name = Name);
+
    ------------------------
    -- Sync_From_Manifest --
    ------------------------
@@ -1716,6 +1736,12 @@ package body Alire.Roots is
       begin
          This.Traverse (Removing_Post_Fetch_Flag'Access);
       end;
+
+      --  Regenerate config files to avoid the unintuitive behavior that after
+      --  an update they may still not exist (or use old switches).
+
+      This.Build_Prepare (Saved_Profiles => False,
+                          Force_Regen    => True);
    end Update;
 
    --------------------
@@ -1845,11 +1871,6 @@ package body Alire.Roots is
 
          This.Set (Solution => Needed);
          This.Deploy_Dependencies;
-
-         --  Update/Create configuration files
-         if Builds.Sandboxed_Dependencies then
-            This.Generate_Configuration (Full => True);
-         end if;
 
          Trace.Detail ("Update completed");
       end;

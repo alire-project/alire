@@ -7,8 +7,6 @@ from drivers.builds import find_hash, hash_input
 from drivers.asserts import assert_eq
 from drivers import builds
 
-run_alr("config", "--set", "--global", "dependencies.shared", "true")
-
 init_local_crate()
 alr_with("hello=1.0.1")
 builds.sync()
@@ -27,6 +25,7 @@ assert_eq(
     'external:HELLO_LIBRARY_TYPE=default\n'
     'external:LIBRARY_TYPE=default\n'
     'profile:hello=RELEASE\n'
+    'switches:hello=-O3,-fdata-sections,-ffunction-sections,-gnatW8,-gnatn\n'
     f'version:gnat_external={external_compiler_version()}\n',
     hash_input("hello"))
 

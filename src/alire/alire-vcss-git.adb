@@ -129,7 +129,7 @@ package body Alire.VCSs.Git is
                    From : URL;
                    Into : Directory_Path)
                    return Outcome
-   is (This.Clone (From, Into, Branch => ""));
+   is (This.Clone (From, Into, Branch => "", Depth => 1));
 
    -----------
    -- Clone --
@@ -731,6 +731,14 @@ package body Alire.VCSs.Git is
          Data.Branch   := +Tail (Output (3), ' ');
       end return;
    end Worktree;
+
+   -------------
+   -- Git_Dir --
+   -------------
+
+   function Git_Dir return Any_Path
+   is (OS_Lib.Getenv (Name    => "GIT_DIR",
+                      Default => ".git"));
 
    -----------------
    -- Head_Commit --

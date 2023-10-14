@@ -4,8 +4,8 @@ use it as a dependency
 """
 
 import os
-import shutil
 
+from drivers import builds
 from drivers.alr import run_alr, init_local_crate, alr_with, alr_publish
 from drivers.helpers import init_git_repo, on_windows
 # from drivers.asserts import assert_eq, assert_match
@@ -49,16 +49,18 @@ assert os.path.isdir(os.path.join(f"monoproject_{commit[:8]}", "mycrate")), \
 init_local_crate("top")
 alr_with("mycrate")
 run_alr("build")
+base = (builds.find_dir("monoproject") if builds.are_shared()
+        else os.path.join("alire", "cache", "dependencies", f"monoproject_{commit[:8]}"))
 assert os.path.isfile(os.path.join(
-    "alire", "cache", "dependencies",
-    f"monoproject_{commit[:8]}", "mycrate", "bin",
+    base, "mycrate", "bin",
     f"mycrate{'.exe' if on_windows() else ''}")), \
     "Expected binary does not exist"
 
 # Also that the info file is there
-assert os.path.isfile(os.path.join(
-    "alire", "cache", "dependencies",
-    f"mycrate_0.1.0_in_monoproject_{commit[:8]}")), \
+deps_dir = (builds.vault_path() if builds.are_shared()
+            else os.path.dirname(base))
+infofile = f"mycrate_0.1.0_in_monoproject_{commit[:8]}"
+assert os.path.isfile(os.path.join(deps_dir, infofile)), \
     "Expected info file does not exist"
 
 print('SUCCESS')

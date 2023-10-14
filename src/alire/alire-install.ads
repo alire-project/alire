@@ -8,8 +8,11 @@ package Alire.Install is
 
    --  Support for installation prefixes
 
-   Default_Prefix : constant Absolute_Path
-     := Platforms.Folders.Home / ".alire";
+   Default_Prefix_Basename : constant Relative_Path := ".alire";
+   Default_Prefix_Dirname  : constant Absolute_Path := Platforms.Folders.Home;
+
+   Default_Prefix : constant Absolute_Path :=
+                      Default_Prefix_Dirname / Default_Prefix_Basename;
 
    procedure Add (Prefix : Any_Path;
                   Deps   : Dependencies.Containers.List);

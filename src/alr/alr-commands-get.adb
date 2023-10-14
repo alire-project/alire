@@ -338,6 +338,8 @@ package body Alr.Commands.Get is
               ("--dirname is incompatible with other switches");
          end if;
 
+         Cmd.Auto_Update_Index;
+
          if not Alire.Index.Exists (Allowed.Crate) then
             Reportaise_Command_Failed
               ("Crate [" & Args (1) & "] does not exist in the index.");

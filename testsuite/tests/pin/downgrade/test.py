@@ -3,13 +3,12 @@ Test that a pin to a lower version downgrades and retrieves the new version
 """
 
 import os
-
-from drivers.alr import run_alr, alr_pin, alr_lockfile
-from drivers.asserts import assert_eq, assert_match
-from drivers.helpers import check_line_in
-
-import os
 import re
+
+from drivers import builds
+from drivers.alr import alr_lockfile, alr_pin, run_alr
+from drivers.asserts import assert_match
+from drivers.helpers import check_line_in
 
 
 # Verify that proper version of libchild is in the printed and disk solution
@@ -26,8 +25,12 @@ def check_child(version, output, pinned):
     check_line_in(alr_lockfile(), f'version = "{version}"')
 
     # Verify dependency folders
-    assert os.path.exists('alire/cache/dependencies/libchild_' + version +
-                          '_filesystem')
+    if builds.are_shared():
+        run_alr('update')  # force hash computation
+        assert builds.find_dir('libchild_' + version + '_filesystem')
+    else:
+        assert os.path.exists('alire/cache/dependencies/libchild_' + version +
+                            '_filesystem')
 
 
 # Create a new "xxx" program project

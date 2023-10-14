@@ -1,5 +1,3 @@
-with AAA.Enum_Tools;
-
 with Alire.Config;
 with Alire.Config.Edit;
 with Alire.Root;
@@ -109,21 +107,17 @@ package body Alr.Commands.Config is
 
             --  Check explicitly for booleans to store the proper TOML type
             --  regardless of the capitalization used by the user.
-            declare
-               function Is_Boolean is new AAA.Enum_Tools.Is_Valid (Boolean);
-            begin
-               if Is_Boolean (Val) then
-                  Alire.Config.Edit.Set_Boolean
-                    (Lvl,
-                     Key, Boolean'Value (Val),
-                     Check => Alire.Config.Edit.Valid_Builtin'Access);
-               else
-                  Alire.Config.Edit.Set
-                    (Lvl,
-                     Key, Val,
-                     Check => Alire.Config.Edit.Valid_Builtin'Access);
-               end if;
-            end;
+            if Is_Boolean (Val) then
+               Alire.Config.Edit.Set_Boolean
+                 (Lvl,
+                  Key, Boolean'Value (Val),
+                  Check => Alire.Config.Edit.Valid_Builtin'Access);
+            else
+               Alire.Config.Edit.Set
+                 (Lvl,
+                  Key, Val,
+                  Check => Alire.Config.Edit.Valid_Builtin'Access);
+            end if;
          end;
 
       elsif Cmd.Unset then

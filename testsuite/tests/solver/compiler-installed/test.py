@@ -3,11 +3,10 @@ Check that, for generic gnat dependencies, no compilers are installed (only a
 locally available one is used).
 """
 
-import subprocess
 import re
 
 from drivers.alr import run_alr, init_local_crate, alr_with
-from drivers.asserts import assert_eq, assert_match, match_solution
+from drivers.asserts import assert_match, match_solution
 
 # With no compiler selected, the external compiler in the environment should be
 # the only one available. We will verify this and capture its version (which is

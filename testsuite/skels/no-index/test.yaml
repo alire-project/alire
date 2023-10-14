@@ -1,1 +1,7 @@
 driver: python-script
+build_mode: both  # one of shared, sandboxed, both (default)
+indexes:
+    compiler_only_index: {}
+    # Note that shared builds require a detected compiler to be able to compute
+    # build hashes, which is needed for many subcommands: build, get, printenv,
+    # update...

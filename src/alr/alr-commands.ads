@@ -1,3 +1,4 @@
+private with AAA.Enum_Tools;
 with AAA.Strings;
 
 with Alire.Directories;
@@ -9,6 +10,7 @@ with CLIC.Subcommand;
 with CLIC.Formatter;
 
 private with GNAT.IO;
+private with GNAT.Strings;
 private with CLIC.Subcommand.Instance;
 
 private with Alr.OS_Lib; -- For the benefit of many child packages that use it
@@ -110,8 +112,8 @@ private
    --  Facilities for command/argument identification. These are available to
    --  commands.
 
-   procedure Reportaise_Command_Failed  (Message : String);
-   procedure Reportaise_Wrong_Arguments (Message : String);
+   procedure Reportaise_Command_Failed  (Message : String) with No_Return;
+   procedure Reportaise_Wrong_Arguments (Message : String) with No_Return;
    --  Report and Raise :P
 
    --  Folder guards conveniences for commands:
@@ -149,9 +151,28 @@ private
       TTY_Version         => CLIC.Formatter.Version,
       TTY_Underline       => CLIC.Formatter.Underline,
       TTY_Emph            => CLIC.Formatter.Emph,
-      TTY_Terminal        => CLIC.Formatter.Terminal);
+      TTY_Terminal        => CLIC.Formatter.Terminal,
+      Global_Options_In_Subcommand_Help => False);
+
+   procedure Auto_Update_Index (This : Command);
 
    Unset : constant String := "unset";
    --  Canary for when a string switch is given without value
+
+   subtype GNAT_String is GNAT.Strings.String_Access;
+   --  Convenience for commands that use string arguments
+
+   function Is_Boolean is new AAA.Enum_Tools.Is_Valid (Boolean);
+
+   function To_Boolean (Image   : GNAT_String;
+                        Switch  : String;
+                        Default : Boolean)
+                        return Boolean
+     with Post =>
+       (if Image in null or else Image.all = "" or else Image.all = Unset
+        then To_Boolean'Result = Default);
+   --  Convert a switch value to a boolean, if explicitly given, or use the
+   --  default otherwise. If not a valid boolean or empty, raise Checked_Error
+   --  with an appropriate error message.
 
 end Alr.Commands;
