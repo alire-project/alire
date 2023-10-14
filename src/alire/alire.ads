@@ -15,6 +15,7 @@ pragma Warnings (On);
 
 with Simple_Logging;
 with CLIC.TTY;
+with CLIC.Formatter;
 
 package Alire with Preelaborate is
 
@@ -240,6 +241,7 @@ package Alire with Preelaborate is
    package Trace renames Simple_Logging;
 
    package TTY renames CLIC.TTY;
+   package Formatter renames CLIC.Formatter;
 
    Log_Level : Simple_Logging.Levels renames Simple_Logging.Level;
    --  This one selects the verbosity level of the logging library. The usage

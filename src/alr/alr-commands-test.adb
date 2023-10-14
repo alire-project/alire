@@ -590,13 +590,17 @@ package body Alr.Commands.Test is
                               return AAA.Strings.Vector
    is (AAA.Strings.Empty_Vector
        .Append ("Tests the retrievability and buildability of all or"
-                & " specific releases. Unless --continue or --redo is given,"
+                & " specific releases. Unless "
+                & Formatter.Terminal ("--continue")
+                & " or " & Formatter.Terminal ("--redo") & " is given,"
                 & " the command expects to be run in an empty folder.")
        .New_Line
        .Append ("After completion, a report in text, markup and junit format"
                 & " will be available in the current directory. A complete log"
                 & " of each release building process will be available in"
-                & " respective <release>/alire/alr_test.log files.")
+                & " respective "
+                & Formatter.Terminal ("<release>/alire/alr_test.log")
+                & " files.")
        .New_Line
        .Append (Crate_Version_Sets));
 
@@ -633,7 +637,8 @@ package body Alr.Commands.Test is
         (Config,
          Cmd.Redo'Access,
          Long_Switch => "--redo",
-         Help => "Retest releases already in folder (implies --continue)");
+         Help => "Retest releases already in folder (implies "
+           & Formatter.Terminal ("--continue") & ")");
 
       Define_Switch
         (Config,

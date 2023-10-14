@@ -49,7 +49,7 @@ package body Alr.Commands.Dev is
             Last_Group := Group;
          end if;
 
-         Put_Line ("## `alr " & Cmd.Name & "`");
+         Put_Line ("## " & Formatter.Terminal ("alr " & Cmd.Name));
 
          New_Line;
          Sub_Cmd.Display_Help (Cmd.Name);

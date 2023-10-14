@@ -248,17 +248,20 @@ package body Alr.Commands.Pin is
       .New_Line
       .Append ("Without arguments, show existing pins.")
       .New_Line
-      .Append ("Use --all to pin the whole current solution.")
+      .Append ("Use " & Formatter.Terminal ("--all")
+               & " to pin the whole current solution.")
       .New_Line
       .Append ("Specify a single crate to modify its pin.")
       .New_Line
-      .Append ("Use the --use <PATH|URL> switch to"
-               & " use the target to fulfill a dependency locally"
+      .Append ("Use the " & Formatter.Terminal ("--use <PATH|URL>")
+               & " switch to use the target to fulfill a dependency locally"
                & " instead of looking for indexed releases."
-               & " An optional reference can be specified with --commit;"
+               & " An optional reference can be specified with "
+               & Formatter.Terminal ("--commit") & ";"
                & " the pin will be frozen at the commit currently matching"
                & " the reference.  Alternatively, a branch to track can be"
-               & " specified with --branch. Use `alr update` to refresh the"
+               & " specified with " & Formatter.Terminal ("--branch") & ". "
+               & "Use " & Formatter.Terminal ("alr update") & " to refresh the"
                & " tracking pin contents.")
      );
 

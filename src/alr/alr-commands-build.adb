@@ -146,18 +146,21 @@ package body Alr.Commands.Build is
          & "whereas dependencies are built in release mode. Use "
          & Switch_Profiles & " for more overrides.")
        .New_Line
-       .Append (Switch_Profiles & "="
-         & TTY.Emph ("*|%|<crate1>=<profile>[,<crate2>=<profile>...]"))
+       .Append (Formatter.Terminal (Switch_Profiles & "="
+         & ("*|%|<crate1>=<profile>[,<crate2>=<profile>...]")))
        .Append ("   Apply profiles to individual crates.")
-       .Append ("   Use " & TTY.Emph ("*=<profile>") & " to set all profiles.")
-       .Append ("   Use " & TTY.Emph ("%=<profile>") & " to set profiles of "
+       .Append ("   Use " & Formatter.Terminal ("*=<profile>")
+                & " to set all profiles.")
+       .Append ("   Use " & Formatter.Terminal ("%=<profile>")
+                & " to set profiles of "
          & "crates without a setting in a manifest only.")
        .New_Line
-       .Append ("Running '" & TTY.Terminal ("alr build") & "' without profile "
+       .Append ("Running '" & Formatter.Terminal ("alr build")
+         & "' without profile "
          & "switches defaults to development (root crate) + release "
          & " (dependencies). Indirect builds through, e.g., '"
-         & TTY.Terminal ("alr run") & "' will use the last '"
-         & TTY.Terminal ("alr build") & "' configuration.")
+         & Formatter.Terminal ("alr run") & "' will use the last '"
+         & Formatter.Terminal ("alr build") & "' configuration.")
       );
 
    --------------------
@@ -188,7 +191,8 @@ package body Alr.Commands.Build is
         (Config,
          Cmd.Profiles'Access,
          "", Switch_Profiles & "=",
-         "Comma-separated list of <crate>=<profile> values (see description)");
+         "Comma-separated list of " & Formatter.Terminal ("<crate>=<profile>")
+           & " values (see description)");
 
    end Setup_Switches;
 

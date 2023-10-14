@@ -352,18 +352,22 @@ package body Alr.Commands.Withing is
                 & " simultaneously added and removed in a single invocation.")
        .New_Line
        .Append ("* Adding dependencies pinned to external sources:")
-       .Append ("When a single crate name is accompanied by an --use PATH|URL"
+       .Append ("When a single crate name is accompanied by a "
+                & Formatter.Terminal ("--use PATH|URL")
                 & " argument, the crate is always fulfilled for any required"
                 & " version by the sources found at the given target."
-                & " An optional reference can be specified with --commit;"
+                & " An optional reference can be specified with "
+                & Formatter.Terminal ("--commit") & ";"
                 & " the pin will be frozen at the commit currently matching"
                 & " the reference. Alternatively, a branch to track can be"
-                & " specified with --branch. Use `alr update` to refresh the"
-                & " tracking pin contents.")
+                & " specified with " & Formatter.Terminal ("--branch")
+                & ". Use '" & Formatter.Terminal ("alr update")
+                & "' to refresh the tracking pin contents.")
        .New_Line
        .Append ("* Adding dependencies from a GPR file:")
-       .Append ("The project file given with --from will be scanned looking"
-                & " for comments that contain the sequence 'alr with'. "
+       .Append ("The project file given with " & Formatter.Terminal ("--from")
+                & " will be scanned looking for comments that contain the"
+                & " sequence '" & Formatter.Terminal ("alr with") & "'. "
                 & " These will be processed individually as if they had been"
                 & " given in the command line, starting with no dependencies."
                 & " That is, only dependencies given in the GPR file will be"
@@ -371,7 +375,7 @@ package body Alr.Commands.Withing is
        .New_Line
        .Append ("Example of GPR file contents:")
        .New_Line
-       .Append ("with ""libhello""; -- alr with libhello")
+       .Append (Formatter.Terminal ("with ""libhello""; -- alr with libhello"))
        .New_Line
        .Append (Crate_Version_Sets));
 

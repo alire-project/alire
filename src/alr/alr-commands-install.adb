@@ -103,8 +103,8 @@ package body Alr.Commands.Install is
        .New_Line
        .Append ("Installation prefixes are intended to make binaries or "
          & "dynamic libraries available outside of the Alire environment, "
-         & "normally by adding the " & TTY.URL ("<prefix>/bin")
-         &  " folder to the user's path.")
+         & "normally by adding the " & Formatter.Terminal ("<prefix>/bin")
+         & " folder to the user's path.")
        .New_Line
        .Append ("Although Alire will vet trivially detectable conflicts "
          & "(e.g., trying to install two executable release with different "
@@ -113,11 +113,13 @@ package body Alr.Commands.Install is
          & "regard to the final consistency of installations.")
        .New_Line
        .Append ("That said, binary crates from the Alire project (" & Binaries
-         & "), as well as crates initialized with `alr` using default "
+         & "), as well as crates initialized with "
+         & Formatter.Terminal ("alr") & " using default "
          & "templates, should be able to coexist in a same installation prefix"
          & " without issue.")
        .New_Line
-       .Append ("You can use the --force to reinstall already installed "
+       .Append ("You can use the " & Formatter.Terminal ("--force")
+         & " to reinstall already installed "
          & "releases.")
       );
 

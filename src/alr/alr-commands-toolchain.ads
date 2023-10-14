@@ -43,7 +43,7 @@ package Alr.Commands.Toolchain is
           & " optional version set to make available or remove a tool.")
        .New_Line
        .Append
-         ("Run `" & TTY.Terminal ("alr help toolchains") & "` for further "
+         ("Run " & Formatter.Terminal ("alr help toolchains") & " for further "
           & "information about toolchain management and use.")
       );
 

@@ -180,7 +180,7 @@ package body Alire is
       if +Err /= "" then
          Err := Err
            & " You can see the complete identifier naming rules"
-           & " with 'alr help identifiers'";
+           & " with '" & Formatter.Terminal ("alr help identifiers") & "'";
       end if;
 
       if Err /= "" then

@@ -1806,7 +1806,8 @@ package body Alire.Roots is
             if not Needed.Is_Complete then
                Trace.Warning
                  ("There are missing dependencies"
-                  & " (use `alr with --solve` for details).");
+                    & " (use " & Formatter.Terminal ("alr with --solve")
+                    & " for details).");
             end if;
 
             This.Sync_Manifest_And_Lockfile_Timestamps;

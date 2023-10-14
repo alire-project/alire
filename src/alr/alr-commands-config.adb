@@ -202,7 +202,8 @@ package body Alr.Commands.Config is
         (Config      => Config,
          Output      => Cmd.Show_Origin'Access,
          Long_Switch => "--show-origin",
-         Help        => "Show origin of configuration values in --list");
+         Help        => "Show origin of configuration values in "
+           & Formatter.Terminal ("--list"));
 
       Define_Switch
         (Config      => Config,

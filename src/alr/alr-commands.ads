@@ -148,7 +148,8 @@ private
       TTY_Description     => CLIC.Formatter.Description,
       TTY_Version         => CLIC.Formatter.Version,
       TTY_Underline       => CLIC.Formatter.Underline,
-      TTY_Emph            => CLIC.Formatter.Emph);
+      TTY_Emph            => CLIC.Formatter.Emph,
+      TTY_Terminal        => CLIC.Formatter.Terminal);
 
    Unset : constant String := "unset";
    --  Canary for when a string switch is given without value

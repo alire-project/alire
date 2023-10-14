@@ -346,19 +346,22 @@ package body Alr.Commands.Show is
        .Append ("Shows information found in the loaded indexes about a"
                 & " specific release (see below to narrow the searched"
                 & " milestones). By default, only direct dependencies are"
-                & " reported. With --solve, a full solution is resolved and"
+                & " reported. With " & Formatter.Terminal ("--solve")
+                & ", a full solution is resolved and"
                 & " reported in list and graph form.")
        .New_Line
-       .Append ("With --external, the external definitions for a crate are"
+       .Append ("With " & Formatter.Terminal ("--external")
+                & ", the external definitions for a crate are"
                 & " shown, instead of information about a particular release")
        .New_Line
-       .Append ("The --dependents switch accepts these values:")
-       .Append ("   * " & TTY.Terminal ("direct")
+       .Append ("The " & Formatter.Terminal ("--dependents")
+                & " switch accepts these values:")
+       .Append ("   * " & Formatter.Terminal ("direct")
          & " (default) shows direct dependents.")
-       .Append ("   * " & TTY.Terminal ("all")
+       .Append ("   * " & Formatter.Terminal ("all")
          & " shows all dependents, including indirect ones, "
          & "and all dependency chains.")
-       .Append ("   * " & TTY.Terminal ("shortest")
+       .Append ("   * " & Formatter.Terminal ("shortest")
          & " shows all dependents, including "
          & "indirect ones, but only once, and a shortest-length chain.")
        .New_Line
@@ -378,7 +381,8 @@ package body Alr.Commands.Show is
       Define_Switch (Config,
                      Cmd.Dependents'Access,
                      "", "--dependents?",
-                     "Show dependent crates (ARG=direct|shortest|all)",
+                     "Show dependent crates ("
+                     & Formatter.Terminal ("ARG=direct|shortest|all") & ")",
                      Argument => "=ARG");
 
       Define_Switch (Config,

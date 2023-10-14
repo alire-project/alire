@@ -66,7 +66,8 @@ package Alire.Config.Builtins is
      (Key => "solver.autonarrow",
       Def => True,
       Help =>
-        "If true, `alr with` will replace 'any' dependencies with the"
+        "If true, " & Formatter.Terminal ("alr with")
+      & " will replace 'any' dependencies with the"
       & " appropriate caret/tilde dependency.");
 
    --  TOOLCHAIN
@@ -104,7 +105,7 @@ package Alire.Config.Builtins is
         "If true, Alire will not attempt to update dependencies even after "
       & "the manifest is manually edited, or when no valid solution has "
       & "been ever computed. All updates have to be manually requested "
-      & "through `alr update`");
+      & "through " & Formatter.Terminal ("alr update"));
 
    --  USER
 
