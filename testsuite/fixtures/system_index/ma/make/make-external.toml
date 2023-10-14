@@ -1,0 +1,9 @@
+description = "Utility for directing compilation"
+name = "make"
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+[[external]]
+kind = "version-output"
+version-command = ["make", "--version"]
+version-regexp = ".*Make ([\\d\\.]+).*"

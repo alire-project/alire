@@ -7,6 +7,7 @@ private with Alire.Builds.Hashes;
 with Alire.Containers;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.States;
+with Alire.Directories;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
 with Alire.Paths;
@@ -333,7 +334,8 @@ package Alire.Roots is
    --  overwrite even if existing (so `alr update` can deal with any
    --  corner case).
 
-   procedure Print_Nested_Crates (Path : Any_Path);
+   procedure Print_Nested_Crates (Path : Any_Path)
+     with Pre => Directories.Is_Directory (Path);
    --  Look for nested crates below the given path and print a summary of
    --  path/milestone:description for each one found. Won't enter `alire` dirs.
 
