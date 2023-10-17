@@ -8,7 +8,8 @@ on:
       - '**.rst'
       - '**.txt'
   release:
-    types: [created]
+    types: [published]
+  workflow_dispatch:
 
 env:
   ALIRE_OS: "windows"
@@ -68,7 +69,7 @@ jobs:
     - name: Add msys2 /usr/bin to the path (for zip)
       run: echo 'C:\Users\runneradmin\.cache\alire\msys64\usr\bin' >> $GITHUB_PATH
       shell: bash
-      
+
     - name: Run installer build script
       run: bash make-alire-installer
       shell: bash

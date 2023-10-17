@@ -8,7 +8,8 @@ on:
       - '**.rst'
       - '**.txt'
   release:
-    types: [created]
+    types: [published]
+  workflow_dispatch:
 
 env:
   alire_index: ""
