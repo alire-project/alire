@@ -270,9 +270,16 @@ package body Alire.Releases is
                                  Paths.Working_Folder_Inside_Root
                                  / (Paths.Crate_File_Name & ".upstream");
             begin
+               --  Backup if already there
                Alire.Directories.Backup_If_Existing
                  (Upstream_File,
                   Base_Dir => Paths.Working_Folder_Inside_Root);
+               --  Remove just backed up file
+               if Directories.Is_File (Upstream_File) then
+                  Directories.Delete_Tree
+                    (Directories.Full_Name (Upstream_File));
+               end if;
+               --  And rename the original manifest into upstream
                Ada.Directories.Rename
                  (Old_Name => Paths.Crate_File_Name,
                   New_Name => Upstream_File);
@@ -299,9 +306,12 @@ package body Alire.Releases is
       Trace.Debug ("Deploying " & This.Milestone.TTY_Image
                    & " into " & TTY.URL (Folder));
 
-      --  Deploy if the target dir is not already there
+      --  Deploy if the target dir is not already there. We only skip for
+      --  releases that require a folder to be deployed; system releases
+      --  require the deploy attempt as the installation check is done by
+      --  the deployer.
 
-      if Completed.Exists then
+      if This.Origin.Is_Index_Provided and then Completed.Exists then
          Was_There := True;
          Trace.Detail ("Skipping checkout of already available " &
                          This.Milestone.Image);

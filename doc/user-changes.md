@@ -6,6 +6,37 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### Enable shared dependencies by default
+
+PR [#1449](https://github.com/alire-project/alire/pull/1449)
+
+Pre-2.0, Alire worked always in "sandboxed" mode; that is, all source
+dependencies were found under `<workspace>/alire/cache`. This behavior can be
+now enabled with `alr config --set dependencies.shared false`, locally or
+globally.
+
+By default, post-2.0, Alire works in "shared" mode, where sources are
+downloaded once (to `~/.cache/alire/releases`) and unique builds are created
+(under `~/.cache/alire/builds`) for unique configurations. This should minimize
+rebuilds across crate configurations and workspaces, and eliminate risks of
+inconsistencies.
+
+Disk use is decreased by unique source downloads, but might be increased by
+unique build configurations. Cache management and cleanup will be provided down
+the road. The build cache can always be deleted to retrieve disk space, at the
+cost of triggering rebuilds.
+
+Unique builds are identified by a build hash which takes into account the
+following inputs for a given release:
+
+- Build profile
+- Environment variables modified in the manifest
+- GPR external variables declared or set
+- Configuration variables declared or set
+- Compiler version
+- Vaue of `LIBRARY_TYPE` and `<CRATE>_LIBRARY_TYPE` variables.
+- Hash of dependencies
+
 ### Automatic index updates
 
 PR [#1447](https://github.com/alire-project/alire/pull/1447)

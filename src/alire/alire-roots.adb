@@ -3,7 +3,6 @@ with Ada.Unchecked_Deallocation;
 with Alire.Builds;
 with Alire.Conditional;
 with Alire.Dependencies.Containers;
-with Alire.Directories;
 with Alire.Environment.Loading;
 with Alire.Errors;
 with Alire.Flags;
@@ -757,9 +756,12 @@ package body Alire.Roots is
                  );
 
                --  If the release was newly deployed, we can inform about its
-               --  nested crates now.
+               --  nested crates now (if it has its own folder where nested
+               --  crates could be found).
 
-               if not Was_There and then not CLIC.User_Input.Not_Interactive
+               if Rel.Origin.Is_Index_Provided
+                 and then not Was_There
+                 and then not CLIC.User_Input.Not_Interactive
                then
                   Print_Nested_Crates (This.Release_Base (Rel.Name,
                                                           For_Deploy));
@@ -1435,7 +1437,7 @@ package body Alire.Roots is
             Rel : constant Releases.Release := Release (This, Crate);
          begin
             if not This.Requires_Build_Sync (Rel) then
-               return This.Release_Parent (Rel, For_Build) / Rel.Base_Folder;
+               return This.Release_Parent (Rel, For_Deploy) / Rel.Base_Folder;
             else
                case Usage is
                   when For_Deploy =>
