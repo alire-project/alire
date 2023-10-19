@@ -71,7 +71,7 @@ jobs:
     - name: Retrieve upload URL for the release
       if: (github.event_name == 'release')
       id: get_release
-      uses: bruceadams/get-release@v1.2.1
+      uses: bruceadams/get-release@v1.3.2
       env:
         GITHUB_TOKEN: ${{ github.token }}
 
@@ -90,40 +90,3 @@ jobs:
         asset_path: alr-bin-linux.zip
         asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-x86_64-linux.zip
         asset_content_type: application/zip
-
-    ############
-    # AppImage #
-    ############
-
-    - name: Install AppImage's linuxdeploy
-      if: (github.event_name == 'release')
-      uses: miurahr/install-linuxdeploy-action@v1
-      with:
-        plugins: appimage
-
-    - name: Copy license into AppImage
-      if: (github.event_name == 'release')
-      run: |
-        mkdir -p AppDir
-        cp LICENSE.txt AppDir/
-
-    - name: Create AppImage
-      if: (github.event_name == 'release')
-      run: >
-        linuxdeploy-x86_64.AppImage --appdir AppDir -e bin/alr
-        -d resources/alr.desktop -i resources/alr.png --output appimage
-
-    - name: Rename AppImage
-      if: (github.event_name == 'release')
-      run: mv alr*AppImage alr.AppImage
-
-    - name: Upload AppImage asset
-      if: (github.event_name == 'release')
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.get_release.outputs.upload_url }}
-        asset_path: alr.AppImage
-        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-x86_64.AppImage
-        asset_content_type: application/x-elf
