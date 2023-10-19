@@ -1,0 +1,115 @@
+name: CI AppImage
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    name: AppImage preparation for Linux
+
+    # Oldest supported by Alire+GitHub to increase AppImage back-compatibility
+    # Unfortunately we depend on the static elaboration model of recent GNATs
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Install FSF toolchain
+      run: sudo apt-get install -y gnat gprbuild
+
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Run test script
+      run: scripts/ci-github.sh
+      shell: bash
+      env:
+        BRANCH: ${{ github.base_ref }}
+        INDEX: ""
+
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@master
+      with:
+        name: e3-log-linux.zip
+        path: testsuite/out
+
+    - name: Retrieve upload URL for the release
+      if: (github.event_name == 'release')
+      id: get_release
+      uses: bruceadams/get-release@v1.3.2
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Get release version
+      if: (github.event_name == 'release')
+      id: get_version
+      uses: battila7/get-version-action@v2
+
+    - name: Get ref version
+      if: (github.event_name != 'release')
+      id: get_ref
+      run: echo "::set-output name=short_sha::$(echo ${{ github.sha }} | cut -c1-8)"
+
+    ############
+    # AppImage #
+    ############
+
+    - name: Install AppImage dependencies (libfuse2)
+      shell: bash
+      run: |
+        sudo add-apt-repository universe
+        sudo apt-get install -y libfuse2
+
+    - name: Install AppImage's linuxdeploy
+      uses: miurahr/install-linuxdeploy-action@v1
+      with:
+        plugins: appimage
+
+    - name: Copy license into AppImage
+      run: |
+        mkdir -p AppDir
+        cp LICENSE.txt AppDir/
+
+    - name: Create AppImage
+      run: >
+        linuxdeploy-x86_64.AppImage --appdir AppDir -e bin/alr
+        -d resources/alr.desktop -i resources/alr.png --output appimage
+
+    - name: Rename AppImage
+      run: mv alr*AppImage alr.AppImage
+
+    - name: Upload AppImage asset
+      if: (github.event_name == 'release')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.get_release.outputs.upload_url }}
+        asset_path: alr.AppImage
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-x86_64.AppImage
+        asset_content_type: application/x-elf
+
+    # When not a release we upload as a plain artifact, just to make sure that
+    # this works as expected. Also this way the AppImage is available for
+    # regular PRs for easy testing.
+    - name: Upload as artifact (when not a release)
+      if: (github.event_name != 'release')
+      uses: actions/upload-artifact@v2
+      with:
+        name: alr-${{ steps.get_ref.outputs.short_sha }}-x86_64.AppImage.zip
+        path: alr.AppImage
