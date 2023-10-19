@@ -1,5 +1,6 @@
 ## Checklist for releasing a new version
 
+1. [ ] Update version in `Alire.Version`.
 1. [ ] Create test release in own fork.
   - To verify builds succeed.
   - As the Windows build can rarely fail, this provides a backup .exe
