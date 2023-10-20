@@ -59,6 +59,8 @@ package body Alr.Commands is
 
    Command_Line_Config_Path : aliased GNAT.OS_Lib.String_Access;
 
+   Command_Line_Chdir_Target_Path : aliased GNAT.OS_Lib.String_Access;
+
    --  Following aliased booleans are used by GNAT.Command_Line processing:
 
    Log_Quiet  : Boolean renames Alire_Early_Elaboration.Switch_Q;
@@ -142,6 +144,11 @@ package body Alr.Commands is
                      Command_Line_Config_Path'Access,
                      "-c=", "--config=",
                      "Override configuration folder location");
+
+      Define_Switch (Config,
+                     Command_Line_Chdir_Target_Path'Access,
+                     "-C=", "--chdir=",
+                     "Run Alire in the given directory");
 
       Define_Switch (Config,
                      Alire.Force'Access,
@@ -496,6 +503,14 @@ package body Alr.Commands is
          begin
             Alire.Config.Edit.Set_Path (Config_Path);
          end;
+      end if;
+
+      --  chdir(2) if necessary.
+
+      if Command_Line_Chdir_Target_Path /= null and then
+         Command_Line_Chdir_Target_Path.all /= ""
+      then
+         Ada.Directories.Set_Directory (Command_Line_Chdir_Target_Path.all);
       end if;
 
       Create_Alire_Folders;
