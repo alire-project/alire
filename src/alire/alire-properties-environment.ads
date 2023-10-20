@@ -41,7 +41,7 @@ private
    type Variable is new Property with record
       Action : Actions;
       Name   : UString;
-      Value  : UString;
+      Value  : UString; -- Value with portable path separators
    end record;
 
 end Alire.Properties.Environment;

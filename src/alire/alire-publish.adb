@@ -25,14 +25,13 @@ with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.User_Pins.Maps;
+with Alire.Utils.Tools;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
 with Alire.VFS;
 
 with CLIC.User_Input;
-
-with GNATCOLL.OS.Constants;
 
 with Semantic_Versioning;
 
@@ -675,8 +674,9 @@ package body Alire.Publish is
             & String'("--exclude=./alire")
             --  Exclude top-level alire folder, before applying prefix
 
-            --  exclude .git and the like, with workaround for macOS bsd tar
-            & (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.MacOS
+            --  exclude .git and the like, with workaround for bsdtar used by
+            --  macOS and Windows without MSYS2
+            & (if Utils.Tools.Is_BSD_Tar
                then Empty_Vector
                     & "--exclude=./.git"
                     & "--exclude=./.hg"
