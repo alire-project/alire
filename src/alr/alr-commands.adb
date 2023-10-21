@@ -161,7 +161,9 @@ package body Alr.Commands is
       Define_Switch (Config,
                      No_Color'Access,
                      Long_Switch => "--no-color",
-                     Help        => "Disables colors in output");
+                     Help        => "Disables colors in output."
+                       & " Default when NO_COLOR is defined in the"
+                       & " environment.");
 
       Define_Switch (Config,
                      No_TTY'Access,
@@ -473,6 +475,7 @@ package body Alr.Commands is
         and then not No_Color
         and then not No_TTY
         and then Ada.Environment_Variables.Value ("TERM", "dumb") /= "dumb"
+        and then Ada.Environment_Variables.Value ("NO_COLOR", "") = ""
       then
          CLIC.TTY.Enable_Color (Force => False);
          --  This may still not enable color if TTY is detected to be incapable
