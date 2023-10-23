@@ -148,7 +148,7 @@ package body Alr.Commands is
       Define_Switch (Config,
                      Command_Line_Chdir_Target_Path'Access,
                      "-C=", "--chdir=",
-                     "Run Alire in the given directory");
+                     "Run `alr` in the given directory");
 
       Define_Switch (Config,
                      Alire.Force'Access,
