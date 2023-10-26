@@ -141,7 +141,7 @@ package body Alr.Commands.Install is
                      Cmd.Prefix'Access,
                      "", "--prefix=",
                      "Override installation prefix (default is "
-                     & TTY.URL ("${CRATE_ROOT}/alire/prefix)") & ")");
+                     & TTY.URL (Alire.Install.Default_Prefix) & ")");
 
       Define_Switch (Config,
                      Cmd.Info'Access,
