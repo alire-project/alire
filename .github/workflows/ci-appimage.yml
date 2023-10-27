@@ -14,7 +14,7 @@ on:
 jobs:
 
   build:
-    name: AppImage preparation for Linux
+    name: Assemble for Linux
 
     # Oldest supported by Alire+GitHub to increase AppImage back-compatibility
     # Unfortunately we depend on the static elaboration model of recent GNATs
