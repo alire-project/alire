@@ -48,9 +48,17 @@ package body Alire.Roots is
          This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
       end if;
 
+      --  Right after initialization, a Root may lack a solution, which is
+      --  needed for configuration generation, so ensure there is one.
+
+      if not This.Has_Lockfile then
+         This.Set (Solutions.Empty_Valid_Solution);
+      end if;
+
+      --  Proceed to load configuration, which must be complete before building
+
       This.Load_Configuration;
       This.Configuration.Ensure_Complete;
-      --  For proceeding to build, the configuration must be complete
 
       --  Ensure sources are up to date
 
@@ -1517,7 +1525,7 @@ package body Alire.Roots is
    -- Dependencies_Dir --
    ----------------------
 
-   function Dependencies_Dir (This  : in out Root) return Any_Path
+   function Dependencies_Dir (This  : in out Root) return Absolute_Path
    is (if Builds.Sandboxed_Dependencies
        then This.Cache_Dir / Paths.Deps_Folder_Inside_Cache_Folder
        else Paths.Vault.Path);
@@ -1561,7 +1569,7 @@ package body Alire.Roots is
    --------------------
 
    procedure Write_Solution (Solution : Solutions.Solution;
-                             Lockfile : String)
+                             Lockfile : Absolute_Path)
    is
    begin
       Lockfiles.Write (Contents => (Solution => Solution),

@@ -54,7 +54,7 @@ package body Alire.Roots.Optional is
                          (R    => Releases.From_Manifest (Crate_File,
                                                           Manifest.Local,
                                                           Strict => True),
-                          Path => Ada.Directories.Full_Name (Path),
+                          Path => Directories.Current,
                           Env  => Alire.Root.Platform_Properties))
                   do
                      --  Crate loaded properly, we can return a valid root here

@@ -492,7 +492,8 @@ package body Alire.Directories is
       use Ada.Directories;
       use Ada.Exceptions;
       use Ada.Strings.Unbounded;
-      procedure Free is new Ada.Unchecked_Deallocation (String, Destination);
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Absolute_Path, Destination);
       Freeable : Destination := This.Enter;
    begin
       if This.Enter /= null
