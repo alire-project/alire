@@ -1,6 +1,7 @@
 with Alire.Conditional;
 with Alire.Dependencies.Diffs;
 with Alire.Directories;
+with Alire.Index;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.Roots.Optional;
@@ -78,8 +79,9 @@ package body Alire.Roots.Editable is
    -- Add_Dependency --
    --------------------
 
-   procedure Add_Dependency (This : in out Root;
-                             Dep  : Dependencies.Dependency)
+   procedure Add_Dependency (This          : in out Root;
+                             Dep           : Dependencies.Dependency;
+                             Allow_Unknown : Boolean := Alire.Force)
    is
 
       --------------------
@@ -124,6 +126,14 @@ package body Alire.Roots.Editable is
       end Find_Updatable;
 
    begin
+
+      --  Reject if unknown
+
+      if not Allow_Unknown and then not Index.Exists (Dep.Crate) then
+         Alire.Recoverable_Error
+           ("Cannot add crate '" & Alire.Utils.TTY.Name (Dep.Crate)
+            & "' not found in index.");
+      end if;
 
       --  Do not add if already a direct dependency
 
@@ -287,7 +297,9 @@ package body Alire.Roots.Editable is
                  (Crate,
                   (if Pin_Root.Is_Valid and then not Pin_Is_Parent_Crate
                    then Pin_Root.Updatable_Dependency.Versions
-                   else Semver.Extended.Any)));
+                   else Semver.Extended.Any)),
+               Allow_Unknown => True);
+            --  Pins to local paths are more likely not to be indexed
          end if;
 
          --  Remove any previous pin for this crate

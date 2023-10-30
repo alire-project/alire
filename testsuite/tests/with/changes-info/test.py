@@ -27,8 +27,8 @@ Changes to dependency solution:
              p.out, flags=re.S)
 
 ###############################################################################
-# Check adding a missing crate
-p = run_alr('with', 'unobtanium', quiet=False)
+# Check adding a missing crate (with forcing)
+p = run_alr('with', 'unobtanium', quiet=False, force=True)
 assert_match(".*" +
              re.escape("""Requested changes:
 
@@ -39,6 +39,14 @@ Changes to dependency solution:
    New solution is incomplete.
    +! unobtanium * (new,missing:unknown)""") + ".*",
              p.out, flags=re.S)
+
+# Remove the missing crate for following tests
+run_alr("with", "--del", "unobtanium")
+
+# Check adding without forcing for simpler error message
+p = run_alr('with', 'unobtanium', force=False, complain_on_error=False)
+assert_match(".*Cannot add crate 'unobtanium' not found in index",
+             p.out)
 
 ###############################################################################
 # Check adding a pinned dir (the dir must exist)
