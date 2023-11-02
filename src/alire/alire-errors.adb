@@ -1,4 +1,3 @@
-with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Ordered_Maps;
 
 package body Alire.Errors is
@@ -166,10 +165,7 @@ package body Alire.Errors is
    -- ERROR STACKING --
    --------------------
 
-   package String_Lists is
-     new Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
-
-   Error_Stack : String_Lists.List;
+   Error_Stack : AAA.Strings.Vector;
 
    ----------
    -- Open --
@@ -177,7 +173,7 @@ package body Alire.Errors is
 
    function Open (Text : String) return Scope is
    begin
-      Error_Stack.Append (Text);
+      Open (Text);
       return (Ada.Finalization.Limited_Controlled with null record);
    end Open;
 
@@ -187,7 +183,9 @@ package body Alire.Errors is
 
    procedure Open (Text : String) is
    begin
-      Error_Stack.Append (Text);
+      if Error_Stack.Is_Empty or else Error_Stack.Last_Element /= Text then
+         Error_Stack.Append (Text);
+      end if;
    end Open;
 
    -----------
