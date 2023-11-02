@@ -437,7 +437,8 @@ package body Alr.Commands.Init is
         .Append ("GPL-3.0-or-later")
         .Append (License_Other);
 
-      Answer : Natural;
+      Answer : Natural := 0;
+      function Chosen return String is (License_Vect (Answer));
    begin
       Answer := CLIC.User_Input.Query_Multi
         (Question  => "Select a software " & Emph ("license") &
@@ -456,7 +457,11 @@ package body Alr.Commands.Init is
                  Default    => "",
                  Validation => License_Validation'Access));
       else
-         Info.Licenses := To_Unbounded_String (License_Vect (Answer));
+         if not License_Validation (Chosen) then
+            raise Program_Error with
+              "Invalid license among choices: " & Chosen;
+         end if;
+         Info.Licenses := To_Unbounded_String (Chosen);
       end if;
    end Query_License;
 
