@@ -72,7 +72,7 @@ jobs:
         python-version: '3.x'
 
     - name: Install e3
-      run: pip install --upgrade e3-testsuite
+      run: pip install --upgrade -r testsuite/requirements.txt
 
     - name: Run testsuite
       run: cd testsuite; ./run.py -E
