@@ -31,12 +31,14 @@ package Alr.Commands.Publish is
                 & " a local or remote git repository.")
        .New_Line
        .Append ("For the common use case of a github-hosted repository,"
-                & " issue `alr publish` after committing and pushing"
-                & " the new release version.")
+                & " issue " & Formatter.Terminal ("alr publish")
+                & " after committing and pushing the new release version.")
        .New_Line
-       .Append ("Use --tar to create a source archive ready to be uploaded.")
+       .Append ("Use " & Formatter.Terminal ("--tar")
+                & " to create a source archive ready to be uploaded.")
        .New_Line
-       .Append ("Use --manifest to use metadata in a non-default file.")
+       .Append ("Use " & Formatter.Terminal ("--manifest")
+                & " to use metadata in a non-default file.")
        .New_Line
        .Append ("See the above link for help with other scenarios."));
 

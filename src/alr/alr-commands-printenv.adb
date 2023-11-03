@@ -66,8 +66,9 @@ package body Alr.Commands.Printenv is
                  " for instance before starting an IDE.")
       .New_Line
       .Append ("Examples:")
-      .Append ("  - eval $(alr printenv --unix)")
-      .Append ("  - alr printenv --powershell | Invoke-Expression")
+      .New_Line
+      .Append ("* eval $(alr printenv --unix)")
+      .Append ("* alr printenv --powershell | Invoke-Expression")
      );
 
    --------------------

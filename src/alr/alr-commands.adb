@@ -472,7 +472,7 @@ package body Alr.Commands is
       end if;
 
       if No_TTY then
-         CLIC.TTY.Force_Disable_TTY;
+         CLIC.Formatter.Force_Disable_TTY;
       end if;
 
       --  Use CLIC.TTY selection/detection of TTY
@@ -563,10 +563,11 @@ package body Alr.Commands is
         .Append ("Version selection syntax (global policy applies "
                  & "within the allowed version subsets):")
         .New_Line
-        .Append ("crate        " & ASCII.HT & "Newest/oldest version")
-        .Append ("crate=version" & ASCII.HT & "Exact version")
-        .Append ("crate^version" & ASCII.HT & "Major-compatible version")
-        .Append ("crate~version" & ASCII.HT & "Minor-compatible version");
+        -- Additional indentation will enable the preformat mode in markdown
+        .Append ("  crate        " & ASCII.HT & "Newest/oldest version")
+        .Append ("  crate=version" & ASCII.HT & "Exact version")
+        .Append ("  crate^version" & ASCII.HT & "Major-compatible version")
+        .Append ("  crate~version" & ASCII.HT & "Minor-compatible version");
    end Crate_Version_Sets;
 
    --------------

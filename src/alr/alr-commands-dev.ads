@@ -37,6 +37,7 @@ private
       Raise_Except : aliased Boolean := False;
       Self_Test    : aliased Boolean := False;
       UTF_8_Test   : aliased Boolean := False; -- Produce some UTF-8 output
+      MD_Help      : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Dev;
