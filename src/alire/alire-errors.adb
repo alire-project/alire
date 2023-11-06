@@ -1,4 +1,3 @@
-with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Ordered_Maps;
 
 package body Alire.Errors is
@@ -166,10 +165,7 @@ package body Alire.Errors is
    -- ERROR STACKING --
    --------------------
 
-   package String_Lists is
-     new Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
-
-   Error_Stack : String_Lists.List;
+   Error_Stack : AAA.Strings.Vector;
 
    ----------
    -- Open --
@@ -177,7 +173,7 @@ package body Alire.Errors is
 
    function Open (Text : String) return Scope is
    begin
-      Error_Stack.Append (Text);
+      Open (Text);
       return (Ada.Finalization.Limited_Controlled with null record);
    end Open;
 
@@ -219,8 +215,15 @@ package body Alire.Errors is
       Msg : UString;
       use UStrings;
    begin
-      for Item of Error_Stack loop
-         Append (Msg, Item & ASCII.LF);
+      --  Remove duplicates that may have creeped in when generating the final
+      --  stack:
+
+      for I in Error_Stack.First_Index .. Error_Stack.Last_Index loop
+         if I = Error_Stack.First_Index
+           or else Error_Stack (I) /= Error_Stack (I - 1)
+         then
+            Append (Msg, Error_Stack (I) & ASCII.LF);
+         end if;
       end loop;
 
       return +Msg & Text;

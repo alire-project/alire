@@ -4,12 +4,15 @@ Helpers to run alr in the testsuite.
 
 import os
 import os.path
+import platform
+import pexpect
 import re
-from shutil import copytree
+import sys
 
 from e3.fs import mkdir
 from e3.os.process import Run, quote_arg
 from e3.testsuite.driver.classic import ProcessResult
+from shutil import copytree
 
 TESTSUITE_ROOT = os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))
@@ -125,6 +128,50 @@ def run_alr(*args, **kwargs):
     # canonicalization is necessary to make output comparison work on all
     # platforms.
     return ProcessResult(p.status, p.out.replace('\r\n', '\n'))
+
+
+def run_alr_interactive(args: [str], output: [str], input: [str], timeout=5) -> str:
+    """
+    NON-WINDOWS-ONLY
+    Run "alr" with the given arguments, feeding it the given input. No other
+    arguments like -q or -d are added (except --no-color).
+
+    :param args: List of arguments to pass to "alr".
+    :param output: List of strings expected to be output by the subprocess.
+    :param input: List of strings to feed to the subprocess's standard input.
+    :param timeout: Timeout in seconds for the subprocess to complete.
+    """
+    # Check whether on Windows to fail early (revisit if pexpect is updated?)
+    if platform.system() == "Windows":
+        print('SKIP: pexpect unavailable on Windows')
+        sys.exit(0)
+
+    # Run interactively using pexpect (run with input fails as it is not
+    # detected as tty and input is closed prematurely)
+    args.insert(0, "--no-color")
+    child = pexpect.spawn('alr',  args=args, timeout=timeout)
+
+    try:
+        # Alternate between expected output and given input
+        for out, inp in zip(output, input):
+            child.expect(out)
+            child.sendline(inp)
+
+        # Wait for the process to finish
+        child.expect(pexpect.EOF)  # Match all output before ending
+        child.wait()
+        child.close()
+    except pexpect.exceptions.TIMEOUT:
+        raise RuntimeError(f"pexpect timeout with alr output:\n"
+                           f"{child.before.decode('utf-8')}")
+
+    # Assert proper output code
+    assert child.exitstatus == 0, \
+        f"Unexpected exit status: {child.exitstatus}\n" + \
+        f"Output: {child.before.decode('utf-8')}"
+
+    # Return command output with CRLF replaced by LF (as does run_alr)
+    return child.before.decode('utf-8').replace('\r\n', '\n')
 
 
 def fixtures_path(*args):
