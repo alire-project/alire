@@ -134,7 +134,7 @@ package Alire.Directories is
    --  This type simplifies staying in a folder during the life of a scope.
    --  Once the scope ends, the current folder is set back to the one it was.
 
-   type Destination is access String;
+   type Destination is access Absolute_Path;
    Stay : constant Destination;
 
    type Guard (Enter : Destination := Stay) is limited private;

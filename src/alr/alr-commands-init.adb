@@ -5,7 +5,9 @@ with Ada.Wide_Wide_Text_IO;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Alire.Config.Builtins;
+with Alire.Roots.Optional;
 with Alire.Utils.User_Input.Query_Config;
+
 with CLIC.User_Input;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
@@ -325,6 +327,18 @@ package body Alr.Commands.Init is
          TIO.Put_Line (File, WW (S));
       end Put_Line;
 
+      ---------------------
+      -- Generate_Config --
+      ---------------------
+
+      procedure Generate_Config is
+         Root : constant Alire.Roots.Optional.Root :=
+                  Alire.Roots.Optional.Detect_Root (+Directory.Full_Name);
+      begin
+         Root.Value.Build_Prepare (Saved_Profiles => False,
+                                   Force_Regen    => False);
+      end Generate_Config;
+
    begin
       --  Crate dir
       Directory.Make_Dir;
@@ -342,6 +356,10 @@ package body Alr.Commands.Init is
       end if;
 
       Generate_Manifest;
+
+      if not Cmd.No_Skel then
+         Generate_Config;
+      end if;
 
       Alire.Put_Success (TTY.Emph (Lower_Name) & " initialized successfully.");
    end Generate;

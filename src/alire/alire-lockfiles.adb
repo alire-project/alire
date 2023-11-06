@@ -27,7 +27,7 @@ package body Alire.Lockfiles is
    -- File_Name --
    ---------------
 
-   function File_Name (Root_Dir : Any_Path) return Any_Path
+   function File_Name (Root_Dir : Absolute_Path) return Absolute_Path
    is (Root_Dir / Paths.Working_Folder_Inside_Root / Simple_Name);
 
    ---------------
@@ -57,7 +57,7 @@ package body Alire.Lockfiles is
    -- Read --
    ----------
 
-   function Read (Filename : Any_Path) return Contents is
+   function Read (Filename : Absolute_Path) return Contents is
    begin
       Trace.Debug ("Reading persistent contents from " & Filename);
 
@@ -119,7 +119,7 @@ package body Alire.Lockfiles is
    -----------
 
    procedure Write (Contents : Lockfiles.Contents;
-                    Filename : Any_Path)
+                    Filename : Absolute_Path)
    is
       use Ada.Text_IO;
       File  : File_Type;

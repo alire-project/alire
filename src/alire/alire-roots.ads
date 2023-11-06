@@ -347,7 +347,7 @@ package Alire.Roots is
    function Cache_Dir (This : Root) return Absolute_Path;
    --  The "alire/cache" dir inside the root path, containing releases and pins
 
-   function Dependencies_Dir (This  : in out Root) return Any_Path;
+   function Dependencies_Dir (This  : in out Root) return Absolute_Path;
    --  The path at which dependencies are deployed, which will
    --  be either Paths.Vault.Path if dependencies are shared, or
    --  <workspace>/alire/cache/dependencies when dependencies are
@@ -368,11 +368,11 @@ private
    --  Force loading of the configuration; useful since the auto-load is not
    --  triggered when doing This.Configuration here.
 
-   function Load_Solution (Lockfile : String) return Solutions.Solution
+   function Load_Solution (Lockfile : Absolute_Path) return Solutions.Solution
    is (Lockfiles.Read (Lockfile).Solution);
 
    procedure Write_Solution (Solution : Solutions.Solution;
-                             Lockfile : String);
+                             Lockfile : Absolute_Path);
    --  Wrapper for use with Cached_Solutions
 
    package Cached_Solutions is new AAA.Caches.Files
@@ -408,7 +408,8 @@ private
       --  These values, if different from "", mean this is a temporary root
       Manifest        : Unbounded_Absolute_Path;
       Lockfile        : Unbounded_Absolute_Path;
-   end record;
+   end record
+     with Type_Invariant => Check_Absolute_Path (+Root.Path);
 
    overriding
    procedure Adjust (This : in out Root);
