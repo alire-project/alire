@@ -23,8 +23,9 @@ assert_match(".*" + re.escape("Unrecognized option '--' (command/topic \"show\")
 
 init_local_crate()
 
-assert_match(".*" + re.escape('Command ["alr_fake", "--help"] exited with code 1'),
+assert_match(".*" + re.escape('Command ["alr_fake", "--help"] exited with code'),
              run_alr("exec", "--", "alr_fake", "--help",
                      complain_on_error=False).out)
+# We don't match the code as it varies between OSes
 
 print("SUCCESS")

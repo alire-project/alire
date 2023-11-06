@@ -143,7 +143,7 @@ package body Alire.OS_Lib.Subprocess is
 
       Raise_Checked_Error
         ("Command " & Image (Command, Arguments)
-         & " exited with code" & Exit_Code'Img
+         & " exited with code" & AAA.Strings.Trim (Exit_Code'Image)
          & " and output: " & Output.Flatten (Separator => "\n"));
 
       return Output;
