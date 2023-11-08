@@ -70,9 +70,6 @@ package body Alr.Commands is
    Debug_Channel : Boolean renames Alire_Early_Elaboration.Switch_D;
    --  For the stderr debug channel
 
-   Help_Switch   : aliased Boolean := False;
-   --  Catches the -h/--help help switch
-
    Prefer_Oldest : aliased Boolean := False;
    --  Catches the --prefer-oldest policy switch
 
@@ -154,11 +151,6 @@ package body Alr.Commands is
                      Alire.Force'Access,
                      "-f", "--force",
                      "Keep going after a recoverable troublesome situation");
-
-      Define_Switch (Config,
-                     Help_Switch'Access,
-                     "-h", "--help",
-                     "Display general or command-specific help");
 
       Define_Switch (Config,
                      CLIC.User_Input.Not_Interactive'Access,
