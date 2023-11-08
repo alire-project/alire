@@ -61,4 +61,21 @@ package body Alire.OS_Lib is
       GNAT.OS_Lib.Setenv (Name, Value);
    end Setenv;
 
+   -------------------------
+   -- Locate_Exec_On_Path --
+   -------------------------
+
+   function Locate_Exec_On_Path (Exec_Name : String) return String is
+      Located : GNAT.OS_Lib.String_Access :=
+                  GNAT.OS_Lib.Locate_Exec_On_Path (Exec_Name);
+   begin
+      if Located not in null then
+         return Result : constant String := Located.all do
+            GNAT.OS_Lib.Free (Located);
+         end return;
+      else
+         return "";
+      end if;
+   end Locate_Exec_On_Path;
+
 end Alire.OS_Lib;

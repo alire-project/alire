@@ -493,7 +493,7 @@ def alr_with(dep="", path="", url="", commit="", branch="",
             return run_alr(*args, force=force)
 
 
-def add_action(type, command, name="", directory=""):
+def add_action(type: str, command: [str], name="", directory=""):
     """
     Add an action to the manifest in the current directory.
     :param str type: "pre-build", etc

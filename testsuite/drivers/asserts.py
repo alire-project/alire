@@ -134,3 +134,11 @@ def match_deploy_dir(crate : str, path_fragment : str):
     assert_match(f".*[: ]{crate.upper()}_ALIRE_PREFIX=[^\\n]*"
                  f"{re.escape(path_fragment)}[^\\n]*{crate}_.*",
                  p.out)
+
+
+def assert_substring(target: str, text: str):
+    """
+    Check that a string is contained in another string
+    """
+    assert target in text, \
+        f"Missing expected string '{target}' in text:\n{text}"

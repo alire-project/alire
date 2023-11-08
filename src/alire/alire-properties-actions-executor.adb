@@ -1,4 +1,5 @@
 with Alire.Directories;
+with Alire.Errors;
 with Alire.Flags;
 with Alire.OS_Lib.Subprocess;
 with Alire.Properties.Actions.Runners;
@@ -41,6 +42,8 @@ package body Alire.Properties.Actions.Executor is
          Flags.Post_Fetch (CWD).Mark_Done;
       end if;
    exception
+      when Checked_Error =>
+         raise;
       when E : others =>
          Log_Exception (E);
          Trace.Warning ("A " & TOML_Adapters.Tomify (Moment'Image)
@@ -73,7 +76,18 @@ package body Alire.Properties.Actions.Executor is
 
       Cmd   : constant AAA.Strings.Vector := Prefix.Append (This.Command_Line);
 
+      Exec : String renames Cmd.First_Element;
    begin
+      if Alire.OS_Lib.Locate_Exec_On_Path (Exec) = "" and then
+        not GNAT.OS_Lib.Is_Executable_File (Exec)
+      then
+         Raise_Checked_Error
+           (Errors.New_Wrapper ("Cannot run action:")
+            .Wrap ("Command not found  [" & TTY.Terminal (Exec) & "]")
+            .Wrap ("Working directory  [" & TTY.URL (Current) & "]")
+            .Wrap ("Action description [" & This.Image & "]").Get);
+      end if;
+
       if Capture then
          Code := Subprocess.Unchecked_Spawn_And_Capture
            (Command             => Cmd.First_Element,
@@ -109,6 +123,8 @@ package body Alire.Properties.Actions.Executor is
          Code       => Unused_Code,
          Output     => Unused_Output);
    exception
+      when Checked_Error =>
+         raise;
       when E : others =>
          Log_Exception (E);
          Trace.Warning ("A " & TOML_Adapters.Tomify (Moment'Image)

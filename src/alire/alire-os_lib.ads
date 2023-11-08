@@ -16,4 +16,7 @@ package Alire.OS_Lib with Preelaborate is
 
    procedure Setenv (Name : String; Value : String);
 
+   function Locate_Exec_On_Path (Exec_Name : String) return String;
+   --  Return the location of an executable if found on PATH, or "" otherwise
+
 end Alire.OS_Lib;

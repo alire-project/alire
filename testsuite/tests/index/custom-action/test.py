@@ -26,13 +26,13 @@ init_local_crate()
 # Add a proper custom action and verify its loading
 add_action(type="on-demand", name="my-action", command=["ls"])
 p = run_alr("show")
-assert_match(".*" + re.escape("On_Demand (my-action) run: ${CRATE_DIR}/./ls"),
+assert_match(".*" + re.escape("On_Demand (my-action) run: ls (from ${CRATE_ROOT}/.)"),
              p.out)
 
 # Verify that regular action can also have a name
 add_action(type="post-fetch", name="action-2", command=["ls"])
 p = run_alr("show")
-assert_match(".*" + re.escape("Post_Fetch (action-2) run: ${CRATE_DIR}/./ls"),
+assert_match(".*" + re.escape("Post_Fetch (action-2) run: ls (from ${CRATE_ROOT}/.)"),
              p.out)
 
 # Add an on-demand action without name and see it fails
