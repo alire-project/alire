@@ -19,6 +19,7 @@ with CLIC.TTY; use CLIC.TTY;
 
 package body Alr.Commands.Init is
 
+   package TIO renames Ada.Wide_Wide_Text_IO;
    package UI renames Alire.Utils.User_Input;
 
    type Crate_Kind is (Library, Binary);
@@ -42,8 +43,6 @@ package body Alr.Commands.Init is
    procedure Generate (Cmd  : Command;
                        Info : Crate_Init_Info)
    is
-
-      package TIO renames Ada.Wide_Wide_Text_IO;
       use AAA.Strings;
 
       For_Library : constant Boolean := Info.Kind = Library;
@@ -78,15 +77,22 @@ package body Alr.Commands.Init is
          Table.Set ("key", TOML.Create_String (S));
 
          --  Remove excess whitespace and quotation
-         return
-           Trim
-             (Trim
-                (Trim (Tail (TOML.Dump_As_String (Table), '=')),
-                 ASCII.LF),
-              '"');
+         declare
+            Result : constant String :=
+                       Trim
+                         (Trim
+                            (Tail (TOML.Dump_As_String (Table), '='),
+                            ASCII.LF));
+         begin
+            --  Trimming the TOML quotes at the extremes fails for a
+            --  string with quotes at the extremes of the string because
+            --  Ada.Strings.Trim removes those too! So just remove the
+            --  quotes we know are there.
+            return Result (Result'First + 1 .. Result'Last - 1);
+         end;
       end Escape;
 
-      function Q (S : String) return String is ("""" & Escape (S) & """");
+      function Q (S : String) return String is ('"' & Escape (S) & '"');
       --  Quote string
 
       function Q (S : Unbounded_String) return String
@@ -242,23 +248,7 @@ package body Alr.Commands.Init is
       -----------------------
 
       procedure Generate_Manifest is
-         use Alire.Config;
       begin
-         if Builtins.User_Email.Is_Empty or else
-           Builtins.User_Name.Is_Empty or else
-           Builtins.User_Github_Login.Is_Empty
-         then
-            AAA.Text_IO.Put_Paragraph
-              ("Alire needs some user information to initialize the crate"
-               & " author and maintainer, for eventual submission to"
-               & " the Alire community index. This information will be"
-               & " interactively requested now.");
-            TIO.New_Line;
-            TIO.Put_Line
-              ("You can edit this information at any time with 'alr config'");
-            TIO.New_Line;
-         end if;
-
          declare
             --  Retrieve initial values from config or user. Only the name may
             --  require encoding, as emails and logins cannot contain strange
@@ -590,11 +580,27 @@ package body Alr.Commands.Init is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
+      use Alire.Config;
       Info : Crate_Init_Info;
    begin
 
       if Cmd.Bin and then Cmd.Lib then
          Reportaise_Wrong_Arguments ("Please provide either --bin or --lib");
+      end if;
+
+      if Builtins.User_Email.Is_Empty or else
+        Builtins.User_Name.Is_Empty or else
+        Builtins.User_Github_Login.Is_Empty
+      then
+         AAA.Text_IO.Put_Paragraph
+           ("Alire needs some user information to initialize the crate"
+            & " author and maintainer, for eventual submission to"
+            & " the Alire community index. This information will be"
+            & " interactively requested now.");
+         TIO.New_Line;
+         TIO.Put_Line
+           ("You can edit this information at any time with 'alr config'");
+         TIO.New_Line;
       end if;
 
       Query_Crate_Name (Args, Info);
