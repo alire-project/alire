@@ -24,9 +24,12 @@ abstract project Alire_Common is
    case Style_Check_Mode is
       when "enabled"  => Style_Check_Switches :=
            ("-gnatwe",   -- Warnings as errors
-            "-gnatyg",   -- Standard checks
+            "-gnatyd",   -- no DOS line terminators
             "-gnatyI",   -- no IN mode
             "-gnatyO",   -- all overrides
+            "-gnatyS",   -- separate lines after THEN/ELSE
+            "-gnatyu",   -- no unnecessary blank lines
+            "-gnatyx",   -- no extra parens around conditionals
             "-gnaty-s"); -- relax fwd decl
       when "disabled" => Style_Check_Switches := ();
    end case;
