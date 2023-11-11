@@ -63,15 +63,6 @@ package body Alire.Publish is
    --  generating an error. E.g., if the user doesn't want to submit online
    --  after successful manifest generation.
 
-   ---------------
-   -- Full_Path --
-   ---------------
-
-   function Full_Path (Path : Any_Path) return Any_Path
-   is (if Directories.Adirs.Exists (Path)
-       then Directories.Adirs.Full_Name (Path)
-       else Path);
-
    -----------------------
    -- Check_Root_Status --
    -----------------------
@@ -83,6 +74,16 @@ package body Alire.Publish is
       --  Path is supplied by the user and may not be a good path. Root has
       --  been attempted to be detected at Path.
       use all type Roots.Optional.States;
+
+      ---------------
+      -- Full_Path --
+      ---------------
+
+      function Full_Path (Path : Any_Path) return Any_Path
+      is (if Directories.Adirs.Exists (Path)
+          then Directories.Adirs.Full_Name (Path)
+          else Path);
+
    begin
       case Root.Status is
          when Outside =>
