@@ -64,14 +64,63 @@ package body Alire.Publish is
    --  after successful manifest generation.
 
    ---------------
+   -- Full_Path --
+   ---------------
+
+   function Full_Path (Path : Any_Path) return Any_Path
+   is (if Directories.Adirs.Exists (Path)
+       then Directories.Adirs.Full_Name (Path)
+       else Path);
+
+   -----------------------
+   -- Check_Root_Status --
+   -----------------------
+
+   procedure Check_Root_Status (Path    : Any_Path;
+                                Root    : Roots.Optional.Root;
+                                Options : All_Options)
+   is
+      --  Path is supplied by the user and may not be a good path. Root has
+      --  been attempted to be detected at Path.
+      use all type Roots.Optional.States;
+   begin
+      case Root.Status is
+         when Outside =>
+            if Options.Nonstandard_Manifest then
+               Trace.Debug ("Using non-standard manifest location: "
+                            & Options.Manifest);
+            else
+               Raise_Checked_Error ("No Alire workspace found at "
+                                    & TTY.URL (Full_Path (Path)));
+            end if;
+         when Broken =>
+            Raise_Checked_Error
+              (Errors.Wrap
+                 ("Invalid metadata found at " & TTY.URL (Full_Path (Path)),
+                  Root.Brokenness));
+         when Valid => null;
+      end case;
+   end Check_Root_Status;
+
+   ---------------
    -- Base_Path --
    ---------------
    --  The workspace root path. To support out-of-alire packaging, this
    --  defaults to the current directory when using a nonstandard manifest.
    function Base_Path (This : Data) return Any_Path
-   is (if This.Options.Nonstandard_Manifest
-       then +This.Path
-       else Root.Current.Path);
+   is
+   begin
+      if This.Options.Nonstandard_Manifest then
+         return +This.Path;
+      else
+         declare
+            Root : constant Roots.Optional.Root := Alire.Root.Current;
+         begin
+            Check_Root_Status (+This.Path, Root, This.Options);
+            return Root.Value.Path;
+         end;
+      end if;
+   end Base_Path;
 
    -----------------
    -- Deploy_Path --
@@ -1010,36 +1059,11 @@ package body Alire.Publish is
    is
       Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
       Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
-      use all type Roots.Optional.States;
 
       Subdir : Unbounded_Relative_Path;
       --  In case we are publishing a nested crate (monorepo), its relative
       --  path in regard to the git worktree will be stored here by
       --  Check_Nested_Crate.
-
-      -----------------------
-      -- Check_Root_Status --
-      -----------------------
-
-      procedure Check_Root_Status is
-      begin
-         case Root.Status is
-         when Outside =>
-            if Options.Nonstandard_Manifest then
-               Trace.Debug ("Using non-standard manifest location: "
-                            & Options.Manifest);
-            else
-               Raise_Checked_Error ("No Alire workspace found at "
-                                    & TTY.URL (Path));
-            end if;
-         when Broken =>
-            Raise_Checked_Error
-              (Errors.Wrap
-                 ("Invalid metadata found at " & TTY.URL (Path),
-                  Root.Brokenness));
-         when Valid => null;
-         end case;
-      end Check_Root_Status;
 
       ------------------------
       -- Check_Nested_Crate --
@@ -1078,7 +1102,8 @@ package body Alire.Publish is
 
    begin
 
-      Check_Root_Status;
+      --  Early report and exit if there's any trouble with the supplied path
+      Check_Root_Status (Path, Root, Options);
 
       declare
          Root_Path : constant Absolute_Path :=
