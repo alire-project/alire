@@ -886,7 +886,9 @@ package body Alire.Solver is
 
                Check_Version_Pin;
 
-            elsif Index.Exists (Dep.Crate, Index_Query_Options) or else
+            elsif Index.Exists (Dep.Crate, Index_Query_Options)
+              or else Index.All_Crate_Aliases.Contains (Dep.Crate)
+              or else
               not Index.Releases_Satisfying (Dep, Props,
                                              Index_Query_Options).Is_Empty
             then
