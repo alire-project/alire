@@ -3,6 +3,9 @@ with GNAT.OS_Lib;
 
 with AAA.Strings;
 
+with Alire_Early_Elaboration;
+pragma Unreferenced (Alire_Early_Elaboration);
+
 with Alire.Environment;
 with Alire.OS_Lib;            use Alire.OS_Lib;
 with Alire.Config.Builtins.Windows;
