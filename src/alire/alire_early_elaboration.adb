@@ -2,7 +2,7 @@ with AAA.Strings;
 
 with Ada.Directories;
 
-with Alire.Config.Edit;
+with Alire.Config.Edit.Early_Load;
 
 with GNAT.Command_Line;
 with GNAT.OS_Lib;
@@ -180,7 +180,7 @@ package body Alire_Early_Elaboration is
       end if;
 
       --  Load config ASAP
-      Alire.Config.Edit.Load_Config;
+      Alire.Config.Edit.Early_Load.Load_Config;
    end Early_Switch_Detection;
 
    -------------------

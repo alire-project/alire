@@ -79,11 +79,12 @@ package Alire.Config.Edit is
                            return Boolean;
    --  Check that the combination satisfies builtin rules
 
+private
+
    procedure Load_Config;
    --  Clear and reload all configuration. Also set some values elsewhere
    --  used to break circularities. Bottom line, this procedure must leave
    --  the program-wide configuration ready. This is done during startup from
-   --  Alire_Early_Elaboration so config is available ASAP; regular clients of
-   --  libalire shouldn't need to call this explicitly.
+   --  Alire_Early_Elaboration so config is available ASAP.
 
 end Alire.Config.Edit;
