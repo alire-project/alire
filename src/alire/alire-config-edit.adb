@@ -138,16 +138,18 @@ package body Alire.Config.Edit is
 
    procedure Load_Config is
    begin
-      DB.Clear;
+      DB_Instance.Clear;
 
       for Lvl in Level loop
          if Lvl /= Local or else Directories.Detect_Root_Path /= "" then
-            CLIC.Config.Load.From_TOML (C      => DB,
+            CLIC.Config.Load.From_TOML (C      => DB_Instance,
                                         Origin => Lvl'Img,
                                         Path   => Filepath (Lvl),
                                         Check  => Valid_Builtin'Access);
          end if;
       end loop;
+
+      Config_Loaded := True;
 
       --  Set variables elsewhere
 
@@ -156,7 +158,6 @@ package body Alire.Config.Edit is
       if Platforms.Current.Disable_Distribution_Detection then
          Trace.Debug ("Distribution detection disabled by configuration");
       end if;
-
    end Load_Config;
 
    Default_Config_Path : constant Absolute_Path := Platforms.Folders.Config;
@@ -313,8 +314,5 @@ package body Alire.Config.Edit is
          New_Line;
       end loop;
    end Print_Builtins_Doc;
-
-begin
-   Load_Config;
 
 end Alire.Config.Edit;

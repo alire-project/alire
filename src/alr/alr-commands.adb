@@ -492,12 +492,15 @@ package body Alr.Commands is
       if Command_Line_Config_Path /= null and then
          Command_Line_Config_Path.all /= ""
       then
-         declare
-            Config_Path : constant Alire.Absolute_Path
-              := Ada.Directories.Full_Name (Command_Line_Config_Path.all);
-         begin
-            Alire.Config.Edit.Set_Path (Config_Path);
-         end;
+         --  Just verify that early processing catched it
+         pragma Assert
+           (Alire.Config.Edit.Path =
+              Ada.Directories.Full_Name (Command_Line_Config_Path.all),
+            "Unexpected mismatch of config paths:"
+            & Alire.New_Line
+            & "Early: " & Alire.Config.Edit.Path
+            & Alire.New_Line
+            & "Late : " & Command_Line_Config_Path.all);
       end if;
 
       --  chdir(2) if necessary.
@@ -514,7 +517,7 @@ package body Alr.Commands is
 
          Set_Builtin_Aliases;
 
-         Sub_Cmd.Load_Aliases (Alire.Config.DB);
+         Sub_Cmd.Load_Aliases (Alire.Config.DB.all);
 
          Sub_Cmd.Execute;
          Log ("alr " & Sub_Cmd.What_Command & " done", Detail);

@@ -59,13 +59,13 @@ package body Alr.Commands.Config is
             when 0 =>
                Trace.Always
                  (CLIC.Config.Info.List
-                    (Alire.Config.DB,
+                    (Alire.Config.DB.all,
                      Filter => ".*",
                      Show_Origin => Cmd.Show_Origin).Flatten (ASCII.LF));
             when 1 =>
                Trace.Always
                  (CLIC.Config.Info.List
-                    (Alire.Config.DB,
+                    (Alire.Config.DB.all,
                      Filter => Args.First_Element,
                      Show_Origin => Cmd.Show_Origin).Flatten (ASCII.LF));
             when others =>
