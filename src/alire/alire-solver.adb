@@ -181,6 +181,18 @@ package body Alire.Solver is
                            return Boolean
    is (Resolve (Deps, Props, Pins, Options).Is_Complete);
 
+   ---------------------
+   -- Culprit_Is_GNAT --
+   ---------------------
+   --  Say if the reason for the solution to be incomplete is that it requires
+   --  a GNAT that is not already installed
+   function Culprit_Is_GNAT (Sol : Solutions.Solution) return Boolean is
+   begin
+      return
+        Sol.Hints.Length = 1
+        and then Sol.Hints.First_Element.Crate = GNAT_Crate;
+   end Culprit_Is_GNAT;
+
    -------------
    -- Resolve --
    -------------
@@ -512,7 +524,11 @@ package body Alire.Solver is
                      & " for " & R.Milestone.TTY_Image
                      & " due to installed compiler availability.");
 
-                  return Tools.Contains (R);
+                  --  On first attempt we prefer only installed GNATs, but
+                  --  we allow a not-installed available one if no complete
+                  --  solution could be found otherwise.
+                  return Tools.Contains (R)
+                    or else Options.Completeness > First_Complete;
 
                else
 
@@ -925,7 +941,8 @@ package body Alire.Solver is
                           (R.Satisfies (Dep)
                            and then
                                (Dep.Crate /= GNAT_Crate or else
-                                Tools.Contains (R)));
+                                Tools.Contains (R) or else
+                                Options.Completeness > First_Complete));
 
                         Check (R, Is_Reused => False);
                      end Consider;
@@ -1291,11 +1308,23 @@ package body Alire.Solver is
       --  on options, there must exist at least one incomplete solution, or we
       --  can retry with a larger solution space.
 
-      if Solutions.Is_Empty then
-         if Options.Completeness <= All_Complete then
+      if Solutions.Is_Empty
+        or else not Solutions.First_Element.Is_Complete
+      then
+
+         --  Inform that no complete solution was found, only when the culprit
+         --  is not GNAT (as that is expected when an uninstalled compiler is
+         --  needed).
+
+         if Options.Completeness <= All_Complete
+           and then not Solutions.Is_Empty
+           and then not Culprit_Is_GNAT (Solutions.First_Element)
+         then
             Put_Warning ("Spent " & TTY.Emph (Timer.Image) & " seconds "
                             & "exploring complete solutions");
          end if;
+
+         --  Now downgrade options to look for more solutions, if allowed
 
          if Options.Completeness < All_Incomplete
            and then Options.Exhaustive
