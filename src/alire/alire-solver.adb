@@ -182,16 +182,16 @@ package body Alire.Solver is
    is (Resolve (Deps, Props, Pins, Options).Is_Complete);
 
    ---------------------
-   -- Culprit_Is_GNAT --
+   -- Culprit_Is_Toolchain --
    ---------------------
    --  Say if the reason for the solution to be incomplete is that it requires
-   --  a GNAT that is not already installed
-   function Culprit_Is_GNAT (Sol : Solutions.Solution) return Boolean is
+   --  a tool from the toolchain that is not already installed
+   function Culprit_Is_Toolchain (Sol : Solutions.Solution) return Boolean is
    begin
       return
-        Sol.Hints.Length = 1
-        and then Sol.Hints.First_Element.Crate = GNAT_Crate;
-   end Culprit_Is_GNAT;
+        (for all Dep of Sol.Hints =>
+           Toolchains.Tools.Contains (Dep.Crate));
+   end Culprit_Is_Toolchain;
 
    -------------
    -- Resolve --
@@ -504,14 +504,13 @@ package body Alire.Solver is
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Toolchains
-                        .Tool_Dependency (GNAT_Crate).Crate = R.Name)'Img
+                       (R.Satisfies
+                            (Toolchains.Tool_Dependency (GNAT_Crate)))'Img
                      & " for " & R.Milestone.TTY_Image
                      & " due to configured compiler: "
                      & Toolchains.Tool_Dependency (GNAT_Crate).TTY_Image);
 
-                  return Toolchains
-                    .Tool_Dependency (GNAT_Crate).Crate = R.Name;
+                  return R.Satisfies (Toolchains.Tool_Dependency (GNAT_Crate));
 
                elsif Dep.Crate = GNAT_Crate then
 
@@ -1313,12 +1312,12 @@ package body Alire.Solver is
       then
 
          --  Inform that no complete solution was found, only when the culprit
-         --  is not GNAT (as that is expected when an uninstalled compiler is
-         --  needed).
+         --  is not a tool from the toolchain (as that is expected when an
+         --  uninstalled compiler is needed).
 
          if Options.Completeness <= All_Complete
            and then not Solutions.Is_Empty
-           and then not Culprit_Is_GNAT (Solutions.First_Element)
+           and then not Culprit_Is_Toolchain (Solutions.First_Element)
          then
             Put_Warning ("Spent " & TTY.Emph (Timer.Image) & " seconds "
                             & "exploring complete solutions");
@@ -1367,10 +1366,12 @@ package body Alire.Solver is
                           elsif User_Answer_Continue = Always
                           then Continue
                           else Options.On_Timeout))));
-         else
+         elsif Solutions.Is_Empty then
             raise Query_Unsuccessful with Errors.Set
               ("Solver failed to find any solution to fulfill dependencies "
                & "after " & Timer.Image);
+         else
+            return Solutions.First_Element;
          end if;
       else
 
