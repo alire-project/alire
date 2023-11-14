@@ -486,6 +486,8 @@ package body Alire.Toolchains is
    -- Available --
    ---------------
 
+   Available_Cached : Releases.Containers.Release_Set;
+
    function Available (Detect_Externals : Boolean := True)
                        return Releases.Containers.Release_Set is
 
@@ -524,6 +526,14 @@ package body Alire.Toolchains is
       end Detect;
 
    begin
+      --  Early exit with cached available toolchains. Looking for toolchains
+      --  on disk is expensive, and the toolchains don't change except when one
+      --  is installed, and nothing happens afterwards, so this is consistent.
+
+      if not Available_Cached.Is_Empty then
+         return Available_Cached;
+      end if;
+
       if Ada.Directories.Exists (Path) then
          Directories.Traverse_Tree
            (Start => Path,
@@ -546,6 +556,7 @@ package body Alire.Toolchains is
          end loop;
       end loop;
 
+      Available_Cached := Result;
       return Result;
    end Available;
 

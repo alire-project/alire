@@ -490,14 +490,20 @@ package body Alire.Solver is
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Specific_GNAT (St.Remaining).Value.Crate = R.Name)'Img
+                       (R.Satisfies (Specific_GNAT (St.Remaining).Value))'Img
                      & " for " & R.Milestone.TTY_Image
                      & " due to compiler already in dependencies: "
                      & Specific_GNAT (State.Remaining).Value.TTY_Image);
 
-                  return Specific_GNAT (State.Remaining).Value.Crate = R.Name;
+                  return R.Satisfies (Specific_GNAT (St.Remaining).Value);
 
-               elsif Toolchains.Tool_Is_Configured (GNAT_Crate) then
+               elsif Toolchains.Tool_Is_Configured (GNAT_Crate)
+                 and then Options.Completeness = First_Complete
+                   --  When we cannot find a complete solution in the first
+                   --  completeness level, this means we need a compiler that
+                   --  is not installed, and then we avoid this branch which
+                   --  forces the selected compiler even if unavailable.
+               then
 
                   --  There is a preferred compiler that we must use, as there
                   --  is no overriding reason not to
@@ -514,12 +520,14 @@ package body Alire.Solver is
 
                elsif Dep.Crate = GNAT_Crate then
 
-                  --  For generic dependencies on gnat, we do not want to use
-                  --  a compiler that is not already installed.
+                  --  For generic dependencies on gnat, we do not want to use a
+                  --  compiler that is not already installed, unless we failed
+                  --  on the First_Complete level.
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Tools.Contains (R))'Image
+                       (Tools.Contains (R)
+                        or else Options.Completeness > First_Complete)'Image
                      & " for " & R.Milestone.TTY_Image
                      & " due to installed compiler availability.");
 
