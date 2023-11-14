@@ -129,7 +129,10 @@ package body Alire.Roots.Editable is
 
       --  Reject if unknown
 
-      if not Allow_Unknown and then not Index.Exists (Dep.Crate) then
+      if not Allow_Unknown
+        and then not Index.Exists (Dep.Crate)
+        and then Index.Releases_For_Crate (Dep.Crate).Is_Empty
+      then
          Alire.Recoverable_Error
            ("Cannot add crate '" & Alire.Utils.TTY.Name (Dep.Crate)
             & "' not found in index.");

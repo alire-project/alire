@@ -386,7 +386,7 @@ package body Alire.Index is
 
    function Releases_Satisfying
      (Dep              : Dependencies.Dependency;
-      Env              : Properties.Vector;
+      Env              : Properties.Vector := Platforms.Current.Properties;
       Opts             : Query_Options := Query_Defaults;
       Use_Equivalences : Boolean := True;
       Available_Only   : Boolean := True;
@@ -425,5 +425,25 @@ package body Alire.Index is
 
       return Result;
    end Releases_Satisfying;
+
+   ------------------------
+   -- Releases_For_Crate --
+   ------------------------
+
+   function Releases_For_Crate
+     (Crate            : Crate_Name;
+      Env              : Properties.Vector := Platforms.Current.Properties;
+      Opts             : Query_Options := Query_Defaults;
+      Use_Equivalences : Boolean := True;
+      Available_Only   : Boolean := True;
+      With_Origin      : Origins.Kinds_Set := (others => True))
+      return Releases.Containers.Release_Set
+   is (Releases_Satisfying
+         (Dep              => Dependencies.New_Dependency (Crate),
+          Env              => Env,
+          Opts             => Opts,
+          Use_Equivalences => Use_Equivalences,
+          Available_Only   => Available_Only,
+          With_Origin      => With_Origin));
 
 end Alire.Index;

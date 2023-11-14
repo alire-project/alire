@@ -5,6 +5,7 @@ with Alire.Config.Builtins;
 with Alire.Crates.Containers;
 with Alire.Dependencies;
 with Alire.Origins;
+with Alire.Platforms.Current;
 with Alire.Policies;
 with Alire.Properties;
 with Alire.Provides;
@@ -124,7 +125,7 @@ package Alire.Index is
 
    function Releases_Satisfying
      (Dep              : Dependencies.Dependency;
-      Env              : Properties.Vector;
+      Env              : Properties.Vector := Platforms.Current.Properties;
       Opts             : Query_Options := Query_Defaults;
       Use_Equivalences : Boolean := True;
       Available_Only   : Boolean := True;
@@ -134,6 +135,16 @@ package Alire.Index is
    --  Return all releases in the catalog able to provide this dependency,
    --  also optionally considering their "provides" equivalences, and also
    --  optionally including unavailable on the platform.
+
+   function Releases_For_Crate
+     (Crate            : Crate_Name;
+      Env              : Properties.Vector := Platforms.Current.Properties;
+      Opts             : Query_Options := Query_Defaults;
+      Use_Equivalences : Boolean := True;
+      Available_Only   : Boolean := True;
+      With_Origin      : Origins.Kinds_Set := (others => True))
+      return Releases.Containers.Release_Set;
+   --  A simplified form of Releases_Satisfying for crate* and
 
    function Find (Name    : Crate_Name;
                   Version : Semantic_Versioning.Version;
