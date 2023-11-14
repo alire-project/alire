@@ -391,6 +391,28 @@ package body Alire.Solutions.Diffs is
       Table : Utils.Tables.Table;
       Changed    : Boolean := False;
 
+      -----------------------------
+      -- Warn_Toolchain_Download --
+      -----------------------------
+      --  If the solution requires downloading a new toolchain, warn about it
+      procedure Warn_Toolchain_Download is
+      begin
+         for Rel of This.Latter.Releases loop
+            if Toolchains.Is_Tool (Rel)
+              and then not Toolchains.Available.Contains (Rel)
+            then
+               Trace.Log (Prefix, Level);
+               Trace.Log
+                 (Prefix & Icon (Missing)
+                  & " The solution requires the (potentially large) ");
+               Trace.Log
+                 (Prefix
+                  & "  download of a toolchain not currently installed.");
+               return;
+            end if;
+         end loop;
+      end Warn_Toolchain_Download;
+
       procedure Warn_Unsatisfiable_GNAT_External is
       begin
          for Dep of This.Latter.All_Dependencies loop
@@ -471,6 +493,7 @@ package body Alire.Solutions.Diffs is
          Table.Print (Level);
 
          Warn_Unsatisfiable_GNAT_External;
+         Warn_Toolchain_Download;
       else
          Trace.Log (Prefix & "No changes between former and new solution.",
                     Level);
