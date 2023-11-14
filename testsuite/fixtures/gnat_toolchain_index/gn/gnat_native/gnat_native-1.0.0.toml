@@ -1,0 +1,10 @@
+description = ""
+name = "gnat_native"
+provides = ["gnat=1.0"]
+version = "1.0.0"
+licenses = "GPL-3.0-only OR MIT"
+maintainers = ["some@bo.dy"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:."
