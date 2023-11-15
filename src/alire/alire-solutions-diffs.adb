@@ -404,14 +404,18 @@ package body Alire.Solutions.Diffs is
                Trace.Log (Prefix, Level);
                Trace.Log
                  (Prefix & Icon (Missing)
-                  & " The solution requires the (potentially large) ");
+                  & " The solution requires the download of");
                Trace.Log
                  (Prefix
-                  & "  download of a toolchain not currently installed.");
+                  & "   a toolchain not currently installed.");
                return;
             end if;
          end loop;
       end Warn_Toolchain_Download;
+
+      --------------------------------------
+      -- Warn_Unsatisfiable_GNAT_External --
+      --------------------------------------
 
       procedure Warn_Unsatisfiable_GNAT_External is
       begin
@@ -492,8 +496,10 @@ package body Alire.Solutions.Diffs is
       if Changed then
          Table.Print (Level);
 
-         Warn_Unsatisfiable_GNAT_External;
          Warn_Toolchain_Download;
+         Warn_Unsatisfiable_GNAT_External;
+         --  Only one of those two can happen and emit their warning, so the
+         --  order doesn't matter.
       else
          Trace.Log (Prefix & "No changes between former and new solution.",
                     Level);
