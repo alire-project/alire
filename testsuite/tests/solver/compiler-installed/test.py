@@ -34,7 +34,7 @@ match_solution(f"gnat={version} (gnat_external)", escape=True)
 # Check that requesting a version different to the one externally available
 # results in a complete solution but with installation warning
 alr_with("gnat", delete=True, manual=False)
-p = run_alr("with", f"gnat/={version}", quiet=False, force=True)
+p = run_alr("with", f"gnat/={version}", quiet=False)
 assert_match(".*download of a toolchain not currently installed", p.out)
 match_solution(f"gnat=8888.0.0 (gnat_native) (origin: binary_archive)",
                escape=True)
