@@ -358,6 +358,36 @@ package body Alire.Solver is
          end if;
       end Ask_User_To_Continue;
 
+      ------------------------------
+      -- Contains_All_Satisfiable --
+      ------------------------------
+      --  A solution may be incomplete but also may be only missing
+      --  impossible dependencies. In that case we can finish already, as
+      --  if the solution were complete. Otherwise, an e.g. missing crate
+      --  may force exploring all the combos of the rest of crates just
+      --  because it doesn't exist.
+      function Contains_All_Satisfiable
+        (Solution : Alire.Solutions.Solution)
+               return Boolean is
+      begin
+         for Crate of Solution.Crates loop
+            if Solution.State (Crate).Fulfilment in Missed | Hinted
+            --  So the dependency is not solved, but why?
+              and then
+                not Unavailable_Crates.Contains (Crate)
+              --  Because it does not exist at all, so "complete"
+              and then
+                not Unavailable_Direct_Deps.Contains
+                  (Solution.Dependency (Crate))
+                    --  Because no release fulfills it, so "complete"
+            then
+               return False;
+            end if;
+         end loop;
+
+         return True;
+      end Contains_All_Satisfiable;
+
       -------------
       -- Partial --
       -------------
@@ -1080,35 +1110,6 @@ package body Alire.Solver is
          --------------------
 
          procedure Store_Finished (Solution : Alire.Solutions.Solution) is
-
-            ------------------------------
-            -- Contains_All_Satisfiable --
-            ------------------------------
-            --  A solution may be incomplete but also may be only missing
-            --  impossible dependencies. In that case we can finish already, as
-            --  if the solution were complete. Otherwise, an e.g. missing crate
-            --  may force exploring all the combos of the rest of crates just
-            --  because it doesn't exist.
-            function Contains_All_Satisfiable return Boolean is
-            begin
-               for Crate of Solution.Crates loop
-                  if Solution.State (Crate).Fulfilment in Missed | Hinted
-                        --  So the dependency is not solved, but why?
-                    and then
-                      not Unavailable_Crates.Contains (Crate)
-                        --  Because it does not exist at all, so "complete"
-                    and then
-                      not Unavailable_Direct_Deps.Contains
-                        (Solution.Dependency (Crate))
-                        --  Because no release fulfills it, so "complete"
-                  then
-                     return False;
-                  end if;
-               end loop;
-
-               return True;
-            end Contains_All_Satisfiable;
-
             Pre_Length : constant Count_Type := Solutions.Length;
          begin
             Trace.Debug ("SOLVER: tree FULLY expanded as: "
@@ -1127,7 +1128,7 @@ package body Alire.Solver is
             Progress_Report; -- As we found a new solution
 
             if Options.Completeness = First_Complete
-              and then Contains_All_Satisfiable
+              and then Contains_All_Satisfiable (Solution)
             then
                raise Solution_Found; -- break recursive search
             end if;
@@ -1331,11 +1332,14 @@ package body Alire.Solver is
                             & "exploring complete solutions");
          end if;
 
-         --  Now downgrade options to look for more solutions, if allowed
+         --  Now downgrade options to look for more solutions, if allowed and
+         --  if it makes sense.
 
          if Options.Completeness < All_Incomplete
            and then Options.Exhaustive
            and then User_Answer_Continue /= No
+           and then (Solutions.Is_Empty or else
+                     not Contains_All_Satisfiable (Solutions.First_Element))
          then
             Trace.Detail
               ("No solution found with completeness policy of "
@@ -1378,9 +1382,16 @@ package body Alire.Solver is
             raise Query_Unsuccessful with Errors.Set
               ("Solver failed to find any solution to fulfill dependencies "
                & "after " & Timer.Image);
-         else
-            return Solutions.First_Element;
          end if;
+      end if;
+
+      --  In case of finding any solution, we always want to go through this
+      --  final step of marking transitivity and reporting:
+
+      if Solutions.Is_Empty then
+         raise Query_Unsuccessful with Errors.Set
+              ("Solver failed to find any solution to fulfill dependencies "
+               & "after " & Timer.Image);
       else
 
          --  Mark direct/indirect dependencies post-hoc
