@@ -1,4 +1,5 @@
 with Alire.Origins;
+with Alire.Toolchains;
 with Alire.Utils.Tables;
 with Alire.User_Pins;
 with Alire.Utils.TTY;
@@ -389,6 +390,35 @@ package body Alire.Solutions.Diffs is
    is
       Table : Utils.Tables.Table;
       Changed    : Boolean := False;
+
+      procedure Warn_Unsatisfiable_GNAT_External is
+      begin
+         for Dep of This.Latter.All_Dependencies loop
+            if Dep.Crate = GNAT_Crate
+              and then not Dep.Is_Solved
+              and then Toolchains.Tool_Is_Configured (GNAT_Crate)
+              and then Toolchains.Tool_Milestone (GNAT_Crate).Crate
+                       = GNAT_External_Crate
+              and then not Toolchains.Tool_Release (GNAT_Crate).Satisfies (Dep)
+            then
+               Trace.Log (Prefix, Level);
+               Trace.Log (Prefix & Icon (Missing)
+                          & " The explicitly configured external compiler "
+                          & Toolchains.Tool_Milestone (GNAT_Crate).TTY_Image);
+               Trace.Log (Prefix
+                          & "  cannot satisfy dependency in solution "
+                          & Dep.As_Dependency.TTY_Image,
+                          Log_Level);
+               Trace.Log (Prefix
+                          & "  You can select a different compiler for the "
+                          & "workspace with");
+               Trace.Log (Prefix & "  "
+                          & TTY.Terminal ("alr toolchain --local --select"),
+                          Log_Level);
+            end if;
+         end loop;
+      end Warn_Unsatisfiable_GNAT_External;
+
    begin
 
       --  Start with an empty line to separate from previous output
@@ -439,6 +469,8 @@ package body Alire.Solutions.Diffs is
 
       if Changed then
          Table.Print (Level);
+
+         Warn_Unsatisfiable_GNAT_External;
       else
          Trace.Log (Prefix & "No changes between former and new solution.",
                     Level);
