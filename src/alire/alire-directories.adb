@@ -1061,7 +1061,16 @@ package body Alire.Directories is
          Default_Aft => 1,
          Unit        => "B");
    begin
-      return TTY.Emph (Image (Modular_File_Size (Size)));
+      --  The SI_Units library returns a UTF-8 string, sometimes using special
+      --  characters for non-breaking space and degrees/micro signs. To avoid
+      --  having to update all of CLIC to Unicode (although we should at some
+      --  point), just filter it out here
+
+      return TTY.Emph
+        (AAA.Strings.Replace
+           (Text  => Image (Modular_File_Size (Size)),
+            Match => Character'Val (16#C2#) & Character'Val (16#A0#),
+            Subst => " "));
    end TTY_Image;
 
    ---------------
