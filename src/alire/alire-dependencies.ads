@@ -11,6 +11,8 @@ private with Alire.Utils.TTY;
 
 package Alire.Dependencies with Preelaborate is
 
+   package Semver renames Semantic_Versioning;
+
    --  A single dependency is a crate name plus a version set
 
    type Dependency (<>) is
@@ -22,7 +24,7 @@ package Alire.Dependencies with Preelaborate is
 
    function New_Dependency
      (Crate    : Crate_Name;
-      Versions : Semantic_Versioning.Extended.Version_Set)
+      Versions : Semver.Extended.Version_Set := Semver.Extended.Any)
       return Dependency;
 
    function New_Dependency
@@ -92,7 +94,7 @@ private
 
    function New_Dependency
      (Crate    : Crate_Name;
-      Versions : Semantic_Versioning.Extended.Version_Set)
+      Versions : Semver.Extended.Version_Set := Semver.Extended.Any)
       return Dependency
    is (Crate.Name'Length, Crate, Versions);
 
