@@ -459,7 +459,7 @@ package body Alire.Toolchains is
                           Level         : Config.Level;
                           Fail_If_Unset : Boolean := True) is
    begin
-      if CLIC.Config.Defined (Config.DB, Tool_Key (Crate)) and then
+      if CLIC.Config.Defined (Config.DB.all, Tool_Key (Crate)) and then
         not CLIC.Config.Edit.Unset
           (Config.Edit.Filepath (Level),
            Tool_Key (Crate))

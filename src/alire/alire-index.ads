@@ -1,4 +1,5 @@
 private with Alire_Early_Elaboration;
+pragma Elaborate_All (Alire_Early_Elaboration);
 pragma Unreferenced (Alire_Early_Elaboration);
 
 with Alire.Config.Builtins;

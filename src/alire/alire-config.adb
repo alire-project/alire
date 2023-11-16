@@ -2,6 +2,20 @@ with Alire.Config.Edit;
 
 package body Alire.Config is
 
+   --------
+   -- DB --
+   --------
+
+   function DB return access constant CLIC.Config.Instance
+   is
+   begin
+      if Config_Loaded then
+         return DB_Instance'Access;
+      else
+         raise Program_Error with "Attempt to use config database too early";
+      end if;
+   end DB;
+
    ---------
    -- Get --
    ---------

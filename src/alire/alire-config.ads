@@ -8,8 +8,7 @@ with CLIC.Config;
 
 package Alire.Config is
 
-   DB : CLIC.Config.Instance;
-   --  The Alire user configuration database
+   function DB return access constant CLIC.Config.Instance;
 
    type Level is (Global, Local);
    --  Ordering is important, as Globals are loaded first and overridden by any
@@ -82,6 +81,11 @@ package Alire.Config is
      with Pre => Help /= "" or not Public;
 
 private
+
+   Config_Loaded : Boolean := False;
+
+   DB_Instance : aliased CLIC.Config.Instance;
+   --  The Alire user configuration database
 
    type Builtin_Option is tagged record
       Key     : Ada.Strings.Unbounded.Unbounded_String;
