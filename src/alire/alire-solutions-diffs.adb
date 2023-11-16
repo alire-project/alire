@@ -23,7 +23,8 @@ package body Alire.Solutions.Diffs is
       Unpinned,   -- A release being unpinned
       Unchanged,  -- An unchanged dependency/release
       Missing,    -- A missing dependency
-      Binary      -- A binary, system or external release
+      Binary,     -- A binary, system or external release
+      Info        -- General info icon
      );
 
    ----------
@@ -42,7 +43,8 @@ package body Alire.Solutions.Diffs is
              when Unpinned   => TTY.Emph  (U ("🎈")), -- alts: 𐩒🎈
              when Unchanged  => TTY.OK    (U ("=")),
              when Missing    => TTY.Error (U ("❗")), -- alts: ⚠️❗‼️
-             when Binary     => TTY.Warn  (U ("📦")))
+             when Binary     => TTY.Warn  (U ("📦")),
+             when Info       => TTY.Emph  (U ("🛈")))
        else
          (case Change is
              when Added      => U ("+"),
@@ -54,7 +56,8 @@ package body Alire.Solutions.Diffs is
              when Unpinned   => U ("o"),
              when Unchanged  => U ("="),
              when Missing    => U ("!"),
-             when Binary     => U ("b")
+             when Binary     => U ("b"),
+             when Info       => U ("i")
          ));
 
    --  This type is used to summarize every detected change
@@ -403,11 +406,14 @@ package body Alire.Solutions.Diffs is
             then
                Trace.Log (Prefix, Level);
                Trace.Log
-                 (Prefix & Icon (Missing)
-                  & " The solution requires the download of");
+                 (Prefix & Icon (Info)
+                  & "  The solution requires a toolchain that is");
                Trace.Log
                  (Prefix
-                  & "   a toolchain not currently installed.");
+                  & "   not yet installed. Accepting the solution");
+               Trace.Log
+                 (Prefix
+                  & "   will download and install this toolchain.");
                return;
             end if;
          end loop;
