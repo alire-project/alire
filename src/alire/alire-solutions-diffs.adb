@@ -23,7 +23,8 @@ package body Alire.Solutions.Diffs is
       Unpinned,   -- A release being unpinned
       Unchanged,  -- An unchanged dependency/release
       Missing,    -- A missing dependency
-      Binary      -- A binary, system or external release
+      Binary,     -- A binary, system or external release
+      Info        -- General info icon
      );
 
    ----------
@@ -42,7 +43,8 @@ package body Alire.Solutions.Diffs is
              when Unpinned   => TTY.Emph  (U ("🎈")), -- alts: 𐩒🎈
              when Unchanged  => TTY.OK    (U ("=")),
              when Missing    => TTY.Error (U ("❗")), -- alts: ⚠️❗‼️
-             when Binary     => TTY.Warn  (U ("📦")))
+             when Binary     => TTY.Warn  (U ("📦")),
+             when Info       => TTY.Emph  (U ("🛈")))
        else
          (case Change is
              when Added      => U ("+"),
@@ -54,7 +56,8 @@ package body Alire.Solutions.Diffs is
              when Unpinned   => U ("o"),
              when Unchanged  => U ("="),
              when Missing    => U ("!"),
-             when Binary     => U ("b")
+             when Binary     => U ("b"),
+             when Info       => U ("i")
          ));
 
    --  This type is used to summarize every detected change
@@ -391,6 +394,35 @@ package body Alire.Solutions.Diffs is
       Table : Utils.Tables.Table;
       Changed    : Boolean := False;
 
+      -----------------------------
+      -- Warn_Toolchain_Download --
+      -----------------------------
+      --  If the solution requires downloading a new toolchain, warn about it
+      procedure Warn_Toolchain_Download is
+      begin
+         for Rel of This.Latter.Releases loop
+            if Toolchains.Is_Tool (Rel)
+              and then not Toolchains.Available.Contains (Rel)
+            then
+               Trace.Log (Prefix, Level);
+               Trace.Log
+                 (Prefix & Icon (Info)
+                  & "  The solution requires a toolchain that is");
+               Trace.Log
+                 (Prefix
+                  & "   not yet installed. Accepting the solution");
+               Trace.Log
+                 (Prefix
+                  & "   will download and install this toolchain.");
+               return;
+            end if;
+         end loop;
+      end Warn_Toolchain_Download;
+
+      --------------------------------------
+      -- Warn_Unsatisfiable_GNAT_External --
+      --------------------------------------
+
       procedure Warn_Unsatisfiable_GNAT_External is
       begin
          for Dep of This.Latter.All_Dependencies loop
@@ -470,7 +502,10 @@ package body Alire.Solutions.Diffs is
       if Changed then
          Table.Print (Level);
 
+         Warn_Toolchain_Download;
          Warn_Unsatisfiable_GNAT_External;
+         --  Only one of those two can happen and emit their warning, so the
+         --  order doesn't matter.
       else
          Trace.Log (Prefix & "No changes between former and new solution.",
                     Level);

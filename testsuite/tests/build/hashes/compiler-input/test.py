@@ -9,12 +9,14 @@ from drivers.asserts import assert_match
 from drivers.builds import clear_builds_dir, hash_input
 from drivers import builds
 
+target_crate = "crate_non_virt"
+
 
 def check_hash(signature: str) -> None:
     """
     Check that the given signature is present in the hash inputs
     """
-    assert_match(f".*{signature}.*", hash_input("crate_real"))
+    assert_match(f".*{signature}.*", hash_input(target_crate))
 
 
 # The first test is to check that the external compiler is used when no
@@ -25,7 +27,7 @@ run_alr("toolchain", "--disable-assistant")
 
 # Init a crate without explicit compiler dependency
 init_local_crate("xxx")
-alr_with("crate_real")  # A regular crate in the index
+alr_with(target_crate)  # A regular crate in the index
 builds.sync()           # Ensure the hash inputs are written to disk
 
 # Check the external compiler is in the hash inputs
@@ -47,8 +49,8 @@ check_hash("version:gnat_native=8888.0.0")
 # Next, check with an explicit compiler in the dependencies. Note that we give
 # the virtual dependency, but the actual native one is used for the hash.
 
-clear_builds_dir()
 alr_with("gnat=7777")  # Downgrade the compiler with an explicit dependency
+clear_builds_dir()
 builds.sync()
 
 # Check the expected compiler is in the hash inputs

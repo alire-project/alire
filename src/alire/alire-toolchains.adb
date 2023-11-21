@@ -22,6 +22,11 @@ with Semantic_Versioning.Extended;
 package body Alire.Toolchains is
 
    use type Ada.Containers.Count_Type;
+   use type Milestones.Milestone;
+
+   use Directories.Operators;
+
+   procedure Invalidate_Available_Cache;
 
    --------------
    -- Any_Tool --
@@ -377,6 +382,8 @@ package body Alire.Toolchains is
          Install (Release);
       end loop;
 
+      Invalidate_Available_Cache;
+
    end Assistant;
 
    ----------------------
@@ -405,6 +412,8 @@ package body Alire.Toolchains is
         (Level,
          Key   => Tool_Key (Release.Name, For_Is_External),
          Value => not Release.Origin.Is_Index_Provided);
+
+      Invalidate_Available_Cache;
    end Set_As_Default;
 
    -----------------------------
@@ -447,7 +456,9 @@ package body Alire.Toolchains is
    exception
       when E : Constraint_Error =>
          Log_Exception (E);
-         Raise_Checked_Error ("Requested tool configured but not installed: "
+         Raise_Checked_Error ("Requested tool configured as "
+                              & Tool_Milestone (Crate).TTY_Image
+                              & " but not installed: "
                               & Utils.TTY.Name (Crate));
    end Tool_Release;
 
@@ -476,11 +487,20 @@ package body Alire.Toolchains is
             end if;
          end;
       end if;
+
+      Invalidate_Available_Cache;
    end Unconfigure;
 
-   use Directories.Operators;
+   Available_Cached : Releases.Containers.Release_Set;
 
-   use type Milestones.Milestone;
+   --------------------------------
+   -- Invalidate_Available_Cache --
+   --------------------------------
+
+   procedure Invalidate_Available_Cache is
+   begin
+      Available_Cached.Clear;
+   end Invalidate_Available_Cache;
 
    ---------------
    -- Available --
@@ -524,6 +544,13 @@ package body Alire.Toolchains is
       end Detect;
 
    begin
+      --  Early exit with cached available toolchains. Looking for toolchains
+      --  on disk is expensive. We invalidate the cache on toolchain changes.
+
+      if not Available_Cached.Is_Empty then
+         return Available_Cached;
+      end if;
+
       if Ada.Directories.Exists (Path) then
          Directories.Traverse_Tree
            (Start => Path,
@@ -546,6 +573,7 @@ package body Alire.Toolchains is
          end loop;
       end loop;
 
+      Available_Cached := Result;
       return Result;
    end Available;
 
@@ -632,6 +660,8 @@ package body Alire.Toolchains is
                                  Fail_If_Unset => False);
          Toolchains.Unconfigure (Release.Name, Config.Local,
                                  Fail_If_Unset => False);
+
+         Invalidate_Available_Cache;
       end if;
 
       if not Confirm or else Query

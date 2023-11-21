@@ -1,6 +1,6 @@
 """
-Check that, for generic gnat dependencies, no compilers are installed (only a
-locally available one is used).
+Check that, for generic gnat dependencies, uninstalled compilers are used only
+as last resort, and a warning is shown
 """
 
 import re
@@ -18,10 +18,9 @@ assert_match(".*\n"  # Headers
              "gnat_external.*Available.*Detected.*\n",
              p.out)
 
-# Capture version
-version = re.search("gnat_external ([0-9.]+)", p.out, re.MULTILINE).group(1)
+# We know the external version of the compiler (3.3.3)
+version = "3.3.3"
 
-print(version)
 # When no compiler is selected, since the external one is available, it should
 # be used before offering to download a new compiler.
 
@@ -33,13 +32,17 @@ alr_with("gnat")
 match_solution(f"gnat={version} (gnat_external)", escape=True)
 
 # Check that requesting a version different to the one externally available
-# results in missing compiler, as Alire won't try to install one.
+# results in a complete solution but with installation warning
 alr_with("gnat", delete=True, manual=False)
-alr_with(f"gnat/={version}")
-match_solution(f"gnat/={version} (direct,hinted)", escape=True)
-# Hinted because we know the crate exists as external
+p = run_alr("with", f"gnat/={version}", quiet=False)
+assert_match(".*solution requires a toolchain", p.out)
+match_solution(f"gnat=8888.0.0 (gnat_native) (origin: binary_archive)",
+               escape=True)
 
-# Now, if the user installs a cross compiler, it will be used
+# Now, if the user installs a cross compiler, it will be used in preference to
+# the 8888 newer one, because it's installed (but we need to uninstall the 8888
+# one first)
+run_alr("toolchain", "--uninstall", "gnat_native=8888")
 
 run_alr("toolchain", "--install", "gnat_cross_2")
 run_alr("update")

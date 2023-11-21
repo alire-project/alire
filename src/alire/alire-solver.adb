@@ -181,6 +181,18 @@ package body Alire.Solver is
                            return Boolean
    is (Resolve (Deps, Props, Pins, Options).Is_Complete);
 
+   ---------------------
+   -- Culprit_Is_Toolchain --
+   ---------------------
+   --  Say if the reason for the solution to be incomplete is that it requires
+   --  a tool from the toolchain that is not already installed
+   function Culprit_Is_Toolchain (Sol : Solutions.Solution) return Boolean is
+   begin
+      return
+        (for all Dep of Sol.Hints =>
+           Toolchains.Tools.Contains (Dep.Crate));
+   end Culprit_Is_Toolchain;
+
    -------------
    -- Resolve --
    -------------
@@ -346,6 +358,36 @@ package body Alire.Solver is
          end if;
       end Ask_User_To_Continue;
 
+      ------------------------------
+      -- Contains_All_Satisfiable --
+      ------------------------------
+      --  A solution may be incomplete but also may be only missing
+      --  impossible dependencies. In that case we can finish already, as
+      --  if the solution were complete. Otherwise, an e.g. missing crate
+      --  may force exploring all the combos of the rest of crates just
+      --  because it doesn't exist.
+      function Contains_All_Satisfiable
+        (Solution : Alire.Solutions.Solution)
+               return Boolean is
+      begin
+         for Crate of Solution.Crates loop
+            if Solution.State (Crate).Fulfilment in Missed | Hinted
+            --  So the dependency is not solved, but why?
+              and then
+                not Unavailable_Crates.Contains (Crate)
+              --  Because it does not exist at all, so "complete"
+              and then
+                not Unavailable_Direct_Deps.Contains
+                  (Solution.Dependency (Crate))
+                    --  Because no release fulfills it, so "complete"
+            then
+               return False;
+            end if;
+         end loop;
+
+         return True;
+      end Contains_All_Satisfiable;
+
       -------------
       -- Partial --
       -------------
@@ -478,41 +520,52 @@ package body Alire.Solver is
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Specific_GNAT (St.Remaining).Value.Crate = R.Name)'Img
+                       (R.Satisfies (Specific_GNAT (St.Remaining).Value))'Img
                      & " for " & R.Milestone.TTY_Image
                      & " due to compiler already in dependencies: "
                      & Specific_GNAT (State.Remaining).Value.TTY_Image);
 
-                  return Specific_GNAT (State.Remaining).Value.Crate = R.Name;
+                  return R.Satisfies (Specific_GNAT (St.Remaining).Value);
 
-               elsif Toolchains.Tool_Is_Configured (GNAT_Crate) then
+               elsif Toolchains.Tool_Is_Configured (GNAT_Crate)
+                 and then Options.Completeness = First_Complete
+                   --  When we cannot find a complete solution in the first
+                   --  completeness level, this means we need a compiler that
+                   --  is not installed, and then we avoid this branch which
+                   --  forces the selected compiler even if unavailable.
+               then
 
                   --  There is a preferred compiler that we must use, as there
                   --  is no overriding reason not to
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Toolchains
-                        .Tool_Dependency (GNAT_Crate).Crate = R.Name)'Img
+                       (R.Satisfies
+                            (Toolchains.Tool_Dependency (GNAT_Crate)))'Img
                      & " for " & R.Milestone.TTY_Image
                      & " due to configured compiler: "
                      & Toolchains.Tool_Dependency (GNAT_Crate).TTY_Image);
 
-                  return Toolchains
-                    .Tool_Dependency (GNAT_Crate).Crate = R.Name;
+                  return R.Satisfies (Toolchains.Tool_Dependency (GNAT_Crate));
 
                elsif Dep.Crate = GNAT_Crate then
 
-                  --  For generic dependencies on gnat, we do not want to use
-                  --  a compiler that is not already installed.
+                  --  For generic dependencies on gnat, we do not want to use a
+                  --  compiler that is not already installed, unless we failed
+                  --  on the First_Complete level.
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Tools.Contains (R))'Image
+                       (Tools.Contains (R)
+                        or else Options.Completeness > First_Complete)'Image
                      & " for " & R.Milestone.TTY_Image
                      & " due to installed compiler availability.");
 
-                  return Tools.Contains (R);
+                  --  On first attempt we prefer only installed GNATs, but
+                  --  we allow a not-installed available one if no complete
+                  --  solution could be found otherwise.
+                  return Tools.Contains (R)
+                    or else Options.Completeness > First_Complete;
 
                else
 
@@ -925,7 +978,8 @@ package body Alire.Solver is
                           (R.Satisfies (Dep)
                            and then
                                (Dep.Crate /= GNAT_Crate or else
-                                Tools.Contains (R)));
+                                Tools.Contains (R) or else
+                                Options.Completeness > First_Complete));
 
                         Check (R, Is_Reused => False);
                      end Consider;
@@ -1056,35 +1110,6 @@ package body Alire.Solver is
          --------------------
 
          procedure Store_Finished (Solution : Alire.Solutions.Solution) is
-
-            ------------------------------
-            -- Contains_All_Satisfiable --
-            ------------------------------
-            --  A solution may be incomplete but also may be only missing
-            --  impossible dependencies. In that case we can finish already, as
-            --  if the solution were complete. Otherwise, an e.g. missing crate
-            --  may force exploring all the combos of the rest of crates just
-            --  because it doesn't exist.
-            function Contains_All_Satisfiable return Boolean is
-            begin
-               for Crate of Solution.Crates loop
-                  if Solution.State (Crate).Fulfilment in Missed | Hinted
-                        --  So the dependency is not solved, but why?
-                    and then
-                      not Unavailable_Crates.Contains (Crate)
-                        --  Because it does not exist at all, so "complete"
-                    and then
-                      not Unavailable_Direct_Deps.Contains
-                        (Solution.Dependency (Crate))
-                        --  Because no release fulfills it, so "complete"
-                  then
-                     return False;
-                  end if;
-               end loop;
-
-               return True;
-            end Contains_All_Satisfiable;
-
             Pre_Length : constant Count_Type := Solutions.Length;
          begin
             Trace.Debug ("SOLVER: tree FULLY expanded as: "
@@ -1103,7 +1128,7 @@ package body Alire.Solver is
             Progress_Report; -- As we found a new solution
 
             if Options.Completeness = First_Complete
-              and then Contains_All_Satisfiable
+              and then Contains_All_Satisfiable (Solution)
             then
                raise Solution_Found; -- break recursive search
             end if;
@@ -1291,15 +1316,30 @@ package body Alire.Solver is
       --  on options, there must exist at least one incomplete solution, or we
       --  can retry with a larger solution space.
 
-      if Solutions.Is_Empty then
-         if Options.Completeness <= All_Complete then
+      if Solutions.Is_Empty
+        or else not Solutions.First_Element.Is_Complete
+      then
+
+         --  Inform that no complete solution was found, only when the culprit
+         --  is not a tool from the toolchain (as that is expected when an
+         --  uninstalled compiler is needed).
+
+         if Options.Completeness <= All_Complete
+           and then not Solutions.Is_Empty
+           and then not Culprit_Is_Toolchain (Solutions.First_Element)
+         then
             Put_Warning ("Spent " & TTY.Emph (Timer.Image) & " seconds "
                             & "exploring complete solutions");
          end if;
 
+         --  Now downgrade options to look for more solutions, if allowed and
+         --  if it makes sense.
+
          if Options.Completeness < All_Incomplete
            and then Options.Exhaustive
            and then User_Answer_Continue /= No
+           and then (Solutions.Is_Empty or else
+                     not Contains_All_Satisfiable (Solutions.First_Element))
          then
             Trace.Detail
               ("No solution found with completeness policy of "
@@ -1338,11 +1378,20 @@ package body Alire.Solver is
                           elsif User_Answer_Continue = Always
                           then Continue
                           else Options.On_Timeout))));
-         else
+         elsif Solutions.Is_Empty then
             raise Query_Unsuccessful with Errors.Set
               ("Solver failed to find any solution to fulfill dependencies "
                & "after " & Timer.Image);
          end if;
+      end if;
+
+      --  In case of finding any solution, we always want to go through this
+      --  final step of marking transitivity and reporting:
+
+      if Solutions.Is_Empty then
+         raise Query_Unsuccessful with Errors.Set
+              ("Solver failed to find any solution to fulfill dependencies "
+               & "after " & Timer.Image);
       else
 
          --  Mark direct/indirect dependencies post-hoc

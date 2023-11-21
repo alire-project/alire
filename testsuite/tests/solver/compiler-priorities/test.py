@@ -4,10 +4,10 @@ Check compiler priorities in the solver. These priorities are:
     - An externally available compiler
     - Newest installed native compiler
     - Newest installed cross-compiler
-    - Newest uninstalled native compiler
-    - Newest uninstalled cross-compiler
-Generic dependencies on gnat= never cause compiler installation. Those only
-match installed or externally available compilers.
+    - Newest uninstalled explicit native compiler
+    - Newest uninstalled explicit cross-compiler
+Generic dependencies on gnat= cause compiler installation as a last resort.
+Those prefer first a native compiler. This case is out of scope of this test.
 """
 
 import subprocess
