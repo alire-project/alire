@@ -10,7 +10,7 @@ package body Alire.Platforms.Folders is
    -- Cache --
    -----------
 
-   function Cache return Absolute_Path is (Common.XDG_Cache_Folder);
+   function Cache return Absolute_Path is (Common.XDG_Data_Folder);
 
    -----------
    -- Config--

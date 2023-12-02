@@ -32,13 +32,13 @@ private package Alire.Platforms.Common is
                                                 Default => ".")));
 
    ----------------------
-   -- XDG_Cache_Folder --
+   -- XDG_Data_Folder --
    ----------------------
 
-   function XDG_Cache_Folder return String
+   function XDG_Data_Folder return String
    is (OS_Lib.Getenv
-         ("XDG_CACHE_HOME",
-          Default => Unix_Home_Folder / ".cache")
+         ("XDG_DATA_HOME",
+          Default => Unix_Home_Folder / ".local" / "share")
        / "alire");
 
    -----------------------

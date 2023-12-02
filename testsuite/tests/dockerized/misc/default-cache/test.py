@@ -16,7 +16,7 @@ alr_with("gnat_native")
 
 home = os.environ["HOME"]
 
-base = f"{home}/.cache/alire"
+base = f"{home}/.local/share/alire"
 
 assert \
     os.path.isdir(f"{base}/toolchains/gnat_native_8888.0.0_99fa3a55"), \
