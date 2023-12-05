@@ -78,6 +78,14 @@ be achieved by using a new configuration path (`ALR_CONFIG` or `-c` global
 switch). In that case, the aforementioned paths will be found under
 `/path/to/config/cache`.
 
+### Set working directory with `--chdir`
+
+PR [#1479](https://github.com/alire-project/alire/pull/1479)
+
+A new switch `--chdir` (short form `-C`) is introduced which requires a target
+directory argument. `alr` then runs as though it were invoked in that
+directory.
+
 ### Request review of an index submission with `alr publish --request-review`
 
 PR [#1409](https://github.com/alire-project/alire/pull/1409)
