@@ -18,7 +18,7 @@ jobs:
 
     # Oldest supported by Alire+GitHub to increase AppImage back-compatibility
     # Unfortunately we depend on the static elaboration model of recent GNATs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     steps:
     - name: Check out repository
@@ -27,7 +27,12 @@ jobs:
         submodules: true
 
     - name: Install FSF toolchain
-      run: sudo apt-get install -y gnat gprbuild
+      run: sudo apt-get install -y gnat-10 gprbuild
+
+    - name: Set up gcc on the PATH to be gcc-10
+      run: |
+        mkdir -p $HOME/.local/bin
+        ln -s /usr/bin/gcc-10 $HOME/.local/bin/gcc
 
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2
