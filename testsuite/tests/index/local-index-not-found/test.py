@@ -21,7 +21,7 @@ for d in ('no-such-directory',
     path_excerpt = os.path.join('alr-config', 'indexes', 'bad_index',
                                 'index.toml')
     assert_match('ERROR: Cannot load metadata from .*{}:'
-                 ' Not a readable directory'
+                 ' Not a readable directory: ./no-such-directory'
                  '\n'
                  .format(re.escape(path_excerpt)),
                  p.out)
