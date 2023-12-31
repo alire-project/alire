@@ -11,7 +11,7 @@ from drivers.alr import prepare_indexes, run_alr
 from drivers.asserts import assert_match
 
 
-for d in ('no-such-directory',
+for d in ('./no-such-directory',
           'file://no-such-directory', ):
     rm('alr-config', recursive=True)
     prepare_indexes('alr-config', '.',
