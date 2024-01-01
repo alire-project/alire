@@ -173,7 +173,7 @@ package body Alire.Index_On_Disk is
          Dir : constant Virtual_File := Create (+Path);
       begin
          if not Dir.Is_Directory then
-            Result := Outcome_Failure ("Not a readable directory");
+            Result := Outcome_Failure ("Not a readable directory: " & Path);
             return New_Invalid_Index;
          end if;
 
