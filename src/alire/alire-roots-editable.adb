@@ -1,3 +1,5 @@
+with Ada.Directories;
+
 with Alire.Conditional;
 with Alire.Dependencies.Diffs;
 with Alire.Directories;

@@ -1,3 +1,4 @@
+with Ada.Directories;
 with Ada.Unchecked_Deallocation;
 
 with Alire.Builds;
