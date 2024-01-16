@@ -5,8 +5,13 @@ import sys
 
 def replace_version(filename, new_text):
     pattern = r'(Current : constant String := "[^+]+\+)([^"]*)(";)'
-    with open(filename, 'r') as file:
+    with open(filename, 'rb') as file:
         content = file.read()
+
+    # Depending on the context in which this is run, there may be mix-ups with
+    # line terminators between the environment detected, github runner, etc...
+    # So just keep them as they are and that should always work.
+    content = content.decode()
 
     new_content = re.sub(pattern, r'\g<1>' + new_text + r'\3', content)
 
@@ -16,8 +21,10 @@ def replace_version(filename, new_text):
         else:
             print(f"WARNING: failed to update version in {filename}")
     else:
-        with open(filename, 'w') as file:
-            file.write(new_content)
+        # Ensure the content line terminators are not changed
+        with open(filename, 'wb') as file:
+            file.write(new_content.encode())
+
 
 # If a flag exists, skip any updating, just print a message and exit
 if "ALR_VERSION_DONT_PATCH" in os.environ:
