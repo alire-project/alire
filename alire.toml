@@ -58,3 +58,14 @@ semantic_versioning = { url = "https://github.com/alire-project/semantic_version
 simple_logging = { url = "https://github.com/alire-project/simple_logging", commit = "3505dc645f3eef6799a486aae223d37e88cfc4d5" }
 si_units = { url = "https://github.com/mosteo/si_units", branch = "alire" }
 stopwatch = { url = "https://github.com/mosteo/stopwatch", commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9" }
+
+# Before building, we add the commit to the version, for unique identification:
+[[actions]]
+type = "pre-build"
+command = ["python3", "scripts/version-patcher.py"]
+
+# Afterwards we leave it as unknown, so people manually building don't use a
+# misleading commit.
+[[actions]]
+type = "post-build"
+command = ["python3", "scripts/version-patcher.py", "unknown_commit"]
