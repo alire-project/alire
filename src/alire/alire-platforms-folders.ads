@@ -12,8 +12,10 @@ package Alire.Platforms.Folders is
    function Cache return Absolute_Path;
    --  Folder for dependencies, global toolchains, and any other info that is
    --  not critical to lose. Can be deleted freely, it's repopulated on-demand.
-   --  On Linux/macOS it is ${XDG_CACHE_HOME:-$HOME/.cache}/alire
-   --  On Windows it is $UserProfile\.cache\alire
+   --  See https://github.com/alire-project/alire/issues/1502 for why it is not
+   --  the OS cache dir but the data dir instead. So, in summary, it's located:
+   --  On Linux/macOS at ${XDG_DATA_HOME:-$HOME/.local/share}/alire
+   --  On Windows it is $LocalAppData\alire ($UserProfile\AppData\Local)
 
    function Home return Absolute_Path;
    --  $HOME (Linux/macOS) or $UserProfile (Windows)
