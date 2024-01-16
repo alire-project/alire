@@ -59,13 +59,15 @@ simple_logging = { url = "https://github.com/alire-project/simple_logging", comm
 si_units = { url = "https://github.com/mosteo/si_units", branch = "alire" }
 stopwatch = { url = "https://github.com/mosteo/stopwatch", commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9" }
 
+# To disable version updating, export ALR_VERSION_DONT_PATCH with any value (even empty)
+
 # Before building, we add the commit to the version, for unique identification:
 [[actions]]
 type = "pre-build"
 command = ["python3", "scripts/version-patcher.py"]
 
-# Afterwards we leave it as unknown, so people manually building don't use a
+# Afterwards we leave an extra note, so people manually building don't use a
 # misleading commit.
 [[actions]]
 type = "post-build"
-command = ["python3", "scripts/version-patcher.py", "unknown_commit"]
+command = ["python3", "scripts/version-patcher.py", "_or_later"]
