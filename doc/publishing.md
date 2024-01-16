@@ -22,6 +22,30 @@ index on GitHub on your behalf.
 Read on for the details underlying these automated steps, or in case you need
 to perform further tweaking.
 
+## Creating a Github Personal Access Token
+
+A Personal Access Token (PAT) allows Alire to act on your behalf to fork the
+community index, push the new release manifest to a new branch in your own fork,
+and finally open a pull-request against the community repository.
+
+The PAT, once created, is a plain string. You can either export the environment
+variable `GH_TOKEN` set to this string, or provide it when Alire asks for it.
+
+There are two kinds of PATs on Github: classic and fine-grained. The latter are
+in beta and not documented here yet. Follow these steps to create a classic PAT:
+
+1. On the main https://github.com page, after having logged in, click on your
+   profile photo on the top-right corner.
+1. Click on "Settings" in the list of options in the profile menu.
+1. Click on "Developer settings" entry at the bottom in your Settings page.
+1. Click on "Personal access tokens" and then "Tokens (classic)".
+1. Click on "Generate new token" and the select the classic variant.
+1. In the "Select scopes" section, under "repo", check "public_repo". This is
+   the only permission needed for this PAT.
+1. Click on "Generate token" at the bottom.
+
+You will get the PAT string after completing the generation.
+
 ## General concepts
 
 The community index is a collection of
