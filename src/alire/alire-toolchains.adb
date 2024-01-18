@@ -26,15 +26,19 @@ package body Alire.Toolchains is
 
    use Directories.Operators;
 
-   procedure Invalidate_Available_Cache;
-
    --------------
    -- Any_Tool --
    --------------
    --  crate=* dependency builder
    function Any_Tool (Crate : Crate_Name) return Dependencies.Dependency
    is (Dependencies.New_Dependency
-        (Crate, Semantic_Versioning.Extended.Any));
+       (Crate, Semantic_Versioning.Extended.Any));
+
+   ----------------------
+   -- Dirty_Cache_Flag --
+   ----------------------
+
+   function Dirty_Cache_Flag return Absolute_Path is (Path / "must_reload");
 
    ---------------
    -- Assistant --
@@ -382,8 +386,6 @@ package body Alire.Toolchains is
          Install (Release);
       end loop;
 
-      Invalidate_Available_Cache;
-
    end Assistant;
 
    ----------------------
@@ -412,8 +414,6 @@ package body Alire.Toolchains is
         (Level,
          Key   => Tool_Key (Release.Name, For_Is_External),
          Value => not Release.Origin.Is_Index_Provided);
-
-      Invalidate_Available_Cache;
    end Set_As_Default;
 
    -----------------------------
@@ -487,11 +487,9 @@ package body Alire.Toolchains is
             end if;
          end;
       end if;
-
-      Invalidate_Available_Cache;
    end Unconfigure;
 
-   Available_Cached : Releases.Containers.Release_Set;
+   Available_Cached    : Releases.Containers.Release_Set;
 
    --------------------------------
    -- Invalidate_Available_Cache --
@@ -545,9 +543,12 @@ package body Alire.Toolchains is
 
    begin
       --  Early exit with cached available toolchains. Looking for toolchains
-      --  on disk is expensive. We invalidate the cache on toolchain changes.
+      --  on disk is expensive. We rely on folder modification time to
+      --  re-detect available toolchains.
 
-      if not Available_Cached.Is_Empty then
+      if not Available_Cached.Is_Empty and then
+        not Ada.Directories.Exists (Dirty_Cache_Flag)
+      then
          return Available_Cached;
       end if;
 
@@ -573,7 +574,11 @@ package body Alire.Toolchains is
          end loop;
       end loop;
 
+      --  Update cache and remove dirty flag
+
       Available_Cached := Result;
+      Directories.Force_Delete (Dirty_Cache_Flag);
+
       return Result;
    end Available;
 
@@ -581,7 +586,7 @@ package body Alire.Toolchains is
    -- Path --
    ----------
 
-   function Path return String
+   function Path return Absolute_Path
    is (Config.Edit.Cache_Path / "toolchains");
 
    ------------
@@ -619,6 +624,10 @@ package body Alire.Toolchains is
            ("Reused previous installation for existing release: "
             & Release.Milestone.TTY_Image);
       end if;
+
+      --  Notify that releases must be reloaded
+
+      Directories.Touch (Dirty_Cache_Flag, Create_Tree => True);
 
       Put_Info (Release.Milestone.TTY_Image & " installed successfully.");
    end Deploy;

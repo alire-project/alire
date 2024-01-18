@@ -1153,10 +1153,14 @@ package body Alire.Directories is
    -- Touch --
    -----------
 
-   procedure Touch (File : File_Path) is
+   procedure Touch (File : File_Path; Create_Tree : Boolean := False) is
       use GNAT.OS_Lib;
       Success : Boolean := False;
    begin
+      if Create_Tree then
+         Directories.Create_Tree (Parent (File));
+      end if;
+
       if Is_Regular_File (File) then
          Set_File_Last_Modify_Time_Stamp (File, Current_Time);
       elsif Ada.Directories.Exists (File) then
