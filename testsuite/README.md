@@ -57,6 +57,9 @@ no matter their value, or lack of one.
 - `ALIRE_DISABLE_NETWORK_TESTS`: when defined, tests that
   require non-local network use will be skipped.
 
+- `ALIRE_ENABLE_LOCAL_TESTS`: when defined, tests that are intended to be run
+  locally only by the Alire developer team will not be skipped.
+
 Example disabling Docker tests for a single run on Bash:
 ```Bash
 $ ALIRE_DISABLE_DOCKER= ./run.sh

@@ -3,6 +3,7 @@ build_mode: both  # one of shared, sandboxed, both (default)
 control: # Used to disable test depending on one of:
     - [SKIP, "skip_distro",  "Unknown distro testing disabled"]
     - [SKIP, "skip_docker",  "Docker-hosted tests disabled"]
+    - [SKIP, "skip_local",   "Local developer-only tests disabled"]
     - [SKIP, "skip_network", "Network-requiring tests disabled"]
     - [SKIP, "skip_linux",   "Test is Linux-only"]
     - [SKIP, "skip_macos",   "Test is macOS-only"]

@@ -177,6 +177,14 @@ def git_blast(path):
     shutil.rmtree(path)
 
 
+def git_init_user():
+    """
+    Initialize git user and email
+    """
+    run(["git", "config", "user.email", "alr@testing.com"]).check_returncode()
+    run(["git", "config", "user.name", "Alire Testsuite"]).check_returncode()
+
+
 def init_git_repo(path):
     """
     Initialize and commit everything inside a folder, returning the HEAD commit
@@ -187,10 +195,7 @@ def init_git_repo(path):
     # You might think to init with --initial-branch=master, but
     # e.g. Centos's git doesn't support this.
     assert run(["git", "checkout", "-b", "master"]).returncode == 0
-    assert run(["git", "config", "user.email", "alr@testing.com"]) \
-        .returncode == 0
-    assert run(["git", "config", "user.name", "Alire Testsuite"]) \
-        .returncode == 0
+    git_init_user()
 
     # Workaround for Windows, where somehow we get undeletable files in temps:
     with open(".gitignore", "wt") as file:
