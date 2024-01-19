@@ -72,9 +72,8 @@ def prepare_env(config_dir, env):
 
     # If distro detection is disabled via environment, configure so in alr
     if "ALIRE_DISABLE_DISTRO" in env:
-        if env["ALIRE_DISABLE_DISTRO"] == "true":
-            run_alr("-c", config_dir, "config", "--global",
-                    "--set", "distribution.disable_detection", "true")
+        run_alr("-c", config_dir, "config", "--global",
+                "--set", "distribution.disable_detection", "true")
 
 
 def run_alr(*args, **kwargs):

@@ -10,6 +10,7 @@ import sys
 
 from drivers import alr
 from drivers.alr import run_alr
+from drivers.helpers import MODIFIERS
 
 
 def main():
@@ -33,6 +34,10 @@ def main():
     os.mkdir(work_dir)
 
     # Set up the environment
+
+    # Copy any received modifiers
+    for modifier in [m for m in MODIFIERS if m in test_env]:
+        os.environ[modifier] = test_env[modifier]
 
     # alr path
     os.environ["ALR_PATH"] = "/usr/bin/alr" # Must match docker volume mount
