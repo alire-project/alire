@@ -1,5 +1,9 @@
 private package Alire.Publish.Submit is
 
+   function Ask_To_Fork (Context : in out Data) return Boolean;
+   --  Offer to fork the community index on the user behalf, return True if
+   --  successfully forked.
+
    --  Steps for the assistant, not intended to be called directly. These steps
    --  are executed right after manifest creation in the order that follows.
 
