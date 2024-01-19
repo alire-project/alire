@@ -124,7 +124,7 @@ package Alire.Toolchains is
    --  Retrieve the release corresponding to Target, if it exists. Will raise
    --  Constraint_Error if not among Available.
 
-   function Path return Any_Path;
+   function Path return Absolute_Path;
    --  Returns the base folder in which all toolchain releases live, defaults
    --  to <cache>/toolchains
 

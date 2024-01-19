@@ -98,8 +98,8 @@ package Alire.Directories is
    --  the top-level only contains "doinstall", "README" and so on that
    --  are unusable and would be confusing in a binary prefix.
 
-   procedure Touch (File : File_Path)
-     with Pre => Is_Directory (Parent (File));
+   procedure Touch (File : File_Path; Create_Tree : Boolean := False)
+     with Pre => Create_Tree or else Is_Directory (Parent (File));
    --  If the file exists, update last edition time; otherwise create it.
    --  If File denotes anything else than a regular file, raise.
 
