@@ -11,12 +11,6 @@ import stat
 from subprocess import run
 from zipfile import ZipFile
 
-# Environment variables that can be used to modify the testsuite behavior
-MODIFIERS : list = [
-      'ALIRE_DISABLE_DISTRO'
-    , 'ALIRE_DISABLE_DOCKER'
-    , 'ALIRE_DISABLE_NETWORK_TESTS'
-]
 
 # Return the entries (sorted) under a given folder, both folders and files
 # Optionally, return only those matching regex. Uses '/' always as separator.

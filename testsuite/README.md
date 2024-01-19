@@ -43,7 +43,7 @@ All tests are based on running a Python script. There are these test drivers:
 - `docker-wrapper`: run in a pristine docker Ubuntu image in shared build mode.
 
 # Environment variables
-The following variables can be used to modify test/testsuite behavior.
+The following variables can be used to modify testsuite behavior.
 
 For `ALIRE_DISABLE_*` variables, their mere existence activates their function,
 no matter their value, or lack of one.

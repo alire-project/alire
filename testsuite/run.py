@@ -22,9 +22,11 @@ from drivers.helpers import on_windows
 
 class Testsuite(e3.testsuite.Testsuite):
     tests_subdir = 'tests'
+
+    # Available drivers
     test_driver_map = {
-        'python-script': PythonScriptDriver,
-        'docker-wrapper': DockerWrapperDriver
+        'python-script'  : PythonScriptDriver,
+        'docker-wrapper' : DockerWrapperDriver
         }
 
     def add_options(self, parser):
