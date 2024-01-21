@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# To be run from the repository root
+
 trap 'echo "ERROR at line ${LINENO} (code: $?)" >&2' ERR
 trap 'echo "Interrupted" >&2 ; exit 1' INT
 
@@ -12,6 +14,10 @@ export PATH+=:${PWD}/bin
 pushd $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     . ../dev/functions.sh
 popd
+
+# Fingerprint the build. The commit ID will appear as the version build part.
+echo "Building from commit: $(git rev-parse HEAD)"
+python3 scripts/version-patcher.py
 
 # Build alr
 export ALIRE_OS=$(get_OS)

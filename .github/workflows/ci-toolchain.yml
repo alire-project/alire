@@ -37,6 +37,11 @@ jobs:
       with:
         submodules: true
 
+    - name: Install Python 3.x # required by testsuite and scripts
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
     # Use a stock alr to make the latest toolchain available
 
     - name: Install FSF toolchain
@@ -71,11 +76,6 @@ jobs:
 
     # Run the testsuite with the just build alr. The testsuite picks the proper
     # alr in the ./bin/alr location.
-
-    - name: Install Python 3.x # required by testsuite
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
 
     - name: Install e3
       run: pip install --upgrade -r testsuite/requirements.txt
