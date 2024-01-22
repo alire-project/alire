@@ -797,7 +797,6 @@ package body Alire.Publish is
    -------------------
 
    procedure Verify_Github (Context : in out Data) is
-      pragma Unreferenced (Context);
    begin
 
       --  Early return if forcing
@@ -827,41 +826,23 @@ package body Alire.Publish is
          --  User must exist
 
          if not GitHub.User_Exists (Login) then
-            Raise_Checked_Error
+            Recoverable_Error
               ("Your GitHub login does not seem to exist: "
                & TTY.Emph (Login));
          end if;
 
          --  It has to have its own fork of the repo
 
-         if not GitHub.Repo_Exists (Login, Index.Community_Repo_Name) then
-            Raise_Checked_Error
-              ("You must fork the community index to your GitHub account"
+         if GitHub.Repo_Exists (Login, Index.Community_Repo_Name) then
+            Put_Success ("User has forked the community repository");
+         else
+            if not Submit.Ask_To_Fork (Context) then
+               Recoverable_Error
+                 ("You must fork the community index to your GitHub account"
                & ASCII.LF & "Please visit "
                & TTY.URL (Tail (Index.Community_Repo, '+'))
-               & " and fork the repository.");
-         else
-            Put_Success ("User has forked the community repository");
-         end if;
-
-         --  The repo must contain the base branch, or otherwise GitHub
-         --  redirects to the main repository page with an error banner on top.
-
-         if not GitHub.Branch_Exists (User   => Login,
-                                      Repo   => Index.Community_Repo_Name,
-                                      Branch => Index.Community_Branch)
-         then
-            Raise_Checked_Error
-              ("Your index fork is missing the current base branch ("
-               & TTY.Emph (Index.Community_Branch) & ")"
-               & " for pull requests to the community repository" & ASCII.LF
-               & "Please synchronize this branch and try again" & ASCII.LF
-               & "Your fork URL is: "
-               & TTY.URL (Index.Community_Host
-                 & "/" & Login & "/" & Index.Community_Repo_Name));
-         else
-            Put_Success ("User's fork contains base branch: "
-                         & TTY.Emph (Index.Community_Branch));
+               & " if you want to fork manually.");
+            end if;
          end if;
       end;
    end Verify_Github;
