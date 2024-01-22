@@ -36,8 +36,28 @@ $ ./run.py
 ```
 
 # Creating tests
-All tests are based on running a Python script. There are three test drivers:
+All tests are based on running a Python script. There are these test drivers:
 
 - `python-script`: run in host in both sandboxed and shared build mode.
     - The build mode can be narrowed down with the `build_mode` attribute.
 - `docker-wrapper`: run in a pristine docker Ubuntu image in shared build mode.
+
+# Environment variables
+The following variables can be used to modify test/testsuite behavior.
+
+For `ALIRE_DISABLE_*` variables, their mere existence activates their function,
+no matter their value, or lack of one.
+
+- `ALIRE_DISABLE_DISTRO`: when defined, `alr` will be configured
+ to not detect the system distribution and fall back to unknown distribution.
+
+- `ALIRE_DISABLE_DOCKER`: when defined, `alr` will skip tests that
+  require Docker (which are enabled by default if Docker is detected).
+
+- `ALIRE_DISABLE_NETWORK_TESTS`: when defined, tests that
+  require non-local network use will be skipped.
+
+Example disabling Docker tests for a single run on Bash:
+```Bash
+$ ALIRE_DISABLE_DOCKER= ./run.sh
+```

@@ -5,14 +5,14 @@ import subprocess
 from importlib import import_module
 from typing import Tuple
 
-from drivers.helpers import FileLock, on_linux
+from drivers.helpers import FileLock, on_linux, MODIFIERS
 from e3.testsuite.driver.classic import (ClassicTestDriver,
                                          TestAbortWithFailure,
                                          TestSkip)
 
 DOCKERFILE = "Dockerfile"
 TAG = "alire_testsuite"
-ENV_FLAG = "ALIRE_DOCKER_ENABLED" # Set to "False" to disable docker tests
+ENV_FLAG = "ALIRE_DISABLE_DOCKER" # Export it to disable docker tests
 LABEL_HASH = "hash"
 
 
@@ -22,7 +22,7 @@ def is_docker_available() -> bool:
         return False
 
     # Detect explicitly disabled
-    if os.environ.get(ENV_FLAG, "True").lower() in ["0", "false"]:
+    if ENV_FLAG in os.environ:
         return False
 
     # Detect python library
@@ -102,6 +102,11 @@ class DockerWrapperDriver(ClassicTestDriver):
 
         build_image()
 
+        # Augment the test environment with local modifiers that could
+        # impact the wrapped test, if defined
+        for modifier in [m for m in MODIFIERS if m in os.environ]:
+            self.test_env[modifier] = os.environ[modifier]
+
         # Run our things
         try:
             container = get_client().containers.run(
@@ -137,6 +142,10 @@ class DockerWrapperDriver(ClassicTestDriver):
 
             # Check that the test succeeded inside the docker container
             out_lines = output.splitlines()
-            if not out_lines or out_lines[-1] != 'SUCCESS':
-                self.result.log += f'missing SUCCESS output line:\n{output}'
+            if out_lines and out_lines[-1] == 'SUCCESS':
+                pass
+            elif out_lines and (reason := out_lines[-1]).startswith('SKIP:'):
+                raise TestSkip(reason.split(":")[-1].strip())
+            else:
+                self.result.log += 'missing SUCCESS output line'
                 raise TestAbortWithFailure('missing SUCCESS output line')
