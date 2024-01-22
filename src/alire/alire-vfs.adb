@@ -11,8 +11,8 @@ package body Alire.VFS is
                               return String
    is
       Relative : constant Any_Path :=
-                   Directories.Find_Relative_Path (Parent => From,
-                                                   Child  => Path);
+         Directories.Find_Relative_Path (Parent => From,
+                                         Child  => Path);
    begin
       if Check_Absolute_Path (Relative) then
          return Path;
@@ -20,6 +20,21 @@ package body Alire.VFS is
          return String (To_Portable (Relative));
       end if;
    end Attempt_Portable;
+
+   -----------------
+   -- To_Portable --
+   -----------------
+
+   function To_Portable (Path : Relative_Path) return Portable_Path
+   is
+   begin
+      case GNATCOLL.OS.Constants.OS is
+         when MacOS | Unix =>
+            return Portable_Path (Path);
+         when Windows      =>
+            return Portable_Path (Replace (Path, "\", "/"));
+      end case;
+   end To_Portable;
 
    --------------
    -- Read_Dir --
