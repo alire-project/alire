@@ -96,15 +96,6 @@ private
        and then
        not Check_Absolute_Path (Path));
 
-   -----------------
-   -- To_Portable --
-   -----------------
-
-   function To_Portable (Path : Relative_Path) return Portable_Path
-   is (case GNATCOLL.OS.Constants.OS is
-          when MacOS | Unix => Portable_Path (Path),
-          when Windows      => Portable_Path (Replace (Path, "\", "/")));
-
    ---------------
    -- To_Native --
    ---------------
