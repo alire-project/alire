@@ -1,5 +1,12 @@
 driver: python-script
 build_mode: both  # one of shared, sandboxed, both (default)
+control: # Used to disable test depending on one of:
+    - [SKIP, "skip_distro",  "Unknown distro testing disabled"]
+    - [SKIP, "skip_docker",  "Docker-hosted tests disabled"]
+    - [SKIP, "skip_network", "Network-requiring tests disabled"]
+    - [SKIP, "skip_linux",   "Test is Linux-only"]
+    - [SKIP, "skip_macos",   "Test is macOS-only"]
+    - [SKIP, "skip_windows", "Test is Windows-only"]
 indexes:
     compiler_only_index: {}
     # Note that shared builds require a detected compiler to be able to compute

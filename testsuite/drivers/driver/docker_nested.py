@@ -10,7 +10,7 @@ import sys
 
 from drivers import alr
 from drivers.alr import run_alr
-from drivers.helpers import MODIFIERS
+from drivers.driver.base_driver import BaseDriver
 
 
 def main():
@@ -36,7 +36,7 @@ def main():
     # Set up the environment
 
     # Copy any received modifiers
-    for modifier in [m for m in MODIFIERS if m in test_env]:
+    for modifier in [m for m in BaseDriver.MODIFIERS.items() if m in test_env]:
         os.environ[modifier] = test_env[modifier]
 
     # alr path

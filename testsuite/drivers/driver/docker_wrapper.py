@@ -5,9 +5,10 @@ import subprocess
 from importlib import import_module
 from typing import Tuple
 
-from drivers.helpers import FileLock, on_linux, MODIFIERS
-from e3.testsuite.driver.classic import (ClassicTestDriver,
-                                         TestAbortWithFailure,
+from drivers.driver.base_driver import BaseDriver
+from drivers.helpers import FileLock, on_linux
+
+from e3.testsuite.driver.classic import (TestAbortWithFailure,
                                          TestSkip)
 
 DOCKERFILE = "Dockerfile"
@@ -88,7 +89,7 @@ def build_image() -> None:
             labels={LABEL_HASH : compute_dockerfile_hash()})
 
 
-class DockerWrapperDriver(ClassicTestDriver):
+class DockerWrapperDriver(BaseDriver):
 
     # This is a workaround for Windows, where attempting to use rlimit by e3-core
     # causes permission errors. TODO: remove once e3-core has a proper solution.
@@ -104,7 +105,7 @@ class DockerWrapperDriver(ClassicTestDriver):
 
         # Augment the test environment with local modifiers that could
         # impact the wrapped test, if defined
-        for modifier in [m for m in MODIFIERS if m in os.environ]:
+        for modifier in [val for _, val in self.MODIFIERS.items() if val in os.environ]:
             self.test_env[modifier] = os.environ[modifier]
 
         # Run our things
