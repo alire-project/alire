@@ -1,6 +1,8 @@
-with Alire.Utils;
 with Alire.Config.Edit;
+with Alire.Utils.Regex;
 with Alire.VCSs.Git;
+
+with GNAT.Regpat;
 
 package body Alire.Selftest is
 
@@ -153,6 +155,42 @@ package body Alire.Selftest is
                        "https://github.com/user/project");
    end Check_Git_To_HTTP;
 
+   --------------------------
+   -- Check_Regex_Escaping --
+   --------------------------
+
+   procedure Check_Regex_Escaping is
+   begin
+      --  Check bugfix #XXXX
+
+      --  This should succeed
+      declare
+         Match : constant String := Utils.Regex.First_Match
+           ("^"
+            & Utils.Regex.Escape ("libstdc++-static")
+            & "[^\s]*\s+(?:\d+:)?([0-9.]+)",
+            "libstdc++-static.x86_64    1:2.3.4-5.fc33    updates");
+      begin
+         pragma Assert (Match = "2.3.4", "Match was: " & Match);
+      end;
+
+      --  This should "fail"
+      begin
+         declare
+            Match : constant String := Utils.Regex.First_Match
+              ("^libstdc++-static"
+               & "[^\s]*\s+(?:\d+:)?([0-9.]+)",
+               "libstdc++-static.x86_64    1:2.3.4-5.fc33    updates")
+              with Unreferenced;
+         begin
+            raise Program_Error with "Previous call should have raised";
+         end;
+      exception
+         when GNAT.Regpat.Expression_Error =>
+            null; -- Expected
+      end;
+   end Check_Regex_Escaping;
+
    ---------
    -- Run --
    ---------
@@ -163,6 +201,7 @@ package body Alire.Selftest is
       Check_Email_Checks;
       Check_GitHub_Logins;
       Check_Git_To_HTTP;
+      Check_Regex_Escaping;
 
       Trace.Detail ("Self-checks passed");
    exception
