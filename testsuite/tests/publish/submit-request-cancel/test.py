@@ -1,6 +1,6 @@
 """
 A complete online test of submitting a release, requesting a review, and
-cancelling the request.
+canceling the request.
 """
 
 import os
