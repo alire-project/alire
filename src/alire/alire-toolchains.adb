@@ -535,7 +535,7 @@ package body Alire.Toolchains is
                   & TTY.URL (Full_Name (Item)));
             end if;
 
-         else
+         elsif Simple_Name (Item) /= Simple_Name (Dirty_Cache_Flag) then
             Warnings.Warn_Once ("Unexpected file in toolchain crates path: "
                                 & TTY.URL (Full_Name (Item)));
          end if;
