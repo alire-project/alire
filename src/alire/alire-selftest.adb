@@ -161,7 +161,7 @@ package body Alire.Selftest is
 
    procedure Check_Regex_Escaping is
    begin
-      --  Check bugfix #XXXX
+      --  See issue #1545
 
       --  This should succeed
       declare
