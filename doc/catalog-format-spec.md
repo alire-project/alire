@@ -455,6 +455,12 @@ static, i.e. they cannot depend on the context.
         several crates from the same repository (sometimes referred to as a
         *monorepo*).
 
+      - `binary`: optional (defauts to false) boolean used to design the origin
+        as binary. Binary origins are not compiled and can use dynamic
+        expressions to narrow down the platform to which they apply. An origin
+        using a dynamic expression is implicitly tagged as binary; see the
+        example below.
+
    Examples of origin tables:
 
    ```toml
@@ -477,6 +483,13 @@ static, i.e. they cannot depend on the context.
    url = "git+https://github.com/example-user/example-project"
    commit = "ec8b267bb8b777c6887059059924d823e9443439"
    subdir = "examples"
+   ```
+
+   ```toml
+   # A binary origin denoting a compiler
+   [origin."case(os)".linux."case(host-arch)".x86-64]
+   url = "https://github.com/alire-project/GNAT-FSF-builds/releases/download/gnat-12.1.0-1/gnat-x86_64-linux-12.1.0-1.tar.gz"
+   hashes = ["sha256:df1f36b306359d528799b1de8629a793523347a90c9d4b72efd23c62a7279555"]
    ```
 
  - `available`: optional dynamic boolean expression.  If it evaluates to
