@@ -5,6 +5,10 @@ with Alire.Roots.Optional;
 
 package body Alire.Dependencies.States is
 
+   ---------
+   -- "=" --
+   ---------
+
    overriding function "=" (L, R : Stored_Release) return Boolean
    is
       use type Milestones.Milestone;
@@ -18,6 +22,21 @@ package body Alire.Dependencies.States is
            L.Element.Milestone = R.Element.Milestone
            and then
            L.Element.Origin = R.Element.Origin);
+   end "=";
+
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "=" (L, R : State) return Boolean
+   is
+   begin
+      --  Explicit because the implicit one is reporting spurious diffs (bug?)
+      return
+         L.Fulfilled = R.Fulfilled
+         and then L.Transitivity = R.Transitivity
+         and then L.Pinning = R.Pinning
+         and then Dependency (L) = Dependency (R);
    end "=";
 
    ----------------------

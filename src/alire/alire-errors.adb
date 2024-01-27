@@ -127,20 +127,25 @@ package body Alire.Errors is
          declare
             Line : constant String := Trim (Lines (I));
          begin
-            Trace.Error ((if I > Lines.First_Index then "   " else "")
-                         --  Indentation
+            if Line /= "" then
+               Trace.Error
+                 ((if I > Lines.First_Index then "   " else "")
+                    --  Indentation
 
-                         & (if I < Lines.Last_Index and Line (Line'Last) = '.'
-                           then Line (Line'First .. Line'Last - 1)
-                           else Line)
-                         --  The error proper, trimming unwanted final '.'
+                  & (if I < Lines.Last_Index and Line (Line'Last) = '.'
+                    then Line (Line'First .. Line'Last - 1)
+                    else Line)
+                  --  The error proper, trimming unwanted final '.'
 
-                         & (if I < Lines.Last_Index
-                              and then Line (Line'Last) /= ':'
-                           then ":"
-                           else "")
-                           --  Trailing ':' except for last line
-                        );
+                  & (if I < Lines.Last_Index
+                    and then Line (Line'Last) /= ':'
+                    then ":"
+                    else "")
+                  --  Trailing ':' except for last line
+                 );
+            else
+               Trace.Error (Line);
+            end if;
          end;
       end loop;
    end Pretty_Print;

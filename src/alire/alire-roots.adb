@@ -884,6 +884,11 @@ package body Alire.Roots is
         Containers.Crate_Name_Sets.Empty_Set)
    is
 
+      --  Pins may be stored with relative paths so we need to ensure being at
+      --  the root of the workspace:
+      CD : Directories.Guard (Directories.Enter (Path (This)))
+        with Unreferenced;
+
       Top_Root   : Root renames This;
       Pins_Dir   : constant Any_Path   := This.Pins_Dir;
       Linked     : Containers.Crate_Name_Sets.Set;
@@ -1810,6 +1815,11 @@ package body Alire.Roots is
       Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set)
    is
+      --  Pins may be stored with relative paths so we need to ensure being at
+      --  the root of the workspace:
+      CD : Directories.Guard (Directories.Enter (Path (This)))
+        with Unreferenced;
+
       Old : constant Solutions.Solution :=
               (if This.Has_Lockfile
                then This.Solution
@@ -1839,7 +1849,7 @@ package body Alire.Roots is
       begin
          --  Early exit when there are no changes
 
-         if not Alire.Force and not Diff.Contains_Changes then
+         if not Alire.Force and then not Diff.Contains_Changes then
             if not Needed.Is_Complete then
                Trace.Warning
                  ("There are missing dependencies"
@@ -1850,27 +1860,31 @@ package body Alire.Roots is
             --  In case manual changes in manifest do not modify the
             --  solution.
 
-            if not Silent then
+            if not Silent and then not Diff.Contains_Changes then
                Trace.Info ("Nothing to update.");
             end if;
 
-         else
+         else -- Forced or there are changes
 
             --  Show changes and optionally ask user to apply them
 
-            if not Interact then
-               declare
-                  Level : constant Trace.Levels :=
-                            (if Silent then Debug else Info);
-               begin
-                  Trace.Log
-                    ("Dependencies automatically updated as follows:",
-                     Level);
-                  Diff.Print (Level => Level);
-               end;
-            elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
-               Trace.Detail ("Update abandoned.");
-               return;
+            if Diff.Contains_Changes then
+               if not Interact then
+                  declare
+                     Level : constant Trace.Levels :=
+                               (if Silent then Debug else Info);
+                  begin
+                     Trace.Log
+                       ("Dependencies automatically updated as follows:",
+                        Level);
+                     Diff.Print (Level => Level);
+                  end;
+               elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
+                  Trace.Detail ("Update abandoned.");
+                  return;
+               end if;
+            elsif not Silent then
+               Trace.Info ("Nothing to update.");
             end if;
 
          end if;

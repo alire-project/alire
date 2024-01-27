@@ -135,7 +135,7 @@ private
       case Kind is
          when To_Git =>
             URL        : UString;
-            Branch : UString; -- Optional
+            Branch     : UString; -- Optional
             Commit     : UString; -- Optional
             Local_Path : Unbounded_Absolute_Path;
             --  Empty until the pin is locally deployed
