@@ -31,14 +31,7 @@ abstract project Alire_Common is
             "-gnatyu",   -- no unnecessary blank lines
             "-gnatyx",   -- no extra parens around conditionals
             "-gnaty-s"); -- relax fwd decl
-      when "disabled" => Style_Check_Switches :=
-           ("-gnat2022",
-            "-gnatx",
-            -- When no style checks are enforced, we are likely debugging,
-            -- commenting blocks, moving things around, etc. At these times we
-            -- may also benefit from some Ada 2022 features like Any_Type'Image.
-            "-gnatwJ" -- Disable warnings about obsolescent "()"
-           );
+      when "disabled" => Style_Check_Switches := ();
    end case;
 
    type Any_Experimental_Ada_Features is ("enabled", "disabled");

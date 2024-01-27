@@ -7,7 +7,7 @@ with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
 with Alire.Flags;
-with Alire.Origins.Deployers;
+with Alire.Origins.Deployers.System;
 with Alire.Paths;
 with Alire.Properties.Bool;
 with Alire.Properties.Scenarios;
@@ -314,6 +314,18 @@ package body Alire.Releases is
       if This.Origin.Is_Index_Provided and then Completed.Exists then
          Was_There := True;
          Trace.Detail ("Skipping checkout of already available " &
+                         This.Milestone.Image);
+
+      elsif This.Origin.Kind not in Origins.Deployable_Kinds then
+         Was_There := True;
+         Trace.Detail ("External requires no deployment for " &
+                         This.Milestone.Image);
+
+      elsif This.Origin.Is_System
+        and then Origins.Deployers.System.Already_Installed (This.Origin)
+      then
+         Was_There := True;
+         Trace.Detail ("Skipping install of already available system origin " &
                          This.Milestone.Image);
 
       else
