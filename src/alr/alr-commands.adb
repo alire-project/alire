@@ -43,9 +43,10 @@ with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
 
+with Alr.Commands.Topics.Aliases;
 with Alr.Commands.Topics.Naming_Convention;
 with Alr.Commands.Topics.Toolchains;
-with Alr.Commands.Topics.Aliases;
+with Alr.Commands.Topics.Upgrading_Alr;
 
 with GNAT.OS_Lib;
 
@@ -660,8 +661,9 @@ begin
    Sub_Cmd.Register ("Testing", new Test.Command);
 
    -- Help topics --
+   Sub_Cmd.Register (new Topics.Aliases.Topic);
    Sub_Cmd.Register (new Topics.Naming_Convention.Topic);
    Sub_Cmd.Register (new Topics.Toolchains.Topic);
-   Sub_Cmd.Register (new Topics.Aliases.Topic);
+   Sub_Cmd.Register (new Topics.Upgrading_Alr.Topic);
 
 end Alr.Commands;
