@@ -1,8 +1,9 @@
 with AAA.Strings; use AAA.Strings;
 
-with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
+with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
+with Alire.Utils.Regex;
 
 package body Alire.Origins.Deployers.System.RPM_Wrappers is
 
@@ -83,9 +84,12 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
 
       function Detect_Not_Installed return Version_Outcomes.Outcome is
 
+         --  Package name at beginning of line, architecture, version
          Regexp : constant String :=
-                    "^" & AAA.Strings.To_Lower_Case (Full_Pkg_Name) &
-                    "[^\s]*\s+(?:\d+:)?([0-9.]+)";
+                    "^"
+                    & Utils.Regex.Escape
+                       (AAA.Strings.To_Lower_Case (Full_Pkg_Name))
+                    & "[^\s]*\s+(?:\d+:)?([0-9.]+)";
          --  A line looks like:
          --  gtk3.x86_64    1:3.24.24-1.fc33    updates
 
@@ -106,8 +110,8 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
                            " output: " & Line & " with regex " & Regexp);
             declare
                Match : constant String :=
-                         Utils.First_Match (Regexp,
-                                            AAA.Strings.To_Lower_Case (Line));
+                         Utils.Regex.First_Match
+                           (Regexp, AAA.Strings.To_Lower_Case (Line));
             begin
                if Match /= "" then
                   Trace.Debug ("Candidate version string: " & Match);
