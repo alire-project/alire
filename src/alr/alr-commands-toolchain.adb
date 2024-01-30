@@ -124,6 +124,7 @@ package body Alr.Commands.Toolchain is
             --  command-line, will impose an origin compatibility constraint
 
             if Toolchains.Tool_Is_Configured (Tool)
+              and then not Toolchains.Tool_Is_Missing (Tool)
               and then not
                 (for some P of Pending =>
                    Toolchains.Tool_Release (Tool).Provides (P) or else

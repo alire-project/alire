@@ -431,7 +431,10 @@ package body Alire.Solutions.Diffs is
               and then Toolchains.Tool_Is_Configured (GNAT_Crate)
               and then Toolchains.Tool_Milestone (GNAT_Crate).Crate
                        = GNAT_External_Crate
-              and then not Toolchains.Tool_Release (GNAT_Crate).Satisfies (Dep)
+              and then
+                (Toolchains.Tool_Is_Missing (GNAT_Crate)
+                 or else
+                   not Toolchains.Tool_Release (GNAT_Crate).Satisfies (Dep))
             then
                Trace.Log (Prefix, Level);
                Trace.Log (Prefix & Icon (Missing)

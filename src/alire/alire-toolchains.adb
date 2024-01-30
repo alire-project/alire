@@ -632,6 +632,34 @@ package body Alire.Toolchains is
       Put_Info (Release.Milestone.TTY_Image & " installed successfully.");
    end Deploy;
 
+   --------------------
+   -- Deploy_Missing --
+   --------------------
+
+   procedure Deploy_Missing is
+   begin
+      for Tool of Tools loop
+         if Tool_Is_Configured (Tool) and then Tool_Is_Missing (Tool) then
+            declare
+               Mil : constant Milestones.Milestone := Tool_Milestone (Tool);
+            begin
+               Put_Warning ("Tool " & Mil.TTY_Image
+                            & " is missing, redeploying...");
+               if Index.Exists (Mil.Crate, Mil.Version) then
+                  Deploy (Index.Find (Mil.Crate, Mil.Version));
+               else
+                  Raise_Checked_Error
+                    (Errors.Wrap
+                       ("A configured tool is missing on disk and unavailable "
+                        & "in the loaded index.",
+                        " Run " & TTY.Terminal ("alr toolchain --select")
+                        & " to select another toolchain"));
+               end if;
+            end;
+         end if;
+      end loop;
+   end Deploy_Missing;
+
    ------------
    -- Remove --
    ------------
@@ -724,5 +752,16 @@ package body Alire.Toolchains is
 
       raise Constraint_Error with "Not installed: " & Target.TTY_Image;
    end Release;
+
+   ---------------------
+   -- Tool_Is_Missing --
+   ---------------------
+
+   function Tool_Is_Missing (Crate : Crate_Name) return Boolean is
+   begin
+      return not (for some Release of Available (Detect_Externals =>
+                                                   Tool_Is_External (Crate))
+                  => Release.Milestone = Tool_Milestone (Crate));
+   end Tool_Is_Missing;
 
 end Alire.Toolchains;
