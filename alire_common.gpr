@@ -34,6 +34,22 @@ abstract project Alire_Common is
       when "disabled" => Style_Check_Switches := ();
    end case;
 
+   type Any_Experimental_Ada_Features is ("enabled", "disabled");
+   Experimental_Ada_Features : Any_Experimental_Ada_Features :=
+       external ("ALIRE_EXPERIMENTAL_ADA_FEATURES", "disabled");
+   --  These should only be enabled temporarily to help with debugging.
+   --  Production builds are always checked with these disabled.
+
+   Experimental_Ada_Switches := ();
+   case Experimental_Ada_Features is
+      when "enabled"  => Experimental_Ada_Switches :=
+           ("-gnat2022",
+            "-gnatx",
+            "-gnatwJ" -- Disable warnings about obsolescent "()"
+           );
+      when "disabled" => Experimental_Ada_Switches := ();
+   end case;
+
    Ada_Common_Switches :=
      (  "-gnatW8" -- use UTF-8 Encoding for Source Files
       , "-s"      -- Recompile if compiler Switches Have Changed
@@ -58,7 +74,8 @@ abstract project Alire_Common is
 
                --  Enable all warnings
                "-gnatwa")
-              & Style_Check_Switches;
+              & Style_Check_Switches
+              & Experimental_Ada_Switches;
 
             for Default_Switches ("C") use ("-g", "-O0", "-Wall");
             --  Likewise for C units
