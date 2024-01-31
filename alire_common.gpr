@@ -31,14 +31,23 @@ abstract project Alire_Common is
             "-gnatyu",   -- no unnecessary blank lines
             "-gnatyx",   -- no extra parens around conditionals
             "-gnaty-s"); -- relax fwd decl
-      when "disabled" => Style_Check_Switches :=
+      when "disabled" => Style_Check_Switches := ();
+   end case;
+
+   type Any_Experimental_Ada_Features is ("enabled", "disabled");
+   Experimental_Ada_Features : Any_Experimental_Ada_Features :=
+       external ("ALIRE_EXPERIMENTAL_ADA_FEATURES", "disabled");
+   --  These should only be enabled temporarily to help with debugging.
+   --  Production builds are always checked with these disabled.
+
+   Experimental_Ada_Switches := ();
+   case Experimental_Ada_Features is
+      when "enabled"  => Experimental_Ada_Switches :=
            ("-gnat2022",
             "-gnatx",
-            -- When no style checks are enforced, we are likely debugging,
-            -- commenting blocks, moving things around, etc. At these times we
-            -- may also benefit from some Ada 2022 features like Any_Type'Image.
             "-gnatwJ" -- Disable warnings about obsolescent "()"
            );
+      when "disabled" => Experimental_Ada_Switches := ();
    end case;
 
    Ada_Common_Switches :=
@@ -65,7 +74,8 @@ abstract project Alire_Common is
 
                --  Enable all warnings
                "-gnatwa")
-              & Style_Check_Switches;
+              & Style_Check_Switches
+              & Experimental_Ada_Switches;
 
             for Default_Switches ("C") use ("-g", "-O0", "-Wall");
             --  Likewise for C units
