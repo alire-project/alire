@@ -662,7 +662,8 @@ package body Alire.Directories is
 
       end if;
 
-      Trace.Debug ("Selected name for tempfile: " & (+This.Name));
+      Trace.Debug ("Selected name for tempfile: " & (+This.Name)
+                   & " when at dir: " & Current);
 
       Temp_Registry.Add (+This.Name);
    end Initialize;
