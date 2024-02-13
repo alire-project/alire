@@ -662,6 +662,8 @@ package body Alire.Directories is
 
       end if;
 
+      Trace.Debug ("Selected name for tempfile: " & (+This.Name));
+
       Temp_Registry.Add (+This.Name);
    end Initialize;
 
@@ -673,6 +675,9 @@ package body Alire.Directories is
    is
    begin
       if This.FD in GNAT.OS_Lib.Invalid_FD then
+         --  Ensure parent location exists
+         Create_Tree (Parent (This.Filename));
+
          This.FD := GNAT.OS_Lib.Create_Output_Text_File (This.Filename);
       end if;
 
