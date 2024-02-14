@@ -39,7 +39,7 @@ package Alire.Roots.Optional is
    function Outside (This : Root) return Boolean;
    --  True when there is no root at all, broken or valid
 
-   function Value (This : aliased Root) return Reference with
+   function Value (This : Root) return Reference with
      Pre => This.Is_Valid;
 
    function Brokenness (This : Root) return String with

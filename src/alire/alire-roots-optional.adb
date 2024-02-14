@@ -125,7 +125,7 @@ package body Alire.Roots.Optional is
    -- Value --
    -----------
 
-   function Value (This : aliased Root) return Reference
+   function Value (This : Root) return Reference
    is
    begin
       This.Assert;
