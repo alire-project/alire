@@ -590,7 +590,11 @@ package body Alr.Commands is
          Cmd.Requires_Workspace;
       end if;
 
-      return Cmd.Optional_Root.Value;
+      return R : constant Alire.Roots.Optional.Reference :=
+        (Ptr => Cmd.Optional_Root.Value.Ptr.all'Unchecked_Access);
+      --  Workaround for bug (?) in GNAT 11 about dangling pointers. It should
+      --  simply be:
+      --  return Cmd.Optional_Root.Value;
    end Root;
 
    ---------

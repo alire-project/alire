@@ -248,7 +248,7 @@ package body Alire.Roots.Editable is
                                   Path  : Any_Path)
                                   return Crate_Name
    is
-      Pin_Root : constant Optional.Root := Optional.Detect_Root (Path);
+      Pin_Root : Optional.Root := Optional.Detect_Root (Path);
 
       -------------------------
       -- Pin_Is_Parent_Crate --

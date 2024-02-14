@@ -47,7 +47,7 @@ package body Alire.Dependencies.States is
                               Workspace : Any_Path)
                               return Stored_Release
    is
-      Opt_Root : constant Roots.Optional.Root :=
+      Opt_Root : Roots.Optional.Root :=
                    Roots.Optional.Detect_Root (Workspace);
    begin
       if Opt_Root.Is_Valid then
