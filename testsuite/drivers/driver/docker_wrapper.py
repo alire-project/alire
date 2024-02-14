@@ -13,7 +13,7 @@ from e3.testsuite.driver.classic import (TestAbortWithFailure,
 
 DOCKERFILE = "Dockerfile"
 TAG = "alire_testsuite"
-ENV_FLAG = "ALIRE_DISABLE_DOCKER" # Export it to disable docker tests
+ENV_FLAG = "ALIRE_TESTSUITE_DISABLE_DOCKER" # Export it to disable docker tests
 LABEL_HASH = "hash"
 
 

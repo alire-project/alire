@@ -77,7 +77,7 @@ def on_windows():
 
 def distribution():
 
-    if 'ALIRE_DISABLE_DISTRO' in os.environ:
+    if 'ALIRE_TESTSUITE_DISABLE_DISTRO' in os.environ:
         return 'DISTRO_UNKNOWN'
 
     known_distro = ["debian", "ubuntu", "msys2", "arch", "rhel", "centos", "fedora"]

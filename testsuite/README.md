@@ -45,22 +45,22 @@ All tests are based on running a Python script. There are these test drivers:
 # Environment variables
 The following variables can be used to modify testsuite behavior.
 
-For `ALIRE_DISABLE_*` variables, their mere existence activates their function,
-no matter their value, or lack of one.
+For `ALIRE_TESTSUITE_DISABLE_*` variables, their mere existence activates their
+function, no matter their value, or lack of one.
 
-- `ALIRE_DISABLE_DISTRO`: when defined, `alr` will be configured
+- `ALIRE_TESTSUITE_DISABLE_DISTRO`: when defined, `alr` will be configured
  to not detect the system distribution and fall back to unknown distribution.
 
-- `ALIRE_DISABLE_DOCKER`: when defined, `alr` will skip tests that
+- `ALIRE_TESTSUITE_DISABLE_DOCKER`: when defined, `alr` will skip tests that
   require Docker (which are enabled by default if Docker is detected).
 
-- `ALIRE_DISABLE_NETWORK_TESTS`: when defined, tests that
+- `ALIRE_TESTSUITE_DISABLE_NETWORK_TESTS`: when defined, tests that
   require non-local network use will be skipped.
 
-- `ALIRE_ENABLE_LOCAL_TESTS`: when defined, tests that are intended to be run
-  locally only by the Alire developer team will not be skipped.
+- `ALIRE_TESTSUITE_ENABLE_LOCAL_TESTS`: when defined, tests that are intended
+  to be run locally only by the Alire developer team will not be skipped.
 
 Example disabling Docker tests for a single run on Bash:
 ```Bash
-$ ALIRE_DISABLE_DOCKER= ./run.sh
+$ ALIRE_TESTSUITE_DISABLE_DOCKER= ./run.sh
 ```
