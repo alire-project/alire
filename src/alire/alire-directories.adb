@@ -662,6 +662,9 @@ package body Alire.Directories is
 
       end if;
 
+      Trace.Debug ("Selected name for tempfile: " & (+This.Name)
+                   & " when at dir: " & Current);
+
       Temp_Registry.Add (+This.Name);
    end Initialize;
 
@@ -673,6 +676,9 @@ package body Alire.Directories is
    is
    begin
       if This.FD in GNAT.OS_Lib.Invalid_FD then
+         --  Ensure parent location exists
+         Create_Tree (Parent (This.Filename));
+
          This.FD := GNAT.OS_Lib.Create_Output_Text_File (This.Filename);
       end if;
 
@@ -744,10 +750,10 @@ package body Alire.Directories is
       end if;
 
       --  Remove temp dir if empty to keep things tidy, and avoid modifying
-      --  lots of tests.
+      --  lots of tests, but only when within <>/alire/tmp
 
-      if Ada.Directories.Simple_Name (Parent (This.Filename)) =
-        Paths.Temp_Folder_Inside_Working_Folder
+      if Ada.Directories.Simple_Name (Parent (Parent (This.Filename))) =
+        Paths.Working_Folder_Inside_Root
       then
          AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
       end if;
