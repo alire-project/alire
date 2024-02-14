@@ -5,6 +5,7 @@ with Alire.Index;
 with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
 with Alire.Paths.Vault;
+with Alire.Platforms.Folders;
 with Alire.Properties;
 with Alire.Roots.Optional;
 with Alire.Toolchains;
@@ -75,6 +76,8 @@ package body Alr.Commands.Version is
         .Append (Alire.Config.Edit.Cache_Path).New_Row;
       Table.Append ("vault folder:").Append (Paths.Vault.Path).New_Row;
       Table.Append ("build folder:").Append (Build_Path).New_Row;
+      Table.Append ("temp folder:")
+        .Append (Alire.Platforms.Folders.Temp).New_Row;
       Table.Append ("force flag:").Append (Alire.Force'Image).New_Row;
       Table.Append ("non-interactive flag:")
         .Append (CLIC.User_Input.Not_Interactive'Image).New_Row;
