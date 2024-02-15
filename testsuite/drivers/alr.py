@@ -71,7 +71,7 @@ def prepare_env(config_dir, env):
             "--set", "index.auto_update", "0")
 
     # If distro detection is disabled via environment, configure so in alr
-    if "ALIRE_DISABLE_DISTRO" in env:
+    if "ALIRE_TESTSUITE_DISABLE_DISTRO" in env:
         run_alr("-c", config_dir, "config", "--global",
                 "--set", "distribution.disable_detection", "true")
 

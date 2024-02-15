@@ -21,10 +21,10 @@ class BaseDriver(ClassicTestDriver):
     #     control:
     #         - [SKIP, "skip_docker", "Docker is disabled"]
     MODIFIERS = {
-          "distro"  : 'ALIRE_DISABLE_DISTRO'
-        , "docker"  : 'ALIRE_DISABLE_DOCKER'
-        , "local"   : 'ALIRE_ENABLE_LOCAL_TESTS'
-        , "network" : 'ALIRE_DISABLE_NETWORK_TESTS'
+          "distro"  : 'ALIRE_TESTSUITE_DISABLE_DISTRO'
+        , "docker"  : 'ALIRE_TESTSUITE_DISABLE_DOCKER'
+        , "local"   : 'ALIRE_TESTSUITE_ENABLE_LOCAL_TESTS'
+        , "network" : 'ALIRE_TESTSUITE_DISABLE_NETWORK_TESTS'
     }
 
     # In the constructor, prepare the features map based on the environment

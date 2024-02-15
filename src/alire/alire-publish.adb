@@ -560,8 +560,11 @@ package body Alire.Publish is
          --  more generic message otherwise (when lacking a github login).
 
          if not Context.Options.Skip_Submit then
-            --  Safeguard to avoid tests creating a live pull request
-            if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset" then
+            --  Safeguard to avoid tests creating a live pull request, unless
+            --  explicitly desired
+            if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset"
+              and then OS_Lib.Getenv (Environment.Testsuite_Allow, "unset") = "unset"
+            then
                raise Program_Error
                  with "Attempting to go online to create a PR during tests";
             end if;

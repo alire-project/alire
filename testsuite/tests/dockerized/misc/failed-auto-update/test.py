@@ -10,11 +10,6 @@ import sys
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
 
-# Skip this test in non-networked environments
-if "ALIRE_DISABLE_NETWORK_TESTS" in os.environ:
-    print("SKIP: network tests disabled")
-    sys.exit(0)
-
 # Configure our online test index
 # An alternative might be to launch a local git server in bg
 INDEX = "git+https://github.com/alire-project/test-index"
