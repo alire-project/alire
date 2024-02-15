@@ -3,9 +3,9 @@ with Alire.Origins.Deployers.System.Homebrew;
 with Alire.Origins.Deployers.System.Macports;
 with Alire.Origins.Deployers.System.Pacman;
 with Alire.Origins.Deployers.System.RPM_Wrappers;
+with Alire.Origins.Deployers.System.Unknown;
 with Alire.Origins.Deployers.System.Zypper;
 with Alire.OS_Lib;
-with Alire.Platforms.Current;
 
 with CLIC.User_Input;
 
@@ -87,9 +87,12 @@ package body Alire.Origins.Deployers.System is
    -- Platform_Deployer --
    -----------------------
 
-   function Platform_Deployer (From : Origins.Origin) return Deployer'Class is
-     (case Platforms.Distro_Manager (Platforms.Current.Distribution) is
-         when Platforms.Apt | Platforms.Packager_Unknown =>
+   function Platform_Deployer
+     (From   : Origins.Origin;
+      Distro : Platforms.Distributions := Platforms.Current.Distribution)
+      return Deployer'Class
+   is (case Platforms.Distro_Manager (Distro) is
+         when Platforms.Apt =>
             System.Apt.Deployer'(Deployers.Deployer'(Base => From)
                                  with others => <>),
          when Platforms.Pacman =>
@@ -113,7 +116,11 @@ package body Alire.Origins.Deployers.System is
                                       with others => <>),
          when Platforms.Macports =>
             System.Macports.Deployer'(Deployers.Deployer'(Base => From)
-                                      with others => <>));
+                                      with others => <>),
+         when Platforms.Packager_Unknown =>
+            System.Unknown.Deployer'(Deployers.Deployer'(Base => From)
+                                     with others => <>)
+     );
       --  NOTE: add here other native package managers as they get
       --  implemented.
 
@@ -135,7 +142,10 @@ package body Alire.Origins.Deployers.System is
       --  We use a mock system package to be able to obtain a deployer. It
       --  doesn't matter if this system package doesn't exist.
    begin
-      return Platform_Deployer (Make).Executable_Name;
+      return Platform_Deployer
+        (Make,
+         Distro => Platforms.Current.Detected_Distribution)
+        .Executable_Name;
    end Executable_Name;
 
    ---------------------

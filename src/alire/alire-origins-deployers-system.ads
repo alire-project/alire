@@ -1,4 +1,5 @@
 with Alire.Outcomes.Definite;
+with Alire.Platforms.Current;
 
 with Semantic_Versioning;
 
@@ -56,8 +57,13 @@ package Alire.Origins.Deployers.System is
    -- Factory --
    -------------
 
-   function Platform_Deployer (From : Origins.Origin) return Deployer'Class
+   function Platform_Deployer
+     (From   : Origins.Origin;
+      Distro : Platforms.Distributions := Platforms.Current.Distribution)
+      return Deployer'Class
      with Pre => From.Is_System;
+   --  Returns the deployer for a current system. Defaults to current one,
+   --  unless distro detection is disabled.
 
    function Platform_Deployer (Package_Name : String) return Deployer'Class is
      (Platform_Deployer (Origins.New_System (Package_Name)));
