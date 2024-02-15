@@ -117,10 +117,22 @@ package body Alr.Commands.Version is
          end loop;
       end;
 
-      Table
-        .Append ("system package manager:")
-        .Append (Alire.Origins.Deployers.System.Executable_Path)
-        .New_Row;
+      declare
+         System_Manager : constant String :=
+                            Origins.Deployers.System.Executable_Path;
+      begin
+         Table
+           .Append ("system package manager:")
+           .Append (if System_Manager /= ""
+                    then System_Manager
+                    else "not found: `"
+                       & Origins.Deployers.System.Executable_Name & "`")
+           .New_Row;
+         Table
+           .Append ("distro detection disabled:")
+           .Append (Platforms.Current.Disable_Distribution_Detection'Image)
+           .New_Row;
+      end;
 
       Table.Append ("").New_Row;
       Table.Append ("WORKSPACE").New_Row;

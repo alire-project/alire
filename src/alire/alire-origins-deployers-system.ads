@@ -62,9 +62,12 @@ package Alire.Origins.Deployers.System is
    function Platform_Deployer (Package_Name : String) return Deployer'Class is
      (Platform_Deployer (Origins.New_System (Package_Name)));
 
+   function Executable_Name return String;
+   --  Returns the simple name of the executable package manager on the system
+
    function Executable_Path return Optional_Absolute_Path;
-   --  Identifies the package manager executable being called in the current
-   --  platform, or "" if none found.
+   --  Identifies the full path to the package manager executable found in the
+   --  current platform, even if distro detection is disabled.
 
 private
 

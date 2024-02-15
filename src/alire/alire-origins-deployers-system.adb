@@ -127,16 +127,24 @@ package body Alire.Origins.Deployers.System is
    end Dont_Ask_Permission;
 
    ---------------------
-   -- Executable_Path --
+   -- Executable_Name --
    ---------------------
 
-   function Executable_Path return Optional_Absolute_Path is
+   function Executable_Name return String is
       Make : constant Origin := New_System ("make");
       --  We use a mock system package to be able to obtain a deployer. It
       --  doesn't matter if this system package doesn't exist.
    begin
-      return OS_Lib.Locate_Exec_On_Path
-        (Platform_Deployer (Make).Executable_Name);
+      return Platform_Deployer (Make).Executable_Name;
+   end Executable_Name;
+
+   ---------------------
+   -- Executable_Path --
+   ---------------------
+
+   function Executable_Path return Optional_Absolute_Path is
+   begin
+      return OS_Lib.Locate_Exec_On_Path (Executable_Name);
    end Executable_Path;
 
 end Alire.Origins.Deployers.System;
