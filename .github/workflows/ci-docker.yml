@@ -1,4 +1,5 @@
 name: CI Docker
+# Check builds on supported Linux distributions
 
 on:
   pull_request:

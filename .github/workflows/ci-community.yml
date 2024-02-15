@@ -1,0 +1,81 @@
+name: CI Community
+# Check proper build using the community edition of the AdaCore toolchain
+
+on:
+  pull_request:
+    paths-ignore:
+        - 'doc/**'
+        - '**.md'
+        - '**.rst'
+        - '**.txt'
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    name: ce${{matrix.version}} on ${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false # Attempt to generate as many of them as possible
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+        version:
+          - 2020
+          - 2021
+        exclude:
+          - os: macos-latest
+            version: 2021 # it was never released for macOS
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    # Until some stable alr with `alr install` is available, we cannot rely on
+    # the alr-install action, as that introduces a circular dependency. If a
+    # nightly build were to fail, there's no way to do an `alr install` anymore
+    # TODO: replace with `alr-install` once alr 2.0 is out.
+
+    # We cannot use variable names in the action reference, so we need to make
+    # them explicit twice
+    - name: Install Community 2020 toolchain
+      uses: ada-actions/toolchain@ce2020
+      if: ${{ matrix.version == '2020' }}
+      with:
+        distrib: community
+
+    - name: Install Community 2021 toolchain
+      uses: ada-actions/toolchain@ce2021
+      if: ${{ matrix.version == '2021' }}
+      with:
+        distrib: community
+
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Run test script
+      run: scripts/ci-github.sh
+      shell: bash
+
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@master
+      with:
+        name: e3-log-linux.zip
+        path: testsuite/out
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: alr-bin-${{ matrix.os }}.zip
+        path: |
+          bin/alr*
+          LICENSE.txt
