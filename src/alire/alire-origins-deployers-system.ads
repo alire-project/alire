@@ -46,6 +46,12 @@ package Alire.Origins.Deployers.System is
    --  This procedure tells the deployer not to ask user permission before
    --  deployment.
 
+   not overriding
+   function Executable_Name (This : Deployer) return String is abstract;
+   --  Must return the name of the executable used for installations (apt,
+   --  pacman, etc). For platforms that use several, the top-most wrapper
+   --  should be returned (i.e., apt instead of dpkg, yum instead of rpm...).
+
    -------------
    -- Factory --
    -------------
@@ -55,6 +61,10 @@ package Alire.Origins.Deployers.System is
 
    function Platform_Deployer (Package_Name : String) return Deployer'Class is
      (Platform_Deployer (Origins.New_System (Package_Name)));
+
+   function Executable_Path return Optional_Absolute_Path;
+   --  Identifies the package manager executable being called in the current
+   --  platform, or "" if none found.
 
 private
 

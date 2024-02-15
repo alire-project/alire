@@ -4,6 +4,7 @@ with Alire.Directories;
 with Alire.Index;
 with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
+with Alire.Origins.Deployers.System;
 with Alire.Paths.Vault;
 with Alire.Platforms.Folders;
 with Alire.Properties;
@@ -115,6 +116,11 @@ package body Alr.Commands.Version is
             I := I + 1;
          end loop;
       end;
+
+      Table
+        .Append ("system package manager:")
+        .Append (Alire.Origins.Deployers.System.Executable_Path)
+        .New_Row;
 
       Table.Append ("").New_Row;
       Table.Append ("WORKSPACE").New_Row;

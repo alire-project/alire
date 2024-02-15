@@ -4,6 +4,7 @@ with Alire.Origins.Deployers.System.Macports;
 with Alire.Origins.Deployers.System.Pacman;
 with Alire.Origins.Deployers.System.RPM_Wrappers;
 with Alire.Origins.Deployers.System.Zypper;
+with Alire.OS_Lib;
 with Alire.Platforms.Current;
 
 with CLIC.User_Input;
@@ -124,5 +125,18 @@ package body Alire.Origins.Deployers.System is
    begin
       This.Ask_Permission := False;
    end Dont_Ask_Permission;
+
+   ---------------------
+   -- Executable_Path --
+   ---------------------
+
+   function Executable_Path return Optional_Absolute_Path is
+      Make : constant Origin := New_System ("make");
+      --  We use a mock system package to be able to obtain a deployer. It
+      --  doesn't matter if this system package doesn't exist.
+   begin
+      return OS_Lib.Locate_Exec_On_Path
+        (Platform_Deployer (Make).Executable_Name);
+   end Executable_Path;
 
 end Alire.Origins.Deployers.System;

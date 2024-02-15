@@ -12,4 +12,7 @@ package Alire.Origins.Deployers.System.Apt is
    overriding
    function Install (This : Deployer) return Outcome;
 
+   overriding
+   function Executable_Name (This : Deployer) return String is ("apt");
+
 end Alire.Origins.Deployers.System.Apt;
