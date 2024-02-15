@@ -125,8 +125,10 @@ package body Alr.Commands.Version is
            .Append ("system package manager:")
            .Append (if System_Manager /= ""
                     then System_Manager
-                    else "not found: `"
-                       & Origins.Deployers.System.Executable_Name & "`")
+                    else "not found: "
+                    & (if Origins.Deployers.System.Executable_Name /= ""
+                      then "`" & Origins.Deployers.System.Executable_Name & "`"
+                      else "unknown package manager"))
            .New_Row;
          Table
            .Append ("distro detection disabled:")

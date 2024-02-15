@@ -17,7 +17,7 @@ package Alire.Origins.Deployers.System.Unknown is
    is (Outcome_Failure ("unknown distro, no system deployer"));
 
    overriding
-   function Executable_Name (This : Deployer) return String
-   is ("nonexistent-package-manager-that-alire-musnt-find");
+   function Executable_Name (This : Deployer) return String is ("");
+   --  Must be "" so no detection is attempted
 
 end Alire.Origins.Deployers.System.Unknown;

@@ -154,7 +154,11 @@ package body Alire.Origins.Deployers.System is
 
    function Executable_Path return Optional_Absolute_Path is
    begin
-      return OS_Lib.Locate_Exec_On_Path (Executable_Name);
+      if Executable_Name /= "" then
+         return OS_Lib.Locate_Exec_On_Path (Executable_Name);
+      else
+         return "";
+      end if;
    end Executable_Path;
 
 end Alire.Origins.Deployers.System;
