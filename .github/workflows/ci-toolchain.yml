@@ -14,7 +14,7 @@ jobs:
 
   build:
 
-    name: ${{ matrix.os }}
+    name: ${{ matrix.os }} gcc^${{ matrix.gcc_version }}
 
     runs-on: ${{ matrix.os }}
 
@@ -25,6 +25,11 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
+        gcc_version:
+          - 10
+          - 11
+          - 12
+          - 13
 
     steps:
     - name: Check out
@@ -37,7 +42,7 @@ jobs:
     - name: Install FSF toolchain
       uses: alire-project/alr-install@v1
       with:
-        crates: gnat_native gprbuild
+        crates: gnat_native^${{matrix.gcc_version}} gprbuild
 
     - name: Build alr with default toolchain
       shell: bash

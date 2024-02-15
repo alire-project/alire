@@ -125,13 +125,14 @@ package body Alire.Roots.Optional is
    -- Value --
    -----------
 
-   function Value (This : aliased Root) return Reference
+   function Value (This : in out Root) return Reference
    is
    begin
       This.Assert;
       --  The following Unrestricted_Access cannot fail as we just asserted
       --  the value is stored.
-      return Reference'(Ptr => This.Data.Value'Unrestricted_Access);
+      return Ref : constant Reference :=
+        Reference'(Ptr => This.Data.Value'Unrestricted_Access);
    end Value;
 
    ---------------------
@@ -166,7 +167,7 @@ package body Alire.Roots.Optional is
    -- Updatable_Dependency --
    --------------------------
 
-   function Updatable_Dependency (This : Root)
+   function Updatable_Dependency (This : in out Root)
                                   return Dependencies.Dependency
    is (Dependencies.New_Dependency
        (This.Value.Release.Element.Name,

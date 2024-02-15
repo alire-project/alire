@@ -41,7 +41,7 @@ package body Alr.Commands.Version is
       Indexes : constant Alire.Index_On_Disk.Loading.Set :=
                   Alire.Index_On_Disk.Loading.Find_All
                     (Alire.Config.Edit.Indexes_Directory, Index_Outcome);
-      Root : constant Alire.Roots.Optional.Root :=
+      Root : Alire.Roots.Optional.Root :=
                Alire.Roots.Optional.Search_Root (Alire.Directories.Current);
 
       Build_Path : constant String :=

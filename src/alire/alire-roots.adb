@@ -997,7 +997,7 @@ package body Alire.Roots is
             declare
                use Containers.Crate_Name_Sets;
                use Semver.Extended;
-               Target : constant Optional.Root :=
+               Target : Optional.Root :=
                           Optional.Detect_Root (Pin.Path);
             begin
 
@@ -1139,7 +1139,11 @@ package body Alire.Roots is
    ---------------
 
    function Load_Root (Path : Any_Path) return Root
-   is (Roots.Optional.Detect_Root (Path).Value);
+   is
+      Optional_Root : Optional.Root := Optional.Detect_Root (Path);
+   begin
+      return Optional_Root.Value;
+   end Load_Root;
 
    ------------------------------
    -- Export_Build_Environment --
@@ -1187,7 +1191,7 @@ package body Alire.Roots is
          --  Try to detect a root in this folder
 
          declare
-            Opt : constant Optional.Root :=
+            Opt : Optional.Root :=
                     Optional.Detect_Root (Full_Name (Item));
          begin
             if Opt.Is_Valid then

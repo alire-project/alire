@@ -115,7 +115,7 @@ package body Alire.Publish is
          return +This.Path;
       else
          declare
-            Root : constant Roots.Optional.Root := Alire.Root.Current;
+            Root : Roots.Optional.Root := Alire.Root.Current;
          begin
             Check_Root_Status (+This.Path, Root, This.Options);
             return Root.Value.Path;
@@ -155,7 +155,7 @@ package body Alire.Publish is
    -- Generated_Filename --
    ------------------------
 
-   function Generated_Filename (This : Data) return String
+   function Generated_Filename (This : in out Data) return String
    is (TOML_Index.Manifest_File
        (This.Root.Value.Name,
           This.Root.Value.Release.Version));
@@ -164,7 +164,7 @@ package body Alire.Publish is
    -- Generated_Manifest --
    ------------------------
 
-   function Generated_Manifest (This : Data) return Absolute_Path
+   function Generated_Manifest (This : in out Data) return Absolute_Path
    is (This.Root.Value.Working_Folder
        / Paths.Release_Folder_Inside_Working_Folder
        / This.Generated_Filename);
@@ -395,7 +395,7 @@ package body Alire.Publish is
          --  Will have raised if the release is not loadable or incomplete
       else
          declare
-            Root : constant Roots.Optional.Root := Alire.Root.Current;
+            Root : Roots.Optional.Root := Alire.Root.Current;
          begin
             case Root.Status is
             when Outside =>
@@ -495,7 +495,7 @@ package body Alire.Publish is
 
    procedure Generate_Index_Manifest (Context : in out Data) is
       User_Manifest : constant Any_Path := Packaged_Manifest (Context);
-      Workspace     : constant Roots.Optional.Root := Root.Current;
+      Workspace     :          Roots.Optional.Root := Root.Current;
    begin
       if not GNAT.OS_Lib.Is_Read_Accessible_File (User_Manifest) then
          Raise_Checked_Error
@@ -1042,7 +1042,7 @@ package body Alire.Publish is
                                Revision : String   := "HEAD";
                                Options  : All_Options := New_Options)
    is
-      Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
+      Root : Roots.Optional.Root   := Roots.Optional.Search_Root (Path);
       Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
 
       Subdir : Unbounded_Relative_Path;

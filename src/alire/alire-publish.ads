@@ -97,14 +97,14 @@ private
    -- Branch_Name --
    -----------------
 
-   function Branch_Name (This : Data) return String
+   function Branch_Name (This : in out Data) return String
    is (Branch_Name (This.Root.Value.Release.Milestone));
 
    -------------
    -- PR_Name --
    -------------
 
-   function PR_Name (This : Data) return String
+   function PR_Name (This : in out Data) return String
    is (This.Root.Value.Name.As_String & " "
        & This.Root.Value.Release.Version.Image);
 
@@ -112,12 +112,12 @@ private
    -- Generated_Filename --
    ------------------------
 
-   function Generated_Filename (This : Data) return String;
+   function Generated_Filename (This : in out Data) return String;
 
    ------------------------
    -- Generated_Manifest --
    ------------------------
 
-   function Generated_Manifest (This : Data) return Absolute_Path;
+   function Generated_Manifest (This : in out Data) return Absolute_Path;
 
 end Alire.Publish;

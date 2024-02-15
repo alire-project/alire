@@ -259,7 +259,7 @@ package body Alire.User_Pins is
       --  At this point, we have the sources at Destination. Last checks ensue.
 
       declare
-         Root : constant Roots.Optional.Root :=
+         Root : Roots.Optional.Root :=
                   Roots.Optional.Detect_Root (Destination);
       begin
 
