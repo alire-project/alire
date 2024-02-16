@@ -591,10 +591,12 @@ package body Alr.Commands is
       end if;
 
       return R : constant Alire.Roots.Optional.Reference :=
-        (Ptr => Cmd.Optional_Root.Value.Ptr.all'Unchecked_Access);
+        (Ptr => Cmd.Optional_Root.Value.Ptr.all'Unrestricted_Access);
       --  Workaround for bug (?) in GNAT 11 about dangling pointers. It should
       --  simply be:
       --  return Cmd.Optional_Root.Value;
+      --  Also, the 'Unrestricted is needed by GNAT CE 2020, it can be simply
+      --  'Unchecked in later versions.
    end Root;
 
    ---------
