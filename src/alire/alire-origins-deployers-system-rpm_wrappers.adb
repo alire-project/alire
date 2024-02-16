@@ -18,6 +18,14 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
          when Dnf => "dnf",
          when Yum => "yum");
 
+   ---------------------
+   -- Executable_Name --
+   ---------------------
+
+   overriding
+   function Executable_Name (This : Deployer) return String
+   is (This.Wrapper_Command);
+
    ------------------------------
    -- Package_Name_With_Archit --
    ------------------------------

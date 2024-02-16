@@ -4,6 +4,7 @@ with Alire.Directories;
 with Alire.Index;
 with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
+with Alire.Origins.Deployers.System;
 with Alire.Paths.Vault;
 with Alire.Platforms.Folders;
 with Alire.Properties;
@@ -114,6 +115,25 @@ package body Alr.Commands.Version is
                        else "not configured").New_Row;
             I := I + 1;
          end loop;
+      end;
+
+      declare
+         System_Manager : constant String :=
+                            Origins.Deployers.System.Executable_Path;
+      begin
+         Table
+           .Append ("system package manager:")
+           .Append (if System_Manager /= ""
+                    then System_Manager
+                    else "not found: "
+                    & (if Origins.Deployers.System.Executable_Name /= ""
+                      then "`" & Origins.Deployers.System.Executable_Name & "`"
+                      else "unknown package manager"))
+           .New_Row;
+         Table
+           .Append ("distro detection disabled:")
+           .Append (Platforms.Current.Disable_Distribution_Detection'Image)
+           .New_Row;
       end;
 
       Table.Append ("").New_Row;
