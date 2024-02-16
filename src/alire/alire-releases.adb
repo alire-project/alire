@@ -332,19 +332,18 @@ package body Alire.Releases is
          Was_There := False;
          Put_Info ("Deploying " & This.Milestone.TTY_Image & "...");
          Alire.Origins.Deployers.Deploy (This, Folder).Assert;
-
-         --  For deployers that do nothing, we ensure the folder exists so all
-         --  dependencies leave a trace in the cache/dependencies folder, and
-         --  a place from where to run their actions by default.
-
-         Ada.Directories.Create_Path (Folder);
-
-         --  Backup a potentially packaged manifest, so our authoritative
-         --  manifest from the index is always used.
-
-         Backup_Upstream_Manifest;
-
       end if;
+
+      --  For deployers that do nothing, we ensure the folder exists so all
+      --  dependencies leave a trace in the cache/dependencies folder, and
+      --  a place from where to run their actions by default.
+
+      Ada.Directories.Create_Path (Folder);
+
+      --  Backup a potentially packaged manifest, so our authoritative
+      --  manifest from the index is always used.
+
+      Backup_Upstream_Manifest;
 
       --  Create manifest if requested
 
