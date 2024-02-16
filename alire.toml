@@ -50,8 +50,8 @@ windows = { ALIRE_OS = "windows" }
 aaa = { url = "https://github.com/mosteo/aaa", commit = "dff61d2615cc6332fa6205267bae19b4d044b9da" }
 ada_toml = { url = "https://github.com/mosteo/ada-toml", commit = "da4e59c382ceb0de6733d571ecbab7ea4919b33d" }
 clic = { url = "https://github.com/alire-project/clic", commit = "de0330053584bad4dbb3dbd5e1ba939c4e8c6b55" }
-dirty_booleans = { url = "https://github.com/mosteo/dirty_booleans", branch = "main" }
-diskflags = { url = "https://github.com/mosteo/diskflags", branch = "main" }
+dirty_booleans = { url = "https://github.com/mosteo/dirty_booleans", branch = "alire" }
+diskflags = { url = "https://github.com/mosteo/diskflags", branch = "alire" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "4e663b87a028252e7e074f054f8f453661397166" }
 minirest = { url = "https://github.com/mosteo/minirest.git", commit = "9a9c660f9c6f27f5ef75417e7fac7061dff14d78" }
 semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning", commit = "2f23fc5f6b4855b836b599adf292fed9c0ed4144" }
