@@ -217,7 +217,8 @@ package body Alire.Index_On_Disk is
          return Process_Local_Index
            (Origin (Origin'First + File_Prefix'Length ..  Origin'Last));
       elsif Origin (Origin'First) = '/'
-            or else not AAA.Strings.Contains (Origin, "+")
+        or else not (AAA.Strings.Contains (Origin, "@")
+                     or AAA.Strings.Contains (Origin, "+"))
       then
          return Process_Local_Index (Origin);
       end if;
