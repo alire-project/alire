@@ -10,7 +10,6 @@ Generic dependencies on gnat= cause compiler installation as a last resort.
 Those prefer first a native compiler. This case is out of scope of this test.
 """
 
-import subprocess
 import re
 
 from drivers.alr import run_alr, init_local_crate, alr_with

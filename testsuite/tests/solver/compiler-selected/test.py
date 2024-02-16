@@ -1,13 +1,12 @@
 """
-Check solving with a configured preferred compiler
+Check solving with a configured preferred compiler. When the selected compiler
+fulfills the dependency, it is preferred over other available but not installed
+compilers.
 """
 
-import subprocess
-import os
 
 from drivers.alr import run_alr, init_local_crate, alr_with
-from drivers.asserts import assert_eq, assert_match, match_solution
-from re import escape as e
+from drivers.asserts import match_solution
 
 # Select the default preferred compiler, which is the native packaged one
 run_alr("toolchain", "--select")
