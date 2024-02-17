@@ -1,4 +1,5 @@
-with Alire.Builds;
+with AAA.Enum_Tools;
+
 with Alire.Crate_Configuration;
 with Alire.Utils.Switches;
 
@@ -52,15 +53,32 @@ package body Alr.Commands.Build is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
+      function Is_Valid_Stage is
+        new AAA.Enum_Tools.Is_Valid (Alire.Builds.Build_Stages);
+
       use Alire.Utils.Switches;
       Profiles_Selected : constant Natural :=
                             Alire.Utils.Count_True ((Cmd.Release_Mode,
                                                      Cmd.Validation_Mode,
                                                      Cmd.Dev_Mode));
       Profile : Profile_Kind;
+      Stop_After : Alire.Builds.Build_Stages := Alire.Builds.Build_Stages'Last;
    begin
+      --  Validation
+
       if Profiles_Selected > 1 then
          Reportaise_Wrong_Arguments ("Only one build profile can be selected");
+      end if;
+
+      if Cmd.Stop_After.all /= "" then
+         if Is_Valid_Stage (Cmd.Stop_After.all) then
+            Stop_After := Alire.Builds.Build_Stages'Value (Cmd.Stop_After.all);
+         else
+            Reportaise_Wrong_Arguments
+              ("Stopping stage is invalid: " & TTY.Error (Cmd.Stop_After.all)
+               & "; see " & TTY.Terminal ("alr help build")
+               & " for valid values");
+         end if;
       end if;
 
       Cmd.Requires_Workspace;
@@ -89,7 +107,7 @@ package body Alr.Commands.Build is
 
       --  And redirect to actual execution procedure
 
-      if not Execute (Cmd, Args) then
+      if not Execute (Cmd, Args, Stop_After) then
          Reportaise_Command_Failed ("Compilation failed.");
       end if;
    end Execute;
@@ -99,9 +117,12 @@ package body Alr.Commands.Build is
    -------------
 
    function Execute (Cmd              : in out Commands.Command'Class;
-                     Args             :        AAA.Strings.Vector)
+                     Args             :        AAA.Strings.Vector;
+                     Stop             :        Alire.Builds.Build_Stages :=
+                       Alire.Builds.Build_Stages'Last)
                      return Boolean
    is
+      use type Alire.Builds.Build_Stages;
    begin
       --  Prevent premature update of dependencies, as the exact folders
       --  will depend on the build hashes, which are yet unknown until
@@ -111,16 +132,30 @@ package body Alr.Commands.Build is
 
       declare
          Timer : Stopwatch.Instance;
+         Build_Kind : constant String :=
+                        (if Stop < Alire.Builds.Build_Stages'Last
+                         then TTY.Warn ("Partial") & " build"
+                         else "Build");
       begin
          if Cmd.Root.Build (Args,
-                            Saved_Profiles => Cmd not in Build.Command'Class)
+                            Saved_Profiles => Cmd not in Build.Command'Class,
+                            Stop_After     => Stop)
            --  That is, we apply the saved profiles unless the user is
            --  explicitly invoking `alr build`.
          then
 
-            Trace.Info ("Build finished successfully in "
-                        & TTY.Bold (Timer.Image) & " seconds.");
-            Trace.Detail ("Use alr run --list to check available executables");
+            Alire.Put_Success (Build_Kind & " finished successfully in "
+                               & TTY.Bold (Timer.Image) & " seconds.");
+
+            if Stop < Alire.Builds.Build_Stages'Last then
+               Alire.Put_Info
+                 ("Build was requested to stop after stage: "
+                  & TTY.Emph (AAA.Strings.To_Lower_Case (Stop'Image))
+                  & "; build artifacts may be missing.");
+            else
+               Trace.Detail
+                 ("Use alr run --list to check available executables");
+            end if;
 
             return True;
 

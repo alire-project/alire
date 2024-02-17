@@ -1,5 +1,7 @@
 with AAA.Strings;
 
+with Alire.Builds;
+
 private with GNAT.OS_Lib;
 
 package Alr.Commands.Build is
@@ -21,7 +23,9 @@ package Alr.Commands.Build is
                       Args :        AAA.Strings.Vector);
 
    function Execute (Cmd  : in out Commands.Command'Class;
-                     Args :        AAA.Strings.Vector)
+                     Args :        AAA.Strings.Vector;
+                     Stop :        Alire.Builds.Build_Stages :=
+                       Alire.Builds.Build_Stages'Last)
                      return Boolean;
    --  Returns True if compilation succeeded. For invocations after some other
    --  command that already has set up the build environment we need to avoid
