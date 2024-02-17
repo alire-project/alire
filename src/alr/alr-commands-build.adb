@@ -7,6 +7,7 @@ with Stopwatch;
 package body Alr.Commands.Build is
 
    Switch_Profiles : constant String := "--profiles";
+   Switch_Stop     : constant String := "--stop-after";
 
    --------------------
    -- Apply_Profiles --
@@ -137,9 +138,29 @@ package body Alr.Commands.Build is
    overriding
    function Long_Description (Cmd : Command)
                               return AAA.Strings.Vector
-   is (AAA.Strings.Empty_Vector
+   is
+      use all type Alire.Builds.Build_Stages;
+
+      -----------
+      -- Stage --
+      -----------
+
+      function Stage (Name        : Alire.Builds.Build_Stages;
+                      Description : String)
+                      return String
+      is ("* "
+          & AAA.Strings.To_Lower_Case (TTY.Emph (Name'Image))
+          & ": " & Description);
+
+      function Building return Alire.Builds.Build_Stages
+      is (Alire.Builds.Build);
+
+   begin
+      return AAA.Strings.Empty_Vector
        .Append ("Invokes gprbuild to compile all targets in the current"
          & " crate.")
+       .New_Line
+       .Append (TTY.Bold ("Build profiles"))
        .New_Line
        .Append ("A build profile can be selected with the appropriate switch."
          & " The profile is applied to the root release only, "
@@ -158,7 +179,21 @@ package body Alr.Commands.Build is
          & " (dependencies). Indirect builds through, e.g., '"
          & TTY.Terminal ("alr run") & "' will use the last '"
          & TTY.Terminal ("alr build") & "' configuration.")
-      );
+       .New_Line
+         .Append (TTY.Bold ("Build stages"))
+         .New_Line
+         .Append ("Instead of a full build, the process can be stopped early "
+           & "using " & TTY.Terminal (Switch_Stop) & "=<stage>, where <stage> "
+                  & "is one of:")
+        .New_Line
+        .Append (Stage (Sync, "      sync pristine sources to build location"))
+        .Append (Stage (Generation, "generate configuration-dependent files"))
+        .Append (Stage (Post_Fetch, "running of post-fetch actions"))
+        .Append (Stage (Pre_Build, " running of pre-build actions"))
+        .Append (Stage (Building, "     actual building of sources"))
+        .Append (Stage (Post_Build, "running of post-build actions"))
+      ;
+   end Long_Description;
 
    --------------------
    -- Setup_Switches --
@@ -189,6 +224,12 @@ package body Alr.Commands.Build is
          Cmd.Profiles'Access,
          "", Switch_Profiles & "=",
          "Comma-separated list of <crate>=<profile> values (see description)");
+
+      Define_Switch
+        (Config,
+         Cmd.Stop_After'Access,
+         "", Switch_Stop & "=",
+         "Build stage after which to stop (see description)");
 
    end Setup_Switches;
 
