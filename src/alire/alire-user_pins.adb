@@ -158,6 +158,14 @@ package body Alire.User_Pins is
 
          --  Check out the branch or commit
 
+         Put_Info ("Deploying " & Utils.TTY.Name (Crate)
+                   & (if Commit /= ""
+                     then " commit " & TTY.URL (VCSs.Git.Short_Commit (Commit))
+                     elsif Branch /= ""
+                     then  " branch " & TTY.URL (Branch)
+                     else " default branch")
+                   & "...");
+
          if not
            VCSs.Git.Handler.Clone
              (From   => URL (This) & (if Commit /= ""
@@ -206,6 +214,9 @@ package body Alire.User_Pins is
          --  Finally update. In case the branch has just been changed by the
          --  user in the manifest, the following call will also take care of
          --  it.
+
+         Put_Info ("Pulling " & Utils.TTY.Name (Crate)
+                   & " branch " & TTY.URL (Branch) & "...");
 
          if not VCSs.Git.Handler.Update (Destination, Branch).Success then
             Raise_Checked_Error

@@ -7,7 +7,7 @@ with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
 with Alire.Flags;
-with Alire.Origins.Deployers;
+with Alire.Origins.Deployers.System;
 with Alire.Paths;
 with Alire.Properties.Bool;
 with Alire.Properties.Scenarios;
@@ -316,23 +316,34 @@ package body Alire.Releases is
          Trace.Detail ("Skipping checkout of already available " &
                          This.Milestone.Image);
 
+      elsif This.Origin.Kind not in Origins.Deployable_Kinds then
+         Was_There := True;
+         Trace.Detail ("External requires no deployment for " &
+                         This.Milestone.Image);
+
+      elsif This.Origin.Is_System
+        and then Origins.Deployers.System.Already_Installed (This.Origin)
+      then
+         Was_There := True;
+         Trace.Detail ("Skipping install of already available system origin " &
+                         This.Milestone.Image);
+
       else
          Was_There := False;
          Put_Info ("Deploying " & This.Milestone.TTY_Image & "...");
          Alire.Origins.Deployers.Deploy (This, Folder).Assert;
-
-         --  For deployers that do nothing, we ensure the folder exists so all
-         --  dependencies leave a trace in the cache/dependencies folder, and
-         --  a place from where to run their actions by default.
-
-         Ada.Directories.Create_Path (Folder);
-
-         --  Backup a potentially packaged manifest, so our authoritative
-         --  manifest from the index is always used.
-
-         Backup_Upstream_Manifest;
-
       end if;
+
+      --  For deployers that do nothing, we ensure the folder exists so all
+      --  dependencies leave a trace in the cache/dependencies folder, and
+      --  a place from where to run their actions by default.
+
+      Ada.Directories.Create_Path (Folder);
+
+      --  Backup a potentially packaged manifest, so our authoritative
+      --  manifest from the index is always used.
+
+      Backup_Upstream_Manifest;
 
       --  Create manifest if requested
 
