@@ -49,7 +49,7 @@ windows = { ALIRE_OS = "windows" }
 [[pins]]
 aaa = { url = "https://github.com/mosteo/aaa", commit = "dff61d2615cc6332fa6205267bae19b4d044b9da" }
 ada_toml = { url = "https://github.com/mosteo/ada-toml", commit = "da4e59c382ceb0de6733d571ecbab7ea4919b33d" }
-clic = { url = "https://github.com/alire-project/clic" }
+clic = { url = "https://github.com/alire-project/clic", commit = "56bbdc008e16996b6f76e443fd0165a240de1b13" }
 dirty_booleans = { url = "https://github.com/mosteo/dirty_booleans", branch = "alire" }
 diskflags = { url = "https://github.com/mosteo/diskflags", branch = "alire" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "4e663b87a028252e7e074f054f8f453661397166" }

@@ -267,9 +267,9 @@ package body Alire.Roots is
       end Build_Single_Release;
 
    begin
-
       This.Build_Prepare (Saved_Profiles => Saved_Profiles,
-                          Force_Regen    => False);
+                          Force_Regen    => False,
+                          Stop_After     => stop_after);
 
       if Stop_Build (Stop_After, Actual => Generation) then
          return True;

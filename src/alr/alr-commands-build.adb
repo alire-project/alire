@@ -1,6 +1,7 @@
 with AAA.Enum_Tools;
 
 with Alire.Crate_Configuration;
+with Alire.TOML_Adapters;
 with Alire.Utils.Switches;
 
 with Stopwatch;
@@ -71,8 +72,10 @@ package body Alr.Commands.Build is
       end if;
 
       if Cmd.Stop_After.all /= "" then
-         if Is_Valid_Stage (Cmd.Stop_After.all) then
-            Stop_After := Alire.Builds.Build_Stages'Value (Cmd.Stop_After.all);
+         if Is_Valid_Stage (Alire.TOML_Adapters.Adafy (Cmd.Stop_After.all))
+         then
+            Stop_After := Alire.Builds.Build_Stages'Value
+              (Alire.TOML_Adapters.Adafy (Cmd.Stop_After.all));
          else
             Reportaise_Wrong_Arguments
               ("Stopping stage is invalid: " & TTY.Error (Cmd.Stop_After.all)
@@ -184,7 +187,7 @@ package body Alr.Commands.Build is
                       Description : String)
                       return String
       is ("* "
-          & AAA.Strings.To_Lower_Case (TTY.Emph (Name'Image))
+          & TTY.Emph (Alire.TOML_Adapters.Tomify (Name'Image))
           & ": " & Description);
 
       function Building return Alire.Builds.Build_Stages
