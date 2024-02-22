@@ -55,7 +55,7 @@ package body Alr.Commands.Build is
                       Args :        AAA.Strings.Vector)
    is
       function Is_Valid_Stage is
-        new AAA.Enum_Tools.Is_Valid (Alire.Builds.Build_Stages);
+        new AAA.Enum_Tools.Is_Valid (Alire.Builds.Stop_Points);
 
       use Alire.Utils.Switches;
       Profiles_Selected : constant Natural :=
@@ -63,7 +63,7 @@ package body Alr.Commands.Build is
                                                      Cmd.Validation_Mode,
                                                      Cmd.Dev_Mode));
       Profile : Profile_Kind;
-      Stop_After : Alire.Builds.Build_Stages := Alire.Builds.Build_Stages'Last;
+      Stop_After : Alire.Builds.Stop_Points := Alire.Builds.Stop_Points'Last;
    begin
       --  Validation
 
@@ -74,7 +74,7 @@ package body Alr.Commands.Build is
       if Cmd.Stop_After.all /= "" then
          if Is_Valid_Stage (Alire.TOML_Adapters.Adafy (Cmd.Stop_After.all))
          then
-            Stop_After := Alire.Builds.Build_Stages'Value
+            Stop_After := Alire.Builds.Stop_Points'Value
               (Alire.TOML_Adapters.Adafy (Cmd.Stop_After.all));
          else
             Reportaise_Wrong_Arguments
@@ -121,11 +121,11 @@ package body Alr.Commands.Build is
 
    function Execute (Cmd              : in out Commands.Command'Class;
                      Args             :        AAA.Strings.Vector;
-                     Stop             :        Alire.Builds.Build_Stages :=
-                       Alire.Builds.Build_Stages'Last)
+                     Stop             :        Alire.Builds.Stop_Points :=
+                       Alire.Builds.Stop_Points'Last)
                      return Boolean
    is
-      use type Alire.Builds.Build_Stages;
+      use type Alire.Builds.Stop_Points;
    begin
       --  Prevent premature update of dependencies, as the exact folders
       --  will depend on the build hashes, which are yet unknown until
@@ -136,7 +136,7 @@ package body Alr.Commands.Build is
       declare
          Timer : Stopwatch.Instance;
          Build_Kind : constant String :=
-                        (if Stop < Alire.Builds.Build_Stages'Last
+                        (if Stop < Alire.Builds.Stop_Points'Last
                          then TTY.Warn ("Partial") & " build"
                          else "Build");
       begin
@@ -150,7 +150,7 @@ package body Alr.Commands.Build is
             Alire.Put_Success (Build_Kind & " finished successfully in "
                                & TTY.Bold (Timer.Image) & " seconds.");
 
-            if Stop < Alire.Builds.Build_Stages'Last then
+            if Stop < Alire.Builds.Stop_Points'Last then
                Alire.Put_Info
                  ("Build was requested to stop after stage: "
                   & TTY.Emph (AAA.Strings.To_Lower_Case (Stop'Image))
@@ -177,20 +177,20 @@ package body Alr.Commands.Build is
    function Long_Description (Cmd : Command)
                               return AAA.Strings.Vector
    is
-      use all type Alire.Builds.Build_Stages;
+      use all type Alire.Builds.Stop_Points;
 
       -----------
       -- Stage --
       -----------
 
-      function Stage (Name        : Alire.Builds.Build_Stages;
+      function Stage (Name        : Alire.Builds.Stop_Points;
                       Description : String)
                       return String
       is ("* "
           & TTY.Emph (Alire.TOML_Adapters.Tomify (Name'Image))
           & ": " & Description);
 
-      function Building return Alire.Builds.Build_Stages
+      function Building return Alire.Builds.Stop_Points
       is (Alire.Builds.Build);
 
    begin
@@ -240,7 +240,8 @@ package body Alr.Commands.Build is
         .New_Line
         .Append ("After a partial build, to ensure a proper full build is"
                  & " performed, just run a regular "
-                 & TTY.Terminal ("alr build") &  " without " & Switch_Stop)
+                 & TTY.Terminal ("alr build") &  " without "
+                 & Switch_Stop & ".")
       ;
    end Long_Description;
 

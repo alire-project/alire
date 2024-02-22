@@ -24,8 +24,8 @@ package Alr.Commands.Build is
 
    function Execute (Cmd  : in out Commands.Command'Class;
                      Args :        AAA.Strings.Vector;
-                     Stop :        Alire.Builds.Build_Stages :=
-                       Alire.Builds.Build_Stages'Last)
+                     Stop :        Alire.Builds.Stop_Points :=
+                       Alire.Builds.Stop_Points'Last)
                      return Boolean;
    --  Returns True if compilation succeeded. For invocations after some other
    --  command that already has set up the build environment we need to avoid

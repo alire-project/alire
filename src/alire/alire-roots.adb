@@ -36,9 +36,9 @@ package body Alire.Roots is
    -- Stop_Build --
    ----------------
 
-   function Stop_Build (Wanted, Actual : Builds.Build_Stages) return Boolean
+   function Stop_Build (Wanted, Actual : Builds.Stop_Points) return Boolean
    is
-     use type Builds.Build_Stages;
+     use type Builds.Stop_Points;
    begin
       if Wanted <= Actual then
          Trace.Debug ("Stopping build as requested at stage: " & Wanted'Image);
@@ -55,10 +55,10 @@ package body Alire.Roots is
    procedure Build_Prepare (This           : in out Root;
                             Saved_Profiles : Boolean;
                             Force_Regen    : Boolean;
-                            Stop_After     : Builds.Build_Stages :=
-                              Builds.Build_Stages'Last)
+                            Stop_After     : Builds.Stop_Points :=
+                              Builds.Stop_Points'Last)
    is
-      use all type Builds.Build_Stages;
+      use all type Builds.Stop_Points;
    begin
       --  Check whether we should override configuration with the last one used
       --  and stored on disk. Since the first time the one from disk will be be
@@ -107,13 +107,13 @@ package body Alire.Roots is
                    Cmd_Args         : AAA.Strings.Vector;
                    Build_All_Deps   : Boolean := False;
                    Saved_Profiles   : Boolean := True;
-                   Stop_After       : Builds.Build_Stages :=
-                     Builds.Build_Stages'Last)
+                   Stop_After       : Builds.Stop_Points :=
+                     Builds.Stop_Points'Last)
                    return Boolean
    is
       Build_Failed : exception;
 
-      use all type Builds.Build_Stages;
+      use all type Builds.Stop_Points;
 
       --------------------------
       -- Build_Single_Release --

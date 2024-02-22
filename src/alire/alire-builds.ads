@@ -27,7 +27,10 @@ package Alire.Builds is
    --  many more shared releases in the vault, finding toolchains could take
    --  much more time, hence the separate storage.
 
-   type Build_Stages is
+   --  The following are moments during the build process after which we can
+   --  interrupt the process "safely", that is, some consistency is to be
+   --  expected: actions run as a whole, config files all generated, etc.
+   type Stop_Points is
      (Sync,
       --  Synchronization of pristine sources from the vault to the build dir.
       --  This stage does not exist when using sandboxed dependencies.
