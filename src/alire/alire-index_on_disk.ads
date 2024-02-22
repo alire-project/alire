@@ -22,6 +22,7 @@ package Alire.Index_On_Disk is
 
    File_Prefix        : constant String := "file://";
    HTTP_Prefix        : constant String := "http";
+   SSH_Prefix         : constant String := "ssh://";
 
    subtype Priorities is Integer; -- Lower is loaded before
 

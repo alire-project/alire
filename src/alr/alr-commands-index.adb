@@ -208,6 +208,13 @@ package body Alr.Commands.Index is
                & " case a pull operation will be performed on them."
                & " An index initially set up with a specific commit will"
                & " not be updated.")
+      .New_Line
+      .Append ("URL can be one of:")
+      .Append ("- Plain absolute path: /path/to/index")
+      .Append ("- Explicit path:       file://path/to/index")
+      .Append ("- git over HTTP/HTTPS: git+https://github.com/org/repo")
+      .Append ("- git over SSH:        git+ssh://user@host.com:/path/to/repo")
+      .Append ("- git user over SSH:   git@github.com:/org/repo")
      );
 
    ---------------------

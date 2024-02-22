@@ -1,3 +1,0 @@
-driver: python-script
-indexes:
-    compiler_only_index: {}
