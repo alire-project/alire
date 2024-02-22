@@ -924,9 +924,9 @@ package body Alire.Releases is
    -----------------------
 
    function Property_Contains (R : Release; Str : String)
-                               return AAA.Strings.Vector
+                               return AAA.Strings.Set
    is
-      Results : AAA.Strings.Vector;
+      Results : AAA.Strings.Set;
       use AAA.Strings;
 
       Search : constant String := To_Lower_Case (Str);
@@ -941,12 +941,12 @@ package body Alire.Releases is
                   Value : constant String := Trim (Tail (Image, ':'));
                begin
                   if Contains (To_Lower_Case (Value), Search) then
-                     Results.Append (Prop);
+                     Results.Include (Prop);
                   end if;
                end;
             else
                if Contains (To_Lower_Case (Image), Search) then
-                  Results.Append (Image);
+                  Results.Include (Image);
                end if;
             end if;
          end;

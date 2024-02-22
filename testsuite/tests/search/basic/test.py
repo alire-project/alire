@@ -42,8 +42,8 @@ p = run_alr('search', '--crates', 'lib')
 assert_eq('libhello  "Hello, world!" demonstration project support library\n', p.out)
 
 
-# Then on all properties
-p = run_alr('search', 'libhello-tag1')
+# Then on all properties, matching properties name should appear only once
+p = run_alr('search', 'libhello-tag')
 assert_eq(format_table(
     ('libhello', '', '1.0.0',
      '"Hello, world!" demonstration project support library', '', 'Tag'),

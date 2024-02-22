@@ -37,7 +37,7 @@ package body Alr.Commands.Search is
       -------------------
 
       procedure Print_Release (R               : Alire.Releases.Release;
-                                Match_Locations : AAA.Strings.Vector)
+                               Match_Locations : AAA.Strings.Set)
       is
          package Solver renames Alire.Solver;
 
@@ -63,7 +63,7 @@ package body Alr.Commands.Search is
          Tab.Append (TTY.Version (Semantic_Versioning.Image (R.Version)));
          Tab.Append (TTY.Description (R.Description));
          Tab.Append (R.Notes);
-         Tab.Append (Match_Locations.Flatten (", "));
+         Tab.Append (Match_Locations.To_Vector.Flatten (", "));
       end Print_Release;
 
       -----------------
@@ -72,16 +72,16 @@ package body Alr.Commands.Search is
 
       function Match_Crate (Crate   : Alire.Crates.Crate;
                             Pattern : String)
-                            return AAA.Strings.Vector
+                            return AAA.Strings.Set
       is
-         Match_Locations : AAA.Strings.Vector;
+         Match_Locations : AAA.Strings.Set;
       begin
          if AAA.Strings.Contains (+Crate.Name, Pattern) then
-            Match_Locations.Append ("Name");
+            Match_Locations.Include ("Name");
          end if;
 
          if AAA.Strings.Contains (Crate.Description, Pattern) then
-            Match_Locations.Append ("Description");
+            Match_Locations.Include ("Description");
          end if;
          return Match_Locations;
       end Match_Crate;
@@ -90,7 +90,7 @@ package body Alr.Commands.Search is
       -- Filter_Release --
       --------------------
 
-      procedure Filter_Release (R : Alire.Releases.Release;
+      procedure Filter_Release (R       : Alire.Releases.Release;
                                 Pattern : String)
       is
       begin
@@ -98,10 +98,10 @@ package body Alr.Commands.Search is
 
          if Pattern = "" then
             --  Empty pattern means include everything
-            Print_Release (R, Match_Locations => AAA.Strings.Empty_Vector);
+            Print_Release (R, Match_Locations => AAA.Strings.Empty_Set);
          else
             declare
-               Match_Locations : constant AAA.Strings.Vector
+               Match_Locations : constant AAA.Strings.Set
                  := R.Property_Contains (Pattern);
             begin
                if not Match_Locations.Is_Empty
@@ -119,8 +119,8 @@ package body Alr.Commands.Search is
       --------------------
 
       procedure Print_External (Name : Alire.Crate_Name;
-                                 Ext  : Alire.Externals.External'Class;
-                                 Match_Locations : AAA.Strings.Vector)
+                                 Ext : Alire.Externals.External'Class;
+                                 Match_Locations : AAA.Strings.Set)
       is
       begin
          Found := Found + 1;
@@ -132,7 +132,7 @@ package body Alr.Commands.Search is
          Tab.Append ("external");
          Tab.Append (Alire.Index.Crate (Name).TTY_Description);
          Tab.Append (Ext.Image);
-         Tab.Append (Match_Locations.Flatten (", "));
+         Tab.Append (Match_Locations.To_Vector.Flatten (", "));
       end Print_External;
 
    begin
@@ -209,7 +209,7 @@ package body Alr.Commands.Search is
          -- List_All_Or_Latest --
          ------------------------
 
-         procedure List_All_Or_Latest (Crate  : Alire.Crates.Crate;
+         procedure List_All_Or_Latest (Crate   : Alire.Crates.Crate;
                                        Pattern : String)
          is
             Progress : Trace.Ongoing :=
@@ -238,7 +238,7 @@ package body Alr.Commands.Search is
                          Trace.Activity (Crate.Name.Index_Prefix)
               with Unreferenced;
 
-            Match_Locations : constant AAA.Strings.Vector :=
+            Match_Locations : constant AAA.Strings.Set :=
               Match_Crate (Crate, Pattern);
          begin
             if Cmd.External
