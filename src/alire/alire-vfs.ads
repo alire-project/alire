@@ -99,7 +99,9 @@ private
    -----------------
 
    function To_Portable (Path : Relative_Path) return Portable_Path
-   is (Portable_Path (OS_Lib.To_Portable (Path)));
+   is (Portable_Path
+       (OS_Lib.To_Portable
+          (Path)));
 
    ---------------
    -- To_Native --

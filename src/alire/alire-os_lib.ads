@@ -38,13 +38,19 @@ package Alire.OS_Lib with Preelaborate is
 
    subtype Native_Path_Like is String
      with Dynamic_Predicate =>
-       (for all Char of Native_Path_Like => Char /= Forbidden_Dir_Separator);
+       (for all Char of Native_Path_Like => Char /= Forbidden_Dir_Separator)
+     or else raise Ada.Assertions.Assertion_Error
+       with "Not a native-path-like: " & Native_Path_Like;
 
    subtype Portable_Path_Like is String
      with Dynamic_Predicate =>
-       (for all Char of Portable_Path_Like => Char /= '\');
+       (for all Char of Portable_Path_Like => Char /= '\')
+     or else raise Ada.Assertions.Assertion_Error
+       with "Not a portable-path-like: " & Portable_Path_Like;
 
-   function To_Portable (Path : Native_Path_Like) return Portable_Path_Like;
+   function To_Portable (Path : Any_Path) return Portable_Path_Like;
+   --  Path is Any_Path and not Native_Path_Like because some Windows native
+   --  programs return mixed style paths such as "C:/blah/blah".
 
    function To_Native (Path : Portable_Path_Like) return Native_Path_Like;
 
@@ -57,7 +63,7 @@ private
    -- To_Portable_Like --
    ----------------------
 
-   function To_Portable (Path : Native_Path_Like)
+   function To_Portable (Path : Any_Path)
                               return Portable_Path_Like
    is (case GNATCOLL.OS.Constants.OS is
           when MacOS | Unix => Path,

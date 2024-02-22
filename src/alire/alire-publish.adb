@@ -630,12 +630,10 @@ package body Alire.Publish is
                                                With_Extension => False);
       Git        : constant VCSs.Git.VCS := VCSs.Git.Handler;
       Is_Repo    : constant Boolean := Git.Is_Repository (Base_Path (Context));
-      Archive    : constant Relative_Path :=
-                     Target_Dir
-                       / (Milestone
-                          & (if Is_Repo
-                             then ".tgz"
-                             else ".tbz2"));
+      Archive    : constant Relative_Path := Target_Dir / (Milestone & ".tgz");
+      --  We used to use tbz2 for locally tar'ed files, but that has an implicit
+      --  dependency on bzip2 that we are not managing yet, so for now we err on
+      --  the safe side of built-in tar gzip capabilities.
 
       -----------------
       -- Git_Archive --
@@ -668,7 +666,7 @@ package body Alire.Publish is
          OS_Lib.Subprocess.Checked_Spawn
            ("tar",
             Empty_Vector
-            & "cfj"
+            & "cfz"
             & Archive --  Destination file at alire/archives/crate-version.tbz2
 
             & String'("--exclude=./alire")
@@ -1096,7 +1094,6 @@ package body Alire.Publish is
                         then Ada.Directories.Full_Name (Path)
                         else Ada.Directories.Full_Name (Root.Value.Path));
       begin
-
          if not Git.Is_Repository (Root_Path) then
             Git_Error ("no git repository found", Root_Path);
          end if;
