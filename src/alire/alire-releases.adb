@@ -919,6 +919,42 @@ package body Alire.Releases is
       return False;
    end Property_Contains;
 
+   -----------------------
+   -- Property_Contains --
+   -----------------------
+
+   function Property_Contains (R : Release; Str : String)
+                               return AAA.Strings.Vector
+   is
+      Results : AAA.Strings.Vector;
+      use AAA.Strings;
+
+      Search : constant String := To_Lower_Case (Str);
+   begin
+      for P of Conditional.Enumerate (R.Properties) loop
+         declare
+            Image : constant String := P.Image;
+         begin
+            if Contains (Image, ":") then
+               declare
+                  Prop  : constant String := Head (Image, ':');
+                  Value : constant String := Trim (Tail (Image, ':'));
+               begin
+                  if Contains (To_Lower_Case (Value), Search) then
+                     Results.Append (Prop);
+                  end if;
+               end;
+            else
+               if Contains (To_Lower_Case (Image), Search) then
+                  Results.Append (Image);
+               end if;
+            end if;
+         end;
+      end loop;
+
+      return Results;
+   end Property_Contains;
+
    -------------------
    -- From_Manifest --
    -------------------
