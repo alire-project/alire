@@ -230,6 +230,17 @@ package body Alr.Commands.Build is
         .Append (Stage (Pre_Build, " running of pre-build actions"))
         .Append (Stage (Building, "     actual building of sources"))
         .Append (Stage (Post_Build, "running of post-build actions"))
+        .New_Line
+        .Append ("These stages are always run in the given order. A premature"
+                 & " stop will likely not produce the complete build "
+                 & "artifacts, so it is intended for advanced usage when "
+                 & "debugging or testing specific build stages, or to ensure "
+                 & "generated files are up-to-date without launching a "
+                 & "costly build, for example.")
+        .New_Line
+        .Append ("After a partial build, to ensure a proper full build is"
+                 & " performed, just run a regular "
+                 & TTY.Terminal ("alr build") &  " without " & Switch_Stop)
       ;
    end Long_Description;
 
