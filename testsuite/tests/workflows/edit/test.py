@@ -13,6 +13,9 @@ import shutil
 run_alr('get', 'libhello')
 os.chdir(glob('libhello*')[0])
 
+# Set GNATstudio as prefered editor
+run_alr('config', '--set', 'editor.cmd', 'gnatstudio -P ${GPR_FILE}')
+
 gs = shutil.which('gnatstudio')
 
 if gs is None:
