@@ -253,4 +253,23 @@ package body Alire.Utils is
       end if;
    end Image_Keys_One_Line;
 
+   ------------------------
+   -- Finalize_Exception --
+   ------------------------
+
+   procedure Finalize_Exception (E : Ada.Exceptions.Exception_Occurrence) is
+
+      --  Import a Last_Chance_Handler procedure that will either be the one
+      --  declared by Alr, or the default GNAT last chance handler.
+
+      procedure Last_Chance_Handler (E : Ada.Exceptions.Exception_Occurrence);
+      pragma Import (C,
+                     Last_Chance_Handler,
+                     "__gnat_last_chance_handler");
+      pragma No_Return (Last_Chance_Handler);
+
+   begin
+      Last_Chance_Handler (E);
+   end Finalize_Exception;
+
 end Alire.Utils;

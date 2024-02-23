@@ -14,6 +14,10 @@ package body Alr.Utils.Temp_File is
          Delete_File (This.Name);
          null;
       end if;
+
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    --------------

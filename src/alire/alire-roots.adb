@@ -2020,6 +2020,9 @@ package body Alire.Roots is
         (Crate_Configuration.Global_Config, Global_Config_Access);
    begin
       Free (This.Configuration);
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
 end Alire.Roots;
