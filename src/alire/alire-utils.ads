@@ -84,6 +84,27 @@ package Alire.Utils with Preelaborate is
    --  Flatten String keys of Indefinite_Ordered_Maps into string
    --  representation.
 
+   procedure Finalize_Exception (E : Ada.Exceptions.Exception_Occurrence);
+   --  Every controlled object Finalize procedure must call this function to
+   --  report unhandled exceptions.
+   --
+   --  Ada exceptions are not propagated outside the Finalize procedure.
+   --  Instead, another exception is raise with the message "finalize/adjust
+   --  raised exception". Alire is using exceptions to report meaningfull error
+   --  messages to the user. If one of these exception is raised in a Finalize
+   --  procedure, the error message will vanish and the user will only see
+   --  "finalize/adjust raised exception".
+   --
+   --  For this reason, it is important to catch all exceptions before reaching
+   --  the end of Finalize and use this Finalize_Exception procedure to display
+   --  a meaningful error message.
+   --
+   --  Use the following code at the end of every Finalize procedures:
+   --   exception
+   --      when E : others =>
+   --         Alire.Utils.Finalize_Exception (E);
+   --   end Finalize;
+
 private
 
    function Quote (S : String) return String

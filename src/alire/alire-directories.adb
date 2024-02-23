@@ -1,6 +1,5 @@
 with AAA.Directories;
 
-with Ada.Exceptions;
 with Ada.Numerics.Discrete_Random;
 with Ada.Real_Time;
 with Ada.Unchecked_Conversion;
@@ -11,6 +10,7 @@ with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Platforms.Folders;
 with Alire.VFS;
+with Alire.Utils;
 
 with GNAT.String_Hash;
 
@@ -490,7 +490,6 @@ package body Alire.Directories is
    overriding
    procedure Finalize (This : in out Guard) is
       use Ada.Directories;
-      use Ada.Exceptions;
       use Ada.Strings.Unbounded;
       procedure Free is
         new Ada.Unchecked_Deallocation (Absolute_Path, Destination);
@@ -506,10 +505,7 @@ package body Alire.Directories is
       Free (Freeable);
    exception
       when E : others =>
-         Trace.Debug
-           ("FG.Finalize: unexpected exception: " &
-              Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
-              Exception_Information (E));
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    ------------------
@@ -760,8 +756,7 @@ package body Alire.Directories is
 
    exception
       when E : others =>
-         Log_Exception (E);
-         raise;
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    --------------------

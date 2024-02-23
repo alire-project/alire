@@ -523,6 +523,9 @@ package body Alire.Roots.Editable is
                Trace.Debug ("Discarding temporary root file: " & File);
             end;
          end if;
+      exception
+         when E : others =>
+            Alire.Utils.Finalize_Exception (E);
       end Finalize;
 
    begin
@@ -530,7 +533,7 @@ package body Alire.Roots.Editable is
       Finalize (+This.Edit.Lockfile);
    exception
       when E : others =>
-         Log_Exception (E, Warning);
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    ---------

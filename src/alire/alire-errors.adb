@@ -1,4 +1,5 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
+with Alire.Utils;
 
 package body Alire.Errors is
 
@@ -209,6 +210,9 @@ package body Alire.Errors is
       pragma Unreferenced (This);
    begin
       Close;
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    -----------

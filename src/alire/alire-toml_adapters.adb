@@ -1,3 +1,5 @@
+with Alire.Utils;
+
 package body Alire.TOML_Adapters is
 
    --------------
@@ -10,6 +12,10 @@ package body Alire.TOML_Adapters is
    begin
       --  Manually close this error scope
       Errors.Close;
+
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    ------------
