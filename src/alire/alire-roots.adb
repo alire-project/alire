@@ -1,7 +1,6 @@
 with Ada.Directories;
 with Ada.Unchecked_Deallocation;
 
-with Alire.Builds;
 with Alire.Conditional;
 with Alire.Dependencies.Containers;
 with Alire.Environment.Loading;
@@ -33,13 +32,33 @@ package body Alire.Roots is
 
    use type UString;
 
+   ----------------
+   -- Stop_Build --
+   ----------------
+
+   function Stop_Build (Wanted, Actual : Builds.Stop_Points) return Boolean
+   is
+     use type Builds.Stop_Points;
+   begin
+      if Wanted <= Actual then
+         Trace.Debug ("Stopping build as requested at stage: " & Wanted'Image);
+         return True;
+      else
+         return False;
+      end if;
+   end Stop_Build;
+
    -------------------
    -- Build_Prepare --
    -------------------
 
    procedure Build_Prepare (This           : in out Root;
                             Saved_Profiles : Boolean;
-                            Force_Regen    : Boolean) is
+                            Force_Regen    : Boolean;
+                            Stop_After     : Builds.Stop_Points :=
+                              Builds.Stop_Points'Last)
+   is
+      use all type Builds.Stop_Points;
    begin
       --  Check whether we should override configuration with the last one used
       --  and stored on disk. Since the first time the one from disk will be be
@@ -68,6 +87,10 @@ package body Alire.Roots is
          --  Changes in configuration may require new build dirs.
       end if;
 
+      if Stop_Build (Stop_After, Actual => Sync) then
+         return;
+      end if;
+
       --  Ensure configurations are in place and up-to-date
 
       This.Generate_Configuration (Full => Force or else Force_Regen);
@@ -83,10 +106,14 @@ package body Alire.Roots is
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
                    Build_All_Deps   : Boolean := False;
-                   Saved_Profiles   : Boolean := True)
+                   Saved_Profiles   : Boolean := True;
+                   Stop_After       : Builds.Stop_Points :=
+                     Builds.Stop_Points'Last)
                    return Boolean
    is
       Build_Failed : exception;
+
+      use all type Builds.Stop_Points;
 
       --------------------------
       -- Build_Single_Release --
@@ -193,18 +220,29 @@ package body Alire.Roots is
             end if;
 
             --  Run post-fetch, it will be skipped if already ran
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
                Properties.Actions.Post_Fetch);
 
+            if Stop_Build (Stop_After, Actual => Post_Fetch) then
+               return;
+            end if;
+
             --  Pre-build must run always
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
                Properties.Actions.Pre_Build);
 
+            if Stop_Build (Stop_After, Actual => Pre_Build) then
+               return;
+            end if;
+
             --  Actual build
+
             if Release.Origin.Requires_Build then
                Call_Gprbuild (Release);
             else
@@ -213,7 +251,12 @@ package body Alire.Roots is
                   & ": release has no sources.", Detail);
             end if;
 
+            if Stop_Build (Stop_After, Actual => Build) then
+               return;
+            end if;
+
             --  Post-build must run always
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
@@ -224,9 +267,13 @@ package body Alire.Roots is
       end Build_Single_Release;
 
    begin
-
       This.Build_Prepare (Saved_Profiles => Saved_Profiles,
-                          Force_Regen    => False);
+                          Force_Regen    => False,
+                          Stop_After     => stop_after);
+
+      if Stop_Build (Stop_After, Actual => Generation) then
+         return True;
+      end if;
 
       This.Export_Build_Environment;
 
