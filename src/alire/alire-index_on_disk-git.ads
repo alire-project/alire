@@ -8,7 +8,8 @@ package Alire.Index_On_Disk.Git is
    function New_Handler (Origin : URL;
                          Name   : Restricted_Name;
                          Parent : Any_Path) return Index with
-     Pre => AAA.Strings.Has_Prefix (Origin, "git+");
+     Pre => AAA.Strings.Has_Prefix (Origin, "git+") or
+            AAA.Strings.Has_Prefix (Origin, "git@");
 
    overriding
    function Add (This : Index) return Outcome;

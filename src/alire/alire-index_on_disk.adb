@@ -218,12 +218,27 @@ package body Alire.Index_On_Disk is
          return Process_Local_Index
            (Origin (Origin'First + File_Prefix'Length ..  Origin'Last));
       elsif Origin (Origin'First) = '/'
-            or else not AAA.Strings.Contains (Origin, "+")
+        or else not (AAA.Strings.Contains (Origin, "@")
+                     or AAA.Strings.Contains (Origin, "+"))
       then
          return Process_Local_Index (Origin);
       end if;
 
-      --  Process other paths as VCS's
+      --  Process "git+ssh://" as git over ssh and suggest for "ssh://"
+
+      if AAA.Strings.Has_Prefix (Origin, SSH_Prefix) then
+         Result := Outcome_Failure
+           ("ssh:// URLs are not valid index origins. "
+            & "You may want git+" & Origin & " instead.");
+         return New_Invalid_Index;
+      elsif AAA.Strings.Has_Prefix (Origin, "git+" & SSH_Prefix) then
+         Result := Outcome_Success;
+         return Index_On_Disk.Git
+           .New_Handler (Origin, Name, Parent)
+           .With_Priority (Priority);
+      end if;
+
+      --  Process other paths as VCSs
 
       case VCSs.Kind (Origin) is
          when VCSs.VCS_Git =>
