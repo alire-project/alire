@@ -35,7 +35,7 @@ package Alire.Config.Builtins is
    Editor_Cmd : constant Builtin := New_Builtin
      (Key  => "editor.cmd",
       Kind => Cfg_String,
-      Def  => "gnatstudio -P ${GPR_FILE}",
+      Def  => "",
       Help =>
         "Editor command and arguments for editing crate code (alr edit)." &
         " The executables and arguments are separated by a single space" &

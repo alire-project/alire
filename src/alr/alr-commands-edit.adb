@@ -5,16 +5,114 @@ with Alire.Config.Builtins;
 with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
 
+with CLIC.User_Input;
+
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Alr.Commands.Edit is
+
+   --------------------
+   -- Set_Config_Cmd --
+   --------------------
+
+   procedure Set_Config_Cmd (Cmd : String) is
+      use Trace;
+   begin
+      Config.Set_Globally (Config.Builtins.Editor_Cmd, Cmd);
+      Put_Info ("'" & cmd & "' is now set as the editor command.");
+      Put_Info ("You can change this setting by running the following command:");
+      Put_Info ("`alr config --global --unset " &
+                  Config.Builtins.Editor_Cmd.Key & "`");
+      Put_Info ("and then run `alr edit` again.");
+   end Set_Config_Cmd;
+
+   --------------------------
+   -- Report_Not_Installed --
+   --------------------------
+
+   procedure Report_Not_Installed (Exec : String) is
+   begin
+      if Exec = "gnatstudio" or else Exec = "gnatstudio.exe" then
+         Reportaise_Command_Failed
+           ("GNAT Studio not available or not in PATH. " & ASCII.LF &
+              "You can download it at: " & ASCII.LF &
+              "https://github.com/AdaCore/gnatstudio/releases");
+      elsif Exec = "code" or else Exec = "code.exe" then
+         Reportaise_Command_Failed
+           ("VS Code not available or not in PATH. " & ASCII.LF &
+              "You can download it at: " & ASCII.LF &
+              "https://code.visualstudio.com/download"  & ASCII.LF &
+              "We also recomend installing the 'AdaCore.ada' extension.");
+      else
+         Reportaise_Command_Failed
+           ("'" & Exec & "' not available or not in PATH.");
+      end if;
+   end Report_Not_Installed;
+
+   ------------------
+   -- Query_Editor --
+   ------------------
+
+   procedure Query_Editor is
+      use AAA.Strings;
+      use Clic.User_Input;
+
+      type Editor_Choice is (VScode, GNATstudio, Other);
+
+      subtype Editor_With_Command
+        is Editor_Choice range VScode .. GNATstudio;
+
+      function Img (E : Editor_Choice) return String
+      is (case E is
+             when VScode     => "VS Code",
+             when GNATstudio => "GNAT studio",
+             when Other      => "Other");
+
+      function Cmd (E : Editor_With_Command) return String
+      is (case E is
+             when VScode     => "code ${GPR_FILE}",
+             when GNATstudio => "gnatstudio -P ${GPR_FILE}");
+      Choices : AAA.Strings.Vector;
+
+   begin
+
+      for Ed in Editor_Choice loop
+         Choices.Append (Img (Ed));
+      end loop;
+
+      declare
+         Answer_Index : constant Positive :=
+           Query_Multi ("Please select your prefered editor" &
+                          " or 'other' to enter a custom command",
+                        Choices);
+
+         Answer : constant Editor_Choice :=
+           Editor_Choice'Val
+             (Editor_Choice'Pos (Editor_Choice'First) + (Answer_Index - 1));
+
+      begin
+         case Answer is
+            when Editor_With_Command =>
+               Set_Config_Cmd (Cmd (Answer));
+
+            when Other  =>
+               declare
+                  Custom : constant String :=
+                    Query_String ("Please enter a custom editor command",
+                                  "", null);
+               begin
+                  Set_Config_Cmd (Custom);
+               end;
+         end case;
+      end;
+   end Query_Editor;
 
    ------------------
    -- Start_Editor --
    ------------------
 
    procedure Start_Editor (Args : in out AAA.Strings.Vector;
-                           Prj : Relative_Path)
+                           Prj  : Relative_Path)
    is
       Pattern : constant String := "${GPR_FILE}";
 
@@ -62,17 +160,18 @@ package body Alr.Commands.Edit is
       use Alire.Config;
 
       package Builtins renames Alire.Config.Builtins;
-
-      Editor_Cmd  : constant String :=
-                      Builtins.Editor_Cmd.Get;
-
-      Edit_Args : AAA.Strings.Vector := AAA.Strings.Split (Editor_Cmd, ' ');
    begin
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
       end if;
 
-      if Edit_Args.Is_Empty then
+      --  Check if editor command is defined in the configuration
+      if Builtins.Editor_Cmd.Is_Empty then
+         Query_Editor;
+      end if;
+
+      --  Check again after asking user for prefered editor
+      if Builtins.Editor_Cmd.Is_Empty then
          Reportaise_Command_Failed
            ("No editor defined in config key '"
             & Builtins.Editor_Cmd.Key & "'.");
@@ -83,27 +182,23 @@ package body Alr.Commands.Edit is
       Cmd.Root.Export_Build_Environment;
 
       declare
+         Editor_Cmd  : constant String :=
+           Builtins.Editor_Cmd.Get;
+
+         Edit_Args : AAA.Strings.Vector :=
+           AAA.Strings.Split (Editor_Cmd, ' ');
+
          Exec : constant String := Edit_Args.First_Element;
-      begin
-         if Alire.OS_Lib.Subprocess.Locate_In_Path (Exec) = "" then
-            if Exec = "gnatstudio" or else Exec = "gnatstudio.exe" then
 
-               Reportaise_Command_Failed
-                 ("GNAT Studio not available or not in PATH. " & ASCII.LF &
-                    "You can download it at: " & ASCII.LF &
-                    "https://github.com/AdaCore/gnatstudio/releases");
-            else
-               Reportaise_Command_Failed
-                 ("'" & Exec & "' not available or not in PATH.");
-            end if;
-         end if;
-      end;
-
-      declare
          Project_Files : constant AAA.Strings.Vector :=
            Cmd.Root.Release.Project_Files
              (Platforms.Current.Properties, With_Path => True);
       begin
+         if Alire.OS_Lib.Subprocess.Locate_In_Path (Exec) = "" then
+            --  Executable not in PATH, report an error
+            Report_Not_Installed (Exec);
+         end if;
+
          if Project_Files.Length = 0 then
             Reportaise_Command_Failed
               ("No project file to open for this crate.");
@@ -137,7 +232,7 @@ package body Alr.Commands.Edit is
    function Long_Description (Cmd : Command)
                               return AAA.Strings.Vector is
      (AAA.Strings.Empty_Vector
-      .Append ("Start GNAT Studio with Alire build environment setup.")
+      .Append ("Start an editor with Alire build environment setup.")
      );
 
    --------------------
