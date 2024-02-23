@@ -99,7 +99,8 @@ package body Alire.Index_On_Disk is
       return Outcome_Success;
    exception
       when E : others =>
-         return Outcome_From_Exception (E, "Could not delete index directory");
+         return Outcome_From_Exception
+           (E, "Could not delete index directory: " & This.Metadata_Directory);
    end Delete;
 
    ----------
