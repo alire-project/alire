@@ -27,10 +27,19 @@ jobs:
       with:
         submodules: true
 
+
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
     - name: Install FSF toolchain
       uses: alire-project/alr-install@v1
       with:
         crates: gnat_native gprbuild
+
+    - name: Fingerprint build
+      run: python3 scripts/version-patcher.py
 
     - name: Build alr
       run: gprbuild -j0 -p -P alr_env
@@ -40,11 +49,6 @@ jobs:
 
     - name: install tar from msys2 (Git tar in Actions VM does not seem to work)
       run: C:\Users\runneradmin\AppData\Local\alire\msys64\usr\bin\pacman --noconfirm -S tar
-
-    - name: Install Python 3.x (required for the testsuite)
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
 
     - name: Run test script
       run: scripts/ci-github.sh

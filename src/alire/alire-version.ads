@@ -2,7 +2,11 @@ package Alire.Version with Preelaborate is
 
    --  Remember to update Alire.Index branch if needed too
 
-   Current : constant String := "2.0-dev+beta2";
+   --  NOTE: in the following version string, the build part (after '+') will
+   --  be replaced by `alr build` with the current commit, and appended with
+   --  "_or_later" after build.
+
+   Current : constant String := "2.0-beta2+277e6a52_dirty";
    --  2.0.0-b1:  first public release on the 2.0 branch
    --  1.2.1:     build switches fix and other minor assorted fixes
    --  1.2.0:     rpm speed-up, silence propagation warning, early switch parse
