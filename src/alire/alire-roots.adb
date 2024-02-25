@@ -21,6 +21,7 @@ with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
 
 with GNAT.OS_Lib;
+with GNAT.SHA256;
 
 with Semantic_Versioning.Extended;
 
@@ -317,7 +318,10 @@ package body Alire.Roots is
            ("Requested build hash of release " & Name.As_String
             & " not among solution states:");
          This.Solution.Print_States ("   ", Error);
-         raise Program_Error;
+         Recoverable_Program_Error ("using default hash");
+         --  Using an improperly computed hash may cause some unexpected
+         --  recompilations but should be less of a show-stopper.
+         return "error:" & GNAT.SHA256.Digest (Name.As_String);
       end if;
    end Build_Hash;
 
@@ -1516,7 +1520,8 @@ package body Alire.Roots is
       elsif This.Solution.State (Crate).Is_Linked then
          return This.Solution.State (Crate).Link.Path;
       else
-         raise Program_Error with "release must be either solved or linked";
+         raise Program_Error with
+           "release must be either solved or linked";
       end if;
    end Release_Base;
 
@@ -1887,7 +1892,7 @@ package body Alire.Roots is
          if Old.Pins.Contains (Crate) then
             --  The solver will never update a pinned crate, so we may allow
             --  this to be attempted but it will have no effect.
-            Recoverable_Error
+            Recoverable_User_Error
               ("Requested crate is pinned and cannot be updated: "
                & Alire.Utils.TTY.Name (Crate));
          end if;

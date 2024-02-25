@@ -68,7 +68,7 @@ package body Alire.TOML_Adapters is
    is
    begin
       if Recover then
-         Recoverable_Error (Message, Recover);
+         Recoverable_User_Error (Message, Recover);
       else
          Queue.Checked_Error (Message);
       end if;
@@ -86,7 +86,8 @@ package body Alire.TOML_Adapters is
       Queue.Assert_Key (Key, Kind);
       return Value : TOML.TOML_Value do
          if not Queue.Pop (Key, Value) then
-            raise Program_Error with ("missing key, but it was just checked?");
+            raise Program_Error with
+              "missing key, but it was just checked?";
          end if;
       end return;
    end Checked_Pop;
@@ -327,7 +328,7 @@ package body Alire.TOML_Adapters is
 
       if Errored then
          if Force then
-            Recoverable_Error (+Message);
+            Recoverable_User_Error (+Message);
             return Outcome_Success;
          else
             return Outcome_Failure (+Message);

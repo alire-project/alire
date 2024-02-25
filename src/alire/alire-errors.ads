@@ -122,6 +122,21 @@ package Alire.Errors with Preelaborate is
    function Stack (Text : String) return String;
    --  Return current error stack, plus Text as the latest error
 
+   -----------
+   -- Other --
+   -----------
+
+   procedure Program_Error (Explanation  : String  := "";
+                            Recoverable  : Boolean := True;
+                            Stack_Trace  : String  := "";
+                            Stack_Offset : Natural := 0);
+   --  For unexpected situations where normally a Program_Error would be
+   --  adecuate, but we do not want to bomb on the user because continuing is
+   --  acceptable. We log a stack trace, print a warning and continue, so a
+   --  motivated user can report an issue, but we don't needlessly raise. If
+   --  not Survivable, then do raise a Program_Error. If Stack_Trace /= "",
+   --  use it instead of generating one.
+
 private
 
    Id_Marker : constant String := "alire-stored-error:";

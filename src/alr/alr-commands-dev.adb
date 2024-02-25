@@ -69,6 +69,10 @@ package body Alr.Commands.Dev is
          Trace.Debug ("In dev --filter");
       end if;
 
+      if Cmd.Error then
+         Alire.Recoverable_Program_Error ("Forced error");
+      end if;
+
       if Cmd.Raise_Except then
          raise Program_Error with "Raising forcibly";
       end if;
@@ -118,6 +122,11 @@ package body Alr.Commands.Dev is
                      Cmd.Filtering'Access,
                      "", "--filter",
                      "Used by scope filtering test");
+
+      Define_Switch (Config,
+                     Cmd.Error'Access,
+                     "", "--error",
+                     "Program error report");
 
       Define_Switch (Config,
                      Cmd.Raise_Except'Access,

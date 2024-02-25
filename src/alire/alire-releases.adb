@@ -201,8 +201,8 @@ package body Alire.Releases is
            & (case R.Origin.Kind is
                  when Git | Hg => R.Origin.Short_Unique_Id,
                  when SVN => R.Origin.Commit,
-                 when others => raise Program_Error
-                   with "monorepo folder only applies to VCS origins");
+                 when others => raise Program_Error with
+                   "monorepo folder only applies to VCS origins");
       end Monorepo_Path;
 
       ------------------

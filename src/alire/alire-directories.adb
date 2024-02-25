@@ -331,7 +331,7 @@ package body Alire.Directories is
       --  like "/c/alire". This is for peace of mind.
 
       if Path'Length < 8 then
-         Recoverable_Error ("Suspicious deletion request for path: " & Path);
+         Recoverable_User_Error ("Suspicious deletion request for path: " & Path);
       end if;
 
       if Exists (Path) then
@@ -828,7 +828,7 @@ package body Alire.Directories is
 
          if Adirs.Exists (Dst) then
             if Fail_On_Existing_File then
-               Recoverable_Error ("Cannot move " & TTY.URL (Src)
+               Recoverable_User_Error ("Cannot move " & TTY.URL (Src)
                                   & " into place, file already exists: "
                                   & TTY.URL (Dst));
             elsif Adirs.Kind (Dst) /= Ordinary_File then

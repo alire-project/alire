@@ -303,7 +303,8 @@ package body Alire.Solutions.Diffs is
             --  disappearing from the solutions.
             Chg.Best_Version := +Best_Version (Former);
          else
-            raise Program_Error with "crate is neither in former or latter";
+            Recoverable_Program_Error
+              ("crate is neither in former or latter");
          end if;
 
       end Determine_Relevant_Version;
@@ -335,11 +336,10 @@ package body Alire.Solutions.Diffs is
             if Rel.Origin.Kind in Report_Kinds then
                Add_Change (Chg, Icon (Binary),
                            TTY.Warn
-                             (case Rel.Origin.Kind is
+                             (case Report_Kinds (Rel.Origin.Kind) is
                                  when Binary_Archive => "binary",
                                  when External       => "executable in path",
-                                 when System         => "system package",
-                                 when others         => raise Program_Error));
+                                 when System         => "system package"));
             end if;
          end;
       end Releases_Without_Sources;
