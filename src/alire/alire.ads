@@ -236,6 +236,14 @@ package Alire with Preelaborate is
    --  When Recover, emit a warning and return normally. When not Recover call
    --  Raise_Checked_Error instead.
 
+   procedure Report_Program_Error (Explanation : String  := "";
+                                   Survivable  : Boolean := True) is null;
+   --  For unexpected situations where normally a Program_Error would be
+   --  adecuate, but we do not want to bomb on the user because continuing is
+   --  acceptable. We log a stack trace, print a warning and continue, so
+   --  a motivated user can report an issue, but we don't needlessly raise. If
+   --  not Survivable, then do raise a Program_Error.
+
    ---------------
    --  LOGGING  --
    ---------------

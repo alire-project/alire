@@ -14,9 +14,9 @@ from glob import glob
 run_alr('get', 'hello=3', force=True)
 os.chdir(glob('hello*')[0])
 
-# Check missing dependency is shown as external
+# Check missing dependency is properly identified
 p = run_alr('with', '--solve')
-assert_match('.*Dependencies \(external\):\n'
+assert_match('.*Dependencies \(missing\):\n'
              '   libhello\^3\.0.*',
              p.out, flags=re.S)
 

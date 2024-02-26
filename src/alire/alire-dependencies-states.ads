@@ -113,6 +113,13 @@ package Alire.Dependencies.States is
    --  From the POV of users, pinning to version or linking to dir is a pin
 
    function Is_Solved (This : State) return Boolean;
+   --  With a regular release from the index
+
+   function Is_Fulfilled (This : State) return Boolean;
+   --  Either solved or linked
+
+   function Is_Unfulfilled (This : State) return Boolean;
+   --  Neither solved nor linked
 
    --  Case-specific info
 
@@ -332,6 +339,16 @@ private
 
    function Is_Direct (This : State) return Boolean
    is (This.Transitivity = Direct);
+
+   function Is_Fulfilled (This : State) return Boolean
+   is (case This.Fulfilment is
+          when Solved | Linked => True,
+          when Hinted | Missed => False);
+
+   function Is_Unfulfilled (This : State) return Boolean
+   is (case This.Fulfilment is
+          when Solved | Linked => False,
+          when Hinted | Missed => True);
 
    function Is_Hinted (This : State) return Boolean
    is (This.Fulfilled.Fulfillment = Hinted);
