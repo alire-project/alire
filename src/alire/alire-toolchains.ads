@@ -130,7 +130,7 @@ package Alire.Toolchains is
 
    function Path return Absolute_Path;
    --  Returns the base folder in which all toolchain releases live, defaults
-   --  to <cache>/toolchains
+   --  to <cache>/toolchains, overridable via config builtin `toolchain.dir`
 
    procedure Deploy (Release  : Releases.Release;
                      Location : Any_Path := Path);

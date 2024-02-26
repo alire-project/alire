@@ -47,10 +47,11 @@ package Alire.Config.Edit is
    --  * Default per-platform path (see alire-platforms-*)
 
    function Cache_Path return Absolute_Path;
-   --  The location for data that will be recreated if missing; defaults to
-   --  Platforms.Folders.Cache; if Path above is overridden, the cache will
-   --  be inside the config folder so as to keep that configuration completely
-   --  isolated.
+   --  The location for data that will be recreated if missing; its value in
+   --  precedence order is:
+   --  1) Config builtin 'cache.dir'
+   --  2) if Path above is overridden, Path/cache
+   --  3) Platforms.Folders.Cache
 
    procedure Set_Path (Path : Absolute_Path);
    --  Override global config folder path
