@@ -160,7 +160,8 @@ package body Alire.Externals.From_System is
          --  We show either the requested Distro only, or all distros, which is
          --  signaled by Distro = Unknown.
 
-         if Concrete_Distro = Distro or else Distro = Platforms.Distro_Unknown
+         if Concrete_Distro = Distro or else
+            Distro = Platforms.Distribution_Unknown
          then
             declare
                On_Distro : constant Conditional_Packages.Tree :=

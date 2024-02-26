@@ -52,7 +52,7 @@ package body Alire.Utils.Tools is
    begin
       case Distribution is
 
-         when Distro_Unknown =>
+         when Distribution_Unknown =>
             --  Cannot have package for an unknown distribution
             return "";
 

@@ -7,8 +7,8 @@ package body Alire.Platforms.Current is
    -- Detected_Distribution --
    ---------------------------
 
-   function Detected_Distribution return Platforms.Distributions is
-      (Platforms.Distro_Unknown);
+   function Detected_Distribution return Platforms.Distributions
+   is (Platforms.Distribution_Unknown);
 
    -----------------------
    -- Distribution_Root --

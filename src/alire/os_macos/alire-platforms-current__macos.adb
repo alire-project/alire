@@ -29,7 +29,7 @@ package body Alire.Platforms.Current is
       then Homebrew
       elsif Macports_Present
       then Macports
-      else Distro_Unknown);
+      else Distribution_Unknown);
 
    -----------------------
    -- Distribution_Root --

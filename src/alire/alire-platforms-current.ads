@@ -45,7 +45,7 @@ package Alire.Platforms.Current is
    --  via config.
 
    function Distribution_Is_Known return Boolean is
-     (Platforms."/=" (Distribution, Platforms.Distro_Unknown));
+     (Platforms."/=" (Distribution, Platforms.Distribution_Unknown));
 
    function Host_Architecture return Platforms.Architectures;
 
@@ -67,7 +67,7 @@ private
 
    function Distribution return Platforms.Distributions
    is (if Disable_Distribution_Detection
-       then Platforms.Distro_Unknown
+       then Platforms.Distribution_Unknown
        else Detected_Distribution);
 
    -----------------------
@@ -103,7 +103,7 @@ private
    ---------------
 
    function Toolchain return Platforms.Toolchains is
-     (if Distribution /= Distro_Unknown
+     (if Distribution /= Distribution_Unknown
          and then
          Alire.OS_Lib.Subprocess.Locate_In_Path ("gprconfig") =
            "/usr/bin/gprconfig"
