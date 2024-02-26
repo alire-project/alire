@@ -315,9 +315,11 @@ package body Alr.Commands is
       end if;
 
       --  Unless the command is precisely to configure the toolchain, ask the
-      --  user for its preference at this time.
+      --  user for its preference at this time. We also don't ask during `alr
+      --  printenv`, whose output is likely being redirected.
 
       if Cmd not in Commands.Toolchain.Command'Class and then
+        Cmd not in Commands.Printenv.Command'Class and then
         Alire.Toolchains.Assistant_Enabled
       then
          Alire.Toolchains.Assistant (Conf.Global, First_Run => True);
