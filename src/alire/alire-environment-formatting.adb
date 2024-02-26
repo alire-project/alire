@@ -1,5 +1,6 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with Alire.OS_Lib;
 with Alire.Platforms.Current;
 
 package body Alire.Environment.Formatting is
@@ -81,6 +82,23 @@ package body Alire.Environment.Formatting is
          end if;
       end Replace;
 
+      ---------------
+      -- To_Native --
+      ---------------
+      --  Replace forward slashes with native slashes on Windows, unless they
+      --  are an escape sequence.
+      function To_Native (S : String) return String is
+      begin
+         case OS_Lib.Dir_Separator is
+            when '/' => return S;
+            when '\' => null;
+            when others => raise Unimplemented with
+                 "Unknown OS with dir separator: " & OS_Lib.Dir_Separator;
+         end case;
+
+         return AAA.Strings.Replace (S, "/", "" & OS_Lib.Dir_Separator);
+      end To_Native;
+
       Result : Unbounded_String := To_Unbounded_String (Value);
       From   : Natural := 1;
       To     : Natural;
@@ -107,7 +125,8 @@ package body Alire.Environment.Formatting is
          From := 1;
       end loop;
 
-      return To_String (Result);
+      --  For final usage, we use the native separator
+      return To_Native (+Result);
    end Format;
 
 end Alire.Environment.Formatting;

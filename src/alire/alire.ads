@@ -1,3 +1,4 @@
+with Ada.Assertions;
 with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 private with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
@@ -144,7 +145,9 @@ package Alire with Preelaborate is
    --  Filenames with full path
 
    subtype Absolute_Path is Any_Path
-     with Dynamic_Predicate => Check_Absolute_Path (Absolute_Path);
+     with Dynamic_Predicate => Check_Absolute_Path (Absolute_Path)
+       or else raise Ada.Assertions.Assertion_Error
+       with "Path is not absolute: " & Absolute_Path;
 
    function Absolute_Path_Image (Path : Absolute_Path) return String;
    --  Needed for later instantiations
