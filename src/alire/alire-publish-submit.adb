@@ -166,10 +166,19 @@ package body Alire.Publish.Submit is
    ---------------
 
    procedure Fork (Context : in out Data) is
+      use type UString;
    begin
       if not Ask_To_Fork (Context) then
             Raise_Checked_Error
               ("Cannot continue with automatic submission");
+      end if;
+
+      --  If the fork already existed, the token wouldn't have been needed up
+      --  to this point, so now we make sure it is informed for next steps.
+
+      if Context.Token = "" then
+         Context.Token := +Ask_For_Token
+           ("to create a submission to the community index on your behalf");
       end if;
    end Fork;
 
