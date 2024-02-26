@@ -65,11 +65,19 @@ package body Alr.Commands.Printenv is
                  " This command can be used to setup a build environment," &
                  " for instance before starting an IDE.")
       .New_Line
+      .Append ("When using " & TTY.Terminal ("alr printenv") & " in scripts, "
+        & "to ensure no unwanted output is intermixed with the environment "
+        & "definitions, the recommendation is to run it twice and and use the "
+        & "output of the second run in quiet non-interactive mode. This is "
+        & "because running " & TTY.Terminal ("alr printenv") & " after "
+        & "manifest editions may trigger an automatic synchronization that "
+        & "could produce extra output not intended as environment variables.")
+      .New_line
       .Append ("Examples:")
-      .Append ("  - eval $(alr printenv --unix)")
-      .Append ("  - alr printenv --powershell | Invoke-Expression")
+      .Append ("  - eval $(alr -n -q printenv --unix)")
+      .Append ("  - alr -n -q printenv --powershell | Invoke-Expression")
       .Append ("  - for /F ""usebackq delims="" %x "
-               & "in (`alr printenv --wincmd`) do %x")
+               & "in (`alr -n -q printenv --wincmd`) do %x")
      );
 
    --------------------
