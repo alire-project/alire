@@ -29,7 +29,7 @@ package body Alr.Commands.Edit is
          Put_Info ("The editor command has been unset.");
       end if;
 
-      Put_Info ("You can change this setting by running the following command:");
+      Put_Info ("You can change editors by running the following command:");
       Put_Info ("`alr edit " & Switch_Select & "`");
    end Set_Config_Cmd;
 
@@ -62,7 +62,7 @@ package body Alr.Commands.Edit is
 
    procedure Query_Editor is
       use AAA.Strings;
-      use Clic.User_Input;
+      use CLIC.User_Input;
 
       package Builtins renames Alire.Config.Builtins;
 

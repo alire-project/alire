@@ -24,13 +24,12 @@ abstract project Alire_Common is
    case Style_Check_Mode is
       when "enabled"  => Style_Check_Switches :=
            ("-gnatwe",   -- Warnings as errors
-            "-gnatyd",   -- no DOS line terminators
-            "-gnatyI",   -- no IN mode
-            "-gnatyO",   -- all overrides
-            "-gnatyS",   -- separate lines after THEN/ELSE
-            "-gnatyu",   -- no unnecessary blank lines
-            "-gnatyx",   -- no extra parens around conditionals
-            "-gnaty-s"); -- relax fwd decl
+            "-gnatyg",   -- Standard GNAT style = -gnatyydISuxz
+                         --   where -gnatyy = gnaty3aAbcefhiklmnprst
+                         --   which is all but -gnatyBoOx
+            "-gnatyO",   -- explicitly mark all overrides
+            "-gnaty-s"   -- don't require forward declarations
+            );
       when "disabled" => Style_Check_Switches := ();
    end case;
 

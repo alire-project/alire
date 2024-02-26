@@ -563,7 +563,8 @@ package body Alire.Publish is
             --  Safeguard to avoid tests creating a live pull request, unless
             --  explicitly desired
             if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset"
-              and then OS_Lib.Getenv (Environment.Testsuite_Allow, "unset") = "unset"
+              and then
+                OS_Lib.Getenv (Environment.Testsuite_Allow, "unset") = "unset"
             then
                raise Program_Error
                  with "Attempting to go online to create a PR during tests";

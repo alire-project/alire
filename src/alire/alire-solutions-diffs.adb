@@ -235,7 +235,7 @@ package body Alire.Solutions.Diffs is
          if Has_Latter and then Latter.Is_Provided
            and then
              (not Has_Former or else
-                (Former.Has_Release and Then
+                (Former.Has_Release and then
                  Former.Release.Name_Str /= Latter.Release.Name_Str))
          then
             Add_Change (Chg, "", TTY.Italic (Latter.Release.Name.As_String));

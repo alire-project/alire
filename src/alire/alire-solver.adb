@@ -379,7 +379,7 @@ package body Alire.Solver is
               and then
                 not Unavailable_Direct_Deps.Contains
                   (Solution.Dependency (Crate))
-                    --  Because no release fulfills it, so "complete"
+                  --  Because no release fulfills it, so "complete"
             then
                return False;
             end if;

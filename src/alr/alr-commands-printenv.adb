@@ -72,7 +72,7 @@ package body Alr.Commands.Printenv is
         & "because running " & TTY.Terminal ("alr printenv") & " after "
         & "manifest editions may trigger an automatic synchronization that "
         & "could produce extra output not intended as environment variables.")
-      .New_line
+      .New_Line
       .Append ("Examples:")
       .Append ("  - eval $(alr -n -q printenv --unix)")
       .Append ("  - alr -n -q printenv --powershell | Invoke-Expression")
