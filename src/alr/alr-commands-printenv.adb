@@ -76,6 +76,8 @@ package body Alr.Commands.Printenv is
       .Append ("Examples:")
       .Append ("  - eval $(alr -n -q printenv --unix)")
       .Append ("  - alr -n -q printenv --powershell | Invoke-Expression")
+      .Append ("  - for /F ""usebackq delims="" %x "
+               & "in (`alr -n -q printenv --wincmd`) do %x")
      );
 
    --------------------
