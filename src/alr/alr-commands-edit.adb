@@ -11,6 +11,8 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Alr.Commands.Edit is
 
+   Switch_Select : constant String := "--select-editor";
+
    --------------------
    -- Set_Config_Cmd --
    --------------------
@@ -18,12 +20,17 @@ package body Alr.Commands.Edit is
    procedure Set_Config_Cmd (Cmd : String) is
       use Trace;
    begin
-      Config.Set_Globally (Config.Builtins.Editor_Cmd, Cmd);
-      Put_Info ("'" & cmd & "' is now set as the editor command.");
+      if Cmd /= "" then
+         Config.Set_Globally (Config.Builtins.Editor_Cmd, Cmd);
+         Put_Info ("'" & TTY.Terminal (Cmd)
+                   & "' is now set as the editor command.");
+      else
+         Config.Builtins.Editor_Cmd.Unset (Alire.Config.Global);
+         Put_Info ("The editor command has been unset.");
+      end if;
+
       Put_Info ("You can change this setting by running the following command:");
-      Put_Info ("`alr config --global --unset " &
-                  Config.Builtins.Editor_Cmd.Key & "`");
-      Put_Info ("and then run `alr edit` again.");
+      Put_Info ("`alr edit " & Switch_Select & "`");
    end Set_Config_Cmd;
 
    --------------------------
@@ -57,6 +64,8 @@ package body Alr.Commands.Edit is
       use AAA.Strings;
       use Clic.User_Input;
 
+      package Builtins renames Alire.Config.Builtins;
+
       type Editor_Choice is (VScode, GNATstudio, Other);
 
       subtype Editor_With_Command
@@ -75,6 +84,13 @@ package body Alr.Commands.Edit is
       Choices : AAA.Strings.Vector;
 
    begin
+
+      if Builtins.Editor_Cmd.Is_Empty then
+         Put_Info ("There is no editor currently configured.");
+      else
+         Put_Info ("The current editor command is: '"
+                   & TTY.Terminal (Builtins.Editor_Cmd.Get) & "'");
+      end if;
 
       for Ed in Editor_Choice loop
          Choices.Append (Img (Ed));
@@ -96,6 +112,10 @@ package body Alr.Commands.Edit is
                Set_Config_Cmd (Cmd (Answer));
 
             when Other  =>
+               Trace.Always
+                 ("In your custom editor command, `alr` will replace "
+                  & TTY.Emph ("${GPR_FILE}")
+                  & " with the corresponding project file.");
                declare
                   Custom : constant String :=
                     Query_String ("Please enter a custom editor command",
@@ -163,6 +183,12 @@ package body Alr.Commands.Edit is
    begin
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
+      end if;
+
+      --  Launch the editor selection if explicitly asked for
+      if Cmd.Set then
+         Query_Editor;
+         return;
       end if;
 
       --  Check if editor command is defined in the configuration
@@ -251,6 +277,10 @@ package body Alr.Commands.Edit is
                      "", "--project=",
                      "Select the project file to open if the crate " &
                        "provides multiple project files, ignored otherwise");
+      Define_Switch (Config,
+                     Cmd.Set'Access,
+                     "", "--select-editor",
+                     "Launch the interactive editor selector");
    end Setup_Switches;
 
 end Alr.Commands.Edit;

@@ -35,5 +35,6 @@ private
 
    type Command is new Commands.Command with record
       Prj : aliased GNAT.Strings.String_Access;
+      Set : aliased Boolean; --select-editor
    end record;
 end Alr.Commands.Edit;
