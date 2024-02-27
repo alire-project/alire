@@ -77,7 +77,7 @@ commit = "9a9c660f9c6f27f5ef75417e7fac7061dff14d78"
 
 [pins.semantic_versioning]
 url    = "https://github.com/alire-project/semantic_versioning"
-commit = "2f23fc5f6b4855b836b599adf292fed9c0ed4144"
+commit = "cc2148cf9c8934fb557b5ae49a3f7947194fa7ee"
 
 [pins.simple_logging]
 url    = "https://github.com/alire-project/simple_logging"

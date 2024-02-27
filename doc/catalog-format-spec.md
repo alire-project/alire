@@ -463,9 +463,9 @@ static, i.e. they cannot depend on the context.
         *monorepo*).
 
       - `binary`: optional (defauts to false) boolean used to design the origin
-        as binary. Binary origins are not compiled and can use dynamic
+        as binary. Binary origins are not compiled and can optionally use dynamic
         expressions to narrow down the platform to which they apply. An origin
-        using a dynamic expression is implicitly tagged as binary; see the
+        using a dynamic expression must be tagged as binary; see the
         example below.
 
    Examples of origin tables:
@@ -497,6 +497,7 @@ static, i.e. they cannot depend on the context.
    [origin."case(os)".linux."case(host-arch)".x86-64]
    url = "https://github.com/alire-project/GNAT-FSF-builds/releases/download/gnat-12.1.0-1/gnat-x86_64-linux-12.1.0-1.tar.gz"
    hashes = ["sha256:df1f36b306359d528799b1de8629a793523347a90c9d4b72efd23c62a7279555"]
+   binary = true
    ```
 
  - `available`: optional dynamic boolean expression.  If it evaluates to
