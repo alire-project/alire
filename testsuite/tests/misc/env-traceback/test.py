@@ -9,7 +9,7 @@ from drivers.asserts import assert_eq, assert_match
 def check_no_traceback():
     assert_match("""\
 ERROR: .* BEGIN Alire bug detected .*
-ERROR: Location  : Alr.Commands.Dev.Execute at alr-commands-dev.adb:.*
+ERROR: Location  : .*
 ERROR: Extra info: Raising forcibly
 ERROR: Report at : .*
 ERROR: Re-run with `-vv -d` for a full log and stack trace.

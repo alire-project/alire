@@ -352,8 +352,8 @@ package body Alire.Platforms.Current is
       exception
          when E : Checked_Error =>
             Log_Exception (E);
-            Recoverable_Error ("While updating msys2 after installation: "
-                               & Errors.Get (E, Clear => False));
+            Recoverable_User_Error ("While updating msys2 after installation: "
+                                    & Errors.Get (E, Clear => False));
       end;
 
       return Alire.Outcome_Success;
@@ -384,7 +384,7 @@ package body Alire.Platforms.Current is
       if not Alire.Check_Absolute_Path (Cfg_Install_Dir) then
          --  This error is recoverable as msys2 is not required for alr to
          --  work.
-         Alire.Recoverable_Error
+         Alire.Recoverable_User_Error
            ("Invalid absolute install path for msys2 in configuration:" &
               " '" & Cfg_Install_Dir & "'");
          return;
@@ -398,7 +398,7 @@ package body Alire.Platforms.Current is
          if not Result.Success then
             --  This error is recoverable as msys2 is not required for alr to
             --  work.
-            Alire.Recoverable_Error (Message (Result));
+            Alire.Recoverable_User_Error (Message (Result));
             return;
          end if;
 

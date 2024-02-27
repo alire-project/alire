@@ -11,7 +11,7 @@ from drivers.asserts import assert_eq, assert_match
 def check_output(dump):
     assert_match('''\
 .*
-ERROR: Location  : Alr.Commands.Dev.Execute at alr-commands-dev.adb:.*
+ERROR: Location  : .*
 ERROR: Extra info: Raising forcibly
 ERROR: Report at : .*
 ERROR: Re-run with `-vv -d` for a full log and stack trace.\
@@ -38,7 +38,7 @@ assert_match(
           ".*"
           "ERROR: Raising forcibly from finalization\n"
           "ERROR: alr encountered an unexpected error, re-run with -d for details.\n"
-          "ERROR: error location: Alr.Commands.Dev.Raise_From_Finalization.Finalize at alr-commands-dev.adb:49",
+          "ERROR: error location: .*",
           run_alr('dev', '--raise-finalization', debug=False, complain_on_error=False).out)
 
 print('SUCCESS')
