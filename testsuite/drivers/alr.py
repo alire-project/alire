@@ -47,18 +47,16 @@ def prepare_env(config_dir, env):
     #  We pass config location explicitly in the following calls since env is
     #  not yet applied (it's just a dict to be passed later to subprocess)
 
-    # Set the msys2 path to the default one, so that every test does not try to
-    # reinstall a new copy in their private config
     if platform.system() == "Windows":
+        # Disable msys inadvertent installation
+        run_alr("-c", config_dir, "config", "--global",
+                "--set", "msys2.do_not_install", "true")
+
+        # And configure the one set up in the environment so it is used by
+        # tests that need it.
         run_alr("-c", config_dir, "config", "--global",
                 "--set", "msys2.install_dir",
                 os.path.join(os.environ.get("LocalAppData"), "alire", "msys64"))
-
-        # And, to make completely sure, disable msys2 installation, as tests
-        # use their own config that should not rely on a fresh msys2 anyway. On
-        # GitHub CI, msys2 is set up in advance.
-        run_alr("-c", config_dir, "config", "--global",
-                "--set", "msys2.do_not_install", "true")
 
     # Disable autoconfig of the community index, to prevent unintended use of
     # it in tests, besides the overload of fetching it
