@@ -180,7 +180,7 @@ package body Alr.Commands.Show is
                           External.Detail
                             (if Cmd.System
                              then Alire.Platforms.Current.Distribution
-                             else Alire.Platforms.Distro_Unknown);
+                             else Alire.Platforms.Distribution_Unknown);
                Available : Alire.Conditional.Availability :=
                              (if Cmd.System
                               then External.On_Platform
