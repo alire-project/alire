@@ -878,12 +878,13 @@ available.'case(toolchain)'.user = false
 ## Parameters
 
  - `os`: name of the OS. Currently supported values are: `freebsd`, `linux`,
-   `macos`, `os-unknown`, and `windows`.
+   `macos`, `windows`, and `os-unknown`.
 
  - `distribution`: name of the Linux distribution or name of the software
    distribution platform if running on a different OS. Currently supported
-   values are: `arch`, `centos`, `debian`, `distro-unknown`, `fedora`,
-   `homebrew`, `macports`, `msys2`, `rhel`, `suse`, and `ubuntu`.
+   values are: `arch`, `centos`, `debian`, `fedora`,
+   `homebrew`, `macports`, `msys2`, `rhel`, `suse`, `ubuntu`, and
+   `distribution-unknown`.
 
  - `toolchain`: takes `system` value in distributions with the system Ada
    compiler first in PATH (GNAT FSF in Debian/Ubuntu), `user` otherwise (GNAT
