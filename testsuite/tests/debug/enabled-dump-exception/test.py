@@ -9,10 +9,12 @@ from drivers.asserts import assert_eq, assert_match
 
 
 def check_output(dump):
-    assert_match(
-	'''stderr: PROGRAM_ERROR
-stderr: Raising forcibly
-stderr: raised PROGRAM_ERROR : Raising forcibly.*
+    assert_match('''\
+.*
+ERROR: Location  : Alr.Commands.Dev.Execute at alr-commands-dev.adb:.*
+ERROR: Extra info: Raising forcibly
+ERROR: Report at : .*
+ERROR: Re-run with `-vv -d` for a full log and stack trace.\
 ''', dump)
 
 
@@ -24,13 +26,19 @@ check_output(run_alr('--debug', 'dev', '--raise',
                      debug=False, complain_on_error=False).out)
 
 # Check ordinary non-debug output:
-assert_eq(run_alr('dev', '--raise', debug=False, complain_on_error=False).out,
-          "ERROR: Raising forcibly\n"
-          "ERROR: alr encountered an unexpected error, re-run with -d for details.\n")
+assert_match(
+          ".*"
+          "ERROR: Extra info: Raising forcibly.*"
+          "ERROR: Re-run with `-vv -d` for a full log and stack trace",
+          run_alr('dev', '--raise', debug=False, complain_on_error=False).out
+          )
 
 # Check exception from finalization :
-assert_eq(run_alr('dev', '--raise-finalization', debug=False, complain_on_error=False).out,
+assert_match(
+          ".*"
           "ERROR: Raising forcibly from finalization\n"
-          "ERROR: alr encountered an unexpected error, re-run with -d for details.\n")
+          "ERROR: alr encountered an unexpected error, re-run with -d for details.\n"
+          "ERROR: error location: Alr.Commands.Dev.Raise_From_Finalization.Finalize at alr-commands-dev.adb:49",
+          run_alr('dev', '--raise-finalization', debug=False, complain_on_error=False).out)
 
 print('SUCCESS')

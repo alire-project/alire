@@ -8,8 +8,8 @@ package body Alire.Utils.Regex is
 
    function Escape (Literal : String) return String is
       Targets  : constant String := "\()[].*+?^";
-      Result   : Ustring;
-      use Ustrings;
+      Result   : UString;
+      use UStrings;
    begin
       for Char of Literal loop
          if (for some Nono of Targets => Char = Nono) then

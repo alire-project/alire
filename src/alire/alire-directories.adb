@@ -331,7 +331,8 @@ package body Alire.Directories is
       --  like "/c/alire". This is for peace of mind.
 
       if Path'Length < 8 then
-         Recoverable_User_Error ("Suspicious deletion request for path: " & Path);
+         Recoverable_User_Error
+           ("Suspicious deletion request for path: " & Path);
       end if;
 
       if Exists (Path) then

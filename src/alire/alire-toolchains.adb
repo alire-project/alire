@@ -587,7 +587,9 @@ package body Alire.Toolchains is
    ----------
 
    function Path return Absolute_Path
-   is (Config.Edit.Cache_Path / "toolchains");
+   is (if Config.Builtins.Toolchain_Dir.Get /= ""
+       then Config.Builtins.Toolchain_Dir.Get
+       else Config.Edit.Cache_Path / "toolchains");
 
    ------------
    -- Deploy --

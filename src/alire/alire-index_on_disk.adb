@@ -99,8 +99,7 @@ package body Alire.Index_On_Disk is
       return Outcome_Success;
    exception
       when E : others =>
-         return Outcome_From_Exception
-           (E, "Could not delete index directory: " & This.Metadata_Directory);
+         return Outcome_From_Exception (E, "Could not delete index directory");
    end Delete;
 
    ----------
@@ -219,7 +218,7 @@ package body Alire.Index_On_Disk is
            (Origin (Origin'First + File_Prefix'Length ..  Origin'Last));
       elsif Origin (Origin'First) = '/'
         or else not (AAA.Strings.Contains (Origin, "@")
-                     or AAA.Strings.Contains (Origin, "+"))
+                     or else AAA.Strings.Contains (Origin, "+"))
       then
          return Process_Local_Index (Origin);
       end if;

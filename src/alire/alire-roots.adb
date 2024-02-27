@@ -39,7 +39,7 @@ package body Alire.Roots is
 
    function Stop_Build (Wanted, Actual : Builds.Stop_Points) return Boolean
    is
-     use type Builds.Stop_Points;
+      use type Builds.Stop_Points;
    begin
       if Wanted <= Actual then
          Trace.Debug ("Stopping build as requested at stage: " & Wanted'Image);
@@ -270,7 +270,7 @@ package body Alire.Roots is
    begin
       This.Build_Prepare (Saved_Profiles => Saved_Profiles,
                           Force_Regen    => False,
-                          Stop_After     => stop_after);
+                          Stop_After     => Stop_After);
 
       if Stop_Build (Stop_After, Actual => Generation) then
          return True;
@@ -447,7 +447,7 @@ package body Alire.Roots is
                            Prefix       => Prefix,
                            Recursive    => False,
                            Quiet        => True,
-                           Force        => (Force or
+                           Force        => (Force or else
                                               Action in Reinstall | Replace));
 
                         --  Say something if after installing a crate it

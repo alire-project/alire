@@ -6,6 +6,23 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### Cache and toolchain storage location overridding
+
+PR [#1593](https://github.com/alire-project/alire/pull/1593)
+
+The cache directory can now be set independently of the configuration
+directory, by setting the `cache.dir` config builtin to an absolute path. For
+example:
+```
+alr config --global --set cache.dir /path/to/my/global/cache
+```
+Since the cache by default also contains installed toolchains, which may not be
+needed to be moved elsewhere, the `toolchain.dir` can be used to dissociate
+toolchain location from cache location in a similar way:
+```
+alr config --global --set toolchain.dir /path/to/my/toolchains
+```
+
 ### New switch `alr build --stop-after=<build stage>`
 
 PR [#1573](https://github.com/alire-project/alire/pull/1573)

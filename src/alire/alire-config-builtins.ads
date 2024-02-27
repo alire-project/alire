@@ -6,6 +6,15 @@ package Alire.Config.Builtins is
    -- Builtins --
    --------------
 
+   --  CACHE
+
+   Cache_Dir : constant Builtin := New_Builtin
+     (Key  => "cache.dir",
+      Kind => Cfg_Absolute_Path,
+      Def  => "",
+      Help =>
+        "Directory where Alire will store its cache.");
+
    --  DEPENDENCIES
 
    Dependencies_Git_Keep_Repository : constant Builtin := New_Builtin
@@ -106,6 +115,13 @@ package Alire.Config.Builtins is
       Help =>
         "If true, and assistant to select the default toolchain will run "
       & "when first needed.");
+
+   Toolchain_Dir : constant Builtin := New_Builtin
+     (Key  => "toolchain.dir",
+      Kind => Cfg_Absolute_Path,
+      Def  => "",
+      Help =>
+        "Directory where Alire will store its toolchains.");
 
    Toolchain_External : constant Builtin := New_Builtin
      (Key    => "toolchain.external",

@@ -136,9 +136,9 @@ package body Alire.Errors is
             if Line /= "" then
                Trace.Error
                  ((if I > Lines.First_Index then "   " else "")
-                    --  Indentation
+                  --  Indentation
 
-                  & (if I < Lines.Last_Index and Line (Line'Last) = '.'
+                  & (if I < Lines.Last_Index and then Line (Line'Last) = '.'
                     then Line (Line'First .. Line'Last - 1)
                     else Line)
                   --  The error proper, trimming unwanted final '.'
@@ -261,10 +261,10 @@ package body Alire.Errors is
 
       Caller : constant Positive :=
                  5 + Stack_Offset - (if Stack_Trace /= "" then 2 else 0);
-      -- The minus 2 is because in stacks obtained from the original exception:
-      -- 1) Except name 2) exec name 3) stack start
-      -- If instead we use AAA.Debug.Stack_Trace:
-      -- 1) Except name 2) exec name 3) AAA.Debug 4) here 5) caller
+      --  The minus 2 is because in stacks obtained from an exception:
+      --  1) Except name 2) exec name 3) stack start
+      --  If instead we use AAA.Debug.Stack_Trace:
+      --  1) Except name 2) exec name 3) AAA.Debug 4) here 5) caller
 
       URL    : constant String
       := "https://github.com/alire-project/alire/issues/new?title=[Bug%20box]";
@@ -282,11 +282,14 @@ package body Alire.Errors is
       end Put;
 
    begin
-      Trace.Debug (AAA.Debug.Stack_Trace);
+      if Stack_Trace = "" then
+         Trace.Debug (AAA.Debug.Stack_Trace);
+      end if;
+      --  Otherwise, the exception has been logged elsewhere
 
       Put ("******************* BEGIN Alire bug detected *******************");
       Put ("Location  : "
-           & (if integer (Stack.Length) >= Caller
+           & (if Integer (Stack.Length) >= Caller
              then Stack (Caller)
              else "<unknown>"));
 
@@ -297,7 +300,7 @@ package body Alire.Errors is
       Put ("Report at : " & URL);
 
       if Log_Level < Debug or else not Log_Debug then
-         Put ("Re-run with `-vv -d` for a full stack trace.");
+         Put ("Re-run with `-vv -d` for a full log and stack trace.");
       end if;
 
       if Recoverable then

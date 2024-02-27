@@ -328,12 +328,12 @@ package body Alr.Commands.Get is
          Allowed : constant Alire.Dependencies.Dependency :=
            Alire.Dependencies.From_String (Args (1));
       begin
-         if Cmd.Build and Cmd.Only then
+         if Cmd.Build and then Cmd.Only then
             Reportaise_Wrong_Arguments
               ("--only is incompatible with --build");
          end if;
 
-         if Cmd.Dirname and (Cmd.Build or else Cmd.Only) then
+         if Cmd.Dirname and then (Cmd.Build or else Cmd.Only) then
             Reportaise_Wrong_Arguments
               ("--dirname is incompatible with other switches");
          end if;

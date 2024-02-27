@@ -7,9 +7,14 @@ from drivers.alr import run_alr
 from drivers.asserts import assert_eq, assert_match
 
 def check_no_traceback():
-    assert_eq('ERROR: Raising forcibly\n'
-              'ERROR: alr encountered an unexpected error,'
-              ' re-run with -d for details.\n',
+    assert_match("""\
+ERROR: .* BEGIN Alire bug detected .*
+ERROR: Location  : Alr.Commands.Dev.Execute at alr-commands-dev.adb:.*
+ERROR: Extra info: Raising forcibly
+ERROR: Report at : .*
+ERROR: Re-run with `-vv -d` for a full log and stack trace.
+ERROR: .* END Alire bug detected .*\
+""",
               run_alr("dev", "--raise",
                       debug=False, complain_on_error=False).out)
 

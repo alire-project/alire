@@ -37,7 +37,7 @@ package Alire.Index_On_Disk is
                          Result   : out Outcome;
                          Priority :     Priorities := Default_Priority)
                          return Index'Class
-     with Post => Name in Restricted_Name or not Result.Success;
+     with Post => Name in Restricted_Name or else not Result.Success;
    pragma Warnings (On);
    --  Factory function.
    --  Name is a user given name used to denote the index (like a git origin).

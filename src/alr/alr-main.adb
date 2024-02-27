@@ -13,6 +13,7 @@ begin
    Commands.Execute;
 exception
    when E : Program_Error =>
+      Alire.Log_Exception (E);
       Alire.Errors.Program_Error
         (Explanation => Alire.Errors.Get (E),
          Recoverable => False,

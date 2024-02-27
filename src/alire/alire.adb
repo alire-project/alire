@@ -276,7 +276,9 @@ package body Alire is
    -- Recoverable_Error --
    -----------------------
 
-   procedure Recoverable_User_Error (Msg : String; Recover : Boolean := Force) is
+   procedure Recoverable_User_Error (Msg     : String;
+                                     Recover : Boolean := Force)
+   is
       Info : constant String := " (This error can be overridden with "
                                 & TTY.Terminal ("--force") & ".)";
    begin
