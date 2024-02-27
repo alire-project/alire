@@ -23,12 +23,29 @@ abstract project Alire_Common is
    Style_Check_Switches := ();
    case Style_Check_Mode is
       when "enabled"  => Style_Check_Switches :=
-           ("-gnatwe",   -- Warnings as errors
-            "-gnatyg",   -- Standard GNAT style = -gnatyydISuxz
-                         --   where -gnatyy = gnaty3aAbcefhiklmnprst
-                         --   which is all but -gnatyBoOx
-            "-gnatyO",   -- explicitly mark all overrides
-            "-gnaty-s"   -- don't require forward declarations
+           ( "-gnatwe" -- Warnings as errors
+            ,"-gnaty3" -- Specify indentation level of 3
+            ,"-gnatya" -- Check attribute casing
+            ,"-gnatyA" -- Use of array index numbers in array attributes
+            ,"-gnatyB" -- Check Boolean operators
+            ,"-gnatyb" -- Blanks not allowed at statement end
+            ,"-gnatyc" -- Check comments
+            ,"-gnatye" -- Check end/exit labels
+            ,"-gnatyf" -- No form feeds or vertical tabs
+            ,"-gnatyh" -- No horizontal tabs
+            ,"-gnatyi" -- Check if-then layout
+            ,"-gnatyI" -- check mode IN keywords
+            ,"-gnatyk" -- Check keyword casing
+            ,"-gnatyl" -- Check layout
+            ,"-gnatym" -- Check maximum line length
+            ,"-gnatyn" -- Check casing of entities in Standard
+            ,"-gnatyO" -- Check all overriding subprograms explicitly marked
+            ,"-gnatyp" -- Check pragma casing
+            ,"-gnatyr" -- Check identifier references casing
+            ,"-gnatyS" -- Check no statements after THEN/ELSE
+            ,"-gnatyt" -- Check token spacing
+            ,"-gnatyu" -- Check unnecessary blank lines
+            ,"-gnatyx" -- Check extra parentheses
             );
       when "disabled" => Style_Check_Switches := ();
    end case;

@@ -443,7 +443,7 @@ package body Alire.Roots is
                            Prefix       => Prefix,
                            Recursive    => False,
                            Quiet        => True,
-                           Force        => (Force or
+                           Force        => (Force or else
                                               Action in Reinstall | Replace));
 
                         --  Say something if after installing a crate it

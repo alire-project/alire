@@ -1115,7 +1115,7 @@ package body Alire.Publish is
          --  already. No matter what, it will be checked again on the
          --  deployed sources step.
 
-         if Revision = "" or Revision = "HEAD" then
+         if Revision = "" or else Revision = "HEAD" then
             declare
                Tmp_Context : Data := (Options => Options, others => <>);
             begin

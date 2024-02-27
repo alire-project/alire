@@ -440,7 +440,7 @@ package body Alr.Commands.Show is
       end if;
 
       if Args.Count = 0 then
-         if Alire.Root.Current.Outside and not Cmd.Nested then
+         if Alire.Root.Current.Outside and then not Cmd.Nested then
             Reportaise_Wrong_Arguments
               ("Cannot proceed without a crate name");
          elsif not Cmd.Nested then
@@ -450,8 +450,8 @@ package body Alr.Commands.Show is
 
       if Cmd.External and then
         (Cmd.Dependents.all /= "unset"
-         or Cmd.Detect or Cmd.Jekyll or Cmd.Graph or Cmd.Solve
-         or Cmd.Tree)
+         or else Cmd.Detect or else Cmd.Jekyll or else Cmd.Graph
+         or else Cmd.Solve  or else Cmd.Tree)
       then
          Reportaise_Wrong_Arguments
            ("Switch --external can only be combined with --system");

@@ -62,7 +62,8 @@ package body Alire.Utils.Tools is
                        when Easy_Graph =>
                          (if Distribution in Centos | Fedora | Rhel | Suse
                           then "perl-Graph-Easy"
-                          elsif Distribution /= Msys2 and Distribution /= Arch
+                          elsif Distribution /= Msys2 and then
+                                Distribution /= Arch
                           then "libgraph-easy-perl"
                           else ""),
                        when Git | Tar | Unzip | Curl =>

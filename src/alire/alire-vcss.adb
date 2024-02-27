@@ -35,7 +35,7 @@ package body Alire.VCSs is
    ----------
 
    function Kind (Origin : URL) return Kinds is
-     (if Has_Prefix (Origin, "git+") or Has_Prefix (Origin, "git@")
+     (if Has_Prefix (Origin, "git+") or else Has_Prefix (Origin, "git@")
       then VCS_Git
       else VCS_Unknown);
 

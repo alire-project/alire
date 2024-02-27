@@ -70,7 +70,7 @@ package Alire.Config is
                          Public : Boolean := True;
                          Check  : CLIC.Config.Check_Import := null)
                          return Builtin_Option
-     with Pre => Help /= "" or not Public;
+     with Pre => Help /= "" or else not Public;
 
    function New_Builtin (Key    : CLIC.Config.Config_Key;
                          Def    : Boolean;
@@ -78,7 +78,7 @@ package Alire.Config is
                          Public : Boolean := True;
                          Check  : CLIC.Config.Check_Import := null)
                          return Builtin_Option
-     with Pre => Help /= "" or not Public;
+     with Pre => Help /= "" or else not Public;
 
 private
 

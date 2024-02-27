@@ -418,12 +418,12 @@ package body Alr.Commands.Toolchain is
            ("The provided switches cannot be used simultaneously");
       end if;
 
-      if (Cmd.Install or Cmd.Uninstall) and then Args.Is_Empty then
+      if (Cmd.Install or else Cmd.Uninstall) and then Args.Is_Empty then
          Reportaise_Wrong_Arguments ("No release specified");
       end if;
 
       if not Args.Is_Empty and then
-        not (Cmd.Install or Cmd.Uninstall or Cmd.S_Select)
+        not (Cmd.Install or else Cmd.Uninstall or else Cmd.S_Select)
       then
          Reportaise_Wrong_Arguments
            ("Specify the action to perform with the crate");
