@@ -131,9 +131,9 @@ package body Alire.Errors is
             if Line /= "" then
                Trace.Error
                  ((if I > Lines.First_Index then "   " else "")
-                    --  Indentation
+                  --  Indentation
 
-                  & (if I < Lines.Last_Index and Line (Line'Last) = '.'
+                  & (if I < Lines.Last_Index and then Line (Line'Last) = '.'
                     then Line (Line'First .. Line'Last - 1)
                     else Line)
                   --  The error proper, trimming unwanted final '.'

@@ -295,7 +295,7 @@ package Alire.Solutions is
    --  exact versions. NOTE that the original dependency is thus lost in this
    --  info.
 
-   function Pins (This : Solution) return dependency_Map;
+   function Pins (This : Solution) return Dependency_Map;
    --  return all version-pinned dependencies as plain dependencies for a exact
    --  version. NOTE that the original dependency is thus lost.
 

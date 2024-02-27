@@ -562,7 +562,8 @@ package body Alire.Publish is
             --  Safeguard to avoid tests creating a live pull request, unless
             --  explicitly desired
             if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset"
-              and then OS_Lib.Getenv (Environment.Testsuite_Allow, "unset") = "unset"
+              and then
+                OS_Lib.Getenv (Environment.Testsuite_Allow, "unset") = "unset"
             then
                raise Program_Error
                  with "Attempting to go online to create a PR during tests";
@@ -631,9 +632,9 @@ package body Alire.Publish is
       Git        : constant VCSs.Git.VCS := VCSs.Git.Handler;
       Is_Repo    : constant Boolean := Git.Is_Repository (Base_Path (Context));
       Archive    : constant Relative_Path := Target_Dir / (Milestone & ".tgz");
-      --  We used to use tbz2 for locally tar'ed files, but that has an implicit
-      --  dependency on bzip2 that we are not managing yet, so for now we err on
-      --  the safe side of built-in tar gzip capabilities.
+      --  We used to use tbz2 for locally tar'ed files, but that has an
+      --  implicit dependency on bzip2 that we are not managing yet, so for
+      --  now we err on the safe side of built-in tar gzip capabilities.
 
       -----------------
       -- Git_Archive --
@@ -1111,7 +1112,7 @@ package body Alire.Publish is
          --  already. No matter what, it will be checked again on the
          --  deployed sources step.
 
-         if Revision = "" or Revision = "HEAD" then
+         if Revision = "" or else Revision = "HEAD" then
             declare
                Tmp_Context : Data := (Options => Options, others => <>);
             begin
