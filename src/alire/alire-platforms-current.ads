@@ -31,6 +31,15 @@ package Alire.Platforms.Current is
 
    function Operating_System return Platforms.Operating_Systems;
 
+   ----------------------
+   --  Self configuration
+
+   procedure Initialize;
+   --  Do any initialization that is necessary for this platform. This is
+   --  called as soon as we know the user is not running `alr config`, as we
+   --  want to allow the opportunity to configure things without triggering
+   --  this initialization.
+
    --------------------------------
    -- Portable derived utilities --
    --------------------------------

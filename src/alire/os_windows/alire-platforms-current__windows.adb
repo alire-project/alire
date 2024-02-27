@@ -27,21 +27,9 @@ package body Alire.Platforms.Current is
    ------------------
 
    function Detect_Msys2 return Boolean is
-      use AAA.Strings;
    begin
       --  Try to detect if Msys2's pacman tool is already in path
-      declare
-         Unused : Vector;
-      begin
-         Unused := OS_Lib.Subprocess.Checked_Spawn_And_Capture
-           ("pacman", Empty_Vector & ("-V"),
-            Err_To_Out => True);
-         return True;
-      exception when others =>
-            null;
-      end;
-
-      return False;
+      return OS_Lib.Locate_Exec_On_Path ("pacman") /= "";
    end Detect_Msys2;
 
    -----------------------
@@ -268,6 +256,12 @@ package body Alire.Platforms.Current is
          return Alire.Outcome_Success;
       end if;
 
+      --  Prevent unwilling installation of msys2 during testsuite runs
+      if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset" then
+         raise Program_Error
+           with "Attempting to install msys2 during testsuite run";
+      end if;
+
       Result := Download_File (Msys2_Installer_URL,
                                Msys2_Installer,
                                Install_Dir);
@@ -421,6 +415,13 @@ package body Alire.Platforms.Current is
 
    end Setup_Msys2;
 
-begin
-   Setup_Msys2;
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize is
+   begin
+      Setup_Msys2;
+   end Initialize;
+
 end Alire.Platforms.Current;

@@ -4,9 +4,11 @@ package Alr.Commands.Config is
 
    type Command is new Commands.Command with private;
 
+   Command_Name : constant String := "config";
+
    overriding
    function Name (Cmd : Command) return CLIC.Subcommand.Identifier
-   is ("config");
+   is (Command_Name);
 
    overriding
    procedure Execute (Cmd  : in out Command;

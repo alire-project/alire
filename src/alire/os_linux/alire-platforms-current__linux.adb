@@ -133,4 +133,10 @@ package body Alire.Platforms.Current is
    function Operating_System return Alire.Platforms.Operating_Systems
    is (Alire.Platforms.Linux);
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize is null;
+
 end Alire.Platforms.Current;
