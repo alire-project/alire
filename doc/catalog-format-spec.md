@@ -316,6 +316,10 @@ static, i.e. they cannot depend on the context.
    PATH.append = "${DISTRIB_ROOT}/usr/bin"
    ```
 
+   Path fragments in this table must use portable format, that is, '/' for path
+   separation. Alire will take care of using the native separator when setting
+   these variables.
+
    Predefined variables are provided by Alire and will be replaced in the
    value:
 
@@ -324,6 +328,9 @@ static, i.e. they cannot depend on the context.
      distribution. On UNIX systems it will be `/`, on Windows `msys2` it will
      be the `msys2` installation directory (e.g.
      `C:\Users\user_name\.cache\alire\msys2`).
+
+   The escaping `"\$"` can be used to prevent the expansion of a
+   dollar-bracketed expression.
 
    Environment entries can use dynamic expressions:
 
@@ -870,11 +877,14 @@ available.'case(toolchain)'.user = false
 
 ## Parameters
 
- - `os`: name of the OS. Currently supported values are: `linux`, `macos` and
-   `windows`.
+ - `os`: name of the OS. Currently supported values are: `freebsd`, `linux`,
+   `macos`, `windows`, and `os-unknown`.
 
- - `distribution`: name of the Linux distribution, or `none` if running on a
-   different OS. Currently supported values are: `debian`, `ubuntu`.
+ - `distribution`: name of the Linux distribution or name of the software
+   distribution platform if running on a different OS. Currently supported
+   values are: `arch`, `centos`, `debian`, `fedora`,
+   `homebrew`, `macports`, `msys2`, `rhel`, `suse`, `ubuntu`, and
+   `distribution-unknown`.
 
  - `toolchain`: takes `system` value in distributions with the system Ada
    compiler first in PATH (GNAT FSF in Debian/Ubuntu), `user` otherwise (GNAT

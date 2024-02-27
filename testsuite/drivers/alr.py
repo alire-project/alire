@@ -24,7 +24,7 @@ class CalledProcessError(Exception):
 
 def distro_is_known():
     p = run_alr('version')
-    return not re.match('.*distribution:.*DISTRO_UNKNOWN.*',
+    return not re.match('.*distribution:.*DISTRIBUTION_UNKNOWN.*',
                         p.out, flags=re.S)
 
 

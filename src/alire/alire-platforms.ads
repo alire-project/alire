@@ -43,7 +43,7 @@ package Alire.Platforms with Preelaborate is
                           Suse,
                           Homebrew,
                           Macports,
-                          Distro_Unknown);
+                          Distribution_Unknown);
 
    subtype Known_Distributions is
      Distributions range Distributions'First ..
@@ -70,7 +70,7 @@ package Alire.Platforms with Preelaborate is
       Suse            => Zypper,
       Homebrew        => Homebrew,
       Macports        => Macports,
-      Distro_Unknown  => Packager_Unknown);
+      Distribution_Unknown  => Packager_Unknown);
 
    type Toolchains is (System,
                        --  Provided through system packages, able to use other

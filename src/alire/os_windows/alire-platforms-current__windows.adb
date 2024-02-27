@@ -20,7 +20,7 @@ package body Alire.Platforms.Current is
    --  Windows implementation
 
    Distrib_Detected : Boolean := False;
-   Distrib : Platforms.Distributions := Platforms.Distro_Unknown;
+   Distrib : Platforms.Distributions := Platforms.Distribution_Unknown;
 
    ------------------
    -- Detect_Msys2 --
@@ -60,7 +60,7 @@ package body Alire.Platforms.Current is
          return;
       end if;
 
-      Distrib := Platforms.Distro_Unknown;
+      Distrib := Platforms.Distribution_Unknown;
    end Detect_Distrib;
 
    ------------------
