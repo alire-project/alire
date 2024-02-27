@@ -322,7 +322,7 @@ package body Alr.Commands.Init is
       ---------------------
 
       procedure Generate_Config is
-         Root : constant Alire.Roots.Optional.Root :=
+         Root : Alire.Roots.Optional.Root :=
                   Alire.Roots.Optional.Detect_Root (+Directory.Full_Name);
       begin
          Root.Value.Build_Prepare (Saved_Profiles => False,

@@ -18,4 +18,8 @@ package Alire.Utils.Tools is
    --  Check if a required executable tool is available in PATH.
    --  If not, try to install it. If unable and Fail, abort, otherwise return
 
+   function Is_BSD_Tar return Boolean
+     with Pre => Available (Tar);
+   --  Say if the tar in PATH is the bsdtar variant, which lacks some features
+
 end Alire.Utils.Tools;

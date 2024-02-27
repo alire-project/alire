@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 with Alire.OS_Lib.Subprocess; use Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib;
 with Alire.Platforms.Current;
@@ -52,7 +54,7 @@ package body Alire.Utils.Tools is
    begin
       case Distribution is
 
-         when Distro_Unknown =>
+         when Distribution_Unknown =>
             --  Cannot have package for an unknown distribution
             return "";
 
@@ -156,5 +158,19 @@ package body Alire.Utils.Tools is
 
       Install_From_Distrib (Tool, Fail);
    end Check_Tool;
+
+   ----------------
+   -- Is_BSD_Tar --
+   ----------------
+
+   function Is_BSD_Tar return Boolean is
+      use AAA.Strings;
+   begin
+      return Contains
+        (To_Lower_Case
+           (Checked_Spawn_And_Capture
+                ("tar", To_Vector ("--version")).Flatten),
+         "bsdtar");
+   end Is_BSD_Tar;
 
 end Alire.Utils.Tools;

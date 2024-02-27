@@ -1,3 +1,4 @@
+with Ada.Assertions;
 with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 private with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
@@ -144,10 +145,17 @@ package Alire with Preelaborate is
    --  Filenames with full path
 
    subtype Absolute_Path is Any_Path
-     with Dynamic_Predicate => Check_Absolute_Path (Absolute_Path);
+     with Dynamic_Predicate => Check_Absolute_Path (Absolute_Path)
+       or else raise Ada.Assertions.Assertion_Error
+       with "Path is not absolute: " & Absolute_Path;
 
    function Absolute_Path_Image (Path : Absolute_Path) return String;
    --  Needed for later instantiations
+
+   subtype Optional_Absolute_Path is Any_Path
+     with Dynamic_Predicate =>
+       Optional_Absolute_Path = "" or else
+       Check_Absolute_Path (Optional_Absolute_Path);
 
    subtype Unbounded_Absolute_Path is UString
      with Dynamic_Predicate =>
@@ -230,6 +238,14 @@ package Alire with Preelaborate is
    procedure Recoverable_Error (Msg : String; Recover : Boolean := Force);
    --  When Recover, emit a warning and return normally. When not Recover call
    --  Raise_Checked_Error instead.
+
+   procedure Report_Program_Error (Explanation : String  := "";
+                                   Survivable  : Boolean := True) is null;
+   --  For unexpected situations where normally a Program_Error would be
+   --  adecuate, but we do not want to bomb on the user because continuing is
+   --  acceptable. We log a stack trace, print a warning and continue, so
+   --  a motivated user can report an issue, but we don't needlessly raise. If
+   --  not Survivable, then do raise a Program_Error.
 
    ---------------
    --  LOGGING  --

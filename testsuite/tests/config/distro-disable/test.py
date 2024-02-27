@@ -2,10 +2,6 @@
 Verify that disabling distro detection works as intended
 """
 
-import os
-
-from glob import glob
-
 from drivers.alr import run_alr, distro_is_known
 
 run_alr("config", "--global",

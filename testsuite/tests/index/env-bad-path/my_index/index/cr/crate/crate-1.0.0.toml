@@ -1,0 +1,14 @@
+description = "Sample crate"
+name = "crate"
+version = "1.0.0"
+licenses = []
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[environment]
+VAR1.set = "${CRATE_ROOT}/crate_test_bin"    # OK
+VAR2.set = "\\${CRATE_ROOT}/crate_test_bin"  # OK, escape the $ to avoid expansion
+VAR3.set = "${CRATE_ROOT}\\bin"              # BAD, non-portable path
+
+[origin]
+url = "file:../../../crates/crate"

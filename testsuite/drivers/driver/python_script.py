@@ -4,12 +4,13 @@ import shutil
 import sys
 
 from drivers.alr import prepare_env, prepare_indexes, run_alr
-from e3.testsuite.driver.classic import (ClassicTestDriver,
-                                         TestAbortWithFailure,
+from drivers.driver.base_driver import BaseDriver
+
+from e3.testsuite.driver.classic import (TestAbortWithFailure,
                                          TestSkip)
 
 
-class PythonScriptDriver(ClassicTestDriver):
+class PythonScriptDriver(BaseDriver):
     """
     Test driver to run a "test.py" Python script.
 
@@ -142,6 +143,9 @@ class PythonScriptDriver(ClassicTestDriver):
                                  self.test_env.get('build-mode',
                                                    DEFAULT_MODE))
         # One of 'shared', 'sandboxed', or 'both'
+        if mode not in ["shared", "sandboxed", "both"]:
+            raise ValueError(f"Invalid build mode: {mode}, must be one of "
+                             "'shared', 'sandboxed', or 'both'")
 
         # If mode is "both", track original files for later
         if mode == "both":

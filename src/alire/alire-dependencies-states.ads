@@ -33,6 +33,8 @@ package Alire.Dependencies.States is
 
    type State (<>) is new Dependency with private;
 
+   overriding function "=" (L, R : State) return Boolean;
+
    ------------------
    -- Constructors --
    ------------------
@@ -111,6 +113,13 @@ package Alire.Dependencies.States is
    --  From the POV of users, pinning to version or linking to dir is a pin
 
    function Is_Solved (This : State) return Boolean;
+   --  With a regular release from the index
+
+   function Is_Fulfilled (This : State) return Boolean;
+   --  Either solved or linked
+
+   function Is_Unfulfilled (This : State) return Boolean;
+   --  Neither solved nor linked
 
    --  Case-specific info
 
@@ -211,7 +220,7 @@ private
       return State;
 
    package Link_Holders is
-     new AAA.Containers.Indefinite_Holders (Softlink);
+     new AAA.Containers.Indefinite_Holders (Softlink, User_Pins."=");
 
    type Link_Holder is new Link_Holders.Holder with null record;
 
@@ -242,6 +251,9 @@ private
    -----------
 
    type State (Name_Len : Natural) is new Dependency (Name_Len) with record
+      --  NOTE: check "=" implementation if adding fields to this record.
+      --  There seems to be some trouble with the default "=" operator so its
+      --  overridden.
       Fulfilled    : Fulfillment_Data;
       Pinning      : Pinning_Data;
       Transitivity : Transitivities := Unknown;
@@ -327,6 +339,16 @@ private
 
    function Is_Direct (This : State) return Boolean
    is (This.Transitivity = Direct);
+
+   function Is_Fulfilled (This : State) return Boolean
+   is (case This.Fulfilment is
+          when Solved | Linked => True,
+          when Hinted | Missed => False);
+
+   function Is_Unfulfilled (This : State) return Boolean
+   is (case This.Fulfilment is
+          when Solved | Linked => False,
+          when Hinted | Missed => True);
 
    function Is_Hinted (This : State) return Boolean
    is (This.Fulfilled.Fulfillment = Hinted);

@@ -128,6 +128,12 @@ package body Alire.Origins.Deployers is
       --  as some deployers may not need one (like system packages).
       Temp_Dir.Keep;
       if Ada.Directories.Exists (Temp_Dir.Filename) then
+         --  First, remove any vestigial folder that may remain
+         if Ada.Directories.Exists (Folder) then
+            Trace.Debug ("Removing spurious pre-existing dir: " & Folder);
+            Directories.Force_Delete (Folder);
+         end if;
+
          Trace.Debug ("Renaming into place " & TTY.URL (Temp_Dir.Filename)
                       & " as " & TTY.URL (Folder));
          Ada.Directories.Rename (Old_Name => Temp_Dir.Filename,

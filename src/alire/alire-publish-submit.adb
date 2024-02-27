@@ -72,6 +72,9 @@ package body Alire.Publish.Submit is
             & "variable.");
          Put_Info
            ("You can create access tokens at " & TTY.URL (GitHub.URL_Tokens));
+         Put_Info
+           ("Run " & TTY.Terminal ("alr help publish")
+            & " for further details.");
       end if;
 
       return (if GH_Token /= ""
@@ -117,29 +120,21 @@ package body Alire.Publish.Submit is
       Put_Success ("No conflicting pull request found");
    end Exists;
 
-   ---------------
-   -- Fork_Repo --
-   ---------------
+   -----------------
+   -- Ask_To_Fork --
+   -----------------
 
-   procedure Fork (Context : in out Data) is
+   function Ask_To_Fork (Context : in out Data) return Boolean is
       use all type CLIC.User_Input.Answer_Kind;
       use all type GitHub.Async_Result;
    begin
-
-      --  Verify manifest to publish was generated at expected place
-
-      if not Directories.Is_File (Context.Generated_Manifest) then
-         Raise_Checked_Error ("Cannot continue: manifest missing at "
-                              & TTY.URL (Context.Generated_Manifest));
-      end if;
-
-      Context.Token := +Ask_For_Token
-        ("to fork the community index to your account");
-
       if GitHub.Repo_Exists then
          Put_Success ("Community index fork exists in user account");
-         return;
+         return True;
       else
+         Context.Token := +Ask_For_Token
+           ("to fork the community index to your account");
+
          if CLIC.User_Input.Query
            ("A fork of the community index will now be created into your "
             & "GitHub account to be able to submit a pull request. "
@@ -147,8 +142,7 @@ package body Alire.Publish.Submit is
             Valid   => (Yes | No => True, others => False),
             Default => Yes) /= Yes
          then
-            Raise_Checked_Error
-              ("Cannot continue with automatic submission");
+            return False;
          end if;
       end if;
 
@@ -163,6 +157,29 @@ package body Alire.Publish.Submit is
          when Completed =>
             Put_Success ("Fork of community index completed");
       end case;
+
+      return True;
+   end Ask_To_Fork;
+
+   ---------------
+   -- Fork_Repo --
+   ---------------
+
+   procedure Fork (Context : in out Data) is
+      use type UString;
+   begin
+      if not Ask_To_Fork (Context) then
+            Raise_Checked_Error
+              ("Cannot continue with automatic submission");
+      end if;
+
+      --  If the fork already existed, the token wouldn't have been needed up
+      --  to this point, so now we make sure it is informed for next steps.
+
+      if Context.Token = "" then
+         Context.Token := +Ask_For_Token
+           ("to create a submission to the community index on your behalf");
+      end if;
    end Fork;
 
    -----------

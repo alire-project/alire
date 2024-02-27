@@ -40,7 +40,7 @@ assert_match
 p = run_alr('show', 'crate_master', '--solve', '--system', quiet=False)
 
 assert_match(".*"   # Skip previous crate info
-             "Dependencies \(external\):\n"
+             "Dependencies \(missing\):\n"
              "   crate\* \(direct,hinted\)\n"
              "      Hint: This is a custom hint\n"
              "Dependencies \(graph\):\n"

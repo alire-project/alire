@@ -1,3 +1,5 @@
+with Ada.Directories;
+
 with Alire.Conditional;
 with Alire.Dependencies.Diffs;
 with Alire.Directories;
@@ -246,14 +248,17 @@ package body Alire.Roots.Editable is
                                   Path  : Any_Path)
                                   return Crate_Name
    is
-      Pin_Root : constant Optional.Root := Optional.Detect_Root (Path);
+      Pin_Root : Optional.Root := Optional.Detect_Root (Path);
 
       -------------------------
       -- Pin_Is_Parent_Crate --
       -------------------------
 
       function Pin_Is_Parent_Crate return Boolean
-      is (Directories.Find_Relative_Path_To (Path) = "..");
+      is
+      begin
+         return Directories.Find_Relative_Path_To (Path) = "..";
+      end Pin_Is_Parent_Crate;
 
    begin
       --  When adding a pin from a folder other than the root, notify about it.
@@ -295,14 +300,28 @@ package body Alire.Roots.Editable is
          --  aesthetic, as pins will always override the version.
 
          if not This.Solution.Depends_On (Crate) then
-            This.Add_Dependency
-              (Dependencies.New_Dependency
-                 (Crate,
-                  (if Pin_Root.Is_Valid and then not Pin_Is_Parent_Crate
-                   then Pin_Root.Updatable_Dependency.Versions
-                   else Semver.Extended.Any)),
-               Allow_Unknown => True);
-            --  Pins to local paths are more likely not to be indexed
+            declare
+               --  This temporary is used to work around a bug in GNAT 13
+               Dep_Ver : Semver.Extended.Version_Set;
+            begin
+               if Pin_Root.Is_Valid and then not Pin_Is_Parent_Crate then
+                  declare
+                     --  This temporary is used to work around a bug in GNAT 13
+                     Updatable_Dep : constant Dependencies.Dependency
+                       := Pin_Root.Updatable_Dependency;
+                  begin
+                     Dep_Ver := Updatable_Dep.Versions;
+                  end;
+               else
+                  Dep_Ver := Semver.Extended.Any;
+               end if;
+
+               This.Add_Dependency
+                 (Dependencies.New_Dependency (Crate, Dep_Ver),
+                  Allow_Unknown => True);
+               --  Pins to local paths are more likely not to be indexed, so we
+               --  allow unknown dependencies here.
+            end;
          end if;
 
          --  Remove any previous pin for this crate
@@ -504,6 +523,9 @@ package body Alire.Roots.Editable is
                Trace.Debug ("Discarding temporary root file: " & File);
             end;
          end if;
+      exception
+         when E : others =>
+            Alire.Utils.Finalize_Exception (E);
       end Finalize;
 
    begin
@@ -511,7 +533,7 @@ package body Alire.Roots.Editable is
       Finalize (+This.Edit.Lockfile);
    exception
       when E : others =>
-         Log_Exception (E, Warning);
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    ---------

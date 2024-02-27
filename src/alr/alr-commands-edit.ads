@@ -25,7 +25,7 @@ package Alr.Commands.Edit is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Start GNAT Studio with Alire build environment setup");
+   is ("Start an editor with Alire build environment setup");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
@@ -35,5 +35,6 @@ private
 
    type Command is new Commands.Command with record
       Prj : aliased GNAT.Strings.String_Access;
+      Set : aliased Boolean; --select-editor
    end record;
 end Alr.Commands.Edit;

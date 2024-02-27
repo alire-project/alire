@@ -72,6 +72,10 @@ $run_pip install --upgrade -r requirements.txt
 echo Python search paths:
 $run_python -c "import sys; print('\n'.join(sys.path))"
 
+echo Check Finalize exception handling :
+$run_python ../scripts/python/check_finalize_exceptions.py ../src
+echo ............................
+
 echo Running test suite now:
 $run_python ./run.py -E || { echo Test suite failures, unstable build!; exit 1; }
 cd ..

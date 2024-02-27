@@ -1,6 +1,5 @@
 with AAA.Directories;
 
-with Ada.Exceptions;
 with Ada.Numerics.Discrete_Random;
 with Ada.Real_Time;
 with Ada.Unchecked_Conversion;
@@ -11,6 +10,7 @@ with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Platforms.Folders;
 with Alire.VFS;
+with Alire.Utils;
 
 with GNAT.String_Hash;
 
@@ -490,7 +490,6 @@ package body Alire.Directories is
    overriding
    procedure Finalize (This : in out Guard) is
       use Ada.Directories;
-      use Ada.Exceptions;
       use Ada.Strings.Unbounded;
       procedure Free is
         new Ada.Unchecked_Deallocation (Absolute_Path, Destination);
@@ -506,10 +505,7 @@ package body Alire.Directories is
       Free (Freeable);
    exception
       when E : others =>
-         Trace.Debug
-           ("FG.Finalize: unexpected exception: " &
-              Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
-              Exception_Information (E));
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    ------------------
@@ -662,6 +658,9 @@ package body Alire.Directories is
 
       end if;
 
+      Trace.Debug ("Selected name for tempfile: " & (+This.Name)
+                   & " when at dir: " & Current);
+
       Temp_Registry.Add (+This.Name);
    end Initialize;
 
@@ -673,6 +672,9 @@ package body Alire.Directories is
    is
    begin
       if This.FD in GNAT.OS_Lib.Invalid_FD then
+         --  Ensure parent location exists
+         Create_Tree (Parent (This.Filename));
+
          This.FD := GNAT.OS_Lib.Create_Output_Text_File (This.Filename);
       end if;
 
@@ -744,18 +746,17 @@ package body Alire.Directories is
       end if;
 
       --  Remove temp dir if empty to keep things tidy, and avoid modifying
-      --  lots of tests.
+      --  lots of tests, but only when within <>/alire/tmp
 
-      if Ada.Directories.Simple_Name (Parent (This.Filename)) =
-        Paths.Temp_Folder_Inside_Working_Folder
+      if Ada.Directories.Simple_Name (Parent (Parent (This.Filename))) =
+        Paths.Working_Folder_Inside_Root
       then
          AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
       end if;
 
    exception
       when E : others =>
-         Log_Exception (E);
-         raise;
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    --------------------
@@ -1153,10 +1154,14 @@ package body Alire.Directories is
    -- Touch --
    -----------
 
-   procedure Touch (File : File_Path) is
+   procedure Touch (File : File_Path; Create_Tree : Boolean := False) is
       use GNAT.OS_Lib;
       Success : Boolean := False;
    begin
+      if Create_Tree then
+         Directories.Create_Tree (Parent (File));
+      end if;
+
       if Is_Regular_File (File) then
          Set_File_Last_Modify_Time_Stamp (File, Current_Time);
       elsif Ada.Directories.Exists (File) then

@@ -17,7 +17,7 @@ init_local_crate("xxx", enter=True)
 # generated location as the "online" location, and this works because we are
 # forcing.
 p = run(["alr", "-q", "-f", "-n", "publish", "--skip-build", "--skip-submit", "--tar"],
-        input=f"file:{os.getcwd()}/alire/archives/xxx-0.1.0-dev.tbz2\n".encode())
+        input=f"file:{os.getcwd()}/alire/archives/xxx-0.1.0-dev.tgz\n".encode())
 p.check_returncode()
 
 # Add improper subdir to manifest

@@ -99,7 +99,8 @@ package body Alire.Index_On_Disk is
       return Outcome_Success;
    exception
       when E : others =>
-         return Outcome_From_Exception (E, "Could not delete index directory");
+         return Outcome_From_Exception
+           (E, "Could not delete index directory: " & This.Metadata_Directory);
    end Delete;
 
    ----------
@@ -173,7 +174,7 @@ package body Alire.Index_On_Disk is
          Dir : constant Virtual_File := Create (+Path);
       begin
          if not Dir.Is_Directory then
-            Result := Outcome_Failure ("Not a readable directory");
+            Result := Outcome_Failure ("Not a readable directory: " & Path);
             return New_Invalid_Index;
          end if;
 
@@ -217,12 +218,27 @@ package body Alire.Index_On_Disk is
          return Process_Local_Index
            (Origin (Origin'First + File_Prefix'Length ..  Origin'Last));
       elsif Origin (Origin'First) = '/'
-            or else not AAA.Strings.Contains (Origin, "+")
+        or else not (AAA.Strings.Contains (Origin, "@")
+                     or AAA.Strings.Contains (Origin, "+"))
       then
          return Process_Local_Index (Origin);
       end if;
 
-      --  Process other paths as VCS's
+      --  Process "git+ssh://" as git over ssh and suggest for "ssh://"
+
+      if AAA.Strings.Has_Prefix (Origin, SSH_Prefix) then
+         Result := Outcome_Failure
+           ("ssh:// URLs are not valid index origins. "
+            & "You may want git+" & Origin & " instead.");
+         return New_Invalid_Index;
+      elsif AAA.Strings.Has_Prefix (Origin, "git+" & SSH_Prefix) then
+         Result := Outcome_Success;
+         return Index_On_Disk.Git
+           .New_Handler (Origin, Name, Parent)
+           .With_Priority (Priority);
+      end if;
+
+      --  Process other paths as VCSs
 
       case VCSs.Kind (Origin) is
          when VCSs.VCS_Git =>

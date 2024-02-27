@@ -1,7 +1,8 @@
 with AAA.Strings; use AAA.Strings;
 
-with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
+with Alire.OS_Lib.Subprocess;
+with Alire.Utils.Regex;
 
 package body Alire.Origins.Deployers.System.Zypper is
 
@@ -70,7 +71,8 @@ package body Alire.Origins.Deployers.System.Zypper is
             Trace.Debug ("Extracting native version from zypper output: " &
                          Line);
             declare
-               Match : constant String := Utils.First_Match (Regexp, Line);
+               Match : constant String :=
+                         Utils.Regex.First_Match (Regexp, Line);
             begin
                if Match /= "" then
                   Trace.Debug ("Candidate version string: " & Match);

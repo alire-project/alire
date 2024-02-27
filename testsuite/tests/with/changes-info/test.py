@@ -7,7 +7,6 @@ import re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
-from drivers.helpers import path_separator, with_project
 
 # Initialize a workspace for the test
 run_alr('init', '--bin', 'xxx')
@@ -30,14 +29,17 @@ Changes to dependency solution:
 # Check adding a missing crate (with forcing)
 p = run_alr('with', 'unobtanium', quiet=False, force=True)
 assert_match(".*" +
-             re.escape("""Requested changes:
+             re.escape("""\
+Requested changes:
 
    + unobtanium * (add)
 
 Changes to dependency solution:
 
    New solution is incomplete.
-   +! unobtanium * (new,missing:unknown)""") + ".*",
+   Missing:
+   +!       unobtanium * (new,missing:unknown)\
+""") + ".*",
              p.out, flags=re.S)
 
 # Remove the missing crate for following tests

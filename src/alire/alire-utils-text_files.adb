@@ -46,6 +46,10 @@ package body Alire.Utils.Text_Files is
          Close (File);
          Replacer.Replace;
       end;
+
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    -----------

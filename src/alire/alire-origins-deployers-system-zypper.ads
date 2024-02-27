@@ -12,4 +12,7 @@ package Alire.Origins.Deployers.System.Zypper is
    overriding
    function Install (This : Deployer) return Outcome;
 
+   overriding
+   function Executable_Name (This : Deployer) return String is ("zypper");
+
 end Alire.Origins.Deployers.System.Zypper;

@@ -71,6 +71,10 @@ package Alire.Toolchains is
    --  Use the stored config to check if the tool is external without having to
    --  detect it. Defaults to True if unset or tool is not configured.
 
+   function Tool_Is_Missing (Crate : Crate_Name) return Boolean
+     with Pre => Tool_Is_Configured (Crate);
+   --  Says is the configured tool is not ready for use and must be downloaded
+
    function Tool_Milestone (Crate : Crate_Name) return Milestones.Milestone;
 
    function Tool_Release (Crate : Crate_Name) return Releases.Release;
@@ -124,13 +128,16 @@ package Alire.Toolchains is
    --  Retrieve the release corresponding to Target, if it exists. Will raise
    --  Constraint_Error if not among Available.
 
-   function Path return Any_Path;
+   function Path return Absolute_Path;
    --  Returns the base folder in which all toolchain releases live, defaults
    --  to <cache>/toolchains
 
    procedure Deploy (Release  : Releases.Release;
                      Location : Any_Path := Path);
    --  Deploy a release in the specified location
+
+   procedure Deploy_Missing;
+   --  Deploy any configured tool that is not found where expected on disk
 
    procedure Remove
      (Release : Releases.Release;

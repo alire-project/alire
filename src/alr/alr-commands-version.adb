@@ -4,7 +4,9 @@ with Alire.Directories;
 with Alire.Index;
 with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
+with Alire.Origins.Deployers.System;
 with Alire.Paths.Vault;
+with Alire.Platforms.Folders;
 with Alire.Properties;
 with Alire.Roots.Optional;
 with Alire.Toolchains;
@@ -40,7 +42,7 @@ package body Alr.Commands.Version is
       Indexes : constant Alire.Index_On_Disk.Loading.Set :=
                   Alire.Index_On_Disk.Loading.Find_All
                     (Alire.Config.Edit.Indexes_Directory, Index_Outcome);
-      Root : constant Alire.Roots.Optional.Root :=
+      Root : Alire.Roots.Optional.Root :=
                Alire.Roots.Optional.Search_Root (Alire.Directories.Current);
 
       Build_Path : constant String :=
@@ -75,6 +77,8 @@ package body Alr.Commands.Version is
         .Append (Alire.Config.Edit.Cache_Path).New_Row;
       Table.Append ("vault folder:").Append (Paths.Vault.Path).New_Row;
       Table.Append ("build folder:").Append (Build_Path).New_Row;
+      Table.Append ("temp folder:")
+        .Append (Alire.Platforms.Folders.Temp).New_Row;
       Table.Append ("force flag:").Append (Alire.Force'Image).New_Row;
       Table.Append ("non-interactive flag:")
         .Append (CLIC.User_Input.Not_Interactive'Image).New_Row;
@@ -111,6 +115,25 @@ package body Alr.Commands.Version is
                        else "not configured").New_Row;
             I := I + 1;
          end loop;
+      end;
+
+      declare
+         System_Manager : constant String :=
+                            Origins.Deployers.System.Executable_Path;
+      begin
+         Table
+           .Append ("system package manager:")
+           .Append (if System_Manager /= ""
+                    then System_Manager
+                    else "not found: "
+                    & (if Origins.Deployers.System.Executable_Name /= ""
+                      then "`" & Origins.Deployers.System.Executable_Name & "`"
+                      else "unknown package manager"))
+           .New_Row;
+         Table
+           .Append ("distro detection disabled:")
+           .Append (Platforms.Current.Disable_Distribution_Detection'Image)
+           .New_Row;
       end;
 
       Table.Append ("").New_Row;

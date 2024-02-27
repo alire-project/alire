@@ -1,3 +1,5 @@
+with Alire.Utils;
+
 package body Alire.TOML_Adapters is
 
    --------------
@@ -10,6 +12,10 @@ package body Alire.TOML_Adapters is
    begin
       --  Manually close this error scope
       Errors.Close;
+
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    ------------
@@ -257,8 +263,8 @@ package body Alire.TOML_Adapters is
    ----------------------
 
    function Pop_Single_Table (Queue : Key_Queue;
-                              Value : out TOML.TOML_Value;
-                              Kind  : TOML.Any_Value_Kind) return String
+                              Value : out TOML.TOML_Value)
+                              return String
    is
       use TOML;
    begin
@@ -274,14 +280,28 @@ package body Alire.TOML_Adapters is
 
       Value := Queue.Value.Get (Queue.Value.Keys (1));
 
+      return Key : constant String := +Queue.Value.Keys (1) do
+         Queue.Value.Unset (Queue.Value.Keys (1));
+      end return;
+   end Pop_Single_Table;
+
+   ----------------------
+   -- Pop_Single_Table --
+   ----------------------
+
+   function Pop_Single_Table (Queue : Key_Queue;
+                              Value : out TOML.TOML_Value;
+                              Kind  : TOML.Any_Value_Kind) return String
+   is
+      use TOML;
+      Key : constant String := Queue.Pop_Single_Table (Value);
+   begin
       if Value.Kind /= Kind then
          Queue.Checked_Error ("expected a single entry of type "
                               & Kind'Img & ", but got a " & Value.Kind'Img);
       end if;
 
-      return Key : constant String := +Queue.Value.Keys (1) do
-         Queue.Value.Unset (Queue.Value.Keys (1));
-      end return;
+      return Key;
    end Pop_Single_Table;
 
    -----------------------

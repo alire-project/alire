@@ -26,13 +26,13 @@ with open(os.path.join("alire", canary), "wt") as file:
 # forcing.
 p = run(["alr", "-q", "-f", "-n", "publish", "--skip-build", "--skip-submit", "--tar",
          "--manifest", "xxx.toml"],
-        input=f"file:{os.getcwd()}/alire/archives/xxx-0.1.0-dev.tbz2\n".encode())
+        input=f"file:{os.getcwd()}/alire/archives/xxx-0.1.0-dev.tgz\n".encode())
 p.check_returncode()
 
 # Verify the generated file does not contain the alire folder
-p = run(["tar", "tf", "alire/archives/xxx-0.1.0-dev.tbz2"],
+p = run(["tar", "tf", os.path.join("alire", "archives", "xxx-0.1.0-dev.tgz")],
         capture_output=True)
-p.check_returncode()
+assert p.returncode == 0, "tar failed: " + p.stderr.decode()
 assert "xxx-0.0.0/alire/" not in p.stdout.decode(), \
     "Unexpected contents in tarball: " + p.stdout.decode()
 

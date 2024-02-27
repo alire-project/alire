@@ -3,6 +3,7 @@ private with Ada.Finalization;
 
 with AAA.Strings;
 
+with Alire.Builds;
 private with Alire.Builds.Hashes;
 with Alire.Containers;
 with Alire.Crate_Configuration;
@@ -264,7 +265,9 @@ package Alire.Roots is
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
                    Build_All_Deps   : Boolean := False;
-                   Saved_Profiles   : Boolean := True)
+                   Saved_Profiles   : Boolean := True;
+                   Stop_After       : Builds.Stop_Points :=
+                     Builds.Stop_Points'Last)
                    return Boolean;
    --  Recursively build all dependencies that declare executables, and finally
    --  the root release. Also executes all pre-build/post-build actions for
@@ -286,7 +289,9 @@ package Alire.Roots is
 
    procedure Build_Prepare (This           : in out Root;
                             Saved_Profiles : Boolean;
-                            Force_Regen    : Boolean);
+                            Force_Regen    : Boolean;
+                            Stop_After     : Builds.Stop_Points :=
+                              Builds.Stop_Points'Last);
    --  Perform all preparations but the building step itself. This will require
    --  complete configuration, and will leave all files on disk as if an actual
    --  build were attempted. May optionally use saved profiles from the command

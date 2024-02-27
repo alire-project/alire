@@ -27,6 +27,32 @@ package Alire.Builds is
    --  many more shared releases in the vault, finding toolchains could take
    --  much more time, hence the separate storage.
 
+   --  The following are moments during the build process after which we can
+   --  interrupt the process "safely", that is, some consistency is to be
+   --  expected: actions run as a whole, config files all generated, etc.
+   type Stop_Points is
+     (Sync,
+      --  Synchronization of pristine sources from the vault to the build dir.
+      --  This stage does not exist when using sandboxed dependencies.
+
+      Generation,
+      --  Generation of files based on profiles/configuration variables
+
+      Post_Fetch,
+      --  Running of the post-fetch actions, which happens only on the first
+      --  build after syncing to a new build location.
+
+      Pre_Build,
+      --  Running of the pre-build actions, which happens on every build
+
+      Build,
+      --  The actual building of sources
+
+      Post_Build
+      --  Running of the post-build actions
+
+     );
+
    function Sandboxed_Dependencies return Boolean;
    --  Queries config to see if dependencies should be sandboxed in workspace
 

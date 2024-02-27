@@ -400,16 +400,13 @@ package body Alire.Origins is
       use AAA.Strings;
       use all type URI.Schemes;
       Scheme      : constant URI.Schemes := URI.Scheme (URL);
-      Transformed : constant Alire.URL := VCSs.Git.Transform_To_Public (URL);
       VCS_URL : constant String :=
                   (if Contains (URL, "+file://") then
                       Tail (URL, '+') -- strip the VCS proto only
                    elsif Contains (URL, "+file:") then
                       Tail (URL, ':') -- Remove file: w.o. // that confuses git
-                   elsif Has_Prefix (URL, "git@") and then
-                      Transformed /= URL -- known and transformable
-                   then
-                      Transformed
+                   elsif Scheme = URI.Pure_Git then
+                      URL
                    elsif Scheme in URI.VCS_Schemes then
                       Tail (URL, '+') -- remove prefix vcs+
                    elsif Scheme in URI.HTTP then -- A plain URL... check VCS
@@ -425,15 +422,7 @@ package body Alire.Origins is
 
    begin
       case Scheme is
-         when Pure_Git =>
-            if Transformed /= URL then
-               return New_VCS (Transformed, Commit);
-            else
-               Raise_Checked_Error
-                 ("Attempting to use a private git@ URL with an unknown host: "
-                  & Utils.TTY.URL (URL));
-            end if;
-         when Git | HTTP =>
+         when Pure_Git | Git | HTTP =>
             if Commit'Length /= Git_Commit'Length then
                Raise_Checked_Error
                  ("invalid git commit id, " &

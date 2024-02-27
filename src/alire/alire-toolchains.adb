@@ -26,15 +26,19 @@ package body Alire.Toolchains is
 
    use Directories.Operators;
 
-   procedure Invalidate_Available_Cache;
-
    --------------
    -- Any_Tool --
    --------------
    --  crate=* dependency builder
    function Any_Tool (Crate : Crate_Name) return Dependencies.Dependency
    is (Dependencies.New_Dependency
-        (Crate, Semantic_Versioning.Extended.Any));
+       (Crate, Semantic_Versioning.Extended.Any));
+
+   ----------------------
+   -- Dirty_Cache_Flag --
+   ----------------------
+
+   function Dirty_Cache_Flag return Absolute_Path is (Path / "must_reload");
 
    ---------------
    -- Assistant --
@@ -382,8 +386,6 @@ package body Alire.Toolchains is
          Install (Release);
       end loop;
 
-      Invalidate_Available_Cache;
-
    end Assistant;
 
    ----------------------
@@ -412,8 +414,6 @@ package body Alire.Toolchains is
         (Level,
          Key   => Tool_Key (Release.Name, For_Is_External),
          Value => not Release.Origin.Is_Index_Provided);
-
-      Invalidate_Available_Cache;
    end Set_As_Default;
 
    -----------------------------
@@ -487,11 +487,9 @@ package body Alire.Toolchains is
             end if;
          end;
       end if;
-
-      Invalidate_Available_Cache;
    end Unconfigure;
 
-   Available_Cached : Releases.Containers.Release_Set;
+   Available_Cached    : Releases.Containers.Release_Set;
 
    --------------------------------
    -- Invalidate_Available_Cache --
@@ -537,7 +535,7 @@ package body Alire.Toolchains is
                   & TTY.URL (Full_Name (Item)));
             end if;
 
-         else
+         elsif Simple_Name (Item) /= Simple_Name (Dirty_Cache_Flag) then
             Warnings.Warn_Once ("Unexpected file in toolchain crates path: "
                                 & TTY.URL (Full_Name (Item)));
          end if;
@@ -545,9 +543,12 @@ package body Alire.Toolchains is
 
    begin
       --  Early exit with cached available toolchains. Looking for toolchains
-      --  on disk is expensive. We invalidate the cache on toolchain changes.
+      --  on disk is expensive. We rely on folder modification time to
+      --  re-detect available toolchains.
 
-      if not Available_Cached.Is_Empty then
+      if not Available_Cached.Is_Empty and then
+        not Ada.Directories.Exists (Dirty_Cache_Flag)
+      then
          return Available_Cached;
       end if;
 
@@ -573,7 +574,11 @@ package body Alire.Toolchains is
          end loop;
       end loop;
 
+      --  Update cache and remove dirty flag
+
       Available_Cached := Result;
+      Directories.Force_Delete (Dirty_Cache_Flag);
+
       return Result;
    end Available;
 
@@ -581,7 +586,7 @@ package body Alire.Toolchains is
    -- Path --
    ----------
 
-   function Path return String
+   function Path return Absolute_Path
    is (Config.Edit.Cache_Path / "toolchains");
 
    ------------
@@ -620,8 +625,40 @@ package body Alire.Toolchains is
             & Release.Milestone.TTY_Image);
       end if;
 
+      --  Notify that releases must be reloaded
+
+      Directories.Touch (Dirty_Cache_Flag, Create_Tree => True);
+
       Put_Info (Release.Milestone.TTY_Image & " installed successfully.");
    end Deploy;
+
+   --------------------
+   -- Deploy_Missing --
+   --------------------
+
+   procedure Deploy_Missing is
+   begin
+      for Tool of Tools loop
+         if Tool_Is_Configured (Tool) and then Tool_Is_Missing (Tool) then
+            declare
+               Mil : constant Milestones.Milestone := Tool_Milestone (Tool);
+            begin
+               Put_Warning ("Tool " & Mil.TTY_Image
+                            & " is missing, redeploying...");
+               if Index.Exists (Mil.Crate, Mil.Version) then
+                  Deploy (Index.Find (Mil.Crate, Mil.Version));
+               else
+                  Raise_Checked_Error
+                    (Errors.Wrap
+                       ("A configured tool is missing on disk and unavailable "
+                        & "in the loaded index.",
+                        " Run " & TTY.Terminal ("alr toolchain --select")
+                        & " to select another toolchain"));
+               end if;
+            end;
+         end if;
+      end loop;
+   end Deploy_Missing;
 
    ------------
    -- Remove --
@@ -715,5 +752,16 @@ package body Alire.Toolchains is
 
       raise Constraint_Error with "Not installed: " & Target.TTY_Image;
    end Release;
+
+   ---------------------
+   -- Tool_Is_Missing --
+   ---------------------
+
+   function Tool_Is_Missing (Crate : Crate_Name) return Boolean is
+   begin
+      return not (for some Release of Available (Detect_Externals =>
+                                                   Tool_Is_External (Crate))
+                  => Release.Milestone = Tool_Milestone (Crate));
+   end Tool_Is_Missing;
 
 end Alire.Toolchains;

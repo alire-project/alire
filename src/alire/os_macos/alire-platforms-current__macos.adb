@@ -29,7 +29,7 @@ package body Alire.Platforms.Current is
       then Homebrew
       elsif Macports_Present
       then Macports
-      else Distro_Unknown);
+      else Distribution_Unknown);
 
    -----------------------
    -- Distribution_Root --
@@ -73,5 +73,11 @@ package body Alire.Platforms.Current is
    ----------------------
 
    function Operating_System return Platforms.Operating_Systems is (MacOS);
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize is null;
 
 end Alire.Platforms.Current;

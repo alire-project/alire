@@ -24,7 +24,7 @@ class CalledProcessError(Exception):
 
 def distro_is_known():
     p = run_alr('version')
-    return not re.match('.*distribution:.*DISTRO_UNKNOWN.*',
+    return not re.match('.*distribution:.*DISTRIBUTION_UNKNOWN.*',
                         p.out, flags=re.S)
 
 
@@ -71,10 +71,9 @@ def prepare_env(config_dir, env):
             "--set", "index.auto_update", "0")
 
     # If distro detection is disabled via environment, configure so in alr
-    if "ALIRE_DISABLE_DISTRO" in env:
-        if env["ALIRE_DISABLE_DISTRO"] == "true":
-            run_alr("-c", config_dir, "config", "--global",
-                    "--set", "distribution.disable_detection", "true")
+    if "ALIRE_TESTSUITE_DISABLE_DISTRO" in env:
+        run_alr("-c", config_dir, "config", "--global",
+                "--set", "distribution.disable_detection", "true")
 
 
 def run_alr(*args, **kwargs):

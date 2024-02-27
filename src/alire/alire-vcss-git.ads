@@ -22,6 +22,9 @@ package Alire.VCSs.Git is
    function Git_Dir return Any_Path;
    --  ".git" unless overridden by GIT_DIR
 
+   function Short_Commit (Commit : Git_Commit) return String
+   is (Commit (Commit'First .. Commit'First + 7));
+
    type VCS (<>) is new VCSs.VCS with private;
 
    function Handler return VCS;

@@ -25,14 +25,13 @@ with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.User_Pins.Maps;
+with Alire.Utils.Tools;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
 with Alire.VFS;
 
 with CLIC.User_Input;
-
-with GNATCOLL.OS.Constants;
 
 with Semantic_Versioning;
 
@@ -115,7 +114,7 @@ package body Alire.Publish is
          return +This.Path;
       else
          declare
-            Root : constant Roots.Optional.Root := Alire.Root.Current;
+            Root : Roots.Optional.Root := Alire.Root.Current;
          begin
             Check_Root_Status (+This.Path, Root, This.Options);
             return Root.Value.Path;
@@ -155,7 +154,7 @@ package body Alire.Publish is
    -- Generated_Filename --
    ------------------------
 
-   function Generated_Filename (This : Data) return String
+   function Generated_Filename (This : in out Data) return String
    is (TOML_Index.Manifest_File
        (This.Root.Value.Name,
           This.Root.Value.Release.Version));
@@ -164,7 +163,7 @@ package body Alire.Publish is
    -- Generated_Manifest --
    ------------------------
 
-   function Generated_Manifest (This : Data) return Absolute_Path
+   function Generated_Manifest (This : in out Data) return Absolute_Path
    is (This.Root.Value.Working_Folder
        / Paths.Release_Folder_Inside_Working_Folder
        / This.Generated_Filename);
@@ -395,7 +394,7 @@ package body Alire.Publish is
          --  Will have raised if the release is not loadable or incomplete
       else
          declare
-            Root : constant Roots.Optional.Root := Alire.Root.Current;
+            Root : Roots.Optional.Root := Alire.Root.Current;
          begin
             case Root.Status is
             when Outside =>
@@ -495,7 +494,7 @@ package body Alire.Publish is
 
    procedure Generate_Index_Manifest (Context : in out Data) is
       User_Manifest : constant Any_Path := Packaged_Manifest (Context);
-      Workspace     : constant Roots.Optional.Root := Root.Current;
+      Workspace     :          Roots.Optional.Root := Root.Current;
    begin
       if not GNAT.OS_Lib.Is_Read_Accessible_File (User_Manifest) then
          Raise_Checked_Error
@@ -560,8 +559,11 @@ package body Alire.Publish is
          --  more generic message otherwise (when lacking a github login).
 
          if not Context.Options.Skip_Submit then
-            --  Safeguard to avoid tests creating a live pull request
-            if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset" then
+            --  Safeguard to avoid tests creating a live pull request, unless
+            --  explicitly desired
+            if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset"
+              and then OS_Lib.Getenv (Environment.Testsuite_Allow, "unset") = "unset"
+            then
                raise Program_Error
                  with "Attempting to go online to create a PR during tests";
             end if;
@@ -628,12 +630,10 @@ package body Alire.Publish is
                                                With_Extension => False);
       Git        : constant VCSs.Git.VCS := VCSs.Git.Handler;
       Is_Repo    : constant Boolean := Git.Is_Repository (Base_Path (Context));
-      Archive    : constant Relative_Path :=
-                     Target_Dir
-                       / (Milestone
-                          & (if Is_Repo
-                             then ".tgz"
-                             else ".tbz2"));
+      Archive    : constant Relative_Path := Target_Dir / (Milestone & ".tgz");
+      --  We used to use tbz2 for locally tar'ed files, but that has an implicit
+      --  dependency on bzip2 that we are not managing yet, so for now we err on
+      --  the safe side of built-in tar gzip capabilities.
 
       -----------------
       -- Git_Archive --
@@ -666,14 +666,15 @@ package body Alire.Publish is
          OS_Lib.Subprocess.Checked_Spawn
            ("tar",
             Empty_Vector
-            & "cfj"
+            & "cfz"
             & Archive --  Destination file at alire/archives/crate-version.tbz2
 
             & String'("--exclude=./alire")
             --  Exclude top-level alire folder, before applying prefix
 
-            --  exclude .git and the like, with workaround for macOS bsd tar
-            & (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.MacOS
+            --  exclude .git and the like, with workaround for bsdtar used by
+            --  macOS and Windows without MSYS2
+            & (if Utils.Tools.Is_BSD_Tar
                then Empty_Vector
                     & "--exclude=./.git"
                     & "--exclude=./.hg"
@@ -797,7 +798,6 @@ package body Alire.Publish is
    -------------------
 
    procedure Verify_Github (Context : in out Data) is
-      pragma Unreferenced (Context);
    begin
 
       --  Early return if forcing
@@ -827,41 +827,23 @@ package body Alire.Publish is
          --  User must exist
 
          if not GitHub.User_Exists (Login) then
-            Raise_Checked_Error
+            Recoverable_Error
               ("Your GitHub login does not seem to exist: "
                & TTY.Emph (Login));
          end if;
 
          --  It has to have its own fork of the repo
 
-         if not GitHub.Repo_Exists (Login, Index.Community_Repo_Name) then
-            Raise_Checked_Error
-              ("You must fork the community index to your GitHub account"
+         if GitHub.Repo_Exists (Login, Index.Community_Repo_Name) then
+            Put_Success ("User has forked the community repository");
+         else
+            if not Submit.Ask_To_Fork (Context) then
+               Recoverable_Error
+                 ("You must fork the community index to your GitHub account"
                & ASCII.LF & "Please visit "
                & TTY.URL (Tail (Index.Community_Repo, '+'))
-               & " and fork the repository.");
-         else
-            Put_Success ("User has forked the community repository");
-         end if;
-
-         --  The repo must contain the base branch, or otherwise GitHub
-         --  redirects to the main repository page with an error banner on top.
-
-         if not GitHub.Branch_Exists (User   => Login,
-                                      Repo   => Index.Community_Repo_Name,
-                                      Branch => Index.Community_Branch)
-         then
-            Raise_Checked_Error
-              ("Your index fork is missing the current base branch ("
-               & TTY.Emph (Index.Community_Branch) & ")"
-               & " for pull requests to the community repository" & ASCII.LF
-               & "Please synchronize this branch and try again" & ASCII.LF
-               & "Your fork URL is: "
-               & TTY.URL (Index.Community_Host
-                 & "/" & Login & "/" & Index.Community_Repo_Name));
-         else
-            Put_Success ("User's fork contains base branch: "
-                         & TTY.Emph (Index.Community_Branch));
+               & " if you want to fork manually.");
+            end if;
          end if;
       end;
    end Verify_Github;
@@ -1058,7 +1040,7 @@ package body Alire.Publish is
                                Revision : String   := "HEAD";
                                Options  : All_Options := New_Options)
    is
-      Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
+      Root : Roots.Optional.Root   := Roots.Optional.Search_Root (Path);
       Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
 
       Subdir : Unbounded_Relative_Path;
@@ -1112,7 +1094,6 @@ package body Alire.Publish is
                         then Ada.Directories.Full_Name (Path)
                         else Ada.Directories.Full_Name (Root.Value.Path));
       begin
-
          if not Git.Is_Repository (Root_Path) then
             Git_Error ("no git repository found", Root_Path);
          end if;

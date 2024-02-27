@@ -316,6 +316,10 @@ static, i.e. they cannot depend on the context.
    PATH.append = "${DISTRIB_ROOT}/usr/bin"
    ```
 
+   Path fragments in this table must use portable format, that is, '/' for path
+   separation. Alire will take care of using the native separator when setting
+   these variables.
+
    Predefined variables are provided by Alire and will be replaced in the
    value:
 
@@ -324,6 +328,9 @@ static, i.e. they cannot depend on the context.
      distribution. On UNIX systems it will be `/`, on Windows `msys2` it will
      be the `msys2` installation directory (e.g.
      `C:\Users\user_name\.cache\alire\msys2`).
+
+   The escaping `"\$"` can be used to prevent the expansion of a
+   dollar-bracketed expression.
 
    Environment entries can use dynamic expressions:
 
@@ -455,6 +462,12 @@ static, i.e. they cannot depend on the context.
         several crates from the same repository (sometimes referred to as a
         *monorepo*).
 
+      - `binary`: optional (defauts to false) boolean used to design the origin
+        as binary. Binary origins are not compiled and can use dynamic
+        expressions to narrow down the platform to which they apply. An origin
+        using a dynamic expression is implicitly tagged as binary; see the
+        example below.
+
    Examples of origin tables:
 
    ```toml
@@ -477,6 +490,13 @@ static, i.e. they cannot depend on the context.
    url = "git+https://github.com/example-user/example-project"
    commit = "ec8b267bb8b777c6887059059924d823e9443439"
    subdir = "examples"
+   ```
+
+   ```toml
+   # A binary origin denoting a compiler
+   [origin."case(os)".linux."case(host-arch)".x86-64]
+   url = "https://github.com/alire-project/GNAT-FSF-builds/releases/download/gnat-12.1.0-1/gnat-x86_64-linux-12.1.0-1.tar.gz"
+   hashes = ["sha256:df1f36b306359d528799b1de8629a793523347a90c9d4b72efd23c62a7279555"]
    ```
 
  - `available`: optional dynamic boolean expression.  If it evaluates to

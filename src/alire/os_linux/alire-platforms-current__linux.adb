@@ -24,7 +24,7 @@ package body Alire.Platforms.Current is
          Trace.Debug ("Distribution identity file not found: "
                       & OS_Identity_File);
          Distro_Cached := True;
-         Cached_Distro := Distro_Unknown;
+         Cached_Distro := Distribution_Unknown;
          return Cached_Distro;
       else
          declare
@@ -79,7 +79,7 @@ package body Alire.Platforms.Current is
                   end;
                end loop;
 
-               return Distro_Unknown;
+               return Distribution_Unknown;
 
             end Get_Os_Release_Value_For_Key;
 
@@ -89,7 +89,7 @@ package body Alire.Platforms.Current is
               Get_Os_Release_Value_For_Key (Key => "id");
 
             --  If no supported distribution found, fallback to id_like key
-            if Cached_Distro = Distro_Unknown then
+            if Cached_Distro = Distribution_Unknown then
                Trace.Debug
                  ("Unknown distro for key 'id', falling back to 'id_like'");
                Cached_Distro :=
@@ -97,7 +97,7 @@ package body Alire.Platforms.Current is
             end if;
 
             --  Still an unsupported distribution ?
-            if Cached_Distro = Distro_Unknown then
+            if Cached_Distro = Distribution_Unknown then
                Trace.Debug ("Found unsupported distro: " & Release (1));
             end if;
 
@@ -109,7 +109,7 @@ package body Alire.Platforms.Current is
       when E : Checked_Error =>
          Trace.Debug ("Unable to detect distribution:");
          Log_Exception (E);
-         return Distro_Unknown;
+         return Distribution_Unknown;
    end Detected_Distribution;
 
    -----------------------
@@ -132,5 +132,11 @@ package body Alire.Platforms.Current is
 
    function Operating_System return Alire.Platforms.Operating_Systems
    is (Alire.Platforms.Linux);
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize is null;
 
 end Alire.Platforms.Current;

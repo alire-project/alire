@@ -6,6 +6,23 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### New switch `alr build --stop-after=<build stage>`
+
+PR [#1573](https://github.com/alire-project/alire/pull/1573)
+
+From `alr help build`:
+
+**Build stages**
+
+   Instead of always doing a full build, the process can be stopped early using `--stop-after=<stage>`, where `<stage>` is one of:
+
+   * sync: sync pristine sources to build location
+   * generation: generate configuration-dependent files
+   * post-fetch: running of post-fetch actions
+   * pre-build: running of pre-build actions
+   * build: actual building of sources
+   * post-build: running of post-build actions
+
 ### Enable shared dependencies by default
 
 PR [#1449](https://github.com/alire-project/alire/pull/1449)

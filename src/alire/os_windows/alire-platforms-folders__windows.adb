@@ -17,7 +17,9 @@ package body Alire.Platforms.Folders is
    -- Cache --
    -----------
 
-   function Cache return Absolute_Path is (Home / ".cache" / "alire");
+   function Cache return Absolute_Path
+   is (OS_Lib.Getenv ("LocalAppData", Home / ".local" / "share")
+       / "alire");
 
    ------------
    -- Config --

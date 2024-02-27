@@ -1,6 +1,8 @@
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+with Ada.Finalization;
 
 with Alire.Selftest;
+with Alire.Utils;
 
 package body Alr.Commands.Dev is
 
@@ -23,6 +25,28 @@ package body Alr.Commands.Dev is
       --  When compiled with -gnatW8, the following should produce valid UTF-8
       Trace.Always (Encode ("ⓘ✓"));
    end Print_UTF_8_Sequence;
+
+   -----------------------------
+   -- Raise_From_Finalization --
+   -----------------------------
+
+   procedure Raise_From_Finalization is
+      type Ctrl is new Ada.Finalization.Controlled with null record;
+
+      overriding
+      procedure Finalize (This : in out Ctrl) is
+      begin
+         raise Program_Error with "Raising forcibly from finalization";
+      exception
+         when E : others =>
+            Alire.Utils.Finalize_Exception (E);
+      end Finalize;
+
+      Test : Ctrl;
+      pragma Unreferenced (Test);
+   begin
+      null;
+   end Raise_From_Finalization;
 
    -------------
    -- Execute --
@@ -47,6 +71,10 @@ package body Alr.Commands.Dev is
 
       if Cmd.Raise_Except then
          raise Program_Error with "Raising forcibly";
+      end if;
+
+      if Cmd.Raise_Final then
+         Raise_From_Finalization;
       end if;
 
       if Cmd.Self_Test then
@@ -95,6 +123,11 @@ package body Alr.Commands.Dev is
                      Cmd.Raise_Except'Access,
                      "", "--raise",
                      "Raise an exception");
+
+      Define_Switch (Config,
+                     Cmd.Raise_Final'Access,
+                     "", "--raise-finalization",
+                     "Raise an exception from a finalization procedure");
 
       Define_Switch (Config,
                      Cmd.Self_Test'Access,

@@ -1,6 +1,6 @@
+with Ada.Directories;
 with Ada.Unchecked_Deallocation;
 
-with Alire.Builds;
 with Alire.Conditional;
 with Alire.Dependencies.Containers;
 with Alire.Environment.Loading;
@@ -32,13 +32,33 @@ package body Alire.Roots is
 
    use type UString;
 
+   ----------------
+   -- Stop_Build --
+   ----------------
+
+   function Stop_Build (Wanted, Actual : Builds.Stop_Points) return Boolean
+   is
+     use type Builds.Stop_Points;
+   begin
+      if Wanted <= Actual then
+         Trace.Debug ("Stopping build as requested at stage: " & Wanted'Image);
+         return True;
+      else
+         return False;
+      end if;
+   end Stop_Build;
+
    -------------------
    -- Build_Prepare --
    -------------------
 
    procedure Build_Prepare (This           : in out Root;
                             Saved_Profiles : Boolean;
-                            Force_Regen    : Boolean) is
+                            Force_Regen    : Boolean;
+                            Stop_After     : Builds.Stop_Points :=
+                              Builds.Stop_Points'Last)
+   is
+      use all type Builds.Stop_Points;
    begin
       --  Check whether we should override configuration with the last one used
       --  and stored on disk. Since the first time the one from disk will be be
@@ -67,6 +87,10 @@ package body Alire.Roots is
          --  Changes in configuration may require new build dirs.
       end if;
 
+      if Stop_Build (Stop_After, Actual => Sync) then
+         return;
+      end if;
+
       --  Ensure configurations are in place and up-to-date
 
       This.Generate_Configuration (Full => Force or else Force_Regen);
@@ -82,10 +106,14 @@ package body Alire.Roots is
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
                    Build_All_Deps   : Boolean := False;
-                   Saved_Profiles   : Boolean := True)
+                   Saved_Profiles   : Boolean := True;
+                   Stop_After       : Builds.Stop_Points :=
+                     Builds.Stop_Points'Last)
                    return Boolean
    is
       Build_Failed : exception;
+
+      use all type Builds.Stop_Points;
 
       --------------------------
       -- Build_Single_Release --
@@ -192,18 +220,29 @@ package body Alire.Roots is
             end if;
 
             --  Run post-fetch, it will be skipped if already ran
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
                Properties.Actions.Post_Fetch);
 
+            if Stop_Build (Stop_After, Actual => Post_Fetch) then
+               return;
+            end if;
+
             --  Pre-build must run always
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
                Properties.Actions.Pre_Build);
 
+            if Stop_Build (Stop_After, Actual => Pre_Build) then
+               return;
+            end if;
+
             --  Actual build
+
             if Release.Origin.Requires_Build then
                Call_Gprbuild (Release);
             else
@@ -212,7 +251,12 @@ package body Alire.Roots is
                   & ": release has no sources.", Detail);
             end if;
 
+            if Stop_Build (Stop_After, Actual => Build) then
+               return;
+            end if;
+
             --  Post-build must run always
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
@@ -223,9 +267,13 @@ package body Alire.Roots is
       end Build_Single_Release;
 
    begin
-
       This.Build_Prepare (Saved_Profiles => Saved_Profiles,
-                          Force_Regen    => False);
+                          Force_Regen    => False,
+                          Stop_After     => stop_after);
+
+      if Stop_Build (Stop_After, Actual => Generation) then
+         return True;
+      end if;
 
       This.Export_Build_Environment;
 
@@ -883,6 +931,11 @@ package body Alire.Roots is
         Containers.Crate_Name_Sets.Empty_Set)
    is
 
+      --  Pins may be stored with relative paths so we need to ensure being at
+      --  the root of the workspace:
+      CD : Directories.Guard (Directories.Enter (Path (This)))
+        with Unreferenced;
+
       Top_Root   : Root renames This;
       Pins_Dir   : constant Any_Path   := This.Pins_Dir;
       Linked     : Containers.Crate_Name_Sets.Set;
@@ -991,7 +1044,7 @@ package body Alire.Roots is
             declare
                use Containers.Crate_Name_Sets;
                use Semver.Extended;
-               Target : constant Optional.Root :=
+               Target : Optional.Root :=
                           Optional.Detect_Root (Pin.Path);
             begin
 
@@ -1133,7 +1186,11 @@ package body Alire.Roots is
    ---------------
 
    function Load_Root (Path : Any_Path) return Root
-   is (Roots.Optional.Detect_Root (Path).Value);
+   is
+      Optional_Root : Optional.Root := Optional.Detect_Root (Path);
+   begin
+      return Optional_Root.Value;
+   end Load_Root;
 
    ------------------------------
    -- Export_Build_Environment --
@@ -1181,7 +1238,7 @@ package body Alire.Roots is
          --  Try to detect a root in this folder
 
          declare
-            Opt : constant Optional.Root :=
+            Opt : Optional.Root :=
                     Optional.Detect_Root (Full_Name (Item));
          begin
             if Opt.Is_Valid then
@@ -1809,6 +1866,11 @@ package body Alire.Roots is
       Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set)
    is
+      --  Pins may be stored with relative paths so we need to ensure being at
+      --  the root of the workspace:
+      CD : Directories.Guard (Directories.Enter (Path (This)))
+        with Unreferenced;
+
       Old : constant Solutions.Solution :=
               (if This.Has_Lockfile
                then This.Solution
@@ -1838,7 +1900,7 @@ package body Alire.Roots is
       begin
          --  Early exit when there are no changes
 
-         if not Alire.Force and not Diff.Contains_Changes then
+         if not Alire.Force and then not Diff.Contains_Changes then
             if not Needed.Is_Complete then
                Trace.Warning
                  ("There are missing dependencies"
@@ -1849,27 +1911,31 @@ package body Alire.Roots is
             --  In case manual changes in manifest do not modify the
             --  solution.
 
-            if not Silent then
+            if not Silent and then not Diff.Contains_Changes then
                Trace.Info ("Nothing to update.");
             end if;
 
-         else
+         else -- Forced or there are changes
 
             --  Show changes and optionally ask user to apply them
 
-            if not Interact then
-               declare
-                  Level : constant Trace.Levels :=
-                            (if Silent then Debug else Info);
-               begin
-                  Trace.Log
-                    ("Dependencies automatically updated as follows:",
-                     Level);
-                  Diff.Print (Level => Level);
-               end;
-            elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
-               Trace.Detail ("Update abandoned.");
-               return;
+            if Diff.Contains_Changes then
+               if not Interact then
+                  declare
+                     Level : constant Trace.Levels :=
+                               (if Silent then Debug else Info);
+                  begin
+                     Trace.Log
+                       ("Dependencies automatically updated as follows:",
+                        Level);
+                     Diff.Print (Level => Level);
+                  end;
+               elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
+                  Trace.Detail ("Update abandoned.");
+                  return;
+               end if;
+            elsif not Silent then
+               Trace.Info ("Nothing to update.");
             end if;
 
          end if;
@@ -2001,6 +2067,9 @@ package body Alire.Roots is
         (Crate_Configuration.Global_Config, Global_Config_Access);
    begin
       Free (This.Configuration);
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
 end Alire.Roots;

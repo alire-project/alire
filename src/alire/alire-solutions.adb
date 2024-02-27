@@ -155,7 +155,7 @@ package body Alire.Solutions is
    -- Hints --
    -----------
 
-   function Hints (This : Solution) return Dependency_Map
+   function Hints (This : Solution) return State_Map
    is (This.Dependencies_That (States.Is_Hinted'Access));
 
    ------------------
@@ -176,14 +176,14 @@ package body Alire.Solutions is
    -- Links --
    -----------
 
-   function Links (This : Solution) return Dependency_Map
+   function Links (This : Solution) return State_Map
    is (This.Dependencies_That (States.Is_Linked'Access));
 
    ------------
    -- Misses --
    ------------
 
-   function Misses (This : Solution) return Dependency_Map
+   function Misses (This : Solution) return State_Map
    is (This.Dependencies_That (States.Is_Missing'Access));
 
    -------------
@@ -323,13 +323,13 @@ package body Alire.Solutions is
    function Dependencies_That
      (This  : Solution;
       Check : not null access function (Dep : Dependency_State) return Boolean)
-      return Dependency_Map
+      return State_Map
    is
    begin
-      return Map : Dependency_Map do
+      return Map : State_Map do
          for Dep of This.Dependencies loop
             if Check (Dep) then
-               Map.Insert (Dep.Crate, Dep.As_Dependency);
+               Map.Insert (Dep.Crate, Dep);
             end if;
          end loop;
       end return;
@@ -746,12 +746,15 @@ package body Alire.Solutions is
          return;
       end if;
 
-      --  Print all releases first, followed by the rest of dependencies
+            --  Print all fulfilled releases first. We include in this
+            --  section linked releases, even those that do not have an Alire
+            --  manifest (raw GPR projects), since those count as a buildable
+            --  dependency.
 
-      if not This.Releases.Is_Empty then
+      if not This.Dependencies_That (States.Is_Fulfilled'Access).Is_Empty then
          Trace.Log (Prefix & "Dependencies (solution):", Level);
 
-         for Dep of This.Dependencies loop
+         for Dep of This.Dependencies_That (States.Is_Fulfilled'Access) loop
             if Dep.Has_Release then
                Trace.Log
                  (Prefix & "   "
@@ -778,54 +781,49 @@ package body Alire.Solutions is
                           & ")" -- origin completed
                      else ""),   -- no details
                   Level);
-            end if;
-         end loop;
-      end if;
-
-      --  Show other dependencies with their status and hints
-
-      --  TODO: show these in line with the previous ones, as most of the info
-      --  is common. Just mark the true external (missing ones) better, see
-      --  #646 and #685. Now, pins without a release are shown here too,
-      --  although they're properly resolved.
-
-      if (for some Dep of This.Dependencies => not Dep.Has_Release) then
-         Trace.Log (Prefix & "Dependencies (external):", Level);
-         for Dep of This.Dependencies loop
-            if not This.State (Dep.Crate).Has_Release
-            then
+            elsif Dep.Is_Linked then
                Trace.Log
                  (Prefix & "   "
                   & Dep.TTY_Image
-                  & (if Dep.Is_Pinned or else Dep.Is_Linked
-                    then TTY.Emph (" (pinned)")
-                    else "")
-                  & (if Detailed and then Dep.Is_Linked
-                     then " (origin: "
-                         & Dep.Link.Relative_Path
-                         & (if Dep.Link.Is_Remote
-                            then " from "
-                                 & Dep.Link.TTY_URL_With_Reference
-                            else "") -- no remote
-                         & ")"  -- origin completed
-                     else ""),  -- no details
+                  & TTY.Emph (" (pinned)"),
                   Level);
+            else
+               Report_Program_Error;
+               --  This should be unreachable, as dependencies in this block
+               --  should either have a release or a link.
+            end if; -- has release
+         end loop;
+      end if;
 
-               --  Look for hints. If we are relying on workspace information
-               --  the index may not be loaded, or have changed, so we need to
-               --  ensure the crate is indexed.
+      --  Show unfulfilled (missing) dependencies with their status and hints
 
-               if Index.Exists (Dep.Crate) then
-                  for Hint of
-                    Alire.Index.Crate (Dep.Crate)
-                    .Externals.Hints
-                      (Name => Dep.Crate,
-                       Env  => Env)
-                  loop
-                     Trace.Log (Prefix & TTY.Emph ("      Hint: ") & Hint,
-                                Level);
-                  end loop;
-               end if;
+      if not This.Dependencies_That (States.Is_Unfulfilled'Access).Is_Empty
+      then
+         Trace.Log
+           (Prefix & "Dependencies (" & TTY.Error ("missing") & "):", Level);
+         for Dep of This.Dependencies_That (States.Is_Unfulfilled'Access) loop
+            Trace.Log
+              (Prefix & "   "
+               & Dep.TTY_Image
+               & (if Dep.Is_Pinned
+                 then TTY.Emph (" (pinned)")
+                 else ""),  -- no details
+               Level);
+
+            --  Look for hints. If we are relying on workspace information
+            --  the index may not be loaded, or have changed, so we need to
+            --  ensure the crate is indexed.
+
+            if Index.Exists (Dep.Crate) then
+               for Hint of
+                 Alire.Index.Crate (Dep.Crate)
+                 .Externals.Hints
+                   (Name => Dep.Crate,
+                    Env  => Env)
+               loop
+                  Trace.Log (Prefix & TTY.Emph ("      Hint: ") & Hint,
+                             Level);
+               end loop;
             end if;
          end loop;
       end if;
@@ -901,7 +899,7 @@ package body Alire.Solutions is
             & "are unavailable within Alire:");
 
          for Dep of This.Hints loop
-            Trace.Warning ("   " & Dep.Image);
+            Trace.Warning ("   " & Dep.As_Dependency.Image);
 
             if Index.All_Crates.Contains (Dep.Crate) then
                for Hint of Index.Crate (Dep.Crate)

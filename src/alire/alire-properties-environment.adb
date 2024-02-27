@@ -71,6 +71,24 @@ package body Alire.Properties.Environment is
       use type Conditional.Properties;
       use TOML;
       Env : TOML_Value;
+
+      ----------------
+      -- Path_Check --
+      ----------------
+
+      procedure Path_Check (Var, S : String) is
+      begin
+         --  We expect something resembling a portable path, but we admit "\$"
+         --  as an escape sequence.
+         for I in S'Range loop
+            if S (I) = '\' and then (I = S'Last or else S (I + 1) /= '$') then
+               Raise_Checked_Error
+                 (Var & ": forbidden '\' character in environment path; "
+                  & "use '/' instead");
+            end if;
+         end loop;
+      end Path_Check;
+
    begin
       if From.Unwrap.Kind /= TOML_Table then
          From.Checked_Error
@@ -87,7 +105,7 @@ package body Alire.Properties.Environment is
          for Name of Env.Keys loop
             declare
                Var  : Variable;   -- The env. var. being parsed
-               Val  : TOML_Value; -- The env. var. value
+               Val  : TOML_Value; -- The env. var. action. value
             begin
                Var.Name := Name;
 
@@ -109,8 +127,10 @@ package body Alire.Properties.Environment is
                           Actions_Suggestion (Action_Image));
                end;
 
-               --  Value (already type checked in previous pop)
+               --  We consider values as possibly containing paths, so we check
+               --  that path separators are portable
 
+               Path_Check (+Name, Val.As_String);
                Var.Value := +Val.As_String;
 
                --  Pop entry to avoid upper "unexpected key" errors

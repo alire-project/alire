@@ -43,9 +43,10 @@ with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
 
+with Alr.Commands.Topics.Aliases;
 with Alr.Commands.Topics.Naming_Convention;
 with Alr.Commands.Topics.Toolchains;
-with Alr.Commands.Topics.Aliases;
+with Alr.Commands.Topics.Upgrading_Alr;
 
 with GNAT.OS_Lib;
 
@@ -314,9 +315,11 @@ package body Alr.Commands is
       end if;
 
       --  Unless the command is precisely to configure the toolchain, ask the
-      --  user for its preference at this time.
+      --  user for its preference at this time. We also don't ask during `alr
+      --  printenv`, whose output is likely being redirected.
 
       if Cmd not in Commands.Toolchain.Command'Class and then
+        Cmd not in Commands.Printenv.Command'Class and then
         Alire.Toolchains.Assistant_Enabled
       then
          Alire.Toolchains.Assistant (Conf.Global, First_Run => True);
@@ -515,6 +518,26 @@ package body Alr.Commands is
 
       begin
 
+         --  Once we know the user is not trying to configure, run the
+         --  platform-specific initialization (which may rely on such config).
+
+         begin
+            if Sub_Cmd.What_Command /= Config.Command_Name
+            then
+               Alire.Platforms.Current.Initialize;
+               Trace.Debug ("Platform-specific initialization done.");
+            else
+               Trace.Debug
+                 ("Platform-specific initialization skipped (alr config).");
+            end if;
+         exception
+            when Sub_Cmd.Error_No_Command =>
+               Trace.Debug
+                 ("Platform-specific initialization skipped (no command).");
+               --  If the user is running plain `alr` or `alr --version`, it's
+               --  likely not the time to interrup with an msys2 installation.
+         end;
+
          Set_Builtin_Aliases;
 
          Sub_Cmd.Load_Aliases (Alire.Config.DB.all);
@@ -589,7 +612,13 @@ package body Alr.Commands is
          Cmd.Requires_Workspace;
       end if;
 
-      return Cmd.Optional_Root.Value;
+      return R : constant Alire.Roots.Optional.Reference :=
+        (Ptr => Cmd.Optional_Root.Value.Ptr.all'Unrestricted_Access);
+      --  Workaround for bug (?) in GNAT 11 about dangling pointers. It should
+      --  simply be:
+      --  return Cmd.Optional_Root.Value;
+      --  Also, the 'Unrestricted is needed by GNAT CE 2020, it can be simply
+      --  'Unchecked in later versions.
    end Root;
 
    ---------
@@ -660,8 +689,9 @@ begin
    Sub_Cmd.Register ("Testing", new Test.Command);
 
    -- Help topics --
+   Sub_Cmd.Register (new Topics.Aliases.Topic);
    Sub_Cmd.Register (new Topics.Naming_Convention.Topic);
    Sub_Cmd.Register (new Topics.Toolchains.Topic);
-   Sub_Cmd.Register (new Topics.Aliases.Topic);
+   Sub_Cmd.Register (new Topics.Upgrading_Alr.Topic);
 
 end Alr.Commands;

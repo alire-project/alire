@@ -17,6 +17,10 @@ package Alire.Environment with Preelaborate is
    Testsuite : constant String := "ALR_TESTSUITE";
    --  If defined, we are running under the testsuite harness
 
+   Testsuite_Allow : constant String := "ALR_TESTSUITE_ALLOW";
+   --  If defined, we want to allow operations normally disabled forbidden
+   --  during testsuite runs, like creating a PR in a public server.
+
    Traceback : constant String := "ALR_TRACEBACK_ENABLED";
    --  If set to True/1, dump unexpected exceptions to console (same as `-d`)
 

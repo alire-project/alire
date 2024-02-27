@@ -27,7 +27,7 @@ minirest = "~0.3"
 optional = "~0.1"
 semantic_versioning = "^3.0"
 simple_logging = "^2.0"
-si_units = "~0.2"
+si_units = "~0.2.2"
 stopwatch = "~0.1"
 toml_slicer = "~0.1"
 uri_ada = "^2.0"
@@ -47,13 +47,14 @@ windows = { ALIRE_OS = "windows" }
 
 # Some dependencies require precise versions during the development cycle:
 [[pins]]
-aaa = { url = "https://github.com/mosteo/aaa", commit = "ecc38772bd4a6b469b54c62363766ea1c0e9f912" }
+aaa = { url = "https://github.com/mosteo/aaa", commit = "dff61d2615cc6332fa6205267bae19b4d044b9da" }
 ada_toml = { url = "https://github.com/mosteo/ada-toml", commit = "da4e59c382ceb0de6733d571ecbab7ea4919b33d" }
-clic = { url = "https://github.com/alire-project/clic", commit = "de0330053584bad4dbb3dbd5e1ba939c4e8c6b55" }
-dirty_booleans = { url = "https://github.com/mosteo/dirty_booleans", branch = "main" }
-diskflags = { url = "https://github.com/mosteo/diskflags", branch = "main" }
+clic = { url = "https://github.com/alire-project/clic", commit = "56bbdc008e16996b6f76e443fd0165a240de1b13" }
+dirty_booleans = { url = "https://github.com/mosteo/dirty_booleans", branch = "alire" }
+diskflags = { url = "https://github.com/mosteo/diskflags", branch = "alire" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "4e663b87a028252e7e074f054f8f453661397166" }
 minirest = { url = "https://github.com/mosteo/minirest.git", commit = "9a9c660f9c6f27f5ef75417e7fac7061dff14d78" }
 semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning", commit = "2f23fc5f6b4855b836b599adf292fed9c0ed4144" }
 simple_logging = { url = "https://github.com/alire-project/simple_logging", commit = "3505dc645f3eef6799a486aae223d37e88cfc4d5" }
+si_units = { url = "https://github.com/mosteo/si_units", branch = "alire" }
 stopwatch = { url = "https://github.com/mosteo/stopwatch", commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9" }
