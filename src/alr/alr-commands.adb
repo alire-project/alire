@@ -518,6 +518,26 @@ package body Alr.Commands is
 
       begin
 
+         --  Once we know the user is not trying to configure, run the
+         --  platform-specific initialization (which may rely on such config).
+
+         begin
+            if Sub_Cmd.What_Command /= Config.Command_Name
+            then
+               Alire.Platforms.Current.Initialize;
+               Trace.Debug ("Platform-specific initialization done.");
+            else
+               Trace.Debug
+                 ("Platform-specific initialization skipped (alr config).");
+            end if;
+         exception
+            when Sub_Cmd.Error_No_Command =>
+               Trace.Debug
+                 ("Platform-specific initialization skipped (no command).");
+               --  If the user is running plain `alr` or `alr --version`, it's
+               --  likely not the time to interrup with an msys2 installation.
+         end;
+
          Set_Builtin_Aliases;
 
          Sub_Cmd.Load_Aliases (Alire.Config.DB.all);

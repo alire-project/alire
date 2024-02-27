@@ -98,8 +98,16 @@ package Alire.TOML_Adapters with Preelaborate is
    --  intended use is to process keys beginning with "case(" in the table.
 
    function Pop_Single_Table (Queue : Key_Queue;
-                              Value : out TOML.TOML_Value;
-                              Kind  : TOML.Any_Value_Kind) return String;
+                              Value : out TOML.TOML_Value)
+                              return String;
+   --  For constructions like [parent.child.grandchild], where only one child
+   --  is allowed. Child is returned as String, and Value is set to granchild.
+   --  Raises Checked_Error if Queue is not a table, or it doesn't contain
+   --  exactly one key.
+
+   function Pop_Single_Table (Queue  : Key_Queue;
+                              Value  : out TOML.TOML_Value;
+                              Kind   : TOML.Any_Value_Kind) return String;
    --  For constructions like [parent.child.grandchild], where we known that
    --  only one child can exist. Will raise Checked_Error if any of these
    --  happens: Queue is not a table; Queue doesn't have exactly one key; Value

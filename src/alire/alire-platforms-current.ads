@@ -31,6 +31,15 @@ package Alire.Platforms.Current is
 
    function Operating_System return Platforms.Operating_Systems;
 
+   ----------------------
+   --  Self configuration
+
+   procedure Initialize;
+   --  Do any initialization that is necessary for this platform. This is
+   --  called as soon as we know the user is not running `alr config`, as we
+   --  want to allow the opportunity to configure things without triggering
+   --  this initialization.
+
    --------------------------------
    -- Portable derived utilities --
    --------------------------------
@@ -45,7 +54,7 @@ package Alire.Platforms.Current is
    --  via config.
 
    function Distribution_Is_Known return Boolean is
-     (Platforms."/=" (Distribution, Platforms.Distro_Unknown));
+     (Platforms."/=" (Distribution, Platforms.Distribution_Unknown));
 
    function Host_Architecture return Platforms.Architectures;
 
@@ -67,7 +76,7 @@ private
 
    function Distribution return Platforms.Distributions
    is (if Disable_Distribution_Detection
-       then Platforms.Distro_Unknown
+       then Platforms.Distribution_Unknown
        else Detected_Distribution);
 
    -----------------------
@@ -103,7 +112,7 @@ private
    ---------------
 
    function Toolchain return Platforms.Toolchains is
-     (if Distribution /= Distro_Unknown
+     (if Distribution /= Distribution_Unknown
          and then
          Alire.OS_Lib.Subprocess.Locate_In_Path ("gprconfig") =
            "/usr/bin/gprconfig"

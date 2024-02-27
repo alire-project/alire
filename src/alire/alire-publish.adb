@@ -25,14 +25,13 @@ with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.User_Pins.Maps;
+with Alire.Utils.Tools;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
 with Alire.VFS;
 
 with CLIC.User_Input;
-
-with GNATCOLL.OS.Constants;
 
 with Semantic_Versioning;
 
@@ -632,12 +631,10 @@ package body Alire.Publish is
                                                With_Extension => False);
       Git        : constant VCSs.Git.VCS := VCSs.Git.Handler;
       Is_Repo    : constant Boolean := Git.Is_Repository (Base_Path (Context));
-      Archive    : constant Relative_Path :=
-                     Target_Dir
-                       / (Milestone
-                          & (if Is_Repo
-                             then ".tgz"
-                             else ".tbz2"));
+      Archive    : constant Relative_Path := Target_Dir / (Milestone & ".tgz");
+      --  We used to use tbz2 for locally tar'ed files, but that has an
+      --  implicit dependency on bzip2 that we are not managing yet, so for
+      --  now we err on the safe side of built-in tar gzip capabilities.
 
       -----------------
       -- Git_Archive --
@@ -670,14 +667,15 @@ package body Alire.Publish is
          OS_Lib.Subprocess.Checked_Spawn
            ("tar",
             Empty_Vector
-            & "cfj"
+            & "cfz"
             & Archive --  Destination file at alire/archives/crate-version.tbz2
 
             & String'("--exclude=./alire")
             --  Exclude top-level alire folder, before applying prefix
 
-            --  exclude .git and the like, with workaround for macOS bsd tar
-            & (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.MacOS
+            --  exclude .git and the like, with workaround for bsdtar used by
+            --  macOS and Windows without MSYS2
+            & (if Utils.Tools.Is_BSD_Tar
                then Empty_Vector
                     & "--exclude=./.git"
                     & "--exclude=./.hg"
@@ -1097,7 +1095,6 @@ package body Alire.Publish is
                         then Ada.Directories.Full_Name (Path)
                         else Ada.Directories.Full_Name (Root.Value.Path));
       begin
-
          if not Git.Is_Repository (Root_Path) then
             Git_Error ("no git repository found", Root_Path);
          end if;
