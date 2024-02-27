@@ -1,4 +1,6 @@
-with Alire.Config.Edit;
+--  Ensure config is loaded for some defaults below
+with Alire.Config.Edit.Early_Load;
+pragma Unreferenced (Alire.Config.Edit.Early_Load);
 
 package Alire.Config.Builtins.Windows is
 

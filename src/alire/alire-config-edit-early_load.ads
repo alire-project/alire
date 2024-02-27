@@ -1,4 +1,4 @@
-package Alire.Config.Edit.Early_Load is
+package Alire.Config.Edit.Early_Load with Elaborate_Body is
 
    procedure Load_Config;
    --  For internal use of Alire_Early_Elaboration, DO NOT CALL otherwise.
