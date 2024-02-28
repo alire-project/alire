@@ -685,7 +685,7 @@ package body Alire.Toolchains is
       end if;
 
       if Toolchains.Solutions.Is_In_Toolchain (Release) then
-         Recoverable_Error ("The release to be removed ("
+         Recoverable_User_Error ("The release to be removed ("
                             & Release.Milestone.TTY_Image & ") is part of the "
                             & "configured default toolchain.");
 

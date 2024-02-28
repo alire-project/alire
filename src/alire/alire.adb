@@ -276,12 +276,14 @@ package body Alire is
    -- Recoverable_Error --
    -----------------------
 
-   procedure Recoverable_Error (Msg : String; Recover : Boolean := Force) is
+   procedure Recoverable_User_Error (Msg     : String;
+                                     Recover : Boolean := Force)
+   is
       Info : constant String := " (This error can be overridden with "
                                 & TTY.Terminal ("--force") & ".)";
    begin
       if Msg'Length > 0 and then Msg (Msg'Last) /= '.' then
-         Recoverable_Error (Msg & ".", Recover);
+         Recoverable_User_Error (Msg & ".", Recover);
          return;
       end if;
 
@@ -290,7 +292,19 @@ package body Alire is
       else
          Raise_Checked_Error (Msg & Info);
       end if;
-   end Recoverable_Error;
+   end Recoverable_User_Error;
+
+   -------------------------------
+   -- Recoverable_Program_Error --
+   -------------------------------
+
+   procedure Recoverable_Program_Error (Explanation : String := "") is
+   begin
+      Errors.Program_Error (Explanation,
+                            Recoverable  => True,
+                            Stack_Offset => 1);
+      --  Offset is 1 because this procedure adds its own stack frame
+   end Recoverable_Program_Error;
 
    --------------
    -- New_Line --

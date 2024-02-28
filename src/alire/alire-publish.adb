@@ -244,7 +244,7 @@ package body Alire.Publish is
 
       Index_On_Disk.Loading.Load_All (Strict => True).Assert;
       if Index.Exists (Release.Name, Release.Version) then
-         Recoverable_Error
+         Recoverable_User_Error
             ("Target release " & Release.Milestone.TTY_Image
              & " already exist in a loaded index");
       end if;
@@ -565,7 +565,7 @@ package body Alire.Publish is
               and then
                 OS_Lib.Getenv (Environment.Testsuite_Allow, "unset") = "unset"
             then
-               raise Program_Error
+               raise Constraint_Error
                  with "Attempting to go online to create a PR during tests";
             end if;
 
@@ -828,7 +828,7 @@ package body Alire.Publish is
          --  User must exist
 
          if not GitHub.User_Exists (Login) then
-            Recoverable_Error
+            Recoverable_User_Error
               ("Your GitHub login does not seem to exist: "
                & TTY.Emph (Login));
          end if;
@@ -839,7 +839,7 @@ package body Alire.Publish is
             Put_Success ("User has forked the community repository");
          else
             if not Submit.Ask_To_Fork (Context) then
-               Recoverable_Error
+               Recoverable_User_Error
                  ("You must fork the community index to your GitHub account"
                & ASCII.LF & "Please visit "
                & TTY.URL (Tail (Index.Community_Repo, '+'))
@@ -869,7 +869,7 @@ package body Alire.Publish is
 
          --  Otherwise we assume this is a local path
 
-         Recoverable_Error
+         Recoverable_User_Error
            ("The origin must be a definitive remote location, but is " & URL);
          --  For testing we may want to allow local URLs, or may be for
          --  internal use with network drives? So allow forcing it.

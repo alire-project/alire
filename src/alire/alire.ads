@@ -235,17 +235,17 @@ package Alire with Preelaborate is
    --  message (Msg) and raise Checked_Error. There is no limitation on the
    --  length of Msg.
 
-   procedure Recoverable_Error (Msg : String; Recover : Boolean := Force);
-   --  When Recover, emit a warning and return normally. When not Recover call
-   --  Raise_Checked_Error instead.
+   procedure Recoverable_User_Error (Msg : String; Recover : Boolean := Force);
+   --  A User_Error is an attempt to do something that we don't allow by
+   --  default, but that could make sense if you know what are doing in dubious
+   --  situations. When Recover, emit a warning and return normally. When not
+   --  Recover call Raise_Checked_Error instead.
 
-   procedure Report_Program_Error (Explanation : String  := "";
-                                   Survivable  : Boolean := True) is null;
-   --  For unexpected situations where normally a Program_Error would be
-   --  adecuate, but we do not want to bomb on the user because continuing is
-   --  acceptable. We log a stack trace, print a warning and continue, so
-   --  a motivated user can report an issue, but we don't needlessly raise. If
-   --  not Survivable, then do raise a Program_Error.
+   procedure Recoverable_Program_Error   (Explanation : String := "");
+   --  This, instead, is for situations that should never happen but that
+   --  are easy to detect and allow continuing, so instead of raising a
+   --  Program_Error deliberately, we give the same kind of feedback but
+   --  without raising.
 
    ---------------
    --  LOGGING  --

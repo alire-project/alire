@@ -233,7 +233,7 @@ package body Alr.Commands.Toolchain is
          --  Check for mixed-origin clashes
 
          if Origin_Status = Frozen and then Rel.Origin.Kind /= Origin_Kind then
-            Recoverable_Error
+            Recoverable_User_Error
               ("Currently configured " & Utils.TTY.Name (The_Other (Dep.Crate))
                & " has origin " & TTY.Emph (Origin_Kind'Image)
                & " but newly selected " & Utils.TTY.Name (Dep.Crate)

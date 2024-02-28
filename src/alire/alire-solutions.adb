@@ -788,7 +788,7 @@ package body Alire.Solutions is
                   & TTY.Emph (" (pinned)"),
                   Level);
             else
-               Report_Program_Error;
+               Recoverable_Program_Error;
                --  This should be unreachable, as dependencies in this block
                --  should either have a release or a link.
             end if; -- has release
@@ -1276,7 +1276,7 @@ package body Alire.Solutions is
       end loop;
 
       raise Program_Error with Errors.Set
-        ("No dependency in solution matches release "
+         ("No dependency in solution matches release "
          & Release.Milestone.TTY_Image);
    end State;
 
@@ -1540,8 +1540,8 @@ package body Alire.Solutions is
             --  that were marked as safe to visit in the 1st step of the round.
 
             if To_Remove.Is_Empty then
-               raise Program_Error
-                 with "No release visited in round" & Round'Img;
+               raise Program_Error with
+                 "No release visited in round" & Round'Img;
             else
                for Dep of To_Remove loop
                   Visit (Dep);

@@ -327,7 +327,7 @@ package body Alire.Install is
 
                --  A different version exists, here we fail unless forced
 
-               Recoverable_Error
+               Recoverable_User_Error
                  (Errors.New_Wrapper
                     ("Release " & Rel.Milestone.TTY_Image
                      & " has another version already installed: ")

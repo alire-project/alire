@@ -34,6 +34,7 @@ private
    type Command is new Commands.Command with record
       Custom       : aliased Boolean := False; -- Custom code to run instead
       Filtering    : aliased Boolean := False; -- Runs debug scope filtering
+      Error        : aliased Boolean := False; -- Create a recoverable error
       Raise_Except : aliased Boolean := False;
       Raise_Final  : aliased Boolean := False;
       Self_Test    : aliased Boolean := False;
