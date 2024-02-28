@@ -9,4 +9,6 @@ package body Alire.Config.Edit.Early_Load is
       Alire.Config.Edit.Load_Config;
    end Load_Config;
 
+begin
+   Load_Config;
 end Alire.Config.Edit.Early_Load;

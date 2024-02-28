@@ -47,6 +47,17 @@ def prepare_env(config_dir, env):
     #  We pass config location explicitly in the following calls since env is
     #  not yet applied (it's just a dict to be passed later to subprocess)
 
+    if platform.system() == "Windows":
+        # Disable msys inadvertent installation
+        run_alr("-c", config_dir, "config", "--global",
+                "--set", "msys2.do_not_install", "true")
+
+        # And configure the one set up in the environment so it is used by
+        # tests that need it.
+        run_alr("-c", config_dir, "config", "--global",
+                "--set", "msys2.install_dir",
+                os.path.join(os.environ.get("LocalAppData"), "alire", "msys64"))
+
     # Disable autoconfig of the community index, to prevent unintended use of
     # it in tests, besides the overload of fetching it
     run_alr("-c", config_dir, "config", "--global",
