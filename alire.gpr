@@ -8,6 +8,7 @@ with "dirty_booleans";
 with "diskflags";
 with "gnatcoll";
 with "minirest";
+with "ncdu";
 with "optional";
 with "semantic_versioning";
 with "simple_logging";

@@ -1,4 +1,5 @@
 with Alire.Builds;
+with Alire.Cache;
 with Alire.Settings.Edit;
 with Alire.Directories;
 with Alire.Index;
@@ -77,7 +78,7 @@ package body Alr.Commands.Version is
       Table.Append ("settings folder:")
         .Append (Alire.Settings.Edit.Path).New_Row;
       Table.Append ("cache folder:")
-        .Append (Alire.Settings.Edit.Cache_Path).New_Row;
+        .Append (Alire.Cache.Path).New_Row;
       Table.Append ("vault folder:").Append (Paths.Vault.Path).New_Row;
       Table.Append ("build folder:").Append (Build_Path).New_Row;
       Table.Append ("temp folder:")
