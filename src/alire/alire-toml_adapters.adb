@@ -110,12 +110,16 @@ package body Alire.TOML_Adapters is
    -- From --
    ----------
 
-   function From (Value   : TOML.TOML_Value;
-                  Context : String) return Key_Queue
+   function From (Value    : TOML.TOML_Value;
+                  Context  : String;
+                  Metadata : Loading.Metadata := Loading.No_Metadata)
+                  return Key_Queue
    is
    begin
       return This : constant Key_Queue :=
-        (Ada.Finalization.Limited_Controlled with Value => Value)
+        (Ada.Finalization.Limited_Controlled with
+           Value    => Value,
+           Metadata => Metadata)
       do
          Errors.Open (Context);
       end return;
@@ -125,11 +129,14 @@ package body Alire.TOML_Adapters is
    -- From --
    ----------
 
-   function From (Key     : String;
-                  Value   : TOML.TOML_Value;
-                  Context : String) return Key_Queue
+   function From (Key      : String;
+                  Value    : TOML.TOML_Value;
+                  Context  : String;
+                  Metadata : Loading.Metadata := Loading.No_Metadata)
+                  return Key_Queue
    is (From (Create_Table (Key, Value),
-             Context));
+             Context,
+             Metadata));
 
    -------------
    -- Descend --
@@ -138,7 +145,7 @@ package body Alire.TOML_Adapters is
    function Descend (Parent  : Key_Queue;
                      Value   : TOML.TOML_Value;
                      Context : String) return Key_Queue is
-     (From (Value, Context));
+     (From (Value, Context, Parent.Metadata));
 
    ------------------
    -- Merge_Tables --

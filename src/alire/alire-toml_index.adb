@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire.Config.Builtins;
 with Alire.Crates;
 with Alire.Directories;
+with Alire.Loading;
 with Alire.TOML_Adapters;
 
 with Alire.Hashes.SHA256_Impl; pragma Unreferenced (Alire.Hashes.SHA256_Impl);
@@ -35,6 +36,12 @@ package body Alire.TOML_Index is
    Strict : Boolean := False;
    --  Allow or not unknown values in enums. This isn't easily moved to an
    --  argument given the current design.
+
+   Loading_Index_Version : Semantic_Versioning.Version;
+   --  FIXME: The version of the index we are currently loading. We should
+   --  pass this around as a regular argument in here, but it will require
+   --  a non-trivial refactor. To keep in mind that **index loading cannot be
+   --  parallelized.**
 
    procedure Set_Error
      (Result            : out Load_Result;
@@ -101,7 +108,6 @@ package body Alire.TOML_Index is
       Filename : constant String := Dirs.Compose (Root, "index.toml");
       Value    : TOML.TOML_Value;
       Key      : constant String := "version";
-      Version  : Semantic_Versioning.Version;
       Suggest_Update : Boolean := False;
 
       use type Semantic_Versioning.Version;
@@ -162,8 +168,9 @@ package body Alire.TOML_Index is
                     & "only 'version' is expected");
       else
 
-         Version := Semantic_Versioning.Parse (Value.Get (Key).As_String,
-                                               Relaxed => False);
+         Loading_Index_Version :=
+           Semantic_Versioning.Parse (Value.Get (Key).As_String,
+                                      Relaxed => False);
 
          --  Check for a branch mismatch first
 
@@ -174,32 +181,34 @@ package body Alire.TOML_Index is
          --  Check that index version is the expected one, or give minimal
          --  advice if it does not match.
 
-         if Alire.Index.Valid_Versions.Contains (Version) and then
-           Version /= Alire.Index.Version and then
-           Warn_Of_Old_Compatible
+         if Alire.Index.Valid_Versions.Contains (Loading_Index_Version)
+           and then Loading_Index_Version /= Alire.Index.Version
+           and then Warn_Of_Old_Compatible
          then
             Put_Warning ("Index '" & TTY.Emph (Index.Name)
-                         & "' version (" & Version.Image
+                         & "' version (" & Loading_Index_Version.Image
                          & ") is older than the newest supported by alr ("
                          & Alire.Index.Version.Image & ")",
                          Disable_Config =>
                            Config.Builtins.Warning_Old_Index.Key);
             Suggest_Update := True;
-         elsif not Alire.Index.Valid_Versions.Contains (Version) then
+         elsif not Alire.Index.Valid_Versions.Contains (Loading_Index_Version)
+         then
 
             --  Index is either too old or too new
 
-            if Alire.Index.Version < Version then
+            if Alire.Index.Version < Loading_Index_Version then
                Set_Error (Result, Filename,
-                          "index version (" & Version.Image
+                          "index version (" & Loading_Index_Version.Image
                           & ") is newer than that expected by alr ("
                           & Alire.Index.Version.Image & ")."
                           & " You may have to update alr");
-            elsif Version < Semver.Parse (Alire.Index.Min_Compatible_Version)
+            elsif Loading_Index_Version < Semver.Parse
+                                           (Alire.Index.Min_Compatible_Version)
             then
                Set_Error
                  (Result, Filename,
-                  "index version (" & Version.Image
+                  "index version (" & Loading_Index_Version.Image
                   & ") is too old. The minimum compatible version is "
                   & Alire.Index.Min_Compatible_Version & ASCII.LF
                   & (if Index.Name = Alire.Index.Community_Name then
@@ -225,11 +234,11 @@ package body Alire.TOML_Index is
                & " changes to the community index.");
          end if;
 
-         if Alire.Index.Version /= Version then
+         if Alire.Index.Version /= Loading_Index_Version then
             Trace.Debug ("Expected index version: "
                          & Semantic_Versioning.Image (Alire.Index.Version));
             Trace.Debug ("But got index version: "
-                         & Semantic_Versioning.Image (Version));
+                         & Semantic_Versioning.Image (Loading_Index_Version));
          end if;
       end if;
 
@@ -501,14 +510,16 @@ package body Alire.TOML_Index is
               (TOML_Adapters.From
                    (Value,
                     Context =>
-                      "Loading externals from " & File_Name),
+                      "Loading externals from " & File_Name,
+                    Metadata => Loading.For_Index (Loading_Index_Version)),
                Strict));
       else
          Index_Release
            (File_Name, Releases.From_TOML
               (TOML_Adapters.From
                    (Value,
-                    Context => "Loading release from " & File_Name),
+                    Context  => "Loading release from " & File_Name,
+                    Metadata => Loading.For_Index (Loading_Index_Version)),
                Manifest.Index,
                Strict));
       end if;

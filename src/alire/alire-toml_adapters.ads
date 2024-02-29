@@ -3,6 +3,7 @@ private with Ada.Finalization;
 with AAA.Strings; use AAA.Strings;
 
 private with Alire.Errors;
+with Alire.Loading;
 
 with TOML; use all type TOML.Any_Value_Kind;
 
@@ -20,13 +21,18 @@ package Alire.TOML_Adapters with Preelaborate is
    --  Also encapsulates a context that can be used to pinpoint errors better.
    --  Note: all operations on this type use shallow copies!
 
-   function From (Key     : String;
-                  Value   : TOML.TOML_Value;
-                  Context : String) return Key_Queue;
+   function Metadata (This : Key_Queue) return Loading.Metadata;
+
+   function From (Key      : String;
+                  Value    : TOML.TOML_Value;
+                  Context  : String;
+                  Metadata : Loading.Metadata := Loading.No_Metadata)
+                  return Key_Queue;
    --  Convert a key/value pair into a wrapped table as Key_Queue.
 
-   function From (Value   : TOML.TOML_Value;
-                  Context : String)
+   function From (Value    : TOML.TOML_Value;
+                  Context  : String;
+                  Metadata : Loading.Metadata := Loading.No_Metadata)
                   return Key_Queue;
    --  Create a new queue wrapping a TOML value.
 
@@ -178,11 +184,19 @@ private
    use type UString; -- Allows comparisons between strings and unbounded
 
    type Key_Queue is new Ada.Finalization.Limited_Controlled with record
-      Value   : TOML.TOML_Value;
+      Value    : TOML.TOML_Value;
+      Metadata : Loading.Metadata;
    end record;
 
    overriding
    procedure Finalize (This : in out Key_Queue);
+
+   --------------
+   -- Metadata --
+   --------------
+
+   function Metadata (This : Key_Queue) return Loading.Metadata
+   is (This.Metadata);
 
    --------------
    -- Contains --
@@ -209,7 +223,7 @@ private
                      Value   : TOML.TOML_Value;
                      Context : String)
                      return Key_Queue is
-      (From (Key, Value, Context));
+      (From (Key, Value, Context, Parent.Metadata));
 
    -------------
    -- Failure --
