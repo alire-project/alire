@@ -2,7 +2,8 @@ package Alire.Version with Preelaborate is
 
    --  Remember to update Alire.Index branch if needed too
 
-   Current : constant String := "2.0-dev+beta2";
+   Current : constant String := "2.0-rc1";
+   --  2.0.0-rc1: release candidate for 2.0
    --  2.0.0-b1:  first public release on the 2.0 branch
    --  1.2.1:     build switches fix and other minor assorted fixes
    --  1.2.0:     rpm speed-up, silence propagation warning, early switch parse

@@ -1,10 +1,11 @@
 ## Checklist for releasing a new version
 
 1. [ ] Update version in `Alire.Version`.
+1. [ ] Update version in `alire.toml`.
 1. [ ] Create test release in own fork.
   - To verify builds succeed.
   - As the Windows build can rarely fail, this provides a backup .exe
-1. [ ] Create new index version branches if necessary.
+1. [ ] In repo `alire-index`: create new index version branches if necessary.
   - Edit index/index.toml to match.
 1. [ ] Ensure the index version is the default branch in the community repos:
   - alire-index
