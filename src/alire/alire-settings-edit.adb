@@ -242,18 +242,6 @@ package body Alire.Settings.Edit is
       end if;
    end Path;
 
-   ----------------
-   -- Cache_Path --
-   ----------------
-
-   function Cache_Path return Absolute_Path
-   is (if Builtins.Cache_Dir.Get /= "" then
-          Builtins.Cache_Dir.Get
-       elsif Path /= Default_Config_Path then
-          Path / Paths.Cache_Folder_Inside_Working_Folder
-       else
-          Platforms.Folders.Cache);
-
    --------------
    -- Set_Path --
    --------------

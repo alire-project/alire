@@ -1,11 +1,11 @@
 with AAA.Strings;
 
-with Alire.Settings.Builtins;
-with Alire.Settings.Edit;
+with Alire.Cache;
 with Alire.Directories;
 with Alire.Flags;
 with Alire.Paths.Vault;
 with Alire.Roots;
+with Alire.Settings.Builtins;
 
 with GNATCOLL.VFS;
 
@@ -83,7 +83,7 @@ package body Alire.Builds is
    ----------
 
    function Path return Absolute_Path
-   is (Settings.Edit.Cache_Path
+   is (Cache.Path
        / Paths.Build_Folder_Inside_Working_Folder);
 
    ----------
