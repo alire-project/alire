@@ -14,7 +14,7 @@
  "10.1" or "true". Extra type checking is used for built-in options (see below).
 
  Specific config options:
-                           
+
   - `--list` List configuration options
   - `--show-origin` Show origin of configuration values in `--list`
   - `--get` Print value of a configuration option
@@ -22,17 +22,17 @@
   - `--unset` Unset a configuration option
   - `--global` Set and Unset global configuration instead of the local one
   - `--builtins-doc` Print Markdown list of built-in configuration options
- 
+
  Examples:
 
  - `alr config --global --set my_option option_value`
-  
-    Will set a configuration option with the key `my_option` and the string 
+
+    Will set a configuration option with the key `my_option` and the string
     value `option_value` in the global configuration file.
 
  - `alr config --get my_option`
-  
-    Will print the value configuration option `my_option` if it is defined, 
+
+    Will print the value configuration option `my_option` if it is defined,
     otherwise the command fails.
 
 
@@ -62,6 +62,23 @@ The built-ins also have a short description to document their type and usage.
 
 ## Built-ins list
 
-Here is the list of `Alire` built-in configuration options. You can also get
-this from `alr` with `alr help config`.
+You can get the list of options recognized by `alr` with `alr help config`,
+including their default values and a short explanation of their effects.
 
+## Relocating your configuration
+
+By default, `alr` stores its global configuration at `<user
+home>/.config/alire`. You can use any other location by setting in the
+environment the variable `ALR_CONFIG=</absolute/path/to/config/folder>`, or by
+using the global `-c` switch: `alr -c </path/to/config> <command>`.
+
+Using a pristine default configuration can be useful to isolate the source of
+errors by ensuring that a misconfiguration is not at play.
+
+## Inspecting your configuration
+
+These commands may help you in identifying Alire configuration and environment:
+- `alr config --list` will show all configuration options in effect.
+- `alr version` will print many relevant bits of information about the current
+  `alr` environment.
+- `alr --version` will just print the version number and exit.
