@@ -1,3 +1,5 @@
+with Alire.Config.Checks;
+
 package Alire.Config.Builtins is
 
    subtype Builtin is Builtin_Option;
@@ -32,12 +34,24 @@ package Alire.Config.Builtins is
       & "location inside the global cache. When false, "
       & "dependencies are sandboxed in each workspace.");
 
+   --  DISTRIBUTION
+
    Distribution_Disable_Detection : constant Builtin := New_Builtin
      (Key  => "distribution.disable_detection",
       Def  => False,
       Help =>
         "If true, Alire will report an unknown distribution and will not"
-      & " attempt to use the system package manager.");
+      & " attempt to use the system package manager. Takes precedence over "
+      & " distribution.override.");
+
+   Distribution_Override          : constant Builtin := New_Builtin
+     (Key   => "distribution.override",
+      Kind  => Cfg_String,
+      Check => Checks.Valid_Distro'Access,
+      Def   => "",
+      Help  =>
+        "Distribution name to be used instead of autodetection. No effect if "
+      & "distribution.disable_detection is True.");
 
    --  EDITOR
 
