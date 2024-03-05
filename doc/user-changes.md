@@ -6,6 +6,19 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### Deprecation of `toolchain --install/--uninstall/--install-dir`
+
+PR [#1614](https://github.com/alire-project/alire/pull/1614)
+
+Toolchain installation for use by Alire is still possible using
+`alr toolchain --select`. For the installation of toolchains outside of Alire
+management, `alr get` covers the `alr toolchain --install --install-dir` use
+case, whereas `alr install` covers the case of installing a compiler to a user
+prefix containing several applications.
+
+Removal of managed toolchains can be done by simply removing their folders
+inside the toolchain cache (reported by `alr version`).
+
 ### Cache and toolchain storage location overridding
 
 PR [#1593](https://github.com/alire-project/alire/pull/1593)
