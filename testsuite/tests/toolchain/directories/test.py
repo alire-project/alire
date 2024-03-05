@@ -37,13 +37,8 @@ def check_content(crate):
 
 
 # First we test manual installation
-run_alr("toolchain", "--install", "gnat_native")
+run_alr("toolchain", "--select", "gnat_native")
 check_content("gnat_native")
-
-# Uninstall the compiler and verify absence
-run_alr("toolchain", "--uninstall", "gnat_native", quiet=False)
-paths = contents(cache_dir, "gnat_native")
-assert len(paths) == 0, "Unexpected contents: " + str(paths)
 
 # Require the external compiler and verify no trace appears in install folder
 # nor in local folder
