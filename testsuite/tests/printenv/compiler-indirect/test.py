@@ -17,7 +17,7 @@ from drivers.asserts import assert_eq, assert_match
 from drivers.helpers import dir_separator
 
 # Install a binary compiler for later use
-run_alr("toolchain", "--select", "gnat_native")
+run_alr("default-toolchain", "--select", "gnat_native")
 
 init_local_crate("another_crate")  # This enters the crate
 alr_with("gnat")  # Make it depend on gnat (in the original bug, the dependency

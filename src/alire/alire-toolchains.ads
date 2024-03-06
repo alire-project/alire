@@ -98,10 +98,10 @@ package Alire.Toolchains is
                 & Utils.TTY.Name ("gnat_native") & " or "
                 & Utils.TTY.Name ("gnat_riscv_elf") & ". ")
      .Append ("")
-     .Append ("Use " & TTY.Terminal ("alr toolchain --help") & " to obtain "
-              & "information about toolchain management. Alire can be "
-              & "configured to rely on a toolchain installed by the user in "
-              & "the environment, or to use one of the indexed toolchains "
+     .Append ("Use " & TTY.Terminal ("alr default-toolchain --help") &
+                " to obtain information about toolchain management. Alire can "
+              & "be configured to rely on a toolchain installed by the user "
+              & "in the environment, or to use one of the indexed toolchains "
               & "whenever possible.")
      .Append ("")
      .Append ("Some crates may override the default toolchain by specifying "

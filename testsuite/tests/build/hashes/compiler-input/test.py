@@ -23,7 +23,7 @@ def check_hash(signature: str) -> None:
 # explicit compiler is selected.
 
 # Disable compiler selection, so the external is used
-run_alr("toolchain", "--disable-assistant")
+run_alr("default-toolchain", "--disable-assistant")
 
 # Init a crate without explicit compiler dependency
 init_local_crate("xxx")
@@ -37,7 +37,7 @@ check_hash(f"version:gnat_external={external_compiler_version()}")
 # Next, check that selecting a compiler results in it being used
 
 # Select the default preferred compiler, in this index is gnat_native=8888
-run_alr("toolchain", "--select", "gnat_native", "gprbuild")
+run_alr("default-toolchain", "--select", "gnat_native", "gprbuild")
 # Clear the build cache so we are able to locate the new hash
 clear_builds_dir()
 builds.sync()

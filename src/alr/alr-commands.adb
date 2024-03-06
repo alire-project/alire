@@ -38,7 +38,7 @@ with Alr.Commands.Run;
 with Alr.Commands.Search;
 with Alr.Commands.Show;
 with Alr.Commands.Test;
-with Alr.Commands.Toolchain;
+with Alr.Commands.Default_Toolchain;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
@@ -318,7 +318,7 @@ package body Alr.Commands is
       --  user for its preference at this time. We also don't ask during `alr
       --  printenv`, whose output is likely being redirected.
 
-      if Cmd not in Commands.Toolchain.Command'Class and then
+      if Cmd not in Commands.Default_Toolchain.Command'Class and then
         Cmd not in Commands.Printenv.Command'Class and then
         Alire.Toolchains.Assistant_Enabled
       then
@@ -663,7 +663,7 @@ begin
    Sub_Cmd.Register ("General", new Sub_Cmd.Builtin_Help);
    Sub_Cmd.Register ("General", new Config.Command);
    Sub_Cmd.Register ("General", new Install.Command);
-   Sub_Cmd.Register ("General", new Toolchain.Command);
+   Sub_Cmd.Register ("General", new Default_Toolchain.Command);
    Sub_Cmd.Register ("General", new Version.Command);
 
    Sub_Cmd.Register ("Index", new Get.Command);

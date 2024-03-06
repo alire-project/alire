@@ -1,24 +1,19 @@
 
-with GNAT.Strings; use GNAT.Strings;
-
 with AAA.Table_IO;
 
 with Alire.Config.Edit;
 with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Errors;
-with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.Releases.Containers;
-with Alire.Solver;
 with Alire.Toolchains;
 with Alire.Utils; use Alire.Utils;
 with Alire.Utils.TTY;
 with Alire.Warnings;
+with Semantic_Versioning;
 
-with Semantic_Versioning.Extended;
-
-package body Alr.Commands.Toolchain is
+package body Alr.Commands.Default_Toolchain is
 
    package Name_Sets renames Alire.Containers.Crate_Name_Sets;
 
@@ -41,19 +36,6 @@ package body Alr.Commands.Toolchain is
 
       Define_Switch
         (Config,
-         Cmd.Install'Access,
-         Switch      => "-i",
-         Long_Switch => "--install",
-         Help        => "Install one or more toolchain component");
-
-      Define_Switch
-        (Config,
-         Cmd.Install_Dir'Access,
-         Long_Switch => "--install-dir=",
-         Help        => "Toolchain component(s) installation directory");
-
-      Define_Switch
-        (Config,
          Cmd.Local'Access,
          Switch      => "",
          Long_Switch => "--local",
@@ -65,13 +47,6 @@ package body Alr.Commands.Toolchain is
          Switch      => "",
          Long_Switch => "--select",
          Help        => "Run the toolchain selection assistant");
-
-      Define_Switch
-        (Config,
-         Cmd.Uninstall'Access,
-         Switch      => "-u",
-         Long_Switch => "--uninstall",
-         Help        => "Uninstall one or more toolchain component");
    end Setup_Switches;
 
    -------------
@@ -84,7 +59,7 @@ package body Alr.Commands.Toolchain is
                       Set_As_Default : Boolean)
    is
       use Alire;
-      use all type Origins.Kinds;
+      use all type Alire.Origins.Kinds;
 
       Dep : constant Dependencies.Dependency :=
               Dependencies.From_String (Request);
@@ -243,27 +218,16 @@ package body Alr.Commands.Toolchain is
 
          --  And perform the actual installation
 
-         if Cmd.Install_Dir.all /= "" then
-            if Rel.Origin.Is_Index_Provided then
-               Toolchains.Deploy (Rel, Cmd.Install_Dir.all);
-            else
-               Reportaise_Command_Failed
-                 ("Releases with external origins cannot be installed at "
-                  & "specific locations; origin for "
-                  & Rel.Milestone.TTY_Image & " is: " & Rel.Origin.Kind'Image);
-            end if;
+         if Rel.Origin.Is_Index_Provided then
+            Toolchains.Deploy (Rel);
+         elsif Rel.Origin.Is_System then
+            Origins.Deployers.Deploy (Rel).Assert;
+         elsif Rel.Origin.Kind = External then
+            Put_Info ("External tool needs no installation: "
+                      & Rel.Milestone.TTY_Image);
          else
-            if Rel.Origin.Is_Index_Provided then
-               Toolchains.Deploy (Rel);
-            elsif Rel.Origin.Is_System then
-               Origins.Deployers.Deploy (Rel).Assert;
-            elsif Rel.Origin.Kind = External then
-               Put_Info ("External tool needs no installation: "
-                         & Rel.Milestone.TTY_Image);
-            else
-               Raise_Checked_Error ("Unexpected release origin: "
-                                    & Rel.Origin.Kind'Image);
-            end if;
+            Raise_Checked_Error ("Unexpected release origin: "
+                                 & Rel.Origin.Kind'Image);
          end if;
 
          if Set_As_Default then
@@ -347,53 +311,6 @@ package body Alr.Commands.Toolchain is
       Table.Print;
    end List;
 
-   ---------------
-   -- Uninstall --
-   ---------------
-
-   procedure Uninstall (Cmd : in out Command; Target : String) is
-
-      ------------------
-      -- Find_Version --
-      ------------------
-
-      function Find_Version return String is
-         --  Obtain all installed releases for the crate; we will proceed if
-         --  only one exists.
-         Available : constant Alire.Releases.Containers.Release_Set :=
-                       Alire.Toolchains.Available.Satisfying
-                         (Alire.Dependencies.New_Dependency
-                            (Crate    => Alire.To_Name (Target),
-                             Versions => Semantic_Versioning.Extended.Any));
-      begin
-         if Available.Is_Empty then
-            Reportaise_Command_Failed
-              ("Requested crate has no installed releases: "
-               & Alire.Utils.TTY.Name (Alire.To_Name (Target)));
-         elsif Available.Length not in 1 then
-            Reportaise_Command_Failed
-              ("Requested crate has several installed releases, "
-               & "please provide an exact target version");
-         end if;
-
-         return Available.First_Element.Milestone.Version.Image;
-      end Find_Version;
-
-   begin
-
-      --  If no version was given, find if only one is installed
-
-      if not AAA.Strings.Contains (Target, "=") then
-         Uninstall (Cmd, Target & "=" & Find_Version);
-         return;
-      end if;
-
-      --  Otherwise we proceed with a complete milestone
-
-      Alire.Toolchains.Remove (Alire.Milestones.New_Milestone (Target));
-
-   end Uninstall;
-
    -------------
    -- Execute --
    -------------
@@ -412,19 +329,13 @@ package body Alr.Commands.Toolchain is
       --  Validation
 
       if Alire.Utils.Count_True
-        ((Cmd.Install, Cmd.S_Select, Cmd.Uninstall)) > 1
+        ((Cmd.S_Select, Cmd.Disable)) > 1
       then
          Reportaise_Wrong_Arguments
            ("The provided switches cannot be used simultaneously");
       end if;
 
-      if (Cmd.Install or else Cmd.Uninstall) and then Args.Is_Empty then
-         Reportaise_Wrong_Arguments ("No release specified");
-      end if;
-
-      if not Args.Is_Empty and then
-        not (Cmd.Install or else Cmd.Uninstall or else Cmd.S_Select)
-      then
+      if not Args.Is_Empty and then not Cmd.S_Select then
          Reportaise_Wrong_Arguments
            ("Specify the action to perform with the crate");
       end if;
@@ -432,11 +343,6 @@ package body Alr.Commands.Toolchain is
       if Cmd.Local and then not (Cmd.S_Select or else Cmd.Disable) then
          Reportaise_Wrong_Arguments
            ("--local requires --select or --disable-assistant");
-      end if;
-
-      if Cmd.Install_Dir.all /= "" and then not Cmd.Install then
-         Reportaise_Wrong_Arguments
-           ("--install-dir is only compatible with --install action");
       end if;
 
       --  Dispatch to subcommands
@@ -451,9 +357,7 @@ package body Alr.Commands.Toolchain is
             & TTY.Emph (if Cmd.Local then "local" else "global")
             & " configuration.");
 
-      end if;
-
-      if Cmd.S_Select then
+      elsif Cmd.S_Select then
 
          Cmd.Auto_Update_Index;
 
@@ -491,22 +395,7 @@ package body Alr.Commands.Toolchain is
                & "command line.");
          end if;
 
-      elsif Cmd.Uninstall then
-         for Elt of Args loop
-            Uninstall (Cmd, Elt);
-         end loop;
-
-      elsif Cmd.Install then
-
-         Cmd.Auto_Update_Index;
-
-         Alire.Toolchains.Detect_Externals;
-
-         for Elt of Args loop
-            Install (Cmd, Elt, Name_Sets.Empty_Set, Set_As_Default => False);
-         end loop;
-
-      elsif not Cmd.Disable then
+      else
          --  When no command is specified, print the list
          Cmd.List;
       end if;
@@ -517,4 +406,4 @@ package body Alr.Commands.Toolchain is
          Reportaise_Wrong_Arguments ("Improper version specification");
    end Execute;
 
-end Alr.Commands.Toolchain;
+end Alr.Commands.Default_Toolchain;

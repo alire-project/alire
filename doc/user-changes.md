@@ -6,6 +6,18 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### Breaking changes in `alr toolchain`
+
+PR [](https://github.com/alire-project/alire/pull/)
+
+First, the `alr toolchain` command is renamed `alr default-toolchain` to better
+represent its intent.
+
+Second, the `--install`, `--uninstall`, and `--install-dir` options are
+removed. These were introduced for people that wanted to get a toolchain from
+the Alire index but not use it in the Alire context. We now recommend using the
+`alr install --prefix=` command in this case.
+
 ### Cache and toolchain storage location overridding
 
 PR [#1593](https://github.com/alire-project/alire/pull/1593)

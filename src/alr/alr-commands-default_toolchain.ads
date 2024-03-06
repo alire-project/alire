@@ -1,8 +1,6 @@
 with AAA.Strings;
 
-private with GNAT.Strings;
-
-package Alr.Commands.Toolchain is
+package Alr.Commands.Default_Toolchain is
 
    --  Installation of binary toolchain crates into the ${ALR_CONFIG}/cache
    --  shared configuration.
@@ -11,7 +9,7 @@ package Alr.Commands.Toolchain is
 
    overriding
    function Name (Cmd : Command) return CLIC.Subcommand.Identifier
-   is ("toolchain");
+   is ("default-toolchain");
 
    overriding
    procedure Execute (Cmd : in out Command;
@@ -22,9 +20,8 @@ package Alr.Commands.Toolchain is
                               return AAA.Strings.Vector
    is (AAA.Strings.Empty_Vector
        .Append
-         ("Download toolchain elements, like" & " " & TTY.Emph ("GNAT")
-          & " and " & TTY.Emph ("gprbuild") & ", in the shared cache of the"
-          & " active configuration.")
+         ("Select default toolchain elements, like" & " " & TTY.Emph ("GNAT")
+          & " and " & TTY.Emph ("gprbuild") & " in the active configuration.")
        .New_Line
        .Append
          ("Run it without arguments to get a list of downloaded tools.")
@@ -39,11 +36,7 @@ package Alr.Commands.Toolchain is
           & " default.")
        .New_Line
        .Append
-         ("Specify --install/--uninstall and one or more crates name with"
-          & " optional version set to make available or remove a tool.")
-       .New_Line
-       .Append
-         ("Run `" & TTY.Terminal ("alr help toolchains") & "` for further "
+         ("Run `" & TTY.Terminal ("alr help " & Cmd.Name) & "` for further "
           & "information about toolchain management and use.")
       );
 
@@ -54,22 +47,18 @@ package Alr.Commands.Toolchain is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Manage Alire-provided toolchains");
+   is ("Select default toolchains");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[-u|--uninstall] [-i|--install crate[version set]] |"
-       & " --select [--local] [releases] [--disable-assistant]");
+   is ("--select [--local] [releases] | [--disable-assistant]");
 
 private
 
    type Command is new Commands.Command with record
       Disable     : aliased Boolean := False;
-      Install     : aliased Boolean := False;
-      Install_Dir : aliased GNAT.Strings.String_Access := null;
       Local       : aliased Boolean := False;
       S_Select    : aliased Boolean := False;
-      Uninstall   : aliased Boolean := False;
    end record;
 
-end Alr.Commands.Toolchain;
+end Alr.Commands.Default_Toolchain;

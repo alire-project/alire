@@ -65,7 +65,7 @@ def prepare_env(config_dir, env):
 
     # Disable selection of toolchain to preserve older behavior. Tests that
     # require a configured compiler will have to set it up explicitly.
-    run_alr("-c", config_dir, "toolchain", "--disable-assistant")
+    run_alr("-c", config_dir, "default-toolchain", "--disable-assistant")
 
     # Disable warning on old index, to avoid having to update index versions
     # when they're still compatible.
@@ -604,7 +604,7 @@ def external_compiler_version() -> str:
     Return the version of the external compiler
     """
     # Obtain available compilers
-    p = run_alr("toolchain")
+    p = run_alr("default-toolchain")
 
     # Capture version
     return re.search("gnat_external ([0-9.]+)", p.out, re.MULTILINE).group(1)

@@ -11,7 +11,7 @@ from drivers.asserts import assert_eq, assert_match, match_solution
 from re import escape as e
 
 # Verify only external compiler available
-p = run_alr("toolchain")
+p = run_alr("default-toolchain")
 assert_match(".*\n"  # Headers
              "gnat_external.*Available.*Detected.*\n",
              p.out)

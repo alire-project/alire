@@ -308,7 +308,7 @@ package body Alire.Toolchains is
       if not First_Run then
          AAA.Text_IO.Put_Paragraphs
            (AAA.Strings.Empty_Vector
-            .Append ("Welcome to the toolchain selection assistant")
+            .Append ("Welcome to the default toolchain selection assistant")
             .Append ("")
             .Append
               ("In this assistant you can set up the default toolchain to be "

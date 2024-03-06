@@ -12,7 +12,7 @@ from drivers.asserts import assert_match
 # We can trigger a buggy situation by configuring a toolchain, removing
 # manually the tool (as if we had moved the cache), and running `alr printenv`.
 
-run_alr("toolchain", "--select", "gprbuild", "gnat_native")
+run_alr("default-toolchain", "--select", "gprbuild", "gnat_native")
 init_local_crate()
 
 # Remove the tool manually through the filesystem

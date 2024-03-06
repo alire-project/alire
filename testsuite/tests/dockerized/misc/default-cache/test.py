@@ -28,7 +28,7 @@ assert \
 # Let's also check the rest of dirs for shared builds
 
 # First, prevent an attempt at downloading a real compiler
-run_alr("toolchain", "--disable-assistant")
+run_alr("default-toolchain", "--disable-assistant")
 
 builds.enable_shared()  # Enabled here as we are using the Docker driver
 alr_with("crate_real")  # This release will go in the cache

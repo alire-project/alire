@@ -9,7 +9,7 @@ from drivers.alr import run_alr, init_local_crate, alr_with
 from drivers.asserts import match_solution
 
 # Select the default preferred compiler, which is the native packaged one
-run_alr("toolchain", "--select")
+run_alr("default-toolchain", "--select")
 
 # Init a crate depending on gnat
 
