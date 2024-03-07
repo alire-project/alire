@@ -35,11 +35,11 @@ if os.environ.get("GH_USERNAME", "") == "":
     print("SKIP: GH_USERNAME not set")
     sys.exit(0)
 else:
-    run_alr("config", "--global", "--set",
+    run_alr("settings", "--global", "--set",
             "user.github_login", os.environ["GH_USERNAME"])
 
 # Configure the testing remote index
-run_alr("config", "--global", "--set", "index.repository_name", "test-index")
+run_alr("settings", "--global", "--set", "index.repository_name", "test-index")
 
 # Clone a simple crate not already in the index with a local remote
 subprocess.run(["gh", "repo", "clone",

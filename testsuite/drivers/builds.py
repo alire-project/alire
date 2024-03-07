@@ -20,7 +20,7 @@ def enable_shared() -> None:
     """
     Enable shared builds
     """
-    run_alr("config", "--global", "--set", "dependencies.shared", "true")
+    run_alr("settings", "--global", "--set", "dependencies.shared", "true")
 
 
 def are_shared() -> bool:
@@ -28,7 +28,7 @@ def are_shared() -> bool:
     Return True if shared builds are enabled
     """
     try:
-        return run_alr("config", "--global", "--get",
+        return run_alr("settings", "--global", "--get",
                        "dependencies.shared").out.strip().lower() == "true"
     except:
         return False

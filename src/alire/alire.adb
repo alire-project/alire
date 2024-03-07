@@ -117,9 +117,9 @@ package body Alire is
    -- Put_Warning --
    -----------------
 
-   procedure Put_Warning (Text           : String;
-                          Level          : Trace.Levels := Warning;
-                          Disable_Config : String := "")
+   procedure Put_Warning (Text            : String;
+                          Level           : Trace.Levels := Warning;
+                          Disable_Setting : String := "")
    is
       Prefix : constant String :=
                  (if Level = Warning
@@ -128,10 +128,10 @@ package body Alire is
                                                "Warning: "));
    begin
       Trace.Log (Prefix & Text, Level);
-      if Disable_Config /= "" then
+      if Disable_Setting /= "" then
          Trace.Log (Prefix
-                    & "You can disable this warning with configuration key '"
-                    & TTY.Emph (Disable_Config) & "'",
+                    & "You can disable this warning with settings key '"
+                    & TTY.Emph (Disable_Setting) & "'",
                     Level);
       end if;
    end Put_Warning;

@@ -169,7 +169,7 @@ class PythonScriptDriver(BaseDriver):
             # Activate shared builds. Using "-c" is needed as the environment
             # still isn't activated at the driver script level.
             run_alr("-c", pristine_env["ALR_CONFIG"],
-                    "config", "--global", "--set",
+                    "settings", "--global", "--set",
                     "dependencies.shared", "true")
             p = self.run_script(copy.deepcopy(pristine_env))
             self.check_result(p)

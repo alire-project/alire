@@ -12,15 +12,15 @@ else:
     drive = ""
 
 # Default cache location (inside test config dir)
-assert_match(r".*cache folder:[^\n]*config__cache-relocation/alr-config/cache",
+assert_match(r".*cache folder:[^\n]*settings__cache-relocation/alr-config/cache",
              run_alr("version").out.replace("\\", "/"))
 
 # Check toolchain location inside cache location
-assert_match(r".*toolchain folder:[^\n]*config__cache-relocation/alr-config/cache/toolchains",
+assert_match(r".*toolchain folder:[^\n]*settings__cache-relocation/alr-config/cache/toolchains",
              run_alr("version").out.replace("\\", "/"))
 
-# Override via config (takes precedence)
-run_alr("config", "--global", "--set", "cache.dir", f"{drive}/relocated-to-root")
+# Override via settings (takes precedence)
+run_alr("settings", "--global", "--set", "cache.dir", f"{drive}/relocated-to-root")
 assert_match(r".*cache folder:[^\n]*/relocated-to-root",
              run_alr("version").out.replace("\\", "/"))
 
@@ -28,8 +28,8 @@ assert_match(r".*cache folder:[^\n]*/relocated-to-root",
 assert_match(r".*toolchain folder:[^\n]*/relocated-to-root/toolchains",
              run_alr("version").out.replace("\\", "/"))
 
-# Check toolchain override via config (takes precedence over cache override)
-run_alr("config", "--global", "--set", "toolchain.dir", f"{drive}/relocated-toolchains")
+# Check toolchain override via settings (takes precedence over cache override)
+run_alr("settings", "--global", "--set", "toolchain.dir", f"{drive}/relocated-toolchains")
 assert_match(r".*toolchain folder:[^\n]*/relocated-toolchains",
              run_alr("version").out.replace("\\", "/"))
 

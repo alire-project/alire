@@ -49,18 +49,18 @@ def prepare_env(config_dir, env):
 
     if platform.system() == "Windows":
         # Disable msys inadvertent installation
-        run_alr("-c", config_dir, "config", "--global",
+        run_alr("-c", config_dir, "settings", "--global",
                 "--set", "msys2.do_not_install", "true")
 
         # And configure the one set up in the environment so it is used by
         # tests that need it.
-        run_alr("-c", config_dir, "config", "--global",
+        run_alr("-c", config_dir, "settings", "--global",
                 "--set", "msys2.install_dir",
                 os.path.join(os.environ.get("LocalAppData"), "alire", "msys64"))
 
     # Disable autoconfig of the community index, to prevent unintended use of
     # it in tests, besides the overload of fetching it
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr("-c", config_dir, "settings", "--global",
             "--set", "index.auto_community", "false")
 
     # Disable selection of toolchain to preserve older behavior. Tests that
@@ -69,21 +69,21 @@ def prepare_env(config_dir, env):
 
     # Disable warning on old index, to avoid having to update index versions
     # when they're still compatible.
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr("-c", config_dir, "settings", "--global",
             "--set", "warning.old_index", "false")
 
     # Disable shared dependencies (keep old pre-2.0 behavior) not to break lots
     # of tests. The post-2.0 behavior will have its own tests.
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr("-c", config_dir, "settings", "--global",
             "--set", "dependencies.shared", "false")
 
     # Disable index auto-updates, which is not expected by most tests
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr("-c", config_dir, "settings", "--global",
             "--set", "index.auto_update", "0")
 
     # If distro detection is disabled via environment, configure so in alr
     if "ALIRE_TESTSUITE_DISABLE_DISTRO" in env:
-        run_alr("-c", config_dir, "config", "--global",
+        run_alr("-c", config_dir, "settings", "--global",
                 "--set", "distribution.disable_detection", "true")
 
 
@@ -614,5 +614,5 @@ def unselect_compiler():
     Leave compiler configuration as if "None" was selected by the user in the
     assistant.
     """
-    run_alr("config", "--global", "--unset", "toolchain.use.gnat")
-    run_alr("config", "--global", "--unset", "toolchain.external.gnat")
+    run_alr("settings", "--global", "--unset", "toolchain.use.gnat")
+    run_alr("settings", "--global", "--unset", "toolchain.external.gnat")
