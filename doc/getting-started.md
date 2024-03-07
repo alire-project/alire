@@ -293,9 +293,9 @@ not an error) with `-q`, which enables quiet mode. Any subprocess that exist
 abnormally will be reported, including its invocation arguments.
 
 If you suspect your configuration may be the source of some problem, please
-check our section on [Configuration](configuration.md), and in particular how
+check our section on [Configuration](configuration), and in particular how
 to use a [default pristine
-configuration](configuration.md#Relocating-your-configuration)
+configuration](configuration#Relocating-your-configuration)
 
 ## Running tests
 
