@@ -22,7 +22,7 @@ else:
     base = f"{home}/.local/share/alire"
 
 assert \
-    os.path.isdir(f"{base}/toolchains/gnat_native_8888.0.0_99fa3a55"), \
+    os.path.isdir(f"{base}/toolchains/gnat_native_8888.0.0_15743d73"), \
     f"Toolchain dir not found at the expected location: {contents(base)}"
 
 # Let's also check the rest of dirs for shared builds

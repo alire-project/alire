@@ -6,6 +6,27 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### Deprecation of `toolchain --install/--uninstall/--install-dir`
+
+PR [#1614](https://github.com/alire-project/alire/pull/1614)
+
+Toolchain selection for use by Alire is still done by using
+`alr toolchain --select`.
+
+For the installation of toolchains outside of Alire management (i.e., for
+direct use with other tools, but not with Alire), the recommended
+method now is to use `alr install`, e.g.:
+```
+# Install to the default location, <user home>/.alire/bin
+$ alr install gnat_native gprbuild
+
+# Install elsewhere
+$ alr install --prefix=/path/to/installation gnat_native gprbuild
+```
+
+Removal of managed toolchains can be done by simply removing their folders
+inside the toolchain cache (reported by `alr version`).
+
 ### Cache and toolchain storage location overridding
 
 PR [#1593](https://github.com/alire-project/alire/pull/1593)

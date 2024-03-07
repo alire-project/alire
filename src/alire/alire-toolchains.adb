@@ -487,6 +487,17 @@ package body Alire.Toolchains is
             end if;
          end;
       end if;
+
+      --  Remove caching of external condition too for consistency
+
+      if CLIC.Config.Defined (Config.DB.all, Tool_Key (Crate, For_Is_External))
+      then
+         Trace.Debug
+           ("Unsetting " & Tool_Key (Crate, For_Is_External) & ": "
+            & CLIC.Config.Edit.Unset
+              (Config.Edit.Filepath (Level),
+               Tool_Key (Crate, For_Is_External))'Image);
+      end if;
    end Unconfigure;
 
    Available_Cached    : Releases.Containers.Release_Set;
@@ -569,6 +580,8 @@ package body Alire.Toolchains is
                                                    Root.Platform_Properties)
          loop
             if not Release.Origin.Is_Index_Provided then
+               Trace.Debug ("Detected external toolchain release: "
+                            & Release.Milestone.TTY_Image);
                Result.Include (Release);
             end if;
          end loop;
@@ -578,6 +591,11 @@ package body Alire.Toolchains is
 
       Available_Cached := Result;
       Directories.Force_Delete (Dirty_Cache_Flag);
+
+      Trace.Debug ("Detected available tools:");
+      for Rel of Result loop
+         Trace.Debug ("   Tool: " & Rel.Milestone.TTY_Image);
+      end loop;
 
       return Result;
    end Available;
@@ -606,6 +624,10 @@ package body Alire.Toolchains is
 
       if Location = Path and then Available.Contains (Release) then
          Trace.Detail ("Skipping installation of already available release: "
+                       & Release.Milestone.TTY_Image);
+         return;
+      elsif Release.Origin.Kind in Origins.External then
+         Trace.Debug ("Skipping installation of external tool release: "
                        & Release.Milestone.TTY_Image);
          return;
       end if;

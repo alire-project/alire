@@ -608,3 +608,11 @@ def external_compiler_version() -> str:
 
     # Capture version
     return re.search("gnat_external ([0-9.]+)", p.out, re.MULTILINE).group(1)
+
+def unselect_compiler():
+    """
+    Leave compiler configuration as if "None" was selected by the user in the
+    assistant.
+    """
+    run_alr("config", "--global", "--unset", "toolchain.use.gnat")
+    run_alr("config", "--global", "--unset", "toolchain.external.gnat")

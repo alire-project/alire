@@ -62,9 +62,4 @@ assert_match(".*gnat_native   8888.0.0 Default.*", p.out)
 assert_match(".*gnat_external [\d\s.]+ Available.*", p.out)
 # The external compiler must be still detected as available, even if unselected
 
-# Finally, note that installing without selecting is not affected by checks,
-# as these are not setting the default toolchain to be used, but merely making
-# available these tools as alternatives.
-run_alr("toolchain", "--install", "gnat_external", "gprbuild=8888")
-
 print('SUCCESS')
