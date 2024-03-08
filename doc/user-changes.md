@@ -153,8 +153,8 @@ be reviewed and merged manually. This can now be done with `alr publish
 
 PR [#1406](https://github.com/alire-project/alire/pull/1406)
 
-A pending submission can be closed with `alr publish --cancel
-<num> --reason <text>`.
+A pending submission can be closed with
+`alr publish --cancel <num> --reason <text>`.
 
 ### Track user's index submissions with `alr publish --status`
 
@@ -697,8 +697,8 @@ crate_1.var2 = true
 crate_2.var1 = "Debug"
 ```
 
-Check more examples and details in the catalog specification section ["Using
-configuration"](https://github.com/mosteo/alire/blob/master/doc/catalog-format-spec.md#using-crate-configuration).
+Check more examples and details in the catalog specification section
+[Using configuration](catalog-format-spec#using-crate-configuration).
 
 ## Release `1.0`
 
@@ -823,7 +823,7 @@ to be submitted to the community index via pull request. An upload link is
 provided for convenience that can be used to create this pull request.
 
 Complete information about this feature is available in the updated
-[Publishing](publishing.md) page.
+[Publishing](publishing) page.
 
 Other features of the assistant are that, in the local mode, a branch or tag
 can be specified to pinpoint a commit, and that the test build of the crate can
@@ -847,8 +847,8 @@ files, executables, maintainers, etc.).
 The manifest internal format has been simplified by eliminating the possibility
 of multiple releases from its contents, which removes some nesting, and
 removing or making optional some fields that only make sense at the time of
-publishing a crate to some index. Check the [catalog-format-spec.md] file for
-details.
+publishing a crate to some index. Check the [catalog-format-spec](catalog-format-spec)
+file for details.
 
 The `alire` directory continues to exist, and it is used to store the source
 code of dependencies, local configuration and backup files. It can be safely
