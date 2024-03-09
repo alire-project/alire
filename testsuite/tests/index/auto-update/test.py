@@ -6,7 +6,7 @@ import os
 from drivers.alr import run_alr
 from drivers.helpers import content_of, lines_of
 
-CONFIG_FILE = os.path.join("alr-config", "config.toml")
+CONFIG_FILE = os.path.join("alr-config", "settings.toml")
 
 # First, we check no related configuration exists
 
