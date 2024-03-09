@@ -1,7 +1,7 @@
 
 with AAA.Table_IO;
 
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Errors;
@@ -237,8 +237,8 @@ package body Alr.Commands.Toolchain is
             Alire.Toolchains.Set_As_Default
               (Rel,
                Level => (if Cmd.Local
-                         then Alire.Config.Local
-                         else Alire.Config.Global));
+                         then Alire.Settings.Local
+                         else Alire.Settings.Global));
             Alire.Put_Info
               (Rel.Milestone.TTY_Image & " set as default in "
                & TTY.Emph (if Cmd.Local then "local" else "global")
@@ -276,7 +276,7 @@ package body Alr.Commands.Toolchain is
 
       if Alire.Toolchains.Available.Is_Empty then
          Trace.Info ("Nothing installed in configuration prefix "
-                     & TTY.URL (Alire.Config.Edit.Path));
+                     & TTY.URL (Alire.Settings.Edit.Path));
          return;
       end if;
 
@@ -344,10 +344,11 @@ package body Alr.Commands.Toolchain is
       --  Dispatch to subcommands
 
       if Cmd.Disable then
-         Alire.Toolchains.Set_Automatic_Assistant (False,
-                                                   (if Cmd.Local
-                                                    then Alire.Config.Local
-                                                    else Alire.Config.Global));
+         Alire.Toolchains.Set_Automatic_Assistant
+           (False,
+            (if Cmd.Local
+             then Alire.Settings.Local
+             else Alire.Settings.Global));
          Alire.Put_Info
            ("Assistant disabled in "
             & TTY.Emph (if Cmd.Local then "local" else "global")
@@ -367,8 +368,8 @@ package body Alr.Commands.Toolchain is
 
          if Args.Count = 0 then
             Alire.Toolchains.Assistant ((if Cmd.Local
-                                         then Alire.Config.Local
-                                         else Alire.Config.Global),
+                                         then Alire.Settings.Local
+                                         else Alire.Settings.Global),
                                         Allow_Incompatible => Alire.Force);
          else
 
@@ -384,8 +385,8 @@ package body Alr.Commands.Toolchain is
             Alire.Toolchains.Set_Automatic_Assistant
               (False,
                (if Cmd.Local
-                then Alire.Config.Local
-                else Alire.Config.Global));
+                then Alire.Settings.Local
+                else Alire.Settings.Global));
             Trace.Detail
               ("Assistant disabled in "
                & TTY.Emph (if Cmd.Local then "local" else "global")

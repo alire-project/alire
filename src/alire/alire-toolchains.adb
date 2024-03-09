@@ -3,7 +3,7 @@ with AAA.Text_IO;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Directories;
 
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Manifest;
@@ -44,7 +44,7 @@ package body Alire.Toolchains is
    -- Assistant --
    ---------------
 
-   procedure Assistant (Level              : Config.Level;
+   procedure Assistant (Level              : Settings.Level;
                         Allow_Incompatible : Boolean := False;
                         First_Run          : Boolean := False) is
       package Release_Vectors is new
@@ -403,14 +403,15 @@ package body Alire.Toolchains is
    -- Set_As_Default --
    --------------------
 
-   procedure Set_As_Default (Release : Releases.Release; Level : Config.Level)
+   procedure Set_As_Default (Release : Releases.Release;
+                             Level   : Settings.Level)
    is
    begin
-      Alire.Config.Edit.Set
+      Alire.Settings.Edit.Set
         (Level,
          Key   => Tool_Key (Release.Name),
          Value => Release.Milestone.Image);
-      Alire.Config.Edit.Set_Boolean
+      Alire.Settings.Edit.Set_Boolean
         (Level,
          Key   => Tool_Key (Release.Name, For_Is_External),
          Value => not Release.Origin.Is_Index_Provided);
@@ -420,10 +421,11 @@ package body Alire.Toolchains is
    -- Set_Automatic_Assistant --
    -----------------------------
 
-   procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level)
+   procedure Set_Automatic_Assistant (Enabled : Boolean;
+                                      Level   : Settings.Level)
    is
    begin
-      Config.Builtins.Toolchain_Assistant.Set (Level, Enabled);
+      Settings.Builtins.Toolchain_Assistant.Set (Level, Enabled);
    end Set_Automatic_Assistant;
 
    ------------------------
@@ -431,7 +433,7 @@ package body Alire.Toolchains is
    ------------------------
 
    function Tool_Is_Configured (Crate : Crate_Name) return Boolean
-   is (Config.DB.Defined (Tool_Key (Crate)));
+   is (Settings.DB.Defined (Tool_Key (Crate)));
 
    ---------------------
    -- Tool_Dependency --
@@ -467,12 +469,12 @@ package body Alire.Toolchains is
    -----------------
 
    procedure Unconfigure (Crate         : Crate_Name;
-                          Level         : Config.Level;
+                          Level         : Settings.Level;
                           Fail_If_Unset : Boolean := True) is
    begin
-      if CLIC.Config.Defined (Config.DB.all, Tool_Key (Crate)) and then
+      if CLIC.Config.Defined (Settings.DB.all, Tool_Key (Crate)) and then
         not CLIC.Config.Edit.Unset
-          (Config.Edit.Filepath (Level),
+          (Settings.Edit.Filepath (Level),
            Tool_Key (Crate))
       then
          declare
@@ -490,12 +492,13 @@ package body Alire.Toolchains is
 
       --  Remove caching of external condition too for consistency
 
-      if CLIC.Config.Defined (Config.DB.all, Tool_Key (Crate, For_Is_External))
+      if CLIC.Config.Defined (Settings.DB.all,
+                              Tool_Key (Crate, For_Is_External))
       then
          Trace.Debug
            ("Unsetting " & Tool_Key (Crate, For_Is_External) & ": "
             & CLIC.Config.Edit.Unset
-              (Config.Edit.Filepath (Level),
+              (Settings.Edit.Filepath (Level),
                Tool_Key (Crate, For_Is_External))'Image);
       end if;
    end Unconfigure;
@@ -605,9 +608,9 @@ package body Alire.Toolchains is
    ----------
 
    function Path return Absolute_Path
-   is (if Config.Builtins.Toolchain_Dir.Get /= ""
-       then Config.Builtins.Toolchain_Dir.Get
-       else Config.Edit.Cache_Path / "toolchains");
+   is (if Settings.Builtins.Toolchain_Dir.Get /= ""
+       then Settings.Builtins.Toolchain_Dir.Get
+       else Settings.Edit.Cache_Path / "toolchains");
 
    ------------
    -- Deploy --
@@ -717,9 +720,9 @@ package body Alire.Toolchains is
 
          --  So remove it at any level. We currently do not have a way to know
          --  from which level we have to remove this configuration.
-         Toolchains.Unconfigure (Release.Name, Config.Global,
+         Toolchains.Unconfigure (Release.Name, Settings.Global,
                                  Fail_If_Unset => False);
-         Toolchains.Unconfigure (Release.Name, Config.Local,
+         Toolchains.Unconfigure (Release.Name, Settings.Local,
                                  Fail_If_Unset => False);
 
          Invalidate_Available_Cache;

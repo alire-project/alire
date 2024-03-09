@@ -4,7 +4,7 @@ with Ada.Directories;
 with Ada.Wide_Wide_Text_IO;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Roots.Optional;
 with Alire.Utils.User_Input.Query_Config;
 
@@ -580,7 +580,7 @@ package body Alr.Commands.Init is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      use Alire.Config;
+      use Alire.Settings;
       Info : Crate_Init_Info;
    begin
 

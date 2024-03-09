@@ -1,6 +1,6 @@
-with Alire.Config.Checks;
+with Alire.Settings.Checks;
 
-package Alire.Config.Builtins is
+package Alire.Settings.Builtins is
 
    subtype Builtin is Builtin_Option;
 
@@ -205,4 +205,4 @@ package Alire.Config.Builtins is
         "using a compatible index with a lower version than the newest" &
         " known.");
 
-end Alire.Config.Builtins;
+end Alire.Settings.Builtins;
