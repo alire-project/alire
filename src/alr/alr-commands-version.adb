@@ -72,7 +72,8 @@ package body Alr.Commands.Version is
 
       Table.Append ("").New_Row;
       Table.Append ("CONFIGURATION").New_Row;
-      Table.Append ("config folder:").Append (Alire.Config.Edit.Path).New_Row;
+      Table.Append ("settings folder:")
+        .Append (Alire.Config.Edit.Path).New_Row;
       Table.Append ("cache folder:")
         .Append (Alire.Config.Edit.Cache_Path).New_Row;
       Table.Append ("vault folder:").Append (Paths.Vault.Path).New_Row;

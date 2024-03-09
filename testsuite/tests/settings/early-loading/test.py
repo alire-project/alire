@@ -17,9 +17,9 @@ expected = "test_value=42\n"
 
 # Verify proper loading with both short and long config options
 assert_eq(expected,
-          run_alr("-c", custom_config, "settings", "--global").out)
+          run_alr("-s", custom_config, "settings", "--global").out)
 assert_eq(expected,
-          run_alr(f"--config={custom_config}", "settings", "--global").out)
+          run_alr(f"--settings={custom_config}", "settings", "--global").out)
 
 # Verify also when using environment variable
 os.environ["ALIRE_SETTINGS"] = os.path.abspath(custom_config)

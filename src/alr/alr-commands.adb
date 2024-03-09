@@ -11,6 +11,7 @@ with Alire_Early_Elaboration;
 with Alire.Config.Builtins;
 with Alire.Config.Edit;
 with Alire.Errors;
+with Alire.Features;
 with Alire.Index_On_Disk.Loading;
 with Alire.Index_On_Disk.Updates;
 with Alire.Lockfiles;
@@ -19,6 +20,7 @@ with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions;
 with Alire.Toolchains;
+with Alire.Version.Semver;
 
 with Alr.Commands.Action;
 with Alr.Commands.Build;
@@ -137,12 +139,22 @@ package body Alr.Commands is
    procedure Set_Global_Switches
      (Config : in out CLIC.Subcommand.Switches_Configuration)
    is
+      use Alire;
       use CLIC.Subcommand;
+      use type Alire.Version.Semver.Version;
    begin
+      if Alire.Version.Semver.Current < Features.Config_Deprecated then
+         Define_Switch (Config,
+                        Command_Line_Config_Path'Access,
+                        "-c=", "--config=",
+                        TTY.Error ("Deprecated")
+                        & ". See -s/--settings switch");
+      end if;
+
       Define_Switch (Config,
                      Command_Line_Config_Path'Access,
-                     "-c=", "--config=",
-                     "Override configuration folder location");
+                     "-s=", "--settings=",
+                     "Override settings folder location");
 
       Define_Switch (Config,
                      Command_Line_Chdir_Target_Path'Access,

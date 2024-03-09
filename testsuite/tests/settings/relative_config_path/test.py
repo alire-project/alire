@@ -10,7 +10,7 @@ from drivers.alr import run_alr
 from drivers.asserts import assert_eq
 from drivers.helpers import lines_of
 
-run_alr("--config=.", "settings", "--global",
+run_alr("--settings=.", "settings", "--global",
         "--set", "some_config_key", "true")
 
 

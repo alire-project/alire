@@ -179,7 +179,7 @@ package body Alire.Config.Edit is
    begin
       --  Warn or fail depending on version
       if OS_Lib.Getenv (Environment.Config, Unset) /= Unset then
-         if Version.Semver.Current < Features.Env_Alr_Config_Deprecated then
+         if Version.Semver.Current < Features.Config_Deprecated then
             Warnings.Warn_Once (Msg, Level => Warning);
          else
             Raise_Checked_Error (Msg);

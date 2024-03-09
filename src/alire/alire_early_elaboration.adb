@@ -3,6 +3,8 @@ with AAA.Strings;
 with Ada.Directories;
 
 with Alire.Config.Edit.Early_Load;
+with Alire.Features;
+with Alire.Version.Semver;
 
 with GNAT.Command_Line;
 with GNAT.OS_Lib;
@@ -86,11 +88,11 @@ package body Alire_Early_Elaboration is
          -- Set_Config_Path --
          ---------------------
 
-         procedure Set_Config_Path (Path : String) is
+         procedure Set_Config_Path (Switch, Path : String) is
             package Adirs renames Ada.Directories;
          begin
             if Path = "" then
-               Config_Switch_Error ("--config");
+               Config_Switch_Error (Switch);
             elsif not Adirs.Exists (Path) then
                Early_Error
                  ("Invalid non-existing configuration path: " & Path);
@@ -101,6 +103,42 @@ package body Alire_Early_Elaboration is
                Alire.Config.Edit.Set_Path (Adirs.Full_Name (Path));
             end if;
          end Set_Config_Path;
+
+         -----------------------------
+         -- Check_Config_Deprecated --
+         -----------------------------
+
+         use type Alire.Version.Semver.Version;
+         Config_Deprecated : constant Boolean
+           := Alire.Version.Semver.Current >= Alire.Features.Config_Deprecated;
+
+         procedure Check_Config_Deprecated is
+         begin
+            if Config_Deprecated then
+               Early_Error
+                 ("--config is deprecated, use --settings instead");
+            end if;
+         end Check_Config_Deprecated;
+
+         ----------------
+         -- Check_Seen --
+         ----------------
+
+         Settings_Seen : Boolean := False;
+
+         procedure Check_Settings_Seen is
+         begin
+            if Settings_Seen then
+               Early_Error
+                 ("Only one of -s, --settings"
+                  & (if not Config_Deprecated
+                    then ", -c, --config"
+                    else "")
+                  & " allowed");
+            else
+               Settings_Seen := True;
+            end if;
+         end Check_Settings_Seen;
 
          -----------------------
          -- Check_Long_Switch --
@@ -116,16 +154,22 @@ package body Alire_Early_Elaboration is
                Switch_D := True;
                Add_Scopes (Tail (Switch, "="));
             elsif Has_Prefix (Switch, "--config") then
-               Set_Config_Path (Tail (Switch, "="));
+               Check_Config_Deprecated;
+               Check_Settings_Seen;
+               Set_Config_Path (Switch, Tail (Switch, "="));
+            elsif Has_Prefix (Switch, "--settings") then
+               Check_Settings_Seen;
+               Set_Config_Path (Switch, Tail (Switch, "="));
             end if;
          end Check_Long_Switch;
 
          Option : Character;
+
       begin
          loop
             --  We use the simpler Getopt form to avoid built-in help and other
             --  shenanigans.
-            Option := Getopt ("* d? --debug? q v c= --config=");
+            Option := Getopt ("* d? --debug? q v c= --config= s= --settings=");
             case Option is
                when ASCII.NUL =>
                   exit;
@@ -133,9 +177,13 @@ package body Alire_Early_Elaboration is
                   if not Subcommand_Seen then
                      Check_Long_Switch (Full_Switch);
                   end if;
-               when 'c' =>
+               when 'c' | 's' =>
                   if not Subcommand_Seen then
-                     Set_Config_Path (Parameter);
+                     Check_Settings_Seen;
+                     if Option = 'c' then
+                        Check_Config_Deprecated;
+                     end if;
+                     Set_Config_Path ("-" & Option, Parameter);
                   end if;
                when 'd' =>
                   if not Subcommand_Seen then
@@ -164,8 +212,8 @@ package body Alire_Early_Elaboration is
          end loop;
       exception
          when GNAT.Command_Line.Invalid_Parameter =>
-            if Option = 'c' then
-               Config_Switch_Error ("-c");
+            if Option in 'c' | 's' then
+               Config_Switch_Error ("-" & Option);
             end if;
          when Exit_From_Command_Line =>
             --  Something unexpected happened but it will be properly dealt
