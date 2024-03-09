@@ -1,8 +1,8 @@
 --  Ensure config is loaded for some defaults below
-with Alire.Config.Edit.Early_Load;
-pragma Unreferenced (Alire.Config.Edit.Early_Load);
+with Alire.Settings.Edit.Early_Load;
+pragma Unreferenced (Alire.Settings.Edit.Early_Load);
 
-package Alire.Config.Builtins.Windows is
+package Alire.Settings.Builtins.Windows is
 
    Default_Msys2_Installer : constant String := "msys2-x86_64-20221216.exe";
    Default_Msys2_Installer_URL : constant String :=
@@ -21,7 +21,7 @@ package Alire.Config.Builtins.Windows is
    Msys2_Install_Dir : constant Builtin := New_Builtin
      (Key  => "msys2.install_dir",
       Kind => Cfg_Absolute_Path,
-      Def  => Config.Edit.Cache_Path / "msys64",
+      Def  => Settings.Edit.Cache_Path / "msys64",
       Help =>
         "Directory where Alire will detect and/or install" &
         " msys2 system package manager. (Windows only)");
@@ -40,4 +40,4 @@ package Alire.Config.Builtins.Windows is
       Help =>
         "URL of the executable msys2 installer. (Windows only)");
 
-end Alire.Config.Builtins.Windows;
+end Alire.Settings.Builtins.Windows;
