@@ -2,9 +2,9 @@ Alire/ALR's testsuite
 =====================
 
 This directory intends to host a comprehensive testsuite for Alire/ALR as a
-library/tool. The testsuite framework currently requires a Python 3
-interpreter with the [e3-testsuite](https://e3-testsuite.readthedocs.io) and
-[pexpect](https://pexpect.readthedocs.io) packages (from PyPI) installed.
+library/tool. The testsuite framework currently requires a Python 3 interpreter
+with the [e3-testsuite](https://e3-testsuite.readthedocs.io) package (from PyPI)
+installed.
 
 You also must have [GNAT](https://www.gnu.org/software/gnat) and
 [GPRBuild](https://github.com/AdaCore/gprbuild) in your `PATH`. You can install
@@ -28,7 +28,7 @@ $ virtualenv my-virtual-env
 $ source my-virtual-env/bin/activate
 
 # Install e3-testsuite and all its dependencies
-$ pip install e3-testsuite pexpect
+$ pip install -r requirements.txt
 
 # You should now be able to run the testsuite (make sure you built alr and
 # made it available with your PATH):
