@@ -36,6 +36,7 @@ with Alr.Commands.Printenv;
 with Alr.Commands.Publish;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
+with Alr.Commands.Settings;
 with Alr.Commands.Show;
 with Alr.Commands.Test;
 with Alr.Commands.Toolchain;
@@ -523,12 +524,14 @@ package body Alr.Commands is
 
          begin
             if Sub_Cmd.What_Command /= Config.Command_Name
+              and then
+               Sub_Cmd.What_Command /= Settings.Command_Name
             then
                Alire.Platforms.Current.Initialize;
                Trace.Debug ("Platform-specific initialization done.");
             else
                Trace.Debug
-                 ("Platform-specific initialization skipped (alr config).");
+                 ("Platform-specific initialization skipped (alr settings).");
             end if;
          exception
             when Sub_Cmd.Error_No_Command =>
@@ -661,6 +664,7 @@ begin
 
    -- Commands --
    Sub_Cmd.Register ("General", new Sub_Cmd.Builtin_Help);
+   Sub_Cmd.Register ("General", new Settings.Command);
    Sub_Cmd.Register ("General", new Config.Command);
    Sub_Cmd.Register ("General", new Install.Command);
    Sub_Cmd.Register ("General", new Toolchain.Command);

@@ -41,7 +41,7 @@ def check(descr: str = "", name: str = ""):
     shutil.rmtree("xxx")
 
     # Unset the user information so it is re-asked next time
-    run_alr('config', '--global', '--unset', 'user.name')
+    run_alr('settings', '--global', '--unset', 'user.name')
     # Other fields are not being set because they use the defaults so don't
     # require unsetting.
 

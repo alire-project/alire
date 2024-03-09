@@ -40,8 +40,8 @@ package Alire.Platforms.Current is
 
    procedure Initialize;
    --  Do any initialization that is necessary for this platform. This is
-   --  called as soon as we know the user is not running `alr config`, as we
-   --  want to allow the opportunity to configure things without triggering
+   --  called as soon as we know the user is not running `alr settings`, as
+   --  we want to allow the opportunity to configure things without triggering
    --  this initialization.
 
    --------------------------------

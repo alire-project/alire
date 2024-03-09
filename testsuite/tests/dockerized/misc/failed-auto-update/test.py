@@ -19,11 +19,11 @@ run_alr("index", "--name", "test", "--add", INDEX)
 run_alr("show", "libhello")
 
 # Enable autoupdate
-run_alr("config", "--global", "--set", "index.auto_update", "1")
+run_alr("settings", "--global", "--set", "index.auto_update", "1")
 
 # Ensure next `alr show` will trigger an update
-run_alr("config", "--global", "--unset", "index.last_update")
-run_alr("config", "--global", "--set", "index.auto_update_asked", "true")
+run_alr("settings", "--global", "--unset", "index.last_update")
+run_alr("settings", "--global", "--set", "index.auto_update_asked", "true")
 
 # Prepare a copy of `unshare` that can be run as regular user
 run(["cp", "/usr/bin/unshare", "/tmp"]).check_returncode()

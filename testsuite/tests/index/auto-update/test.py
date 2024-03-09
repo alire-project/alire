@@ -16,7 +16,7 @@ assert "auto_update_asked = true\n" not in lines_of(CONFIG_FILE), \
 # Auto updates are disabled by default by the python harness, to maintain
 # compatibility of older tests. We disable the disabling now.
 
-run_alr("config", "--global", "--unset", "index.auto_update")
+run_alr("settings", "--global", "--unset", "index.auto_update")
 # This was set to 0 to disable updates
 
 # After using the index, the user will have been asked

@@ -34,8 +34,8 @@ libraries required by some projects in the Alire index, allowing you to build
 more projects out of the box.
 
 `msys2` will not be installed
-- when running `alr config`, to allow uninterrupted configuration, and configuration
-  of `msys2` location (see `alr help config`), or
+- when running `alr settings`, to allow uninterrupted configuration, and setting
+  of `msys2` location (see `alr help settings`), or
 - when you already have a msys2 installation in your PATH (more precisely, if `pacman`
   is found in your PATH.)
   - In this case, `alr` will reuse your existing installation.
@@ -292,10 +292,9 @@ Subprocess output is shown by default (you can silence it, and anything else
 not an error) with `-q`, which enables quiet mode. Any subprocess that exist
 abnormally will be reported, including its invocation arguments.
 
-If you suspect your configuration may be the source of some problem, please
-check our section on [Configuration](configuration), and in particular how
-to use a [default pristine
-configuration](configuration#Relocating-your-configuration)
+If you suspect your settings may be the source of some problem, please check
+our section on [Settings](setting), and in particular how to use a [default
+pristine settings](settings#Relocating-your-settings)
 
 ## Running tests
 

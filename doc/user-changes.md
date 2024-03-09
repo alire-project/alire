@@ -6,6 +6,17 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+###
+
+PR [1617](https://github.com/alire-project/alire/pull/1617)
+
+The `alr settings` command replaces the `alr config` command. This change is
+introduced to tackle the confusion between the configuration of the Alire
+commands and operations, and the configuration of crates.
+
+`alr config` is still available and should work as before with the exception of
+a deprecation warning message.
+
 ### Deprecation of `toolchain --install/--uninstall/--install-dir`
 
 PR [#1614](https://github.com/alire-project/alire/pull/1614)

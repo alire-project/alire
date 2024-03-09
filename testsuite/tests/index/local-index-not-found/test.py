@@ -17,7 +17,7 @@ for d in ('no-such-directory',
     # Delete old configuration and indexes, but disable msys2 installation or
     # installation will be reattempted.
     rm('alr-config', recursive=True)
-    run_alr("config", "--global", "--set", "msys2.do_not_install", "true")
+    run_alr("settings", "--global", "--set", "msys2.do_not_install", "true")
 
     prepare_indexes('alr-config', '.',
                     {'bad_index': {'dir': d, 'in_fixtures': False}})
