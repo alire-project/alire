@@ -122,8 +122,8 @@ package body Alr.Commands.Install is
          & "templates, should be able to coexist in a same installation prefix"
          & " without issue.")
        .New_Line
-       .Append ("You can use the --force to reinstall already installed "
-         & "releases.")
+       .Append ("You can use the --force global option to reinstall "
+         & "already installed releases.")
       );
 
    --------------------

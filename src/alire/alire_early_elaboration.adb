@@ -71,6 +71,17 @@ package body Alire_Early_Elaboration is
 
       procedure Check_Switches is
 
+         -------------------------
+         -- Config_Switch_Error --
+         -------------------------
+
+         procedure Config_Switch_Error (Switch : String) is
+         begin
+            GNAT.IO.Put_Line
+               ("ERROR: Switch " & Switch & " requires argument (global).");
+            Early_Error ("try ""alr --help"" for more information.");
+         end Config_Switch_Error;
+
          ---------------------
          -- Set_Config_Path --
          ---------------------
@@ -78,7 +89,9 @@ package body Alire_Early_Elaboration is
          procedure Set_Config_Path (Path : String) is
             package Adirs renames Ada.Directories;
          begin
-            if not Adirs.Exists (Path) then
+            if Path = "" then
+               Config_Switch_Error ("--config");
+            elsif not Adirs.Exists (Path) then
                Early_Error
                  ("Invalid non-existing configuration path: " & Path);
             elsif Adirs.Kind (Path) not in Adirs.Directory then
@@ -107,11 +120,13 @@ package body Alire_Early_Elaboration is
             end if;
          end Check_Long_Switch;
 
+         Option : Character;
       begin
          loop
             --  We use the simpler Getopt form to avoid built-in help and other
             --  shenanigans.
-            case Getopt ("* d? --debug? q v c= --config=") is
+            Option := Getopt ("* d? --debug? q v c= --config=");
+            case Option is
                when ASCII.NUL =>
                   exit;
                when '*' =>
@@ -148,6 +163,10 @@ package body Alire_Early_Elaboration is
             end case;
          end loop;
       exception
+         when GNAT.Command_Line.Invalid_Parameter =>
+            if Option = 'c' then
+               Config_Switch_Error ("-c");
+            end if;
          when Exit_From_Command_Line =>
             --  Something unexpected happened but it will be properly dealt
             --  with later on, in the regular command-line parser.
