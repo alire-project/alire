@@ -2,10 +2,13 @@ with Ada.Text_IO;
 
 with Alire.Config.Builtins;
 with Alire.Environment;
+with Alire.Features;
 with Alire.Paths;
 with Alire.Platforms.Folders;
 with Alire.Platforms.Current;
 with Alire.Utils;
+with Alire.Version.Semver;
+with Alire.Warnings;
 
 with CLIC.Config.Edit;
 with CLIC.Config.Load;
@@ -167,12 +170,30 @@ package body Alire.Config.Edit is
    ----------
 
    function Path return Absolute_Path is
+      use type Version.Semver.Version;
+      Unset : constant String := "unset";
+      Msg   : constant String
+        := "Environment variable " & Environment.Config
+        & " is " & TTY.Error ("deprecated") & ". Use "
+        & Environment.Settings & " instead.";
    begin
+      --  Warn or fail depending on version
+      if OS_Lib.Getenv (Environment.Config, Unset) /= Unset then
+         if Version.Semver.Current < Features.Env_Alr_Config_Deprecated then
+            Warnings.Warn_Once (Msg, Level => Warning);
+         else
+            Raise_Checked_Error (Msg);
+         end if;
+      end if;
+
       if Config_Path /= null then -- Case with switch (TODO)
          return Config_Path.all;
       else
-         return OS_Lib.Getenv (Environment.Config,
-                               Default_Config_Path);
+         return OS_Lib.Getenv
+           (Environment.Settings,
+            Default =>
+              OS_Lib.Getenv (Environment.Config,
+                             Default_Config_Path));
       end if;
    end Path;
 
