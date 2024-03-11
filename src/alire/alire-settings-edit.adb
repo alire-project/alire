@@ -6,7 +6,7 @@ with Alire.Paths;
 with Alire.Platforms.Folders;
 with Alire.Platforms.Current;
 with Alire.Settings.Builtins;
-with Alire.Utils;
+with Alire.Utils.Text_Files;
 
 with CLIC.Config.Edit;
 with CLIC.Config.Load;
@@ -159,10 +159,26 @@ package body Alire.Settings.Edit is
          Adirs.Copy_File (Source_Name => Location (Old),
                           Target_Name => Location (Current));
 
-         --  Leave an explanation just in case
-         Directories.Touch
-           (Directories.Parent (Location (Old))
-            / "config-toml-is-settings-toml-after-alr-2_0");
+         begin
+            --  Leave an explanation just in case
+            Directories.Touch
+              (Directories.Parent (Location (Old))
+               / "config-toml-is-settings-toml-after-alr-2_0");
+
+            --  And insert a comment in the old config.toml
+            Utils.Text_Files.Replace_Lines
+              (Location (Old),
+               Empty_Vector
+               & String'("# config.toml has been replaced by settings.toml"
+                         & " after alr 2.0")
+               & ""
+               & Utils.Text_Files.Lines (Location (Old)));
+         exception
+            --  Ensure we don't break anything trying to leaving the clues
+            when E : others =>
+               Log_Exception (E);
+               Trace.Debug ("Failed with leaving clues about settings.toml");
+         end;
       end if;
 
       return Location (Current);
