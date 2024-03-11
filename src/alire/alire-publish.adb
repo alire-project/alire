@@ -3,7 +3,7 @@ with Ada.Text_IO;
 
 with AAA.Strings;
 
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Crates;
 with Alire.Environment;
 with Alire.Errors;
@@ -578,12 +578,12 @@ package body Alire.Publish is
             then
                raise Early_Stop;
             end if;
-         elsif not Config.Builtins.User_Github_Login.Is_Empty then
+         elsif not Settings.Builtins.User_Github_Login.Is_Empty then
             Put_Info
               ("Please upload this file to "
                & TTY.URL
                  (Index.Community_Host & "/"
-                  & Config.Builtins.User_Github_Login.Get & "/"
+                  & Settings.Builtins.User_Github_Login.Get & "/"
                   & Index.Community_Repo_Name
                   & "/upload/"
                   & Index.Community_Branch & "/"
@@ -810,7 +810,7 @@ package body Alire.Publish is
 
       --  User has an account
 
-      if Config.Builtins.User_Github_Login.Is_Empty then
+      if Settings.Builtins.User_Github_Login.Is_Empty then
          Put_Info ("Publishing to the community index"
                    & " requires a GitHub account.");
       else

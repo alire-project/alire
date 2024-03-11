@@ -8,7 +8,7 @@ pragma Unreferenced (Alire_Early_Elaboration);
 
 with Alire.Environment;
 with Alire.OS_Lib;            use Alire.OS_Lib;
-with Alire.Config.Builtins.Windows;
+with Alire.Settings.Builtins.Windows;
 with Alire.Errors;
 
 with GNATCOLL.VFS;
@@ -154,7 +154,7 @@ package body Alire.Platforms.Current is
       use CLIC.User_Input;
    begin
 
-      if Config.Builtins.Windows.Msys2_Do_Not_Install.Get then
+      if Settings.Builtins.Windows.Msys2_Do_Not_Install.Get then
 
          --  User already requested that msys2 should not be installed
 
@@ -189,7 +189,8 @@ package body Alire.Platforms.Current is
                    Default  => No) = Yes
          then
             --  Save user choice in the global config
-            Config.Builtins.Windows.Msys2_Do_Not_Install.Set_Globally ("true");
+            Settings
+              .Builtins.Windows.Msys2_Do_Not_Install.Set_Globally ("true");
          end if;
 
          --  We are not allowed to install
@@ -244,10 +245,10 @@ package body Alire.Platforms.Current is
       end Download_File;
 
       Msys2_Installer : constant String :=
-                          Config.Builtins.Windows.Msys2_Installer.Get;
+                          Settings.Builtins.Windows.Msys2_Installer.Get;
 
       Msys2_Installer_URL : constant String :=
-                              Config.Builtins.Windows.Msys2_Installer_URL.Get;
+                            Settings.Builtins.Windows.Msys2_Installer_URL.Get;
 
       Result : Alire.Outcome;
    begin
@@ -285,9 +286,10 @@ package body Alire.Platforms.Current is
             return Alire.Outcome_Failure ("Cannot setup msys2 environment");
       end;
 
-      if Config.Builtins.Windows.Msys2_Install_Dir.Is_Empty then
+      if Settings.Builtins.Windows.Msys2_Install_Dir.Is_Empty then
          --  Save msys2 install dir in the global config
-         Config.Builtins.Windows.Msys2_Install_Dir.Set_Globally (Install_Dir);
+         Settings
+           .Builtins.Windows.Msys2_Install_Dir.Set_Globally (Install_Dir);
       end if;
 
       --  Load msys2 environment to attempt first full update according to
@@ -295,7 +297,7 @@ package body Alire.Platforms.Current is
       --  https://www.msys2.org/wiki/MSYS2-installation/
       declare
          Cfg_Install_Dir : constant String :=
-                             Config.Builtins.Windows.Msys2_Install_Dir.Get;
+                             Settings.Builtins.Windows.Msys2_Install_Dir.Get;
       begin
          Set_Msys2_Env (Cfg_Install_Dir);
       end;
@@ -367,7 +369,7 @@ package body Alire.Platforms.Current is
       Result : Alire.Outcome;
 
       Cfg_Install_Dir : constant String :=
-                          Config.Builtins.Windows.Msys2_Install_Dir.Get;
+                          Settings.Builtins.Windows.Msys2_Install_Dir.Get;
 
       Pacman : constant String :=
                  Alire.OS_Lib.Subprocess.Locate_In_Path ("pacman");

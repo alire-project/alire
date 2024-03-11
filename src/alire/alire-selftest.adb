@@ -1,4 +1,4 @@
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 with Alire.Utils.Regex;
 with Alire.VCSs.Git;
 
@@ -13,28 +13,28 @@ package body Alire.Selftest is
       Key  : constant String := "test_key";
       Val  : constant String := "nominal";
    begin
-      Config.Edit.Set_Globally (Key, Val);
-      pragma Assert (Config.DB.Defined (Key));
-      pragma Assert (Config.DB.Get (Key, "snafu") = Val);
+      Settings.Edit.Set_Globally (Key, Val);
+      pragma Assert (Settings.DB.Defined (Key));
+      pragma Assert (Settings.DB.Get (Key, "snafu") = Val);
 
       --  Check typed storing
 
       --  Raw storing of integer
-      Config.Edit.Set_Globally (Key, "777");
-      pragma Assert (Integer (Config.DB.Get (Key, 0)) = 777);
+      Settings.Edit.Set_Globally (Key, "777");
+      pragma Assert (Integer (Settings.DB.Get (Key, 0)) = 777);
 
       --  Raw storing of boolean
-      Config.Edit.Set_Globally (Key, "true");
-      pragma Assert (Config.DB.Get (Key, False) = True);
+      Settings.Edit.Set_Globally (Key, "true");
+      pragma Assert (Settings.DB.Get (Key, False) = True);
 
       --  Typed storing of boolean
-      Config.Edit.Set_Boolean (Config.Global, Key, False);
-      pragma Assert (Config.DB.Get (Key, True) = False);
+      Settings.Edit.Set_Boolean (Settings.Global, Key, False);
+      pragma Assert (Settings.DB.Get (Key, True) = False);
 
       --  Raw storing of boolean with wrong type
-      Config.Edit.Set_Globally (Key, "True");
+      Settings.Edit.Set_Globally (Key, "True");
       --  This causes a string to be stored, as in TOML only "true" is bool
-      pragma Assert (Config.DB.Get (Key, "False") = "True");
+      pragma Assert (Settings.DB.Get (Key, "False") = "True");
 
    end Check_Config_Changes;
 

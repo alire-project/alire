@@ -1,6 +1,6 @@
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 
-package body Alire.Config is
+package body Alire.Settings is
 
    --------
    -- DB --
@@ -61,7 +61,7 @@ package body Alire.Config is
    ---------
 
    procedure Set (This  : Builtin_Option;
-                  Level : Config.Level;
+                  Level : Settings.Level;
                   Value : String)
    is
    begin
@@ -73,7 +73,7 @@ package body Alire.Config is
    ---------
 
    procedure Set (This  : Builtin_Option;
-                  Level : Config.Level;
+                  Level : Settings.Level;
                   Value : Boolean)
    is
    begin
@@ -85,7 +85,7 @@ package body Alire.Config is
    ---------
 
    procedure Set (This  : Builtin_Option;
-                  Level : Config.Level;
+                  Level : Settings.Level;
                   Value : Config_Int)
    is
    begin
@@ -97,7 +97,7 @@ package body Alire.Config is
    -----------
 
    procedure Unset (This  : Builtin_Option;
-                    Level : Config.Level)
+                    Level : Settings.Level)
    is
    begin
       Edit.Unset (Level, +This.Key);
@@ -182,4 +182,4 @@ package body Alire.Config is
                     Public => Public,
                     Check  => Check));
 
-end Alire.Config;
+end Alire.Settings;

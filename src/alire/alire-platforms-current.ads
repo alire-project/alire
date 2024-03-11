@@ -1,6 +1,6 @@
 private with AAA.Enum_Tools;
 
-private with Alire.Config.Builtins;
+private with Alire.Settings.Builtins;
 limited with Alire.Environment;
 private with Alire.OS_Lib.Subprocess;
 private with Alire.Platforms.Common;
@@ -92,13 +92,14 @@ private
           Platforms.Distribution_Unknown
 
        --  Overridden detection
-       elsif Config.Builtins.Distribution_Override.Get /= "" then
-         (if Is_Valid_Distro (Config.Builtins.Distribution_Override.Get) then
-               Distributions'Value (Config.Builtins.Distribution_Override.Get)
+       elsif Settings.Builtins.Distribution_Override.Get /= "" then
+         (if Is_Valid_Distro (Settings.Builtins.Distribution_Override.Get) then
+               Distributions'Value
+                 (Settings.Builtins.Distribution_Override.Get)
           else
             Return_With_Warning
             ("Invalid distribution override: "
-             & Config.Builtins.Distribution_Override.Get,
+             & Settings.Builtins.Distribution_Override.Get,
              Result => Platforms.Distribution_Unknown))
 
        --  Regular detection

@@ -1,11 +1,11 @@
 with Ada.Text_IO;
 
-with Alire.Config.Builtins;
 with Alire.Environment;
 with Alire.Features;
 with Alire.Paths;
 with Alire.Platforms.Folders;
 with Alire.Platforms.Current;
+with Alire.Settings.Builtins;
 with Alire.Utils;
 with Alire.Version.Semver;
 with Alire.Warnings;
@@ -13,7 +13,7 @@ with Alire.Warnings;
 with CLIC.Config.Edit;
 with CLIC.Config.Load;
 
-package body Alire.Config.Edit is
+package body Alire.Settings.Edit is
 
    use Ada.Strings.Unbounded;
    use AAA.Strings;
@@ -60,7 +60,7 @@ package body Alire.Config.Edit is
    -- Set --
    ---------
 
-   procedure Set (Level : Config.Level;
+   procedure Set (Level : Settings.Level;
                   Key   : CLIC.Config.Config_Key;
                   Value : String;
                   Check : CLIC.Config.Check_Import := null)
@@ -76,7 +76,7 @@ package body Alire.Config.Edit is
    -- Unset --
    -----------
 
-   procedure Unset (Level : Config.Level;
+   procedure Unset (Level : Settings.Level;
                     Key   : CLIC.Config.Config_Key)
    is
    begin
@@ -95,7 +95,7 @@ package body Alire.Config.Edit is
    -- Set_Boolean --
    -----------------
 
-   procedure Set_Boolean (Level : Config.Level;
+   procedure Set_Boolean (Level : Settings.Level;
                           Key   : CLIC.Config.Config_Key;
                           Value : Boolean;
                           Check : CLIC.Config.Check_Import := null)
@@ -117,7 +117,7 @@ package body Alire.Config.Edit is
    begin
       case Lvl is
          when Global =>
-            return Alire.Config.Edit.Path / "config.toml";
+            return Alire.Settings.Edit.Path / "config.toml";
          when Local =>
             declare
                Candidate : constant String :=
@@ -157,7 +157,7 @@ package body Alire.Config.Edit is
       --  Set variables elsewhere
 
       Platforms.Current.Disable_Distribution_Detection :=
-        Config.Builtins.Distribution_Disable_Detection.Get;
+        Settings.Builtins.Distribution_Disable_Detection.Get;
       if Platforms.Current.Disable_Distribution_Detection then
          Trace.Debug ("Distribution detection disabled by configuration");
       end if;
@@ -339,4 +339,4 @@ package body Alire.Config.Edit is
       end loop;
    end Print_Builtins_Doc;
 
-end Alire.Config.Edit;
+end Alire.Settings.Edit;

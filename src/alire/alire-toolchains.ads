@@ -2,7 +2,7 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 
 with AAA.Strings;
 
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Dependencies;
 with Alire.Errors;
 with Alire.Milestones;
@@ -30,7 +30,7 @@ package Alire.Toolchains is
    function Any_Tool (Crate : Crate_Name) return Dependencies.Dependency;
    --  Returns a dependency on crate*
 
-   procedure Assistant (Level              : Config.Level;
+   procedure Assistant (Level              : Settings.Level;
                         Allow_Incompatible : Boolean := False;
                         First_Run          : Boolean := False);
    --  Runs the interactive assistant to select the default toolchain. By
@@ -43,12 +43,14 @@ package Alire.Toolchains is
    --  plain `gnat`. This way we need not to litter the callers with similar
    --  transformations, as we always want whatever gnat_XXX is used for "gnat".
 
-   procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level);
+   procedure Set_Automatic_Assistant (Enabled : Boolean;
+                                      Level   : Settings.Level);
    --  Enable/Disable the automatic assistant on next run
 
    function Assistant_Enabled return Boolean;
 
-   procedure Set_As_Default (Release : Releases.Release; Level : Config.Level);
+   procedure Set_As_Default (Release : Releases.Release;
+                             Level   : Settings.Level);
    --  Mark the given release as the default to be used. Does not check that it
    --  be already installed.
 
@@ -83,7 +85,7 @@ package Alire.Toolchains is
    --  manually).
 
    procedure Unconfigure (Crate         : Crate_Name;
-                          Level         : Config.Level;
+                          Level         : Settings.Level;
                           Fail_If_Unset : Boolean := True);
    --  Set the crate as not configured. If not set and Fail_If_Unset, raise
 
@@ -160,7 +162,7 @@ private
    -----------------------
 
    function Assistant_Enabled return Boolean
-   is (Config.Builtins.Toolchain_Assistant.Get);
+   is (Settings.Builtins.Toolchain_Assistant.Get);
 
    ----------------------
    -- Tool_Is_External --
@@ -168,7 +170,7 @@ private
 
    function Tool_Is_External (Crate : Crate_Name) return Boolean
    is (Boolean'Value
-       (Config.DB.Get_As_String -- because it could be stored as bool or string
+       (Settings.DB.Get_As_String -- because it could be stored as bool or str
           (Tool_Key (Crate, For_Is_External), "True")));
 
    --------------
@@ -182,8 +184,8 @@ private
        then Tool_Key (GNAT_Crate, Kind)
        else CLIC.Config.Config_Key
          ((case Kind is
-             when For_Use         => Config.Builtins.Toolchain_Use.Key,
-             when For_Is_External => Config.Builtins.Toolchain_External.Key)
+             when For_Use         => Settings.Builtins.Toolchain_Use.Key,
+             when For_Is_External => Settings.Builtins.Toolchain_External.Key)
           & "." & Crate.As_String));
 
    --------------------
@@ -191,6 +193,6 @@ private
    --------------------
    --  Return the milestone stored by the user for this tool
    function Tool_Milestone (Crate : Crate_Name) return Milestones.Milestone
-   is (Milestones.New_Milestone (Config.DB.Get (Tool_Key (Crate), "")));
+   is (Milestones.New_Milestone (Settings.DB.Get (Tool_Key (Crate), "")));
 
 end Alire.Toolchains;
