@@ -11,8 +11,16 @@ private with Ada.Containers.Generic_Array_Sort;
 
 package Alire.Environment with Preelaborate is
 
+   --  ANY NEW VARIABLES SHOULD USE "ALIRE" IF THIS IS SOMETHING AFFECTING THE
+   --  BASE LIBRARY. CONSIDER USING A SETTING INSTEAD, UNLESS AN ENVIRONMENT
+   --  VARIABLE MAKES ABSOLUTE SENSE.
+
    Config : constant String := "ALR_CONFIG";
    --  Folder where current alr will look for configuration
+   --  DEPRECATED on 3.0
+
+   Settings : constant String := "ALIRE_SETTINGS_DIR";
+   --  Folder where Alire will look for configuration
 
    Testsuite : constant String := "ALR_TESTSUITE";
    --  If defined, we are running under the testsuite harness

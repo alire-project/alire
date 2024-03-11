@@ -2,14 +2,10 @@
 Check build --profiles switch
 """
 
-from drivers import builds
 from drivers.alr import run_alr, init_local_crate, alr_pin, alr_manifest
 from drivers.helpers import lines_of, content_of
 
 import os
-
-from drivers.asserts import assert_contents, assert_match
-
 
 def check_profile(profile: str, file: str):
     line = f'   Build_Profile : Build_Profile_Kind := "{profile}";\n'
