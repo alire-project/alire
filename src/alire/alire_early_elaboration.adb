@@ -2,7 +2,7 @@ with AAA.Strings;
 
 with Ada.Directories;
 
-with Alire.Config.Edit.Early_Load;
+with Alire.Settings.Edit.Early_Load;
 
 with GNAT.Command_Line;
 with GNAT.OS_Lib;
@@ -98,7 +98,7 @@ package body Alire_Early_Elaboration is
                Early_Error
                  ("Given configuration path is not a directory: " & Path);
             else
-               Alire.Config.Edit.Set_Path (Adirs.Full_Name (Path));
+               Alire.Settings.Edit.Set_Path (Adirs.Full_Name (Path));
             end if;
          end Set_Config_Path;
 
@@ -199,7 +199,7 @@ package body Alire_Early_Elaboration is
       end if;
 
       --  Load config ASAP
-      Alire.Config.Edit.Early_Load.Load_Config;
+      Alire.Settings.Edit.Early_Load.Load_Settings;
    end Early_Switch_Detection;
 
    -------------------

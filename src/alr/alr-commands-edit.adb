@@ -1,7 +1,7 @@
 with Ada.Containers;
 
 with Alire; use Alire;
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
 
@@ -21,11 +21,11 @@ package body Alr.Commands.Edit is
       use Trace;
    begin
       if Cmd /= "" then
-         Config.Set_Globally (Config.Builtins.Editor_Cmd, Cmd);
+         Settings.Set_Globally (Settings.Builtins.Editor_Cmd, Cmd);
          Put_Info ("'" & TTY.Terminal (Cmd)
                    & "' is now set as the editor command.");
       else
-         Config.Builtins.Editor_Cmd.Unset (Alire.Config.Global);
+         Settings.Builtins.Editor_Cmd.Unset (Alire.Settings.Global);
          Put_Info ("The editor command has been unset.");
       end if;
 
@@ -64,7 +64,7 @@ package body Alr.Commands.Edit is
       use AAA.Strings;
       use CLIC.User_Input;
 
-      package Builtins renames Alire.Config.Builtins;
+      package Builtins renames Alire.Settings.Builtins;
 
       type Editor_Choice is (VScode, GNATstudio, Other);
 
@@ -177,9 +177,9 @@ package body Alr.Commands.Edit is
    is
       use Ada.Containers;
       use GNAT.Strings;
-      use Alire.Config;
+      use Alire.Settings;
 
-      package Builtins renames Alire.Config.Builtins;
+      package Builtins renames Alire.Settings.Builtins;
    begin
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");

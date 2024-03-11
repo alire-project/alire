@@ -8,8 +8,8 @@ with CLIC.User_Input;
 
 with Alire.Platforms;
 with Alire_Early_Elaboration;
-with Alire.Config.Builtins;
-with Alire.Config.Edit;
+with Alire.Settings.Builtins;
+with Alire.Settings.Edit;
 with Alire.Errors;
 with Alire.Index_On_Disk.Loading;
 with Alire.Index_On_Disk.Updates;
@@ -207,7 +207,7 @@ package body Alr.Commands is
    procedure Create_Alire_Folders is
       use GNATCOLL.VFS;
    begin
-      Make_Dir (Create (+Alire.Config.Edit.Path));
+      Make_Dir (Create (+Alire.Settings.Edit.Path));
    end Create_Alire_Folders;
 
    --------------------------
@@ -302,9 +302,9 @@ package body Alr.Commands is
       Unchecked : Alire.Roots.Optional.Root renames Cmd.Optional_Root;
 
       Manual_Only : constant Boolean :=
-                      Alire.Config.Builtins.Update_Manually_Only.Get;
+                      Alire.Settings.Builtins.Update_Manually_Only.Get;
 
-      package Conf renames Alire.Config;
+      package Conf renames Alire.Settings;
    begin
 
       --  If the root has been already loaded, then all following checks have
@@ -498,11 +498,11 @@ package body Alr.Commands is
       then
          --  Just verify that early processing catched it
          pragma Assert
-           (Alire.Config.Edit.Path =
+           (Alire.Settings.Edit.Path =
               Ada.Directories.Full_Name (Command_Line_Config_Path.all),
             "Unexpected mismatch of config paths:"
             & Alire.New_Line
-            & "Early: " & Alire.Config.Edit.Path
+            & "Early: " & Alire.Settings.Edit.Path
             & Alire.New_Line
             & "Late : " & Command_Line_Config_Path.all);
       end if;
@@ -543,7 +543,7 @@ package body Alr.Commands is
 
          Set_Builtin_Aliases;
 
-         Sub_Cmd.Load_Aliases (Alire.Config.DB.all);
+         Sub_Cmd.Load_Aliases (Alire.Settings.DB.all);
 
          Sub_Cmd.Execute;
          Log ("alr " & Sub_Cmd.What_Command & " done", Detail);

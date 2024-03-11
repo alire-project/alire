@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 with Alire.Directories;
 with Alire.Paths;
 with Alire.Platforms.Current;
@@ -66,7 +66,7 @@ package body Alr.Commands.Clean is
       --  Configuration-wide cache, where interrupted binary downloads dwell...
 
       Alire.Directories.Traverse_Tree
-        (Start   => Alire.Config.Edit.Path,
+        (Start   => Alire.Settings.Edit.Path,
          Doing   => Add_Target'Access,
          Recurse => True);
 

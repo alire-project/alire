@@ -6,7 +6,7 @@ with CLIC.Config;
 
 with TOML;
 
-package Alire.Config.Edit is
+package Alire.Settings.Edit is
 
    --  Shortcuts that use the standard config locations. These interpret the
    --  value in string as a TOML type whenever possible.
@@ -19,14 +19,14 @@ package Alire.Config.Edit is
                            Value : String;
                            Check : CLIC.Config.Check_Import := null);
 
-   procedure Set (Level : Config.Level;
+   procedure Set (Level : Settings.Level;
                   Key   : CLIC.Config.Config_Key;
                   Value : String;
                   Check : CLIC.Config.Check_Import := null);
 
    --  Typed alternatives
 
-   procedure Set_Boolean (Level : Config.Level;
+   procedure Set_Boolean (Level : Settings.Level;
                           Key   : CLIC.Config.Config_Key;
                           Value : Boolean;
                           Check : CLIC.Config.Check_Import := null);
@@ -35,7 +35,7 @@ package Alire.Config.Edit is
    --  here all non-preelaborable things related to config loading. This
    --  way, querying stays preelaborable.
 
-   procedure Unset (Level : Config.Level;
+   procedure Unset (Level : Settings.Level;
                     Key   : CLIC.Config.Config_Key);
    --  Unset a key at a level; silently succeed even if the key was undefined.
 
@@ -66,7 +66,7 @@ package Alire.Config.Edit is
    --  Return path of the configuration file corresponding to the given
    --  configuration level.
 
-   --  Support for built-in config variables. See Alire.Config.Builtins also.
+   --  Support for built-in config variables. See Alire.Settings.Builtins also.
 
    function Builtins_Info return AAA.Strings.Vector;
    --  Return a String_Vector with the documentation of builtin configuration
@@ -88,4 +88,4 @@ private
    --  the program-wide configuration ready. This is done during startup from
    --  Alire_Early_Elaboration so config is available ASAP.
 
-end Alire.Config.Edit;
+end Alire.Settings.Edit;

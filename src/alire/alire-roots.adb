@@ -669,7 +669,7 @@ package body Alire.Roots is
       Guard : Directories.Guard (Directories.Enter (Path (This)))
         with Unreferenced;
       --  At some point inside the configuration generation process the config
-      --  is loaded and Config.Edit.Filepath requires being inside the root,
+      --  is loaded and Settings.Edit.Filepath requires being inside the root,
       --  which can't be directly used because of circularities.
    begin
       This.Load_Configuration;
