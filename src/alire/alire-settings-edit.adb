@@ -136,8 +136,6 @@ package body Alire.Settings.Edit is
                                 Directories.Detect_Root_Path;
                begin
                   if Candidate /= "" then
-                     --  This file cannot have a .toml extension or the root
-                     --  detection will not work.
                      return Candidate / "alire" / File;
                   else
                      Raise_Checked_Error
@@ -160,12 +158,7 @@ package body Alire.Settings.Edit is
                           Target_Name => Location (Current));
 
          begin
-            --  Leave an explanation just in case
-            Directories.Touch
-              (Directories.Parent (Location (Old))
-               / "config-toml-is-settings-toml-after-alr-2_0");
-
-            --  And insert a comment in the old config.toml
+            --  Insert a comment in the old config.toml
             Utils.Text_Files.Replace_Lines
               (Location (Old),
                Empty_Vector
@@ -177,7 +170,7 @@ package body Alire.Settings.Edit is
             --  Ensure we don't break anything trying to leaving the clues
             when E : others =>
                Log_Exception (E);
-               Trace.Debug ("Failed with leaving clues about settings.toml");
+               Trace.Debug ("Failed when leaving clue about settings.toml");
          end;
       end if;
 
