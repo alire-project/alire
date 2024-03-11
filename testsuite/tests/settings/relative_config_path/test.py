@@ -14,7 +14,7 @@ run_alr("--config=.", "settings", "--global",
         "--set", "some_config_key", "true")
 
 
-assert_eq("some_config_key = true\n", lines_of ("config.toml")[0])
+assert_eq("some_config_key = true\n", lines_of ("settings.toml")[0])
 
 
 print('SUCCESS')

@@ -87,7 +87,7 @@ package body Alire.Directories is
                                 else File & ".prev");
    begin
       if Exists (File) then
-         if not Exists (Base_Dir) then
+         if Base_Dir /= "" and then not Exists (Base_Dir) then
             Create_Directory (Base_Dir);
          end if;
 

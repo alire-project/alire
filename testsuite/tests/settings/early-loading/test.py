@@ -10,7 +10,7 @@ from drivers.asserts import assert_eq, assert_match
 # Create a custom configuration dir + file
 custom_config = "custom_config"
 os.mkdir(custom_config)
-with open(os.path.join(custom_config, "config.toml"), "w") as f:
+with open(os.path.join(custom_config, "settings.toml"), "w") as f:
     f.write("test_value = 42\n")
 
 expected = "test_value=42\n"

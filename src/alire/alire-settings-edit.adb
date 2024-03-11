@@ -1,3 +1,4 @@
+with Ada.Directories;
 with Ada.Text_IO;
 
 with Alire.Environment;
@@ -6,7 +7,7 @@ with Alire.Paths;
 with Alire.Platforms.Folders;
 with Alire.Platforms.Current;
 with Alire.Settings.Builtins;
-with Alire.Utils;
+with Alire.Utils.Text_Files;
 with Alire.Version.Semver;
 with Alire.Warnings;
 
@@ -19,8 +20,10 @@ package body Alire.Settings.Edit is
    use AAA.Strings;
    use TOML;
 
+   package Adirs renames Ada.Directories;
+
    type String_Access is access String;
-   Config_Path : String_Access;
+   Settings_Path : String_Access;
 
    -----------------
    -- Set_Locally --
@@ -114,25 +117,67 @@ package body Alire.Settings.Edit is
    --------------
 
    function Filepath (Lvl : Level) return Absolute_Path is
+
+      type Old_New is (Old, Current);
+
+      --------------
+      -- Location --
+      --------------
+
+      function Location (Which : Old_New) return Absolute_Path is
+         File : constant String :=
+                  (case Which is
+                      when Old     => "config.toml",
+                      when Current => Paths.Settings_File_Name);
+      begin
+         case Lvl is
+            when Global =>
+               return Alire.Settings.Edit.Path / File;
+            when Local =>
+               declare
+                  Candidate : constant String :=
+                                Directories.Detect_Root_Path;
+               begin
+                  if Candidate /= "" then
+                     return Candidate / "alire" / File;
+                  else
+                     Raise_Checked_Error
+                       ("Can only be used in an Alire directory");
+                  end if;
+               end;
+         end case;
+      end Location;
+
    begin
-      case Lvl is
-         when Global =>
-            return Alire.Settings.Edit.Path / "config.toml";
-         when Local =>
-            declare
-               Candidate : constant String :=
-                 Directories.Detect_Root_Path;
-            begin
-               if Candidate /= "" then
-                  --  This file cannot have a .toml extension or the root
-                  --  detection will not work.
-                  return Candidate / "alire" / "config.toml";
-               else
-                  Raise_Checked_Error
-                    ("Can only be used in an Alire directory");
-               end if;
-            end;
-      end case;
+      --  Migrate file on the spot if necessary. This file is transparent to
+      --  users so we do not emit visible messages.
+
+      if Directories.Is_File (Location (Old)) and then
+        not Directories.Is_File (Location (Current))
+      then
+         Trace.Debug ("Migrating settings file: "
+                      & Location (Old) & " --> " & Location (Current));
+         Adirs.Copy_File (Source_Name => Location (Old),
+                          Target_Name => Location (Current));
+
+         begin
+            --  Insert a comment in the old config.toml
+            Utils.Text_Files.Replace_Lines
+              (Location (Old),
+               Empty_Vector
+               & String'("# config.toml has been replaced by settings.toml"
+                         & " after alr 2.0")
+               & ""
+               & Utils.Text_Files.Lines (Location (Old)));
+         exception
+            --  Ensure we don't break anything trying to leaving the clues
+            when E : others =>
+               Log_Exception (E);
+               Trace.Debug ("Failed when leaving clue about settings.toml");
+         end;
+      end if;
+
+      return Location (Current);
    end Filepath;
 
    -----------------
@@ -186,8 +231,8 @@ package body Alire.Settings.Edit is
          end if;
       end if;
 
-      if Config_Path /= null then -- Case with switch (TODO)
-         return Config_Path.all;
+      if Settings_Path /= null then -- Case with switch (TODO)
+         return Settings_Path.all;
       else
          return OS_Lib.Getenv
            (Environment.Settings,
@@ -215,10 +260,10 @@ package body Alire.Settings.Edit is
 
    procedure Set_Path (Path : Absolute_Path) is
    begin
-      if Config_Path /= null then
+      if Settings_Path /= null then
          raise Constraint_Error with "Custom path already set";
       else
-         Config_Path := new String'(Path);
+         Settings_Path := new String'(Path);
       end if;
    end Set_Path;
 
