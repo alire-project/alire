@@ -1,7 +1,7 @@
 with AAA.Strings;
 
-with Alire.Config.Builtins;
-with Alire.Config.Edit;
+with Alire.Settings.Builtins;
+with Alire.Settings.Edit;
 with Alire.Directories;
 with Alire.Flags;
 with Alire.Paths.Vault;
@@ -18,7 +18,7 @@ package body Alire.Builds is
    ----------------------------
 
    function Sandboxed_Dependencies return Boolean
-   is (not Config.Builtins.Dependencies_Shared.Get);
+   is (not Settings.Builtins.Dependencies_Shared.Get);
 
    ----------
    -- Sync --
@@ -83,7 +83,7 @@ package body Alire.Builds is
    ----------
 
    function Path return Absolute_Path
-   is (Config.Edit.Cache_Path
+   is (Settings.Edit.Cache_Path
        / Paths.Build_Folder_Inside_Working_Folder);
 
    ----------

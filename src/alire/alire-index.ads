@@ -2,7 +2,7 @@ private with Alire_Early_Elaboration;
 pragma Elaborate_All (Alire_Early_Elaboration);
 pragma Unreferenced (Alire_Early_Elaboration);
 
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Crates.Containers;
 with Alire.Dependencies;
 with Alire.Origins;
@@ -16,12 +16,13 @@ with Semantic_Versioning.Extended;
 
 package Alire.Index is
 
-   Community_Host : constant String := Config.Builtins.Index_Host.Get;
+   Community_Host : constant String := Settings.Builtins.Index_Host.Get;
 
-   Community_Organization : constant String := Config.Builtins.Index_Owner.Get;
+   Community_Organization : constant String :=
+                              Settings.Builtins.Index_Owner.Get;
 
    Community_Repo_Name : constant String
-     := Config.Builtins.Index_Repository_Name.Get;
+     := Settings.Builtins.Index_Repository_Name.Get;
 
    Community_Repo : constant URL :=
                       "git+" & Community_Host

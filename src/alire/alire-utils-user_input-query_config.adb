@@ -1,4 +1,4 @@
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 with CLIC.User_Input; use CLIC.User_Input;
 
 package body Alire.Utils.User_Input.Query_Config is
@@ -13,17 +13,17 @@ package body Alire.Utils.User_Input.Query_Config is
                                     Validation : String_Validation_Access)
                                     return String
    is
-      use Alire.Config;
+      use Alire.Settings;
    begin
-      if Config.DB.Defined (Config_Key) then
-         return Config.DB.Get (Config_Key, Default);
+      if Settings.DB.Defined (Config_Key) then
+         return Settings.DB.Get (Config_Key, Default);
       else
          declare
             Result : constant String :=
               Query_String (Question, Default, Validation);
          begin
             if Result /= Default then
-               Alire.Config.Edit.Set_Globally (Config_Key, Result);
+               Alire.Settings.Edit.Set_Globally (Config_Key, Result);
             end if;
 
             return Result;

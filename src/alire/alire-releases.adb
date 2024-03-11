@@ -1,7 +1,7 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Crates;
 with Alire.Directories;
 with Alire.Defaults;
@@ -85,7 +85,7 @@ package body Alire.Releases is
       Newline    : constant String := ASCII.LF & "   ";
    begin
       for Dep of This.Flat_Dependencies loop
-         if Config.Builtins.Warning_Caret.Get
+         if Settings.Builtins.Warning_Caret.Get
            and then
            AAA.Strings.Contains (Dep.Versions.Image, "^0")
          then
@@ -98,7 +98,7 @@ package body Alire.Releases is
                & "The suspicious dependency is: " & TTY.Version (Dep.Image)
                & Newline
                & "You can disable this warning by setting the option "
-               & TTY.Emph (Config.Builtins.Warning_Caret.Key) & " to false.",
+               & TTY.Emph (Settings.Builtins.Warning_Caret.Key) & " to false.",
                Warnings.Caret_Or_Tilde);
             return True;
          end if;
