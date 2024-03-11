@@ -1,5 +1,5 @@
 with Alire.Builds;
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Index_On_Disk.Loading;
@@ -41,7 +41,7 @@ package body Alr.Commands.Version is
       Index_Outcome : Alire.Outcome;
       Indexes : constant Alire.Index_On_Disk.Loading.Set :=
                   Alire.Index_On_Disk.Loading.Find_All
-                    (Alire.Config.Edit.Indexes_Directory, Index_Outcome);
+                    (Alire.Settings.Edit.Indexes_Directory, Index_Outcome);
       Root : Alire.Roots.Optional.Root :=
                Alire.Roots.Optional.Search_Root (Alire.Directories.Current);
 
@@ -73,9 +73,9 @@ package body Alr.Commands.Version is
       Table.Append ("").New_Row;
       Table.Append ("CONFIGURATION").New_Row;
       Table.Append ("settings folder:")
-        .Append (Alire.Config.Edit.Path).New_Row;
+        .Append (Alire.Settings.Edit.Path).New_Row;
       Table.Append ("cache folder:")
-        .Append (Alire.Config.Edit.Cache_Path).New_Row;
+        .Append (Alire.Settings.Edit.Cache_Path).New_Row;
       Table.Append ("vault folder:").Append (Paths.Vault.Path).New_Row;
       Table.Append ("build folder:").Append (Build_Path).New_Row;
       Table.Append ("temp folder:")
@@ -88,7 +88,7 @@ package body Alr.Commands.Version is
       Table.Append ("compatible index versions:")
         .Append (Alire.Index.Valid_Versions.Image).New_Row;
       Table.Append ("indexes folder:")
-        .Append (Alire.Config.Edit.Indexes_Directory).New_Row;
+        .Append (Alire.Settings.Edit.Indexes_Directory).New_Row;
       Table.Append ("indexes metadata:")
         .Append (if Index_Outcome.Success
                  then "OK"

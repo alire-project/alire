@@ -6,7 +6,7 @@ with Alire.OS_Lib; use Alire.OS_Lib.Operators;
 
 with CLIC.Config;
 
-package Alire.Config is
+package Alire.Settings is
 
    function DB return access constant CLIC.Config.Instance;
 
@@ -49,19 +49,19 @@ package Alire.Config is
    procedure Set_Globally (This : Builtin_Option; Value : String);
 
    procedure Set (This  : Builtin_Option;
-                  Level : Config.Level;
+                  Level : Settings.Level;
                   Value : String);
 
    procedure Set (This  : Builtin_Option;
-                  Level : Config.Level;
+                  Level : Settings.Level;
                   Value : Boolean);
 
    procedure Set (This  : Builtin_Option;
-                  Level : Config.Level;
+                  Level : Settings.Level;
                   Value : Config_Int);
 
    procedure Unset (This  : Builtin_Option;
-                    Level : Config.Level);
+                    Level : Settings.Level);
 
    function New_Builtin (Key    : CLIC.Config.Config_Key;
                          Kind   : Builtin_Kind;
@@ -115,4 +115,4 @@ private
 
    All_Builtins : Builtin_Maps.Map;
 
-end Alire.Config;
+end Alire.Settings;

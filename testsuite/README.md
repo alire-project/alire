@@ -28,7 +28,7 @@ $ virtualenv my-virtual-env
 $ source my-virtual-env/bin/activate
 
 # Install e3-testsuite and all its dependencies
-$ pip install e3-testsuite
+$ pip install -r requirements.txt
 
 # You should now be able to run the testsuite (make sure you built alr and
 # made it available with your PATH):

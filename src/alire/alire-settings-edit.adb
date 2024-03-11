@@ -1,11 +1,11 @@
 with Ada.Text_IO;
 
-with Alire.Config.Builtins;
 with Alire.Environment;
 with Alire.Features;
 with Alire.Paths;
 with Alire.Platforms.Folders;
 with Alire.Platforms.Current;
+with Alire.Settings.Builtins;
 with Alire.Utils;
 with Alire.Version.Semver;
 with Alire.Warnings;
@@ -13,7 +13,7 @@ with Alire.Warnings;
 with CLIC.Config.Edit;
 with CLIC.Config.Load;
 
-package body Alire.Config.Edit is
+package body Alire.Settings.Edit is
 
    use Ada.Strings.Unbounded;
    use AAA.Strings;
@@ -36,7 +36,7 @@ package body Alire.Config.Edit is
       end if;
 
       --  Reload after change
-      Load_Config;
+      Load_Settings;
    end Set_Locally;
 
    ------------------
@@ -53,14 +53,14 @@ package body Alire.Config.Edit is
       end if;
 
       --  Reload after change
-      Load_Config;
+      Load_Settings;
    end Set_Globally;
 
    ---------
    -- Set --
    ---------
 
-   procedure Set (Level : Config.Level;
+   procedure Set (Level : Settings.Level;
                   Key   : CLIC.Config.Config_Key;
                   Value : String;
                   Check : CLIC.Config.Check_Import := null)
@@ -76,14 +76,14 @@ package body Alire.Config.Edit is
    -- Unset --
    -----------
 
-   procedure Unset (Level : Config.Level;
+   procedure Unset (Level : Settings.Level;
                     Key   : CLIC.Config.Config_Key)
    is
    begin
       if CLIC.Config.Edit.Unset (Filepath (Level), Key, Quiet => True) then
          Trace.Debug ("Config key " & Key & " unset from " & Level'Image
                       & "configuration at " & Filepath (Level));
-         Load_Config;
+         Load_Settings;
       else
          Trace.Debug ("Config key " & Key & " requested to be unset at level "
                       & Level'Image & " but it was already unset at "
@@ -95,7 +95,7 @@ package body Alire.Config.Edit is
    -- Set_Boolean --
    -----------------
 
-   procedure Set_Boolean (Level : Config.Level;
+   procedure Set_Boolean (Level : Settings.Level;
                           Key   : CLIC.Config.Config_Key;
                           Value : Boolean;
                           Check : CLIC.Config.Check_Import := null)
@@ -106,7 +106,7 @@ package body Alire.Config.Edit is
       Assert (Set_Boolean_Impl (Filepath (Level), Key, Value, Check),
               "Cannot set config key '" & Key & "' at level " & Level'Image);
       --  Reload after change
-      Load_Config;
+      Load_Settings;
    end Set_Boolean;
 
    --------------
@@ -117,7 +117,7 @@ package body Alire.Config.Edit is
    begin
       case Lvl is
          when Global =>
-            return Alire.Config.Edit.Path / "config.toml";
+            return Alire.Settings.Edit.Path / "config.toml";
          when Local =>
             declare
                Candidate : constant String :=
@@ -135,11 +135,11 @@ package body Alire.Config.Edit is
       end case;
    end Filepath;
 
-   -----------------
-   -- Load_Config --
-   -----------------
+   -------------------
+   -- Load_Settings --
+   -------------------
 
-   procedure Load_Config is
+   procedure Load_Settings is
    begin
       DB_Instance.Clear;
 
@@ -157,11 +157,11 @@ package body Alire.Config.Edit is
       --  Set variables elsewhere
 
       Platforms.Current.Disable_Distribution_Detection :=
-        Config.Builtins.Distribution_Disable_Detection.Get;
+        Settings.Builtins.Distribution_Disable_Detection.Get;
       if Platforms.Current.Disable_Distribution_Detection then
          Trace.Debug ("Distribution detection disabled by configuration");
       end if;
-   end Load_Config;
+   end Load_Settings;
 
    Default_Config_Path : constant Absolute_Path := Platforms.Folders.Config;
 
@@ -339,4 +339,4 @@ package body Alire.Config.Edit is
       end loop;
    end Print_Builtins_Doc;
 
-end Alire.Config.Edit;
+end Alire.Settings.Edit;

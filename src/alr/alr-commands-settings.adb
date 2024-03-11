@@ -1,5 +1,5 @@
-with Alire.Config;
-with Alire.Config.Edit;
+with Alire.Settings;
+with Alire.Settings.Edit;
 with Alire.Root;
 
 with CLIC.Config.Info;
@@ -17,9 +17,9 @@ package body Alr.Commands.Settings is
    is
       Enabled : Natural := 0;
 
-      Lvl : constant Alire.Config.Level := (if Cmd.Global
-                                            then Alire.Config.Global
-                                            else Alire.Config.Local);
+      Lvl : constant Alire.Settings.Level := (if Cmd.Global
+                                            then Alire.Settings.Global
+                                            else Alire.Settings.Local);
    begin
 
       --  Check no multi-action
@@ -44,7 +44,7 @@ package body Alr.Commands.Settings is
       end if;
 
       if Cmd.Builtins_Doc then
-         Alire.Config.Edit.Print_Builtins_Doc;
+         Alire.Settings.Edit.Print_Builtins_Doc;
          return;
       end if;
 
@@ -59,13 +59,13 @@ package body Alr.Commands.Settings is
             when 0 =>
                Trace.Always
                  (CLIC.Config.Info.List
-                    (Alire.Config.DB.all,
+                    (Alire.Settings.DB.all,
                      Filter => ".*",
                      Show_Origin => Cmd.Show_Origin).Flatten (ASCII.LF));
             when 1 =>
                Trace.Always
                  (CLIC.Config.Info.List
-                    (Alire.Config.DB.all,
+                    (Alire.Settings.DB.all,
                      Filter => Args.First_Element,
                      Show_Origin => Cmd.Show_Origin).Flatten (ASCII.LF));
             when others =>
@@ -83,8 +83,9 @@ package body Alr.Commands.Settings is
                                           Args.First_Element & "'");
          end if;
 
-         if Alire.Config.DB.Defined (Args.First_Element) then
-            Trace.Always (Alire.Config.DB.Get_As_String (Args.First_Element));
+         if Alire.Settings.DB.Defined (Args.First_Element) then
+            Trace.Always
+              (Alire.Settings.DB.Get_As_String (Args.First_Element));
          else
             Reportaise_Command_Failed ("Setting key '" &
                                          Args.First_Element &
@@ -108,15 +109,15 @@ package body Alr.Commands.Settings is
             --  Check explicitly for booleans to store the proper TOML type
             --  regardless of the capitalization used by the user.
             if Is_Boolean (Val) then
-               Alire.Config.Edit.Set_Boolean
+               Alire.Settings.Edit.Set_Boolean
                  (Lvl,
                   Key, Boolean'Value (Val),
-                  Check => Alire.Config.Edit.Valid_Builtin'Access);
+                  Check => Alire.Settings.Edit.Valid_Builtin'Access);
             else
-               Alire.Config.Edit.Set
+               Alire.Settings.Edit.Set
                  (Lvl,
                   Key, Val,
-                  Check => Alire.Config.Edit.Valid_Builtin'Access);
+                  Check => Alire.Settings.Edit.Valid_Builtin'Access);
             end if;
          end;
 
@@ -134,7 +135,7 @@ package body Alr.Commands.Settings is
             end if;
 
             if not CLIC.Config.Edit.Unset
-              (Alire.Config.Edit.Filepath (Lvl), Key)
+              (Alire.Settings.Edit.Filepath (Lvl), Key)
             then
                Reportaise_Command_Failed ("Cannot unset setting key");
             end if;
@@ -173,7 +174,7 @@ package body Alr.Commands.Settings is
       .New_Line
       .Append ("Built-in settings:")
       .New_Line
-      .Append (Alire.Config.Edit.Builtins_Info));
+      .Append (Alire.Settings.Edit.Builtins_Info));
 
    --------------------
    -- Setup_Switches --

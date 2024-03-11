@@ -56,7 +56,8 @@ def prepare_env(settings_dir, env):
         # tests that need it.
         run_alr("-s", settings_dir, "config", "--global",
                 "--set", "msys2.install_dir",
-                os.path.join(os.environ.get("LocalAppData"), "alire", "msys64"))
+                os.path.join(
+                    os.environ.get("LocalAppData"), "alire", "cache", "msys64"))
 
     # Disable autoconfig of the community index, to prevent unintended use of
     # it in tests, besides the overload of fetching it
