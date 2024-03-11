@@ -6,7 +6,15 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
-###
+### `ALIRE_SETTINGS_DIR` replaces `ALR_CONFIG`
+
+PR [1625](https://github.com/alire-project/alire/pull/1625)
+
+This reflects the new nomenclature of Alire settings versus crate
+configuration. Also, it better reflects that the effect is on the whole library
+and not only the `alr` command-line tool.
+
+### `alr settings` replaces `alr config`
 
 PR [1617](https://github.com/alire-project/alire/pull/1617)
 

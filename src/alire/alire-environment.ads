@@ -19,7 +19,7 @@ package Alire.Environment with Preelaborate is
    --  Folder where current alr will look for configuration
    --  DEPRECATED on 3.0
 
-   Settings : constant String := "ALIRE_SETTINGS";
+   Settings : constant String := "ALIRE_SETTINGS_DIR";
    --  Folder where Alire will look for configuration
 
    Testsuite : constant String := "ALR_TESTSUITE";

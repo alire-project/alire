@@ -11,8 +11,8 @@ package Alire.Features is
    use type Min_Version;
 
    Env_Alr_Config_Deprecated : constant On_Version := +"3.0";
-   --  We migrate ALR_CONFIG to ALIRE_SETTINGS, but allow the use of the former
-   --  with a warning during our next major release to ease transition.
+   --  We migrate ALR_CONFIG to ALIRE_SETTINGS_DIR, but allow the use of the
+   --  former with a warning during our next major release to ease transition.
 
    package Index is
 
