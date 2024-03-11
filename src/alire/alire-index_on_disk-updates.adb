@@ -8,7 +8,7 @@ with CLIC.User_Input;
 package body Alire.Index_On_Disk.Updates is
 
    package Builtins renames Settings.Builtins;
-   subtype Int is Settings.Config_Int;
+   subtype Int is Settings.Setting_Int;
 
    Epoch : constant Ada.Calendar.Time := Ada.Calendar.Time_Of
      (Year  => 2017,

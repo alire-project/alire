@@ -35,7 +35,7 @@ package body Alire.Settings.Edit is
    is
    begin
       if not CLIC.Config.Edit.Set (Filepath (Local), Key, Value, Check) then
-         Raise_Checked_Error ("Cannot set local config key");
+         Raise_Checked_Error ("Cannot set local settings key");
       end if;
 
       --  Reload after change
@@ -52,7 +52,7 @@ package body Alire.Settings.Edit is
    is
    begin
       if not CLIC.Config.Edit.Set (Filepath (Global), Key, Value, Check) then
-         Raise_Checked_Error ("Cannot set global config key");
+         Raise_Checked_Error ("Cannot set global settings key");
       end if;
 
       --  Reload after change
@@ -84,11 +84,11 @@ package body Alire.Settings.Edit is
    is
    begin
       if CLIC.Config.Edit.Unset (Filepath (Level), Key, Quiet => True) then
-         Trace.Debug ("Config key " & Key & " unset from " & Level'Image
+         Trace.Debug ("Setting key " & Key & " unset from " & Level'Image
                       & "configuration at " & Filepath (Level));
          Load_Settings;
       else
-         Trace.Debug ("Config key " & Key & " requested to be unset at level "
+         Trace.Debug ("Setting key " & Key & " requested to be unset at level "
                       & Level'Image & " but it was already unset at "
                       & Filepath (Level));
       end if;
@@ -107,7 +107,7 @@ package body Alire.Settings.Edit is
         (Boolean, TOML_Boolean, Boolean'Image);
    begin
       Assert (Set_Boolean_Impl (Filepath (Level), Key, Value, Check),
-              "Cannot set config key '" & Key & "' at level " & Level'Image);
+              "Cannot set setting key '" & Key & "' at level " & Level'Image);
       --  Reload after change
       Load_Settings;
    end Set_Boolean;
@@ -197,7 +197,7 @@ package body Alire.Settings.Edit is
          end if;
       end loop;
 
-      Config_Loaded := True;
+      Settings_Loaded := True;
 
       --  Set variables elsewhere
 
@@ -290,18 +290,18 @@ package body Alire.Settings.Edit is
             --  Verify the type/specific constraints
 
             case Ent.Kind is
-            when Cfg_Int =>
+            when Stn_Int =>
                Result := Value.Kind = TOML_Integer;
-            when Cfg_Float =>
+            when Stn_Float =>
                Result := Value.Kind = TOML_Float;
-            when Cfg_Bool =>
+            when Stn_Bool =>
                Result := Value.Kind = TOML_Boolean;
-            when Cfg_String =>
+            when Stn_String =>
                Result := Value.Kind = TOML_String;
-            when Cfg_Absolute_Path =>
+            when Stn_Absolute_Path =>
                Result := Value.Kind = TOML_String
                  and then Check_Absolute_Path (Value.As_String);
-            when Cfg_Existing_Absolute_Path =>
+            when Stn_Existing_Absolute_Path =>
                Result := Value.Kind = TOML_String
                  and then Check_Absolute_Path (Value.As_String);
                if Result and then
@@ -314,11 +314,11 @@ package body Alire.Settings.Edit is
                      & "please create it beforehand or recheck it.");
                   return False;
                end if;
-            when Cfg_Email =>
+            when Stn_Email =>
                Result := Value.Kind = TOML_String
                  and then Alire.Utils.Could_Be_An_Email (Value.As_String,
                                                          With_Name => False);
-            when Cfg_GitHub_Login =>
+            when Stn_GitHub_Login =>
                Result := Value.Kind = TOML_String
                  and then Utils.Is_Valid_GitHub_Username (Value.As_String);
             end case;

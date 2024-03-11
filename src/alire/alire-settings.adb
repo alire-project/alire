@@ -9,10 +9,10 @@ package body Alire.Settings is
    function DB return access constant CLIC.Config.Instance
    is
    begin
-      if Config_Loaded then
+      if Settings_Loaded then
          return DB_Instance'Access;
       else
-         raise Program_Error with "Attempt to use config database too early";
+         raise Program_Error with "Attempt to use settings database too early";
       end if;
    end DB;
 
@@ -34,8 +34,8 @@ package body Alire.Settings is
    -- Get --
    ---------
 
-   function Get (This : Builtin_Option) return Config_Int
-   is (Config_Int'Value
+   function Get (This : Builtin_Option) return Setting_Int
+   is (Setting_Int'Value
        (DB.Get_As_String (+This.Key, +This.Def)));
 
    -----------------
@@ -86,7 +86,7 @@ package body Alire.Settings is
 
    procedure Set (This  : Builtin_Option;
                   Level : Settings.Level;
-                  Value : Config_Int)
+                  Value : Setting_Int)
    is
    begin
       Edit.Set (Level, +This.Key, Value'Image, This.Check);
@@ -109,14 +109,14 @@ package body Alire.Settings is
 
    function Image (Kind : Builtin_Kind) return String
    is (case Kind is
-          when Cfg_Int                    => "Integer",
-          when Cfg_Float                  => "Float",
-          when Cfg_Bool                   => "Boolean",
-          when Cfg_String                 => "String",
-          when Cfg_Absolute_Path          => "Absolute path",
-          when Cfg_Existing_Absolute_Path => "Absolute path already existing",
-          when Cfg_Email                  => "Email address",
-          when Cfg_GitHub_Login           => "GitHub login");
+          when Stn_Int                    => "Integer",
+          when Stn_Float                  => "Float",
+          when Stn_Bool                   => "Boolean",
+          when Stn_String                 => "String",
+          when Stn_Absolute_Path          => "Absolute path",
+          when Stn_Existing_Absolute_Path => "Absolute path already existing",
+          when Stn_Email                  => "Email address",
+          when Stn_GitHub_Login           => "GitHub login");
 
    ----------------
    -- Is_Builtin --
@@ -137,7 +137,7 @@ package body Alire.Settings is
          return All_Builtins (Key).Kind;
       end if;
 
-      Raise_Checked_Error ("Kind is only valid for builtin config key");
+      Raise_Checked_Error ("Kind is only valid for builtin setting key");
    end Kind_Of_Builtin;
 
    -----------------
@@ -176,7 +176,7 @@ package body Alire.Settings is
                          Check  : CLIC.Config.Check_Import := null)
                          return Builtin_Option
    is (New_Builtin (Key   => Key,
-                    Kind   => Cfg_Bool,
+                    Kind   => Stn_Bool,
                     Def    => Def'Image,
                     Help   => Help,
                     Public => Public,

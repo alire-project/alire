@@ -12,7 +12,7 @@ package Alire.Settings.Builtins is
 
    Cache_Dir : constant Builtin := New_Builtin
      (Key  => "cache.dir",
-      Kind => Cfg_Absolute_Path,
+      Kind => Stn_Absolute_Path,
       Def  => "",
       Help =>
         "Directory where Alire will store its cache.");
@@ -46,7 +46,7 @@ package Alire.Settings.Builtins is
 
    Distribution_Override          : constant Builtin := New_Builtin
      (Key   => "distribution.override",
-      Kind  => Cfg_String,
+      Kind  => Stn_String,
       Check => Checks.Valid_Distro'Access,
       Def   => "",
       Help  =>
@@ -57,7 +57,7 @@ package Alire.Settings.Builtins is
 
    Editor_Cmd : constant Builtin := New_Builtin
      (Key  => "editor.cmd",
-      Kind => Cfg_String,
+      Kind => Stn_String,
       Def  => "",
       Help =>
         "Editor command and arguments for editing crate code (alr edit)." &
@@ -76,7 +76,7 @@ package Alire.Settings.Builtins is
 
    Index_Auto_Update : constant Builtin := New_Builtin
      (Key  => "index.auto_update",
-      Kind => Cfg_Int,
+      Kind => Stn_Int,
       Def  => "24", -- hours
       Help =>
         "Hours between automatic index refresh. Set to 0 to disable.");
@@ -90,25 +90,25 @@ package Alire.Settings.Builtins is
    Index_Last_Update : constant Builtin := New_Builtin
      (Key    => "index.last_update",
       Public => False,
-      Kind   => Cfg_Int,
+      Kind   => Stn_Int,
       Def    => "0", -- seconds since epoch
       Help   => "Timestamp of last index auto-refresh (seconds)");
 
    Index_Host : constant Builtin := New_Builtin
      (Key  => "index.host",
-      Kind => Cfg_String,
+      Kind => Stn_String,
       Def  => "https://github.com",
       Help => "URL of the community index host");
 
    Index_Owner : constant Builtin := New_Builtin
      (Key  => "index.owner",
-      Kind => Cfg_String,
+      Kind => Stn_String,
       Def  => "alire-project",
       Help => "Owner of the index repository (GitHub user/org).");
 
    Index_Repository_Name : constant Builtin := New_Builtin
      (Key  => "index.repository_name",
-      Kind => Cfg_String,
+      Kind => Stn_String,
       Def  => "alire-index",
       Help => "Name of the index repository.");
 
@@ -132,7 +132,7 @@ package Alire.Settings.Builtins is
 
    Toolchain_Dir : constant Builtin := New_Builtin
      (Key  => "toolchain.dir",
-      Kind => Cfg_Absolute_Path,
+      Kind => Stn_Absolute_Path,
       Def  => "",
       Help =>
         "Directory where Alire will store its toolchains.");
@@ -169,21 +169,21 @@ package Alire.Settings.Builtins is
 
    User_Email : constant Builtin := New_Builtin
      (Key  => "user.email",
-      Kind => Cfg_Email,
+      Kind => Stn_Email,
       Help =>
         "User email address. Used for the authors and" &
         " maintainers field of a new crate.");
 
    User_Name : constant Builtin := New_Builtin
      (Key  => "user.name",
-      Kind => Cfg_String,
+      Kind => Stn_String,
       Help =>
         "User full name. Used for the authors and " &
         "maintainers field of a new crate.");
 
    User_Github_Login : constant Builtin := New_Builtin
      (Key  => "user.github_login",
-      Kind => Cfg_GitHub_Login,
+      Kind => Stn_GitHub_Login,
       Help =>
         "User GitHub login/username. Used to for the maintainers-logins " &
         "field of a new crate.");

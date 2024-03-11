@@ -69,8 +69,8 @@ including their default values and a short explanation of their effects.
 
 By default, `alr` stores its global settings at `<user home>/.config/alire`.
 You can use any other location by setting in the environment the variable
-`ALR_CONFIG=</absolute/path/to/config/folder>`, or by using the global `-c`
-switch: `alr -c </path/to/config> <command>`.
+`ALIRE_SETTINGS_DIR=</absolute/path/to/settings/folder>`, or by using the global `-s`
+switch: `alr -s </path/to/settings> <command>`.
 
 Using pristine default settings can be useful to isolate the source of errors
 by ensuring that a misconfiguration is not at play.
