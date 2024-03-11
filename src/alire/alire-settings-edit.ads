@@ -82,7 +82,7 @@ package Alire.Settings.Edit is
 
 private
 
-   procedure Load_Config;
+   procedure Load_Settings;
    --  Clear and reload all configuration. Also set some values elsewhere
    --  used to break circularities. Bottom line, this procedure must leave
    --  the program-wide configuration ready. This is done during startup from

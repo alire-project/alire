@@ -6,7 +6,7 @@ package body Alire.Settings.Edit.Early_Load is
 
    procedure Load_Settings is
    begin
-      Alire.Settings.Edit.Load_Config;
+      Alire.Settings.Edit.Load_Settings;
    end Load_Settings;
 
 begin

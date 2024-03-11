@@ -39,7 +39,7 @@ package body Alire.Settings.Edit is
       end if;
 
       --  Reload after change
-      Load_Config;
+      Load_Settings;
    end Set_Locally;
 
    ------------------
@@ -56,7 +56,7 @@ package body Alire.Settings.Edit is
       end if;
 
       --  Reload after change
-      Load_Config;
+      Load_Settings;
    end Set_Globally;
 
    ---------
@@ -86,7 +86,7 @@ package body Alire.Settings.Edit is
       if CLIC.Config.Edit.Unset (Filepath (Level), Key, Quiet => True) then
          Trace.Debug ("Config key " & Key & " unset from " & Level'Image
                       & "configuration at " & Filepath (Level));
-         Load_Config;
+         Load_Settings;
       else
          Trace.Debug ("Config key " & Key & " requested to be unset at level "
                       & Level'Image & " but it was already unset at "
@@ -109,7 +109,7 @@ package body Alire.Settings.Edit is
       Assert (Set_Boolean_Impl (Filepath (Level), Key, Value, Check),
               "Cannot set config key '" & Key & "' at level " & Level'Image);
       --  Reload after change
-      Load_Config;
+      Load_Settings;
    end Set_Boolean;
 
    --------------
@@ -180,11 +180,11 @@ package body Alire.Settings.Edit is
       return Location (Current);
    end Filepath;
 
-   -----------------
-   -- Load_Config --
-   -----------------
+   -------------------
+   -- Load_Settings --
+   -------------------
 
-   procedure Load_Config is
+   procedure Load_Settings is
    begin
       DB_Instance.Clear;
 
@@ -206,7 +206,7 @@ package body Alire.Settings.Edit is
       if Platforms.Current.Disable_Distribution_Detection then
          Trace.Debug ("Distribution detection disabled by configuration");
       end if;
-   end Load_Config;
+   end Load_Settings;
 
    Default_Config_Path : constant Absolute_Path := Platforms.Folders.Config;
 
@@ -224,7 +224,7 @@ package body Alire.Settings.Edit is
    begin
       --  Warn or fail depending on version
       if OS_Lib.Getenv (Environment.Config, Unset) /= Unset then
-         if Version.Semver.Current < Features.Env_Alr_Config_Deprecated then
+         if Version.Semver.Current < Features.Config_Deprecated then
             Warnings.Warn_Once (Msg, Level => Warning);
          else
             Raise_Checked_Error (Msg);

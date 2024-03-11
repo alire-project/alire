@@ -11,7 +11,7 @@ from drivers.helpers import contents
 
 # Identify config location
 p = run_alr("version")
-config_dir = re.search("config folder:([^\n]*)", p.out).group(1).strip()
+config_dir = re.search("settings folder:([^\n]*)", p.out).group(1).strip()
 config_dir = config_dir.replace("\\", "/")
 cache_dir = os.path.join(config_dir, "cache")
 
