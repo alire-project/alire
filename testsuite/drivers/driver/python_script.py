@@ -168,7 +168,7 @@ class PythonScriptDriver(BaseDriver):
             self.result.log.log += "Build mode: SHARED\n"
             # Activate shared builds. Using "-c" is needed as the environment
             # still isn't activated at the driver script level.
-            run_alr("-c", pristine_env["ALR_CONFIG"],
+            run_alr("-c", pristine_env["ALIRE_SETTINGS_DIR"],
                     "settings", "--global", "--set",
                     "dependencies.shared", "true")
             p = self.run_script(copy.deepcopy(pristine_env))

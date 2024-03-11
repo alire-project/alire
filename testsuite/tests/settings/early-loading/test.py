@@ -22,7 +22,7 @@ assert_eq(expected,
           run_alr(f"--config={custom_config}", "settings", "--global").out)
 
 # Verify also when using environment variable
-os.environ["ALR_CONFIG"] = os.path.abspath(custom_config)
+os.environ["ALIRE_SETTINGS_DIR"] = os.path.abspath(custom_config)
 assert_eq(expected,
           run_alr("settings", "--global").out)
 

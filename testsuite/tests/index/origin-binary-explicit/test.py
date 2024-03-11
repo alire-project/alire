@@ -6,7 +6,7 @@ they do not use a dynamic expression.
 from glob import glob
 import os
 from drivers import builds
-from drivers.alr import alr_config_dir, alr_with, run_alr, init_local_crate
+from drivers.alr import alr_settings_dir, alr_with, run_alr, init_local_crate
 from drivers.asserts import assert_match
 from drivers.helpers import contents
 
