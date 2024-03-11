@@ -73,16 +73,16 @@ package body Alire_Early_Elaboration is
 
       procedure Check_Switches is
 
-         -------------------------
-         -- Config_Switch_Error --
-         -------------------------
+         ---------------------------
+         -- Settings_Switch_Error --
+         ---------------------------
 
-         procedure Config_Switch_Error (Switch : String) is
+         procedure Settings_Switch_Error (Switch : String) is
          begin
             GNAT.IO.Put_Line
                ("ERROR: Switch " & Switch & " requires argument (global).");
             Early_Error ("try ""alr --help"" for more information.");
-         end Config_Switch_Error;
+         end Settings_Switch_Error;
 
          ---------------------
          -- Set_Config_Path --
@@ -92,7 +92,7 @@ package body Alire_Early_Elaboration is
             package Adirs renames Ada.Directories;
          begin
             if Path = "" then
-               Config_Switch_Error (Switch);
+               Settings_Switch_Error (Switch);
             elsif not Adirs.Exists (Path) then
                Early_Error
                  ("Invalid non-existing configuration path: " & Path);
@@ -213,7 +213,7 @@ package body Alire_Early_Elaboration is
       exception
          when GNAT.Command_Line.Invalid_Parameter =>
             if Option in 'c' | 's' then
-               Config_Switch_Error ("-" & Option);
+               Settings_Switch_Error ("-" & Option);
             end if;
          when Exit_From_Command_Line =>
             --  Something unexpected happened but it will be properly dealt
