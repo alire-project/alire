@@ -34,27 +34,21 @@ def are_shared() -> bool:
         return False
 
 
-def clear_builds_dir() -> None:
-    """
-    Clear the shared build directory
-    """
-    rmtree(path())
-
-
 def find_dir(crate_name: str) -> str:
     """
-    Find the build dir of a crate in the shared build directory
+    Find the build dir of a crate in the shared build directory. It always uses
+    forward slashes in the returned folder path.
     """
-    if len(found := glob(f"{path()}/{crate_name}_*")) != 1:
+    if len(found := glob(f"{path()}/{crate_name}*/*")) != 1:
         raise AssertionError(f"Unexpected number of dirs for crate {crate_name}: {found}")
-    return glob(f"{path()}/{crate_name}_*")[0]
+    return glob(f"{path()}/{crate_name}*/*")[0].replace(os.sep, "/")
 
 
 def find_hash(crate_name: str) -> str:
     """
     Find the hash of a crate in the shared build directory
     """
-    return find_dir(crate_name).split("_")[-1]
+    return find_dir(crate_name).split("/")[-1]
 
 
 def hash_input(crate_name: str, as_lines: bool=False) -> str:

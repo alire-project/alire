@@ -97,9 +97,8 @@ package body Alire.Builds is
    is
       Base : constant Absolute_Path :=
                Builds.Path
-                 / (Release.Deployment_Folder
-                    & "_"
-                    & Root.Build_Hash (Release.Name));
+                 / Release.Deployment_Folder
+                 / Root.Build_Hash (Release.Name);
    begin
       if Subdir and then Release.Origin.Is_Monorepo then
          return Base / Release.Origin.Subdir;
