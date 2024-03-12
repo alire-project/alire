@@ -14,16 +14,16 @@ package Alire.Settings is
    --  Ordering is important, as Globals are loaded first and overridden by any
    --  Local definition loaded later.
 
-   subtype Config_Int is Long_Long_Integer;
+   subtype Setting_Int is Long_Long_Integer;
 
    ---------------
    -- Built-ins --
    ---------------
 
-   type Builtin_Kind is (Cfg_Int, Cfg_Float, Cfg_Bool,
-                         Cfg_String, Cfg_Absolute_Path,
-                         Cfg_Existing_Absolute_Path,
-                         Cfg_Email, Cfg_GitHub_Login);
+   type Builtin_Kind is (Stn_Int, Stn_Float, Stn_Bool,
+                         Stn_String, Stn_Absolute_Path,
+                         Stn_Existing_Absolute_Path,
+                         Stn_Email, Stn_GitHub_Login);
 
    function Image (Kind : Builtin_Kind) return String;
 
@@ -42,7 +42,7 @@ package Alire.Settings is
 
    function Get (This : Builtin_Option) return String;
    function Get (This : Builtin_Option) return Boolean;
-   function Get (This : Builtin_Option) return Config_Int;
+   function Get (This : Builtin_Option) return Setting_Int;
 
    procedure Set_Locally (This : Builtin_Option; Value : String);
 
@@ -58,7 +58,7 @@ package Alire.Settings is
 
    procedure Set (This  : Builtin_Option;
                   Level : Settings.Level;
-                  Value : Config_Int);
+                  Value : Setting_Int);
 
    procedure Unset (This  : Builtin_Option;
                     Level : Settings.Level);
@@ -82,10 +82,10 @@ package Alire.Settings is
 
 private
 
-   Config_Loaded : Boolean := False;
+   Settings_Loaded : Boolean := False;
 
    DB_Instance : aliased CLIC.Config.Instance;
-   --  The Alire user configuration database
+   --  The Alire user settings database
 
    type Builtin_Option is tagged record
       Key     : Ada.Strings.Unbounded.Unbounded_String;

@@ -20,7 +20,7 @@ package Alire.Settings.Builtins.Windows is
 
    Msys2_Install_Dir : constant Builtin := New_Builtin
      (Key  => "msys2.install_dir",
-      Kind => Cfg_Absolute_Path,
+      Kind => Stn_Absolute_Path,
       Def  => Settings.Edit.Cache_Path / "msys64",
       Help =>
         "Directory where Alire will detect and/or install" &
@@ -28,14 +28,14 @@ package Alire.Settings.Builtins.Windows is
 
    Msys2_Installer : constant Builtin := New_Builtin
      (Key  => "msys2.installer",
-      Kind => Cfg_String,
+      Kind => Stn_String,
       Def  => Default_Msys2_Installer,
       Help =>
         "Filename of the executable msys2 installer. (Windows only)");
 
    Msys2_Installer_URL : constant Builtin := New_Builtin
      (Key  => "msys2.installer_url",
-      Kind => Cfg_String,
+      Kind => Stn_String,
       Def  => Default_Msys2_Installer_URL,
       Help =>
         "URL of the executable msys2 installer. (Windows only)");
