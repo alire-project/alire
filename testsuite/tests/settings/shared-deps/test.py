@@ -41,12 +41,12 @@ assert_contents(base := os.path.join(vault_dir, "hello_1.0.1_filesystem"),
 # because no build has been attempted yet, hence a sync has not been performed.
 # And, since there's no sync yet, neither the build dir exists:
 
-assert len(glob.glob(os.path.join(build_dir, "hello_1.0.1_filesystem_*"))) == 0, \
+assert len(glob.glob(os.path.join(build_dir, "hello_1.0.1_filesystem/*"))) == 0, \
     "Build dir should not exist yet"
 
 # Do a build, and now the sync should have happened and the build dir be filled
 run_alr("build")
-base = builds.find_dir("hello_1.0.1_filesystem")
+base = builds.find_dir("hello")
 
 # There's too much object files and the like, check a few critical files:
 files = contents(base)  # This returns "normalized" paths (with '/' separators)
