@@ -1,8 +1,10 @@
 with AAA.Strings;
+with Alr.Commands.Settings;
 
 package Alr.Commands.Config is
 
-   type Command is new Commands.Command with private;
+   subtype Parent is Alr.Commands.Settings.Command;
+   type Command is new Parent with private;
 
    Command_Name : constant String := "config";
 
@@ -15,35 +17,21 @@ package Alr.Commands.Config is
                       Args :        AAA.Strings.Vector);
 
    overriding
-   function Long_Description (Cmd : Command)
-                              return AAA.Strings.Vector;
-
-   overriding
-   procedure Setup_Switches
-     (Cmd    : in out Command;
-      Config : in out CLIC.Subcommand.Switches_Configuration);
-
-   overriding
    function Short_Description (Cmd : Command) return String
-   is ("List, Get, Set or Unset configuration options");
+   is (CLIC.TTY.Error ("Deprecated command") & ". " &
+         "Please use `alr " & Settings.Command_Name & "` instead.");
 
    overriding
-   function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("[--list] [--show-origin] [key_regex] |" &
-        " --get <key> |" &
-        " --set <key> <value> |" &
-        " --unset <key>");
+   function Long_Description (Cmd : Command)
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector);
+
+   overriding
+   function Usage_Custom_Parameters (Cmd : Command) return String
+   is ("");
 
 private
 
-   type Command is new Commands.Command with record
-      Show_Origin  : aliased Boolean := False;
-      List         : aliased Boolean := False;
-      Get          : aliased Boolean := False;
-      Set          : aliased Boolean := False;
-      Unset        : aliased Boolean := False;
-      Global       : aliased Boolean := False;
-      Builtins_Doc : aliased Boolean := False;
-   end record;
+   type Command is new Parent with null record;
 
 end Alr.Commands.Config;

@@ -1,8 +1,12 @@
+private with AAA.Enum_Tools;
+
+private with Alire.Settings.Builtins;
 limited with Alire.Environment;
 private with Alire.OS_Lib.Subprocess;
 private with Alire.Platforms.Common;
 with Alire.Properties;
 private with Alire.Properties.Platform;
+private with Alire.Warnings;
 
 private with System;
 
@@ -36,8 +40,8 @@ package Alire.Platforms.Current is
 
    procedure Initialize;
    --  Do any initialization that is necessary for this platform. This is
-   --  called as soon as we know the user is not running `alr config`, as we
-   --  want to allow the opportunity to configure things without triggering
+   --  called as soon as we know the user is not running `alr settings`, as
+   --  we want to allow the opportunity to configure things without triggering
    --  this initialization.
 
    --------------------------------
@@ -50,8 +54,9 @@ package Alire.Platforms.Current is
    Disable_Distribution_Detection : Boolean := False with Atomic;
 
    function Distribution return Platforms.Distributions;
-   --  Cooked distribution that may return Unknown if detection was disabled
-   --  via config.
+   --  Cooked distribution that may return Unknown if detection was
+   --  disabled via config, or a different distribution if config key
+   --  distribution.override is set.
 
    function Distribution_Is_Known return Boolean is
      (Platforms."/=" (Distribution, Platforms.Distribution_Unknown));
@@ -70,14 +75,36 @@ package Alire.Platforms.Current is
 
 private
 
+   function Is_Valid_Distro is
+     new AAA.Enum_Tools.Is_Valid (Platforms.Known_Distributions);
+
+   function Return_With_Warning is
+     new Warnings.Warn_With_Result (Platforms.Distributions);
+
    ------------------
    -- Distribution --
    ------------------
 
    function Distribution return Platforms.Distributions
-   is (if Disable_Distribution_Detection
-       then Platforms.Distribution_Unknown
-       else Detected_Distribution);
+   is (
+       --  Disabled detection
+       if Disable_Distribution_Detection then
+          Platforms.Distribution_Unknown
+
+       --  Overridden detection
+       elsif Settings.Builtins.Distribution_Override.Get /= "" then
+         (if Is_Valid_Distro (Settings.Builtins.Distribution_Override.Get) then
+               Distributions'Value
+                 (Settings.Builtins.Distribution_Override.Get)
+          else
+            Return_With_Warning
+            ("Invalid distribution override: "
+             & Settings.Builtins.Distribution_Override.Get,
+             Result => Platforms.Distribution_Unknown))
+
+       --  Regular detection
+       else
+          Detected_Distribution);
 
    -----------------------
    -- Host_Architecture --

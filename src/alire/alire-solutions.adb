@@ -1,6 +1,6 @@
 with Ada.Containers;
 
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Crates;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
@@ -1402,7 +1402,7 @@ package body Alire.Solutions is
 
       --  Do nothing when deps are being removed.
 
-      if not Config.Builtins.Solver_Autonarrow.Get or else
+      if not Settings.Builtins.Solver_Autonarrow.Get or else
         not Diff.Removed.Is_Empty
       then
          return New_Deps;

@@ -11,7 +11,7 @@ with Alire.Solutions;
 with Alire.Roots;
 with Alire.Origins;
 with Alire.Warnings;
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 
 with Alire.Properties.Build_Profiles;
 with Alire.Properties.Build_Switches;
@@ -955,7 +955,7 @@ package body Alire.Crate_Configuration is
    -------------------------
 
    function Last_Build_Profiles return Profile_Maps.Map is
-      Str : constant String := Config.DB.Get ("last_build_profile", "");
+      Str : constant String := Settings.DB.Get ("last_build_profile", "");
       Profiles : Parsed_Profiles;
    begin
       Profiles := Parse_Profiles (Str, Accept_Wildcards => False);
@@ -1059,7 +1059,7 @@ package body Alire.Crate_Configuration is
            (String'(Key (I).As_String & Profile_Assign & Element (I)'Image));
       end loop;
 
-      Config.Edit.Set_Locally ("last_build_profile",
+      Settings.Edit.Set_Locally ("last_build_profile",
                                Profiles.Flatten (Profile_Split));
    end Save_Last_Build_Profiles;
 

@@ -5,7 +5,6 @@ Test proper publishing using a local repo as reference with custom manifest
 from drivers.alr import init_local_crate, run_alr
 from drivers.asserts import assert_match
 from drivers.helpers import init_git_repo
-from glob import glob
 from shutil import rmtree
 from subprocess import run
 

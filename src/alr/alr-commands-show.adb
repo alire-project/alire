@@ -11,7 +11,8 @@ with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.Tables;
-with Alire.Utils.TTY;
+
+with Alr.Common;
 
 with Semantic_Versioning.Extended;
 
@@ -248,27 +249,6 @@ package body Alr.Commands.Show is
                        (Name, Versions).TTY_Image);
    end Report_Jekyll;
 
-   --------------------
-   -- Show_Providers --
-   --------------------
-
-   function Show_Providers (Dep : Alire.Dependencies.Dependency) return Boolean
-   is
-      use Alire;
-   begin
-      if Index.All_Crate_Aliases.Contains (Dep.Crate) then
-         Trace.Info ("Crate " & Utils.TTY.Name (Dep.Crate) & " is abstract and"
-                     & " provided by:");
-         for Provider of Index.All_Crate_Aliases.all (Dep.Crate) loop
-            Trace.Info ("   " & Utils.TTY.Name (Provider));
-         end loop;
-
-         return True;
-      else
-         return False;
-      end if;
-   end Show_Providers;
-
    -------------
    -- Execute --
    -------------
@@ -310,7 +290,7 @@ package body Alr.Commands.Show is
             --  Even if the crate does not exist, it may be an abstract crate
             --  provided by some others (e.g. gnat_native -> gnat).
 
-            if Show_Providers (Allowed) then
+            if Common.Show_Providers (Allowed) then
                return;
             else
                raise Alire.Query_Unsuccessful;

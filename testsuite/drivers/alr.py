@@ -28,7 +28,7 @@ def distro_is_known():
                         p.out, flags=re.S)
 
 
-def prepare_env(config_dir, env):
+def prepare_env(settings_dir, env):
     """
     Prepare the environment to run "alr".
 
@@ -41,49 +41,50 @@ def prepare_env(config_dir, env):
     env["GIT_CONFIG_GLOBAL"] = "/dev/null"
     env["GIT_CONFIG_SYSTEM"] = "/dev/null"
 
-    config_dir = os.path.abspath(config_dir)
-    mkdir(config_dir)
-    env['ALR_CONFIG'] = config_dir
-    #  We pass config location explicitly in the following calls since env is
+    settings_dir = os.path.abspath(settings_dir)
+    mkdir(settings_dir)
+    env['ALIRE_SETTINGS_DIR'] = settings_dir
+    #  We pass settings location explicitly in the following calls since env is
     #  not yet applied (it's just a dict to be passed later to subprocess)
 
     if platform.system() == "Windows":
         # Disable msys inadvertent installation
-        run_alr("-c", config_dir, "config", "--global",
+        run_alr("-s", settings_dir, "settings", "--global",
                 "--set", "msys2.do_not_install", "true")
 
         # And configure the one set up in the environment so it is used by
         # tests that need it.
-        run_alr("-c", config_dir, "config", "--global",
+        run_alr("-s", settings_dir, "settings", "--global",
                 "--set", "msys2.install_dir",
-                os.path.join(os.environ.get("LocalAppData"), "alire", "msys64"))
+                os.path.join(
+                    os.environ.get("LocalAppData"), "alire", "cache", "msys64"))
 
     # Disable autoconfig of the community index, to prevent unintended use of
     # it in tests, besides the overload of fetching it
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr(f"-s", settings_dir, "settings", "--global",
             "--set", "index.auto_community", "false")
 
     # Disable selection of toolchain to preserve older behavior. Tests that
     # require a configured compiler will have to set it up explicitly.
-    run_alr("-c", config_dir, "toolchain", "--disable-assistant")
+    run_alr("-s", settings_dir, "toolchain", "--disable-assistant")
 
     # Disable warning on old index, to avoid having to update index versions
     # when they're still compatible.
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr("-s", settings_dir, "settings", "--global",
             "--set", "warning.old_index", "false")
 
     # Disable shared dependencies (keep old pre-2.0 behavior) not to break lots
     # of tests. The post-2.0 behavior will have its own tests.
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr("-s", settings_dir, "settings", "--global",
             "--set", "dependencies.shared", "false")
 
     # Disable index auto-updates, which is not expected by most tests
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr("-s", settings_dir, "settings", "--global",
             "--set", "index.auto_update", "0")
 
     # If distro detection is disabled via environment, configure so in alr
     if "ALIRE_TESTSUITE_DISABLE_DISTRO" in env:
-        run_alr("-c", config_dir, "config", "--global",
+        run_alr("-s", settings_dir, "settings", "--global",
                 "--set", "distribution.disable_detection", "true")
 
 
@@ -571,25 +572,25 @@ def alr_publish(name,
     return p
 
 
-def alr_config_dir() -> str:
+def alr_settings_dir() -> str:
     """
     Return the path to the alr configuration directory
     """
-    return os.environ.get("ALR_CONFIG")
+    return os.environ.get("ALIRE_SETTINGS_DIR")
 
 
 def alr_vault_dir() -> str:
     """
     Return the path to the vault for release pristine sources
     """
-    return os.path.join(alr_config_dir(), "cache", "releases")
+    return os.path.join(alr_settings_dir(), "cache", "releases")
 
 
 def alr_builds_dir() -> str:
     """
     Return the path to the builds directory
     """
-    return os.path.join(alr_config_dir(), "cache", "builds")
+    return os.path.join(alr_settings_dir(), "cache", "builds")
 
 
 def crate_dirname(crate):
@@ -608,3 +609,11 @@ def external_compiler_version() -> str:
 
     # Capture version
     return re.search("gnat_external ([0-9.]+)", p.out, re.MULTILINE).group(1)
+
+def unselect_compiler():
+    """
+    Leave compiler configuration as if "None" was selected by the user in the
+    assistant.
+    """
+    run_alr("settings", "--global", "--unset", "toolchain.use.gnat")
+    run_alr("settings", "--global", "--unset", "toolchain.external.gnat")

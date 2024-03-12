@@ -10,14 +10,14 @@ repository](https://github.com/alire-project/alire/releases).
 On Linux, `Alire` is simply provided in an archive.
 
 Once the archive is extracted you have to add `alr` in the environment `PATH` .
-This may be done for the duration of a terminal session by running the command below: 
+This may be done for the duration of a terminal session by running the command below:
 ```bash
 $ export PATH="<PATH_TO_EXTRACTED>/bin/:$PATH"
 ```
 Those wanting to keep this path permanently in their `PATH` environment may do so by pasting the above command into the `.profile` file of their user's account.
 
-Alire provides GNAT toolchains hosted on x86-64 for Linux. If those toolchains do not 
-work for you, or if you are on another host architecture like ARM, you have the option 
+Alire provides GNAT toolchains hosted on x86-64 for Linux. If those toolchains do not
+work for you, or if you are on another host architecture like ARM, you have the option
 to look at the GNAT toolchains from the Linux distribution.
 
 ## `alr` on Windows
@@ -25,15 +25,23 @@ to look at the GNAT toolchains from the Linux distribution.
 On Windows an installer is provided. The installer will create a shortcut to
 start `PowerShell` with `Alire` in the environment `PATH`.
 
-The first time you run `alr` the program will ask if you want to install
-[msys2](https://www.msys2.org/). This is recommended as `alr` will use `msys2`
+The first time you run `alr`, the program
+will ask if you want to install
+[msys2](https://www.msys2.org/) (except in the cases listed below). This is recommended as `alr` will use `msys2`
 to automatically install required tools such as `git` or `make` that you would
 otherwise have to install manually. `msys2` will also provide external
 libraries required by some projects in the Alire index, allowing you to build
 more projects out of the box.
 
-Alire provides GNAT toolchains hosted on x86-64 for Windows. Those toolchains 
-should work for all cases, if not, let us know.
+`msys2` will not be installed
+- when running `alr settings`, to allow uninterrupted configuration, and setting
+  of `msys2` location (see `alr help settings`), or
+- when you already have a msys2 installation in your PATH (more precisely, if `pacman`
+  is found in your PATH.)
+  - In this case, `alr` will reuse your existing installation.
+
+Alire provides GNAT toolchains hosted on x86-64 for Windows. Those toolchains
+should work for all cases; if not, let us know.
 
 ## `alr` on macOS
 
@@ -44,14 +52,14 @@ Once the archive is extracted you have to add `alr` in the environment `PATH`:
 $ export PATH="<PATH_TO_EXTRACTED>/bin/:$PATH"
 ```
 
-If you try to run it on recent versions of macOS, you will get a popup saying 
-`“alr” cannot be opened because the developer cannot be verified.` and inviting 
+If you try to run it on recent versions of macOS, you will get a popup saying
+`“alr” cannot be opened because the developer cannot be verified.` and inviting
 you to move it to the bin. The way round this is to remove the quarantine attribute,
 ```console
 $ xattr -d com.apple.quarantine bin/alr
 ```
 
-Alire provides GNAT toolchains hosted on x86-64 for macOS. If those toolchains do not 
+Alire provides GNAT toolchains hosted on x86-64 for macOS. If those toolchains do not
 work for you, or if you are on another host architecture like the Apple M1, you have
 the option to look at the GNAT toolchains from the community.
 
@@ -276,10 +284,17 @@ to print the build environment:
 
 ## Troubleshooting
 
-By default `alr` is quite terse and will hide the output of subprocesses,
-mostly reporting in case of failure. If you hit any problem, increasing
-verbosity (`-v` or even `-vv`) is usually enough to get an idea of the root of
-the problem. Additionally, `-d` will show tracebacks of exceptions.
+If you hit any problem, increasing verbosity (`-v` or even `-vv`) is usually
+enough to get an idea of the root of the problem. Additionally, `-d` will show
+tracebacks of exceptions.
+
+Subprocess output is shown by default (you can silence it, and anything else
+not an error) with `-q`, which enables quiet mode. Any subprocess that exist
+abnormally will be reported, including its invocation arguments.
+
+If you suspect your settings may be the source of some problem, please check
+our section on [Settings](setting), and in particular how to use a [default
+pristine settings](settings#Relocating-your-settings)
 
 ## Running tests
 

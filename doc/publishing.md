@@ -57,7 +57,7 @@ crate and version it contains. A file contains the description of a release,
 with other metadata.
 
 The complete specification of such TOML files is available in this
-[document](catalog-format-spec.md).
+[document](catalog-format-spec).
 
 ## New crates and releases
 
@@ -88,7 +88,7 @@ release of `alr`.
 
 Each crate is "owned" by a list of maintainers, provided with the
 `maintainers-logins` property of the crate file. After the initial submission,
-which will be manually approved (see the [policies](policies.md) for details),
+which will be manually approved (see the [policies](policies) for details),
 the maintainers of a crate are the only people allowed to submit new releases
 or metadata modifications to the corresponding crate.
 
@@ -100,7 +100,7 @@ Other checks your submission will go through are:
 
 ## Best practices
 
-See the section on [best practices](policies.md#best-practices) for crates
+See the section on [best practices](policies#best-practices) for crates
 before publishing your first release.
 
 ## Detailed steps

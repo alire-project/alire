@@ -1169,7 +1169,7 @@ project My_Crate is
 
 Dependencies in Alire are used also to deal with compiler versions and
 cross-compilers. Also related is the information on toolchains available in the
-[Toolchain management](./toolchains.md) document or via `alr help toolchains`.
+[Toolchain management](toolchains) document or via `alr help toolchains`.
 
 ### Excluding compiler versions
 

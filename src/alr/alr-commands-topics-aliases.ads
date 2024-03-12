@@ -18,10 +18,10 @@ package Alr.Commands.Topics.Aliases is
    function Content (This : Topic) return AAA.Strings.Vector
    is (AAA.Strings.Empty_Vector
        .Append ("Command aliases can be defined in local or global ")
-       .Append ("configuration.")
+       .Append ("settings.")
        .New_Line
        .Append ("For example the following command:")
-       .Append ("""$ alr config --set --global alias.graph 'show --graph'""")
+       .Append ("""$ alr settings --set --global alias.graph 'show --graph'""")
        .Append ("Defines a global alias for the 'show' command with a ")
        .Append ("'--graph' switch.")
        .New_Line

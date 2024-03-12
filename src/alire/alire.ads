@@ -287,7 +287,7 @@ package Alire with Preelaborate is
 
    procedure Put_Warning (Text           : String;
                           Level          : Trace.Levels := Warning;
-                          Disable_Config : String := "");
+                          Disable_Setting : String := "");
    --  Prepend Text with a yellow "⚠", or "Warning: " if no color/tty. If
    --  Disable_setting /= "", append a line informing about how to disable
    --  this warning.

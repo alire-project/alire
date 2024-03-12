@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Index;
@@ -11,6 +11,8 @@ with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
 with Alire.Utils.Switches;
+
+with Alr.Common;
 
 with CLIC.User_Input;
 
@@ -161,8 +163,8 @@ package body Alr.Commands.Get is
             Trace.Info ("Because --only was used, automatic dependency" &
                           " retrieval is disabled in this workspace:" &
                           " use `alr update` to apply dependency changes");
-            Alire.Config.Builtins.Update_Manually_Only.Set (Alire.Config.Local,
-                                                            True);
+            Alire.Settings.Builtins.Update_Manually_Only.Set
+              (Alire.Settings.Local, True);
 
             if not CLIC.User_Input.Not_Interactive then
                Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
@@ -341,8 +343,16 @@ package body Alr.Commands.Get is
          Cmd.Auto_Update_Index;
 
          if not Alire.Index.Exists (Allowed.Crate) then
-            Reportaise_Command_Failed
-              ("Crate [" & Args (1) & "] does not exist in the index.");
+            --  Even if the crate does not exist, it may be an abstract crate
+            --  provided by some others (e.g. gnat -> gnat_native), so inform
+            --  about it rather than saying it doesn't exist.
+            if Common.Show_Providers (Allowed) then
+               return;
+            else
+               Reportaise_Command_Failed
+                 ("Crate [" & Allowed.Crate.As_String
+                  & "] does not exist in the index.");
+            end if;
          end if;
 
          Check_Unavailable_External (Allowed.Crate);

@@ -8,9 +8,10 @@ with CLIC.User_Input;
 
 with Alire.Platforms;
 with Alire_Early_Elaboration;
-with Alire.Config.Builtins;
-with Alire.Config.Edit;
+with Alire.Settings.Builtins;
+with Alire.Settings.Edit;
 with Alire.Errors;
+with Alire.Features;
 with Alire.Index_On_Disk.Loading;
 with Alire.Index_On_Disk.Updates;
 with Alire.Lockfiles;
@@ -19,6 +20,7 @@ with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions;
 with Alire.Toolchains;
+with Alire.Version.Semver;
 
 with Alr.Commands.Action;
 with Alr.Commands.Build;
@@ -36,6 +38,7 @@ with Alr.Commands.Printenv;
 with Alr.Commands.Publish;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
+with Alr.Commands.Settings;
 with Alr.Commands.Show;
 with Alr.Commands.Test;
 with Alr.Commands.Toolchain;
@@ -136,12 +139,22 @@ package body Alr.Commands is
    procedure Set_Global_Switches
      (Config : in out CLIC.Subcommand.Switches_Configuration)
    is
+      use Alire;
       use CLIC.Subcommand;
+      use type Alire.Version.Semver.Version;
    begin
+      if Alire.Version.Semver.Current < Features.Config_Deprecated then
+         Define_Switch (Config,
+                        Command_Line_Config_Path'Access,
+                        "-c=", "--config=",
+                        TTY.Error ("Deprecated")
+                        & ". See -s/--settings switch");
+      end if;
+
       Define_Switch (Config,
                      Command_Line_Config_Path'Access,
-                     "-c=", "--config=",
-                     "Override configuration folder location");
+                     "-s=", "--settings=",
+                     "Override settings folder location");
 
       Define_Switch (Config,
                      Command_Line_Chdir_Target_Path'Access,
@@ -206,7 +219,7 @@ package body Alr.Commands is
    procedure Create_Alire_Folders is
       use GNATCOLL.VFS;
    begin
-      Make_Dir (Create (+Alire.Config.Edit.Path));
+      Make_Dir (Create (+Alire.Settings.Edit.Path));
    end Create_Alire_Folders;
 
    --------------------------
@@ -301,9 +314,9 @@ package body Alr.Commands is
       Unchecked : Alire.Roots.Optional.Root renames Cmd.Optional_Root;
 
       Manual_Only : constant Boolean :=
-                      Alire.Config.Builtins.Update_Manually_Only.Get;
+                      Alire.Settings.Builtins.Update_Manually_Only.Get;
 
-      package Conf renames Alire.Config;
+      package Conf renames Alire.Settings;
    begin
 
       --  If the root has been already loaded, then all following checks have
@@ -497,11 +510,11 @@ package body Alr.Commands is
       then
          --  Just verify that early processing catched it
          pragma Assert
-           (Alire.Config.Edit.Path =
+           (Alire.Settings.Edit.Path =
               Ada.Directories.Full_Name (Command_Line_Config_Path.all),
             "Unexpected mismatch of config paths:"
             & Alire.New_Line
-            & "Early: " & Alire.Config.Edit.Path
+            & "Early: " & Alire.Settings.Edit.Path
             & Alire.New_Line
             & "Late : " & Command_Line_Config_Path.all);
       end if;
@@ -523,12 +536,14 @@ package body Alr.Commands is
 
          begin
             if Sub_Cmd.What_Command /= Config.Command_Name
+              and then
+               Sub_Cmd.What_Command /= Settings.Command_Name
             then
                Alire.Platforms.Current.Initialize;
                Trace.Debug ("Platform-specific initialization done.");
             else
                Trace.Debug
-                 ("Platform-specific initialization skipped (alr config).");
+                 ("Platform-specific initialization skipped (alr settings).");
             end if;
          exception
             when Sub_Cmd.Error_No_Command =>
@@ -540,7 +555,7 @@ package body Alr.Commands is
 
          Set_Builtin_Aliases;
 
-         Sub_Cmd.Load_Aliases (Alire.Config.DB.all);
+         Sub_Cmd.Load_Aliases (Alire.Settings.DB.all);
 
          Sub_Cmd.Execute;
          Log ("alr " & Sub_Cmd.What_Command & " done", Detail);
@@ -661,6 +676,7 @@ begin
 
    -- Commands --
    Sub_Cmd.Register ("General", new Sub_Cmd.Builtin_Help);
+   Sub_Cmd.Register ("General", new Settings.Command);
    Sub_Cmd.Register ("General", new Config.Command);
    Sub_Cmd.Register ("General", new Install.Command);
    Sub_Cmd.Register ("General", new Toolchain.Command);

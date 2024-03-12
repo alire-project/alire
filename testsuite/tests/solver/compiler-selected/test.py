@@ -20,7 +20,7 @@ alr_with("gnat*")
 match_solution("gnat=8888.0.0 (gnat_native)", escape=True)
 
 # Selecting another default will cause a corresponding change in the solution
-run_alr("config", "--set", "toolchain.use.gnat", "gnat_cross_2=1")
+run_alr("settings", "--set", "toolchain.use.gnat", "gnat_cross_2=1")
 run_alr("update")
 match_solution("gnat=1.0.0 (gnat_cross_2)", escape=True)
 

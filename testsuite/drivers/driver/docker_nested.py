@@ -43,7 +43,7 @@ def main():
     os.environ["ALR_PATH"] = "/usr/bin/alr" # Must match docker volume mount
 
     # Disable autoconfig of the community index, to prevent unintended use
-    run_alr("config", "--global", "--set", "index.auto_community", "false")
+    run_alr("settings", "--global", "--set", "index.auto_community", "false")
 
     # Disable selection of toolchain. Tests that
     # require a configured compiler will have to set it up explicitly.
@@ -51,7 +51,7 @@ def main():
 
     # Disable warning on old index, to avoid having to update index versions
     # when they're still compatible.
-    run_alr("config", "--global", "--set", "warning.old_index", "false")
+    run_alr("settings", "--global", "--set", "warning.old_index", "false")
 
     # indexes to use
     if 'indexes' in test_env:

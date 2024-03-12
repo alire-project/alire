@@ -1,5 +1,6 @@
 with AAA.Directories;
 
+with Ada.Directories.Hierarchical_File_Names;
 with Ada.Numerics.Discrete_Random;
 with Ada.Real_Time;
 with Ada.Unchecked_Conversion;
@@ -86,7 +87,7 @@ package body Alire.Directories is
                                 else File & ".prev");
    begin
       if Exists (File) then
-         if not Exists (Base_Dir) then
+         if Base_Dir /= "" and then not Exists (Base_Dir) then
             Create_Directory (Base_Dir);
          end if;
 
@@ -749,11 +750,21 @@ package body Alire.Directories is
       --  Remove temp dir if empty to keep things tidy, and avoid modifying
       --  lots of tests, but only when within <>/alire/tmp
 
-      if Ada.Directories.Simple_Name (Parent (Parent (This.Filename))) =
-        Paths.Working_Folder_Inside_Root
-      then
-         AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
-      end if;
+      begin
+         if not Adirs.Hierarchical_File_Names.Is_Root_Directory_Name
+            (Parent (This.Filename))
+           and then
+             Adirs.Simple_Name (Parent (Parent (This.Filename))) =
+               Paths.Working_Folder_Inside_Root
+         then
+            AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
+         end if;
+      exception
+         when Use_Error =>
+            --  May be raised by Adirs.Containing_Directory
+            Trace.Debug ("Failed to identify location of temp file: "
+                         & This.Filename);
+      end;
 
    exception
       when E : others =>
