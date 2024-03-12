@@ -12,6 +12,8 @@ with Alire.Solutions.Diffs;
 with Alire.Solver;
 with Alire.Utils.Switches;
 
+with Alr.Common;
+
 with CLIC.User_Input;
 
 with Semantic_Versioning.Extended;
@@ -341,8 +343,16 @@ package body Alr.Commands.Get is
          Cmd.Auto_Update_Index;
 
          if not Alire.Index.Exists (Allowed.Crate) then
-            Reportaise_Command_Failed
-              ("Crate [" & Args (1) & "] does not exist in the index.");
+            --  Even if the crate does not exist, it may be an abstract crate
+            --  provided by some others (e.g. gnat -> gnat_native), so inform
+            --  about it rather than saying it doesn't exist.
+            if Common.Show_Providers (Allowed) then
+               return;
+            else
+               Reportaise_Command_Failed
+                 ("Crate [" & Allowed.Crate.As_String
+                  & "] does not exist in the index.");
+            end if;
          end if;
 
          Check_Unavailable_External (Allowed.Crate);
