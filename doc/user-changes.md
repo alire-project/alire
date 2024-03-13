@@ -4,7 +4,9 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
-## Release `2.0-dev`
+## Release `2.1`
+
+## Release `2.0`
 
 ### `ALIRE_SETTINGS_DIR` replaces `ALR_CONFIG`
 

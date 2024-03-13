@@ -2,7 +2,7 @@ package Alire.Version with Preelaborate is
 
    --  Remember to update Alire.Index branch if needed too
 
-   Current : constant String := "2.0";
+   Current : constant String := "2.1-dev";
    --  2.0.0:     alr settings refactor and minor fixes
    --  2.0.0-rc1: release candidate for 2.0
    --  2.0.0-b1:  first public release on the 2.0 branch
