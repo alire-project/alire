@@ -386,7 +386,7 @@ package body Alire.Publish.Submit is
               Title       => Context.PR_Name,
               Message     =>
                 "Created via `alr publish` with `alr "
-                & Version.Current & "`");
+                & Version.Current.Image & "`");
       begin
          Put_Success ("Pull request created successfully");
          Put_Info ("Visit " & TTY.URL (States.Webpage (Number))

@@ -11,6 +11,7 @@ with Alire.Properties;
 with Alire.Roots.Optional;
 with Alire.Toolchains;
 with Alire.Utils.Tables;
+with Alire.Version;
 
 with Alr.Bootstrap;
 
@@ -61,9 +62,10 @@ package body Alr.Commands.Version is
       end if;
 
       Table.Append ("APPLICATION").Append ("").New_Row;
-      Table.Append ("alr version:").Append (Alire.Version.Current).New_Row;
+      Table.Append ("alr version:")
+        .Append (Alire.Version.Current.Image).New_Row;
       Table.Append ("libalire version:")
-        .Append (Alire.Version.Current).New_Row;
+        .Append (Alire.Version.Current.Image).New_Row;
       Table.Append ("compilation date:")
         .Append (GNAT.Source_Info.Compilation_ISO_Date & " "
                  & GNAT.Source_Info.Compilation_Time).New_Row;
@@ -193,7 +195,7 @@ package body Alr.Commands.Version is
 
    procedure Print_Version is
    begin
-      Trace.Always ("alr " & Alire.Version.Current);
+      Trace.Always ("alr " & Alire.Version.Current.Image);
    end Print_Version;
 
 end Alr.Commands.Version;

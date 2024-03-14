@@ -4,7 +4,7 @@ with Ada.Directories;
 
 with Alire.Features;
 with Alire.Settings.Edit.Early_Load;
-with Alire.Version.Semver;
+with Alire.Version;
 
 with GNAT.Command_Line;
 with GNAT.OS_Lib;
@@ -110,7 +110,7 @@ package body Alire_Early_Elaboration is
 
          use type Alire.Version.Semver.Version;
          Config_Deprecated : constant Boolean
-           := Alire.Version.Semver.Current >= Alire.Features.Config_Deprecated;
+           := Alire.Version.Current >= Alire.Features.Config_Deprecated;
 
          procedure Check_Config_Deprecated is
          begin

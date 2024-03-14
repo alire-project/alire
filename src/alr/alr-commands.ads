@@ -139,7 +139,7 @@ private
 
    package Sub_Cmd is new CLIC.Subcommand.Instance
      (Main_Command_Name   => "alr",
-      Version             => Alire.Version.Current,
+      Version             => Alire.Version.Current.Image,
       Put                 => GNAT.IO.Put,
       Put_Line            => GNAT.IO.Put_Line,
       Put_Error           => Put_Error,
