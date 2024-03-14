@@ -203,14 +203,13 @@ package body Alire.TOML_Index is
                           & ") is newer than that expected by alr ("
                           & Alire.Index.Version.Image & ")."
                           & " You may have to update alr");
-            elsif Loading_Index_Version < Semver.Parse
-                                           (Alire.Index.Min_Compatible_Version)
+            elsif Loading_Index_Version < Alire.Index.Min_Compatible_Version
             then
                Set_Error
                  (Result, Filename,
                   "index version (" & Loading_Index_Version.Image
                   & ") is too old. The minimum compatible version is "
-                  & Alire.Index.Min_Compatible_Version & ASCII.LF
+                  & Alire.Index.Min_Compatible_Version.Image & ASCII.LF
                   & (if Index.Name = Alire.Index.Community_Name then
                        " Resetting the community index ("
                        & TTY.Terminal ("alr index --reset-community")
