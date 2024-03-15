@@ -36,7 +36,7 @@ try:
     p = run_alr("cache")
 except:
     # Something strange is happening...
-    assert False, contents("alr-config/cache")
+    assert False, contents("../alr-config/cache")
 assert_match(r"Path:.*alr-config/cache\nSize: (?!0.0 B).*\n", p.out)
 
 print("SUCCESS")
