@@ -20,7 +20,6 @@ with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions;
 with Alire.Toolchains;
-with Alire.Version.Semver;
 
 with Alr.Commands.Action;
 with Alr.Commands.Build;
@@ -143,7 +142,7 @@ package body Alr.Commands is
       use CLIC.Subcommand;
       use type Alire.Version.Semver.Version;
    begin
-      if Alire.Version.Semver.Current < Features.Config_Deprecated then
+      if Alire.Version.Current < Features.Config_Deprecated then
          Define_Switch (Config,
                         Command_Line_Config_Path'Access,
                         "-c=", "--config=",

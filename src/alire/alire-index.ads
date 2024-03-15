@@ -49,21 +49,14 @@ package Alire.Index is
    --  The branch used for the community index. Must be updated when new index
    --  features are introduced.
 
-   Min_Compatible_Version : constant String := "1.1";
-   --  Update as needed in case of backward-incompatible changes
-
-   Max_Compatible_Version : constant String :=
-                              AAA.Strings.Tail (Community_Branch, '-');
+   Min_Compatible_Version : constant Semantic_Versioning.Version;
+   --  Based on the constant defined in private section
 
    --  We store here the indexes we are able to load. As long as we do not
    --  break back compatibility, we can keep on simply updating the minor value
-   Valid_Versions : constant Semantic_Versioning.Extended.Version_Set :=
-                        Semantic_Versioning.Extended.Value
-                          ("^" & Min_Compatible_Version
-                           & " & <=" & Max_Compatible_Version);
+   Valid_Versions : constant Semantic_Versioning.Extended.Version_Set;
 
-   Version : constant Semantic_Versioning.Version :=
-                      Semantic_Versioning.New_Version (Max_Compatible_Version);
+   Version : constant Semantic_Versioning.Version;
    --  The index version understood by alire must match the one in the indexes
    --  being loaded.
 
@@ -172,5 +165,29 @@ package Alire.Index is
    --  Applies some checks to alreadly loaded crates that cannot be easily
    --  applied during load:
    --  * Whether some origin is not in our allowed hosting sites.
+
+private
+
+   --  The string constants for versions are kept in the private section to
+   --  avoid using them in command output or other message. The only option
+   --  is to use the Sementic_Versioning.Image function which will provide a
+   --  consistant output.
+
+   Min_Compatible_Version_Str : constant String := "1.1";
+   --  Update as needed in case of backward-incompatible changes
+
+   Max_Compatible_Version_Str : constant String :=
+                              AAA.Strings.Tail (Community_Branch, '-');
+
+   Min_Compatible_Version : constant Semantic_Versioning.Version :=
+     Semantic_Versioning.New_Version (Min_Compatible_Version_Str);
+
+   Valid_Versions : constant Semantic_Versioning.Extended.Version_Set :=
+                        Semantic_Versioning.Extended.Value
+                          ("^" & Min_Compatible_Version_Str
+                           & " & <=" & Max_Compatible_Version_Str);
+
+   Version : constant Semantic_Versioning.Version :=
+     Semantic_Versioning.New_Version (Max_Compatible_Version_Str);
 
 end Alire.Index;

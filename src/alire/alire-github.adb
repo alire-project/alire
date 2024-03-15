@@ -304,7 +304,7 @@ package body Alire.GitHub is
                      Args  => "state" = "closed");
    begin
       Comment (Number,
-               "Closed using `alr " & Version.Current & "` with reason: "
+               "Closed using `alr " & Version.Current.Image & "` with reason: "
                & Reason);
    end Close;
 
@@ -423,7 +423,7 @@ package body Alire.GitHub is
 
       Mutation : constant String
         := "mutation { markPullRequestReadyForReview (input: { "
-         & "clientMutationId: ""alr-" & Version.Current & """, "
+         & "clientMutationId: ""alr-" & Version.Current.Image & """, "
          & "pullRequestId: ""PRID"" }) {clientMutationId}}";
 
       Response : constant Minirest.Response

@@ -8,7 +8,7 @@ with Alire.Platforms.Folders;
 with Alire.Platforms.Current;
 with Alire.Settings.Builtins;
 with Alire.Utils.Text_Files;
-with Alire.Version.Semver;
+with Alire.Version;
 with Alire.Warnings;
 
 with CLIC.Config.Edit;
@@ -224,7 +224,7 @@ package body Alire.Settings.Edit is
    begin
       --  Warn or fail depending on version
       if OS_Lib.Getenv (Environment.Config, Unset) /= Unset then
-         if Version.Semver.Current < Features.Config_Deprecated then
+         if Version.Current < Features.Config_Deprecated then
             Warnings.Warn_Once (Msg, Level => Warning);
          else
             Raise_Checked_Error (Msg);

@@ -1,8 +1,18 @@
-package Alire.Version with Preelaborate is
+with Semantic_Versioning;
+
+package Alire.Version is
+
+   package Semver renames Semantic_Versioning;
+
+   subtype Version is Semver.Version;
+
+   Current : constant Version;
+
+private
 
    --  Remember to update Alire.Index branch if needed too
 
-   Current : constant String := "2.1-dev";
+   Current_Str : constant String := "2.1-dev";
    --  2.0.0:     alr settings refactor and minor fixes
    --  2.0.0-rc1: release candidate for 2.0
    --  2.0.0-b1:  first public release on the 2.0 branch
@@ -22,5 +32,7 @@ package Alire.Version with Preelaborate is
    --  1.0.0-rc1: release candidate for 1.0
    --  0.8.1-dev: update to devel-0.5 index branch
    --  0.8.0-dev: post-0.7-beta changes
+
+   Current : constant Version := Semver.New_Version (Current_Str);
 
 end Alire.Version;
