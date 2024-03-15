@@ -1,3 +1,5 @@
+# Upgrading
+
 ## Upgrading from 1.x to 2.x
 
 There are no special preparations to be made in advance to upgrading. However,
