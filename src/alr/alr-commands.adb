@@ -153,12 +153,14 @@ package body Alr.Commands is
       Define_Switch (Config,
                      Command_Line_Config_Path'Access,
                      "-s=", "--settings=",
-                     "Override settings folder location");
+                     "Override settings folder location",
+                     Argument => "DIR");
 
       Define_Switch (Config,
                      Command_Line_Chdir_Target_Path'Access,
                      "-C=", "--chdir=",
-                     "Run `alr` in the given directory");
+                     "Run `alr` in the given directory",
+                     Argument => "DIR");
 
       Define_Switch (Config,
                      Alire.Force'Access,
