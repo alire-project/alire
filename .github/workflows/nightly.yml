@@ -32,14 +32,8 @@ jobs:
       with:
         submodules: true
 
-    # Until some stable alr with `alr install` is available, we cannot rely on
-    # the alr-install action, as that introduces a circular dependency. If a
-    # nightly build were to fail, there's no way to do an `alr install` anymore
-    # TODO: replace with `alr-install` once alr 2.0 is out.
     - name: Install FSF toolchain
-      uses: ada-actions/toolchain@ce2020
-      with:
-        distrib: community
+      uses: alire-project/setup-alire@v3
 
     - name: Replace toolchain with aarch64
       if: ${{ runner.arch == 'ARM64' }}
