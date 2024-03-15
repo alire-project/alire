@@ -4,10 +4,13 @@ pragma Unreferenced (Alire.Settings.Edit.Early_Load);
 
 package Alire.Settings.Builtins.Windows is
 
-   Default_Msys2_Installer : constant String := "msys2-x86_64-20221216.exe";
-   Default_Msys2_Installer_URL : constant String :=
-     "https://github.com/msys2/msys2-installer/releases/download/2022-12-16/"
-     & Default_Msys2_Installer;
+   pragma Style_Checks ("M200");
+   Default_Msys2_Installer_URL : constant String
+     := "https://github.com/msys2/msys2-installer/releases/download/2024-01-13/msys2-x86_64-20240113.exe";
+   pragma Style_Checks ("M80");
+
+   Default_Msys2_Installer : constant String
+     := AAA.Strings.Split (Default_Msys2_Installer_URL, '/').Last_Element;
 
    --  MSYS2
 
