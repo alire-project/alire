@@ -1,5 +1,6 @@
 ## Checklist for releasing a new version
 
+1. [ ] Update Msys2 installer at https://github.com/msys2/msys2-installer/releases/
 1. [ ] Run local-only tests (`/testsuite/run-dev-sh`)
 1. [ ] Update version in `Alire.Version`.
 1. [ ] Update version in `alire.toml`.
