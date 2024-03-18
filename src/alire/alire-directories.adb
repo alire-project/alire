@@ -865,12 +865,14 @@ package body Alire.Directories is
             OK : Boolean := False;
          begin
             if VF.Is_Symbolic_Link then
+               Trace.Debug ("   Merge (softlink): " & Src);
+
                if Remove_From_Source then
                   VF.Rename (VFS.New_Virtual_File (Dst), OK);
                else
                   VF.Copy (VFS.Filesystem_String (Dst), OK);
                end if;
-               if not OK then
+               if not OK or else not GNAT.OS_Lib.Is_Symbolic_Link (Dst) then
                   Raise_Checked_Error ("Failed to copy/move softlink: "
                                        & TTY.URL (Src));
                end if;

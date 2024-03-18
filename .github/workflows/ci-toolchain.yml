@@ -44,6 +44,20 @@ jobs:
       with:
         crates: gnat_native^${{matrix.gcc_version}} gprbuild
 
+    # Superstrange occurrence in which a softlink is missing at the installed
+    # destination. The link is there when using `alr get`, and also when using
+    # `alr install` in my machines. Being a softlink the one missing, it could
+    # have something with the order in which files are enumerated and GNATCOLL
+    # implementation. Will have to dig further but this should be a temporary
+    # fix.
+    - name: GNAT 10 fix
+      if: runner.os == 'Linux' && matrix.gcc_version == 10
+      run: |
+        PREFIX=/home/runner/work/alire/alire/alire_prefix/libexec/gcc/x86_64-pc-linux-gnu/10.3.0
+        ln -sf \
+          $PREFIX/liblto_plugin.so.0.0.0 \
+          $PREFIX/liblto_plugin.so
+
     - name: Build alr with default toolchain
       shell: bash
       run: dev/build.sh
