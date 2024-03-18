@@ -1,5 +1,6 @@
 driver: python-script
 build_mode: both  # one of shared, sandboxed, both (default)
+control: # Used to disable test depending on one of: (see no-skel/test.yaml)
 indexes:
     my_index:
         in_fixtures: false
