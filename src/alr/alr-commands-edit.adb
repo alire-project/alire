@@ -276,7 +276,8 @@ package body Alr.Commands.Edit is
                      Cmd.Prj'Access,
                      "", "--project=",
                      "Select the project file to open if the crate " &
-                       "provides multiple project files, ignored otherwise");
+                       "provides multiple project files, ignored otherwise",
+                     Argument => "FILE");
       Define_Switch (Config,
                      Cmd.Set'Access,
                      "", "--select-editor",
