@@ -13,6 +13,7 @@ on:
 
 env:
   ALIRE_OS:     windows
+  MSYS64_ROOT:  C:\Users\runneradmin\AppData\Local\alire\cache\msys64
   MINGW64_PATH: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\mingw64\bin
   MSYS2_PATH:   C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin
   PACMAN:       C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin\pacman --noconfirm
@@ -37,6 +38,12 @@ jobs:
 
     - name: Build alr
       run: gprbuild -j0 -p -P alr_env
+
+    - name: Remove previous alr's msys2 (so a new one can be tested)
+      shell: pwsh
+      run: |
+        if (Test-Path "${{env.MSYS64_ROOT}}") {
+          Remove-Item "${{env.MSYS64_ROOT}}" -Recurse -Force }
 
     - name: Display built alr and trigger install of msys2
       run: ./bin/alr version
