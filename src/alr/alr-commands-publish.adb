@@ -151,7 +151,8 @@ package body Alr.Commands.Publish is
         (Config,
          Cmd.Manifest'Access,
          "", "--manifest=",
-         "Selects a manifest file other than ./alire.toml");
+         "Selects a manifest file other than ./alire.toml",
+         Argument => "FILE");
 
       Define_Switch
         (Config,

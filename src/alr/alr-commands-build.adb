@@ -273,13 +273,15 @@ package body Alr.Commands.Build is
         (Config,
          Cmd.Profiles'Access,
          "", Switch_Profiles & "=",
-         "Comma-separated list of <crate>=<profile> values (see description)");
+         "Comma-separated list of <crate>=<profile> values (see description)",
+         Argument => "LIST");
 
       Define_Switch
         (Config,
          Cmd.Stop_After'Access,
          "", Switch_Stop & "=",
-         "Build stage after which to stop (see description)");
+         "Build stage after which to stop (see description)",
+         Argument => "STAGE");
 
    end Setup_Switches;
 

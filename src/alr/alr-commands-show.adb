@@ -364,8 +364,8 @@ package body Alr.Commands.Show is
       Define_Switch (Config,
                      Cmd.Dependents'Access,
                      "", "--dependents?",
-                     "Show dependent crates (ARG=direct|shortest|all)",
-                     Argument => "=ARG");
+                     "Show dependent crates (WHICH=direct|shortest|all)",
+                     Argument => "=WHICH");
 
       Define_Switch (Config,
                      Cmd.Detail'Access,
