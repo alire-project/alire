@@ -8,4 +8,4 @@ executables=['main']
 
 [origin.'case(os)'.'...']
 url = "file:../../../crate-0.1.0.tgz"
-hashes = ["sha256:73d1455dd4b49ea598faa939557c15046db6c689552db03fd6a49c57d3cbc1b2"]
+hashes = ["sha256:f3bd6b531710b41c9d62144b5a29fa0b4b78ab553c29957f41d4ca9075f5b0b8"]
