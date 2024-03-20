@@ -28,8 +28,18 @@ crate/
 
 """
 
-from drivers.alr import run_alr
-from drivers.helpers import on_windows
+import os
+import shutil
+from drivers.alr import run_alr, crate_dirname
+from drivers.helpers import contents, on_windows
+
+
+def kind(file):
+    return (os.path.isfile(file), os.path.islink(file), os.path.isdir(file))
+
+def ls(path):
+    out = subprocess.run(["ls", "-alFR", path], capture_output=True, text=True)
+    return out.stdout
 
 
 # Does not apply to Windows as it does not support softlinks
