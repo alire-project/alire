@@ -30,10 +30,7 @@ crate/
 
 import os
 import shutil
-import subprocess
-import sys
-
-from drivers.alr import crate_dirname, run_alr
+from drivers.alr import run_alr, crate_dirname
 from drivers.helpers import contents, on_windows
 
 

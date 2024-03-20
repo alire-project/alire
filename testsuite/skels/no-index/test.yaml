@@ -7,7 +7,9 @@ control: # Used to disable test depending on one of:
     - [SKIP, "skip_network", "Network-requiring tests disabled"]
     - [SKIP, "skip_linux",   "Test is Linux-only"]
     - [SKIP, "skip_macos",   "Test is macOS-only"]
+    - [SKIP, "skip_unix",    "Test is Unix-only"]
     - [SKIP, "skip_windows", "Test is Windows-only"]
+    # These have to be interpreted as: "skip (if not running under) condition"
 indexes:
     compiler_only_index: {}
     # Note that shared builds require a detected compiler to be able to compute
