@@ -18,6 +18,7 @@ aggregate project Alr_Env is
                          "deps/diskflags",
                          "deps/gnatcoll-slim",
                          "deps/minirest",
+                         "deps/ncdu",
                          "deps/optional",
                          "deps/semantic_versioning",
                          "deps/si_units",

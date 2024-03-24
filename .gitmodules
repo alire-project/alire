@@ -60,3 +60,6 @@
 [submodule "deps/dirty_booleans"]
 	path = deps/dirty_booleans
 	url = https://github.com/mosteo/dirty_booleans
+[submodule "deps/ncdu"]
+	path = deps/ncdu
+	url = https://github.com/mosteo/ncdu-ada
