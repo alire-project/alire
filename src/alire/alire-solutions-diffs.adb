@@ -45,18 +45,18 @@ package body Alire.Solutions.Diffs is
              when Missing    => TTY.Error (U ("❗")), -- alts: ⚠️❗‼️
              when Binary     => TTY.Warn  (U ("📦")),
              when Info       => TTY.Emph  (U ("🛈")))
-       else
+       else "" &
          (case Change is
-             when Added      => U ("+"),
-             when Removed    => U ("-"),
-             when Upgraded   => U ("^"),
-             when Downgraded => U ("v"),
-             when Pinned     => U ("·"),
-             when Unpinned   => U ("o"),
-             when Unchanged  => U ("="),
-             when Missing    => U ("!"),
-             when Binary     => U ("b"),
-             when Info       => U ("i")
+             when Added      => '+',
+             when Removed    => '-',
+             when Upgraded   => '^',
+             when Downgraded => 'v',
+             when Pinned     => '.',
+             when Unpinned   => 'o',
+             when Unchanged  => '=',
+             when Missing    => '!',
+             when Binary     => 'b',
+             when Info       => 'i'
          ));
 
    --  This type is used to summarize every detected change

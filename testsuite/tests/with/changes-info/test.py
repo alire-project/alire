@@ -61,7 +61,7 @@ assert_match(".*" +
 
 Changes to dependency solution:
 
-   +· local_crate unknown (new,path=local_crate)""") + ".*",
+   +. local_crate unknown (new,path=local_crate)""") + ".*",
              p.out, flags=re.S)
 
 ###############################################################################
@@ -70,7 +70,7 @@ p = run_alr('pin', 'libhello', quiet=False)
 assert_match(".*" +
              re.escape("""Changes to dependency solution:
 
-   · libhello 2.0.0 (pin=2.0.0)""") + ".*",
+   . libhello 2.0.0 (pin=2.0.0)""") + ".*",
              p.out, flags=re.S)
 
 ###############################################################################
