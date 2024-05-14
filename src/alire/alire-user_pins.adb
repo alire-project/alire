@@ -16,6 +16,7 @@ package body Alire.User_Pins is
    package Keys is
       Branch   : constant String := "branch";
       Commit   : constant String := "commit";
+      Subdir   : constant String := "subdir";
       Internal : constant String := "lockfiled";
       Path     : constant String := "path";
       URL      : constant String := "url";
@@ -92,6 +93,9 @@ package body Alire.User_Pins is
                   then ", branch='" & (+This.Branch) & "'"
                   elsif This.Commit /= ""
                   then ", commit='" & (+This.Commit) & "'"
+                  else "")
+               & (if This.Subdir /= ""
+                  then ", subdir='" & (+This.Subdir) & "'"
                   else ""))
        & " }");
 
@@ -314,6 +318,9 @@ package body Alire.User_Pins is
                               else Origins.Short_Commit (+This.Commit))
          elsif Branch (This).Has_Element
          then "#" & TTY.Emph (+This.Branch)
+         else "")
+       & (if Subdir (This).Has_Element
+         then "#" & TTY.Emph (+This.Subdir)
          else ""));
 
    ----------
@@ -399,6 +406,11 @@ package body Alire.User_Pins is
                   elsif This.Contains (Keys.Branch) then
                      Result.Branch :=
                        +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
+                  end if;
+
+                  if This.Contains (Keys.Subdir) then
+                     Result.Subdir :=
+                       +This.Checked_Pop (Keys.Subdir, TOML_String).As_String;
                   end if;
                end return;
 
@@ -572,6 +584,12 @@ package body Alire.User_Pins is
          elsif Branch (This).Has_Element then
             Table.Set (Keys.Branch,
                        Create_String (Branch (This).Element.Ptr.all));
+         end if;
+
+         --  TODO: Should this use the "VFS.Attempt_Portable"?
+         if Subdir (This).Has_Element then
+            Table.Set (Keys.Subdir,
+                       Create_String (Subdir (This).Element.Ptr.all));
          end if;
       end if;
 

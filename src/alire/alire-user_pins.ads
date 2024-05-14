@@ -80,6 +80,9 @@ package Alire.User_Pins is
    function Commit (This : Pin) return Optional.String
      with Pre => This.Is_Remote;
 
+   function Subdir (This : Pin) return Optional.String
+     with Pre => This.Is_Remote;
+
    function TTY_URL_With_Reference (This     : Pin;
                                     Detailed : Boolean := False)
                                     return String
@@ -165,6 +168,15 @@ private
    is (if +This.Commit = ""
        then Optional.Strings.Empty
        else Optional.Strings.Unit (+This.Commit));
+
+   ------------
+   -- Subdir --
+   ------------
+
+   function Subdir (This : Pin) return Optional.String
+   is (if +This.Subdir = ""
+       then Optional.Strings.Empty
+       else Optional.Strings.Unit (+This.Subdir));
 
    ---------------
    -- Is_Remote --
