@@ -276,8 +276,12 @@ package body Alire.User_Pins is
       --  At this point, we have the sources at Destination. Last checks ensue.
 
       declare
-         Root : Roots.Optional.Root :=
-                  Roots.Optional.Detect_Root (Destination);
+         use Directories.Operators; -- "/"
+
+         Subdir : constant String := +This.Subdir;
+         Root   : Roots.Optional.Root := Roots.Optional.Detect_Root
+           ((if Subdir = "" then Destination
+             else Destination / Subdir));
       begin
 
          --  Check crate name mismatch
