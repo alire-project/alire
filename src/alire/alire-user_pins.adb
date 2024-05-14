@@ -507,11 +507,16 @@ package body Alire.User_Pins is
                             "branch cannot be the empty string");
             end if;
 
+            if This.Contains (Keys.Subdir) then
+               Result.Subdir :=
+                 +This.Checked_Pop (Keys.Subdir, TOML_String).As_String;
+               This.Assert (+Result.Subdir /= "",
+                            "subdir cannot be the empty string");
+            end if;
+
             --  TEST: empty branch value
 
             This.Report_Extra_Keys;
-
-            --  TODO: Do I need to test anything here regarding the subdir?
 
             return Result;
          end Load_Remote;
