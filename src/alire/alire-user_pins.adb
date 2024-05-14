@@ -42,14 +42,16 @@ package body Alire.User_Pins is
    -- New_Remote --
    ----------------
 
-   function New_Remote (URL : Alire.URL;
+   function New_Remote (URL    : Alire.URL;
                         Commit : String := "";
-                        Branch : String := "")
+                        Branch : String := "";
+                        Subdir : Alire.Relative_Path := "")
                         return Pin
    is (Kind       => To_Git,
        URL        => +URL,
        Commit     => +Commit,
        Branch     => +Branch,
+       Subdir     => +Subdir,
        Local_Path => <>);
 
    -----------
@@ -465,6 +467,7 @@ package body Alire.User_Pins is
                           TOML_String).As_String,
                         Branch     => <>,
                         Commit     => <>,
+                        Subdir     => <>,
                         Local_Path => <>);
          begin
             if This.Contains (Keys.Branch)
@@ -491,6 +494,8 @@ package body Alire.User_Pins is
             --  TEST: empty branch value
 
             This.Report_Extra_Keys;
+
+            --  TODO: Do I need to test anything here regarding the subdir?
 
             return Result;
          end Load_Remote;

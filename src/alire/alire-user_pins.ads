@@ -62,9 +62,10 @@ package Alire.User_Pins is
 
    --  Remote pins
 
-   function New_Remote (URL : Alire.URL;
+   function New_Remote (URL    : Alire.URL;
                         Commit : String := "";
-                        Branch : String := "")
+                        Branch : String := "";
+                        Subdir : Alire.Relative_Path := "")
                         return Pin
      with
        Pre => Commit = "" or else VCSs.Git.Is_Valid_Commit (Commit),
@@ -137,6 +138,7 @@ private
             URL        : UString;
             Branch     : UString; -- Optional
             Commit     : UString; -- Optional
+            Subdir     : UString; -- Optional
             Local_Path : Unbounded_Absolute_Path;
             --  Empty until the pin is locally deployed
          when To_Path =>

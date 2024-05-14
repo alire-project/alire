@@ -30,7 +30,7 @@ package Alr.Commands.Pin is
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
    is ("[[crate[=<version>]]"
-       & " | crate --use=<path> [--commit=REF] [--branch=NAME]"
+       & " | crate --use=<path> [--commit=REF] [--branch=NAME] [--subdir=PATH]"
        & " | --all]");
 
 private
@@ -38,6 +38,7 @@ private
    type Command is new Commands.Command with record
       Branch  : aliased GNAT.Strings.String_Access;
       Commit  : aliased GNAT.Strings.String_Access;
+      Subdir  : aliased GNAT.Strings.String_Access;
       Pin_All : aliased Boolean;
       Unpin   : aliased Boolean;
       URL     : aliased GNAT.Strings.String_Access;

@@ -373,7 +373,8 @@ package body Alire.Roots.Editable is
                              Crate  : Alire.Optional.Crate_Name;
                              Origin : URL;
                              Ref    : String := "";
-                             Branch : String := "")
+                             Branch : String := "";
+                             Subdir : Relative_Path := "")
    is
 
       ---------------------------
@@ -444,6 +445,9 @@ package body Alire.Roots.Editable is
          package Adirs renames Ada.Directories;
       begin
 
+         --  TODO: Probably need to ensure the subdir exists and there is a
+         --  alire.toml manifest. Where this should go?
+
          --  Put in place the checkout, as it is valid if we reached this point
 
          if not Adirs.Exists (This.Edit.Pins_Dir) then
@@ -464,7 +468,8 @@ package body Alire.Roots.Editable is
                                 Crate,
                                 User_Pins.New_Remote (URL    => Origin,
                                                       Commit => Ref,
-                                                      Branch => Branch));
+                                                      Branch => Branch,
+                                                      Subdir => Subdir));
          This.Reload_Manifest;
 
          --  And update lockfile. We need to call Deploy on the pin (although
