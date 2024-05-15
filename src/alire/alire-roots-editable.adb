@@ -437,7 +437,8 @@ package body Alire.Roots.Editable is
          New_Pin : User_Pins.Pin :=
                      User_Pins.New_Remote (URL    => Origin,
                                            Commit => Ref,
-                                           Branch => Branch);
+                                           Branch => Branch,
+                                           Subdir => Subdir);
 
          Destination : constant Absolute_Path :=
                          New_Pin.Deploy_Path (Crate, This.Edit.Pins_Dir);

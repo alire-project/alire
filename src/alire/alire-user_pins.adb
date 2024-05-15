@@ -322,9 +322,6 @@ package body Alire.User_Pins is
                               else Origins.Short_Commit (+This.Commit))
          elsif Branch (This).Has_Element
          then "#" & TTY.Emph (+This.Branch)
-         else "")
-       & (if Subdir (This).Has_Element
-         then "#" & TTY.Emph (+This.Subdir)
          else ""));
 
    ----------
