@@ -1,6 +1,6 @@
 """
 Verify that the index manifest is copied in the proper place instead of the one
-possible packed by upstream, like is done for regular crates.
+possibly packed by upstream, like it is done for regular crates.
 """
 
 from glob import glob
@@ -38,17 +38,17 @@ alr_publish("crate1", "0.1.0-dev",
 os.chdir(start_dir)
 run_alr("get", "crate1")
 
-# Enter and verify the only manifest is at the expected location, and the only
-# backup is too.
+# Enter and verify the only manifest is at the expected location (in the nested
+# crate), and the only backup is too there.
 
 os.chdir(glob("monoproject_*")[0])
 
 assert not os.path.isfile(alr_manifest()), \
-    "Unexpected manifest in the root of the repository"
+    "Unexpected manifest at the root of the repository"
 
 assert_contents(".",
                 ['./crate1/alire.toml',
                  './crate1/alire/alire.toml.upstream'],
-                ".*alire.*toml")
+                regex=".*alire.*toml")
 
 print('SUCCESS')

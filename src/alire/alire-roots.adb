@@ -1,5 +1,3 @@
-with AAA.Debug;
-
 with Ada.Directories;
 with Ada.Unchecked_Deallocation;
 
@@ -1060,7 +1058,6 @@ package body Alire.Roots is
                   Trace.Debug
                     ("Crate found at pin location " & Pin.Relative_Path);
                   if Target.Value.Name /= Crate then
-                     Trace.Error (AAA.Debug.Stack_Trace);
                      Raise_Checked_Error
                        ("Mismatched crates for pin linking to "
                         & TTY.URL (Pin.Path) & ": expected " &
