@@ -251,20 +251,24 @@ package body Alire.Releases is
       Mark_Completion : Boolean := True)
    is
       use Alire.Directories;
-      Folder : constant Any_Path := Parent_Folder / This.Deployment_Folder;
-      Completed : Flags.Flag := Flags.Complete_Copy (Folder);
+      Repo_Folder : constant Any_Path :=
+                      Parent_Folder / This.Deployment_Folder;
+      Rel_Folder  : constant Any_Path :=
+                      Parent_Folder / This.Base_Folder;
+      Completed   : Flags.Flag := Flags.Complete_Copy (Repo_Folder);
 
       ------------------------------
       -- Backup_Upstream_Manifest --
       ------------------------------
 
       procedure Backup_Upstream_Manifest is
-         Working_Dir : Guard (Enter (Folder)) with Unreferenced;
+         Working_Dir : Guard (Enter (Rel_Folder)) with Unreferenced;
       begin
          Ada.Directories.Create_Path (Paths.Working_Folder_Inside_Root);
 
          if GNAT.OS_Lib.Is_Regular_File (Paths.Crate_File_Name) then
-            Trace.Debug ("Backing up bundled manifest file as *.upstream");
+            Trace.Debug ("Backing up bundled manifest file at "
+                         & Adirs.Current_Directory & " as *.upstream");
             declare
                Upstream_File : constant String :=
                                  Paths.Working_Folder_Inside_Root
@@ -295,16 +299,17 @@ package body Alire.Releases is
       begin
          Trace.Debug ("Generating manifest file for "
                       & This.Milestone.TTY_Image & " with"
-                      & This.Dependencies.Leaf_Count'Img & " dependencies");
+                      & This.Dependencies.Leaf_Count'Img & " dependencies "
+                      & " at " & (Rel_Folder / Paths.Crate_File_Name));
 
-         This.Whenever (Env).To_File (Folder / Paths.Crate_File_Name,
+         This.Whenever (Env).To_File (Rel_Folder / Paths.Crate_File_Name,
                                       Kind);
       end Create_Authoritative_Manifest;
 
    begin
 
       Trace.Debug ("Deploying " & This.Milestone.TTY_Image
-                   & " into " & TTY.URL (Folder));
+                   & " into " & TTY.URL (Repo_Folder));
 
       --  Deploy if the target dir is not already there. We only skip for
       --  releases that require a folder to be deployed; system releases
@@ -331,14 +336,14 @@ package body Alire.Releases is
       else
          Was_There := False;
          Put_Info ("Deploying " & This.Milestone.TTY_Image & "...");
-         Alire.Origins.Deployers.Deploy (This, Folder).Assert;
+         Alire.Origins.Deployers.Deploy (This, Repo_Folder).Assert;
       end if;
 
       --  For deployers that do nothing, we ensure the folder exists so all
       --  dependencies leave a trace in the cache/dependencies folder, and
       --  a place from where to run their actions by default.
 
-      Ada.Directories.Create_Path (Folder);
+      Ada.Directories.Create_Path (Repo_Folder);
 
       --  Backup a potentially packaged manifest, so our authoritative
       --  manifest from the index is always used.
@@ -349,8 +354,8 @@ package body Alire.Releases is
 
       if Create_Manifest then
          Create_Authoritative_Manifest (if Include_Origin
-                                          then Manifest.Index
-                                          else Manifest.Local);
+                                        then Manifest.Index
+                                        else Manifest.Local);
       end if;
 
       if Mark_Completion then
@@ -363,10 +368,10 @@ package body Alire.Releases is
          --  during an action).
          Log_Exception (E);
 
-         if Ada.Directories.Exists (Folder) then
+         if Ada.Directories.Exists (Repo_Folder) then
             Trace.Debug ("Cleaning up failed release deployment of "
                          & This.Milestone.TTY_Image);
-            Directories.Force_Delete (Folder);
+            Directories.Force_Delete (Repo_Folder);
          end if;
 
          raise;
