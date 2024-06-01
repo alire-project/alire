@@ -63,6 +63,3 @@
 [submodule "deps/cstrings"]
 	path = deps/cstrings
 	url = https://github.com/mosteo/cstrings
-[submodule "deps/lml"]
-	path = deps/lml
-	url = https://github.com/mosteo/lml_ada.git

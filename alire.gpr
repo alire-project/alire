@@ -5,6 +5,7 @@ with "ajunitgen";
 with "ansiada";
 with "c_strings";
 with "clic";
+with "compare_to_case";
 with "den";
 with "dirty_booleans";
 with "diskflags";
