@@ -2,11 +2,15 @@ with Alire.Dependencies;
 with Alire.Index;
 with Alire.Origins;
 with Alire.Properties;
+with Alire.Releases;
 with Alire.Solutions;
 with Alire.Types;
 with Alire.User_Pins.Maps;
 
 with Semantic_Versioning.Extended;
+
+private with Alire.Conditional;
+private with Alire.Dependencies.Containers;
 
 package Alire.Solver is
 
@@ -15,58 +19,31 @@ package Alire.Solver is
    --------------
 
    type Age_Policies is (Oldest, Newest);
-   --  When looking for releases within a crate, which one to try first.
-
-   type Completeness_Policies is
-     (First_Complete,
-      --  Stop after finding the first complete solution. No incomplete
-      --  solutions will be attempted. Other complete solutions may exist
-      --  that are globally "newer".
-
-      All_Complete,
-      --  Only attempt to find complete solutions; the first unsatisfiable
-      --  dependency will result in abandoning that search branch. All
-      --  complete solutions will be found, and the best one according
-      --  to Solutions.Is_Better will be returned.
-
-      Some_Incomplete,
-      --  Explores a reasonable subset of incomplete solutions: unknown crates,
-      --  crates with no satisfying releases, crates with externals can appear
-      --  as missing in the solution.
-
-      All_Incomplete
-      --  All crates may appear as missing, even those that have satisfying
-      --  releases. All possible solutions and incomplete subsets are
-      --  eventually explored.
-
-     );
-   --  Allow the solver to further explore incomplete solution space. Each
-   --  value takes more time than the precedent one. All_Incomplete can take
-   --  a veeery long time when many crates/releases must be considered. TODO:
-   --  All these policies can go away once we move from a recursive solver to
-   --  a non-recursive priority-based one.
+   --  When looking for releases within a crate, which one to try first. The
+   --  usual is to look for newest packages, as these may include bugfixes;
+   --  but to avoid malicious updates some advocate the opposite strategy
+   --  (e.g. Google, where every update should be forced).
 
    type Detection_Policies is (Detect, Dont_Detect);
    --  * Detect: externals will be detected and added to the index once needed.
    --  * Dont_Detect: externals will remain undetected (faster).
 
    type Hinting_Policies is (Hint, Fail);
-   --  * Hint: any crate with externals, detected or not, will as last resort
-   --  provide a hint.
+   --  * Hint: any crate with externals or known to exist, detected or not,
+   --  will as last resort provide a hint.
    --  * Fail: fail for any unsatisfiable crate. If Detect, externally detected
    --  releases will be used normally; otherwise a crate with only externals
    --  will always cause failure.
 
-   type Timeout_Policies is
-     (Ask,      -- Normal interaction with user
-      Stop,     -- Abort at first timeout
-      Continue, -- Never ask and continue searching
-      Continue_While_Complete_Then_Stop
-      --  If there are complete solutions unexplored, continue searching.
-      --  Once complete are exhausted, the timeout timer will be reset and the
-      --  policy downgraded to Stop. This is intended to abort as soon as we
-      --  know there aren't complete solutions, but also to be able to provide
-      --  a decent incomplete solution so the problem can be diagnosed.
+   type Stopping_Policies is
+     (Continue,
+      --  Keep searching until finding the best complete solution or "best"
+      --  incomplete one, no matter how long it takes.
+      Ask,
+      --  Normal user interaction; not that we may ask before we are sure no
+      --  complete solutions exist (this will be informed to the user).
+      Stop
+      --  Stop on first timeout with the best solution found yet
      );
 
    subtype Pin_Map  is User_Pins.Maps.Map;
@@ -124,37 +101,28 @@ package Alire.Solver is
 
    type Query_Options is record
       Age          : Age_Policies          := Newest;
-      Completeness : Completeness_Policies := First_Complete;
-      Exhaustive   : Boolean               := True;
-      --  When Exhaustive, Completeness is progressively downgraded. Otherwise
-      --  only the given Completeness is used.
+      Stopping     : Stopping_Policies     := Continue;
       Detecting    : Detection_Policies    := Detect;
       Hinting      : Hinting_Policies      := Hint;
-      On_Timeout   : Timeout_Policies      := Ask;
 
       Timeout      : Duration              := 5.0;
       --  Time until reporting problems finding a complete solution
 
       Timeout_More : Duration              := 10.0;
       --  Extra period if the user wants to keep looking
-
-      Elapsed      : Duration              := 0.0;
-      --  Extra elapsed time that has been already used in a previous search
-      --  configuration. No real use case for the user to modify it, but this
-      --  allows avoiding a big-ish refactoring that isn't worth the trouble.
    end record;
 
    Default_Options : constant Query_Options := (others => <>);
-   --  A reasonable combo that will return the first complete solution found,
-   --  or otherwise consider a subset of incomplete solutions.
+   --  Default options is to keep looking without asking. This is potentially
+   --  more time consuming but it should be safe in the sense that no spurious
+   --  incomplete solutions should be returned. When interaction/early stop is
+   --  preferred, it must be tweaked (see child package Predefined_Options).
 
    --  See child package Predefined_Options for more.
 
    function Resolve
      (Dep : Dependencies.Dependency;
-      Options : Query_Options :=
-        (On_Timeout => Continue_While_Complete_Then_Stop,
-         others     => <>))
+      Options : Query_Options := Default_Options)
       return Solution;
    --  For when we only know the root crate without a precise version and want
    --  either a complete solution or a reasonable idea of what's preventing it.
@@ -176,5 +144,79 @@ package Alire.Solver is
                            Options : Query_Options := Default_Options)
                            return Boolean;
    --  Simplified call to Resolve, discarding result
+
+private
+
+   type State_Id is mod 2 ** 32 - 1;
+
+   Current_Id : State_Id := 0;
+
+   function Next_Id return State_Id;
+
+   type Search_State is tagged record
+      Id     : State_Id := Next_Id;
+
+      Parent : State_Id := 0;
+
+      Downgrade : Natural := 0;
+      --  A downgrade is the use of a release whose version is below the newest
+      --  one known for the required dependency (or viceversa when oldest
+      --  releases are requested).
+
+      Seen : Dependencies.Containers.Set;
+      --  Any dependency already seen needs not to be explored, as it has been
+      --  done at some point upwards the search tree.
+
+      Expanded,
+      --  Releases expanded to get new dependencies, in vector form just for
+      --  simplicity of imaging. This is currently informative, not used for
+      --  anything but debug during the search.
+
+      Target,
+      --  Next subtree to consider
+
+      Remaining : Types.Platform_Dependencies;
+      --  Nodes pending to be considered
+
+      Solution  : Alire.Solutions.Solution;
+      --  Partial or complete solution that stores releases
+      --  and dependencies processed up to now
+   end record;
+
+   function Downgrading (This       : access Search_State;
+                         Downgrades : Natural)
+                         return access Search_State;
+   --  Adds to the downgrades
+
+   function Seeing (This : access Search_State;
+                    Deps : Dependencies.Dependency)
+                    return access Search_State;
+   --  Appends to Seen
+
+   function Expanding (This : access Search_State;
+                       Rel  : Releases.Release)
+                       return access Search_State;
+   --  Appends to Expanded
+
+   function Expanding (This : access Search_State;
+                       Rel  : Conditional.Dependencies)
+                       return access Search_State
+     with Pre => Rel.Is_Empty;
+   --  Used simply for convenience when adding a broken link without release
+
+   function Targeting (This : access Search_State;
+                       Dep  : Conditional.Dependencies)
+                       return access Search_State;
+   --  Replaces Target
+
+   function With_More (This : access Search_State;
+                       Deps : Conditional.Dependencies)
+                       return access Search_State;
+   --  Replaces the Remaining dependencies
+
+   function Solved (This : access Search_State;
+                    As   : Solutions.Solution)
+                       return access Search_State;
+   --  Replaces Solution
 
 end Alire.Solver;
