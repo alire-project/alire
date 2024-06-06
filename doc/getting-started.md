@@ -289,12 +289,12 @@ enough to get an idea of the root of the problem. Additionally, `-d` will show
 tracebacks of exceptions.
 
 Subprocess output is shown by default (you can silence it, and anything else
-not an error) with `-q`, which enables quiet mode. Any subprocess that exist
+not an error) with `-q`, which enables quiet mode. Any subprocess that exits
 abnormally will be reported, including its invocation arguments.
 
 If you suspect your settings may be the source of some problem, please check
-our section on [Settings](setting), and in particular how to use a [default
-pristine settings](settings#Relocating-your-settings)
+our section on [Settings](settings), and in particular how to use a [default
+pristine settings](settings#relocating-your-settings)
 
 ## Running tests
 
@@ -393,8 +393,9 @@ you have to add a
 project-files = ["project_file.gpr"]
 ```
 
-Although this is not recommended (see Best practices), you can have multiple
-GPR project files:
+Although this is not recommended (see
+[best practices](policies#best-practices)), you can have multiple GPR project files:
+
 ```toml
 project-files = ["project_file_1.gpr", "project_file_2.gpr"]
 ```
