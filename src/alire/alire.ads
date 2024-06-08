@@ -312,6 +312,7 @@ package Alire with Preelaborate is
 
    GNAT_Crate          : constant Crate_Name;
    GNAT_External_Crate : constant Crate_Name;
+   GNAT_Native_Crate   : constant Crate_Name;
    GPRbuild_Crate      : constant Crate_Name;
 
 private
@@ -357,6 +358,9 @@ private
 
    GNAT_External_Crate : constant Crate_Name :=
                            (Len => 13, Name => "gnat_external");
+
+   GNAT_Native_Crate : constant Crate_Name :=
+                           (Len => 11, Name => "gnat_native");
 
    function U (S          : Wide_Wide_String;
                Output_BOM : Boolean := False)
