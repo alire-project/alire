@@ -186,6 +186,10 @@ package Alire.Solutions is
 
    function Composition (This : Solution) return Compositions;
 
+   function Contains (This    : Solution;
+                      Release : Alire.Releases.Release) return Boolean;
+   --  Say if the solution contains exactly this release
+
    function Contains_Release (This  : Solution;
                               Crate : Crate_Name) return Boolean;
    --  Say if Crate is among the releases (solved or linked) for this solution.

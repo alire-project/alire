@@ -201,7 +201,7 @@ private
    function Expanding (This : access Search_State;
                        Rel  : Conditional.Dependencies)
                        return access Search_State
-     with Pre => Rel.Is_Empty;
+     with Pre => Rel.Is_Empty or else Rel.Is_Value;
    --  Used simply for convenience when adding a broken link without release
 
    function Targeting (This : access Search_State;

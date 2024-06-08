@@ -21,6 +21,7 @@ package body Alire.Solutions is
    package Semver renames Semantic_Versioning;
 
    use type Ada.Containers.Count_Type;
+   use type Alire.Releases.Release;
    use type Semantic_Versioning.Version;
    use all type States.Missed_Reasons;
 
@@ -50,6 +51,14 @@ package body Alire.Solutions is
           Partial
        else
           Mixed);
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains (This    : Solution;
+                      Release : Alire.Releases.Release) return Boolean
+   is (for some Rel of This.Releases => Rel = Release);
 
    ----------------------
    -- Contains_Release --

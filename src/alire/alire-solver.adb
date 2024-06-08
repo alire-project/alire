@@ -323,10 +323,15 @@ package body Alire.Solver is
       Tools : constant Releases.Containers.Release_Set :=
                                   Toolchains.Available
                                     (Detect_Externals =>
-                                        Options.Detecting = Detect)
-      with Unreferenced;
+                                        Options.Detecting = Detect);
       --  Installed releases do not change during resolution, we make a local
       --  copy here so they are not read repeatedly from disk.
+
+      Compiler_Selected : constant Releases.Containers.Optional
+        := (if Toolchains.Tool_Is_Configured (GNAT_Crate)
+           then Releases.Containers.Unit (Toolchains.Tool_Release (GNAT_Crate))
+           else Releases.Containers.Optional_Releases.Empty);
+      --  Likewise, the preferred compiler plays a role in solving order
 
       Dupes : Natural := 0;
       --  Some solutions are found twice when some dependencies are subsets of
@@ -415,6 +420,7 @@ package body Alire.Solver is
       function Is_Better (L, R : in out Search_State) return Boolean
       is
          use all type Compare_To_Case.Result;
+         use all type Compare_To_Case.Bool_Result;
          use type Alire.Solutions.Compositions;
 
          function Compare is
@@ -422,15 +428,174 @@ package body Alire.Solver is
          function Compare is
            new Compare_To_Case.Compare (Natural);
 
+         LS : Solution renames L.Solution;
+         RS : Solution renames R.Solution;
+
          ------------------------
-         -- Compiler_Is_Better --
+         -- Preferred_Compiler --
          ------------------------
 
-         function Compiler_Is_Better return Compare_To_Case.Result is
+         function Preferred_Compiler return Compare_To_Case.Result is
+
+            -----------------------
+            -- Preferred_Version --
+            -----------------------
+
+            function Preferred_Version (L, R : Semver.Version)
+                                        return Compare_To_Case.Result
+            is
+               use type Semver.Version;
+            begin
+               if L = R then
+                  return Equal;
+               else
+                  case Options.Age is
+                     when Newest => return (if L > R then Left else Right);
+                     when Oldest => return (if L < R then Left else Right);
+                  end case;
+               end if;
+            end Preferred_Version;
+
          begin
-            --  TODO
+            --  Preferred compiler order is, according to our docs and tests:
+            --  - No specific compiler at all
+            --  - The selected compiler, if defined
+            --  - An externally available compiler
+            --  - Newest installed native compiler
+            --  - Newest installed cross-compiler
+            --  - Newest uninstalled explicit native compiler
+            --  - Newest uninstalled explicit cross-compiler
+
+            --  - No specific compiler at all
+
+            case Compare_To_Case.Which_One
+              (LS.Releases_Providing (GNAT_Crate).Is_Empty,
+               RS.Releases_Providing (GNAT_Crate).Is_Empty)
+            is
+               when Left  => return Left;
+               when Right => return Right;
+               when None  => return Equal;
+               when Both  =>
+                  null;
+                  --  Both depend on some GNAT, we have to disambiguate next
+            end case;
+
+            --  - The selected compiler, if defined
+
+            if not Compiler_Selected.Is_Empty then
+               case Compare_To_Case.Which_One
+                 (LS.Contains (Compiler_Selected.Element),
+                  RS.Contains (Compiler_Selected.Element))
+               is
+                  when Left  => return Left;
+                  when Right => return Right;
+                  when Both  => return Equal;
+                  when None  => null; -- Keep on disambiguating
+               end case;
+            end if;
+
+            --  Prefer external compilers
+
+            case Compare_To_Case.Which_One
+              (not LS.Releases_Providing (GNAT_Crate).Is_Empty and then
+               not LS.Releases_Providing (GNAT_Crate)
+                             .First_Element.Origin.Is_Index_Provided,
+               not RS.Releases_Providing (GNAT_Crate).Is_Empty and then
+               not RS.Releases_Providing (GNAT_Crate)
+                             .First_Element.Origin.Is_Index_Provided)
+            is
+               when Left  => return Left;
+               when Right => return Right;
+               when Both  =>
+                  --  Prefer according to version policy
+                  return Preferred_Version
+                    (LS.Releases_Providing (GNAT_Crate).First_Element.Version,
+                     RS.Releases_Providing (GNAT_Crate).First_Element.Version);
+               when None  => null; -- Keep on disambiguating
+            end case;
+
+            --  Prefer newest installed native compiler
+
+            case Compare_To_Case.Which_One
+              (L.Solution.Contains_Release (GNAT_Native_Crate) and then
+               Tools.Contains (LS.Releases.Element (GNAT_Native_Crate))
+               ,
+               R.Solution.Contains_Release (GNAT_Native_Crate) and then
+               Tools.Contains (RS.Releases.Element (GNAT_Native_Crate))
+              )
+            is
+               when Left  => return Left;
+               when Right => return Right;
+               when Both  =>
+                  --  Prefer newest/oldest according to policy
+                  return Preferred_Version
+                    (LS.Releases.Element (GNAT_Native_Crate).Version,
+                     RS.Releases.Element (GNAT_Native_Crate).Version);
+               when None  =>
+                  null; -- Keep on disambiguating
+            end case;
+
+            --  Prefer newest installed any (cross) compiler
+
+            case Compare_To_Case.Which_One
+              (not LS.Releases_Providing (GNAT_Crate).Is_Empty and then
+              Tools.Contains (LS.Releases_Providing (GNAT_Crate).First_Element)
+               ,
+               not RS.Releases_Providing (GNAT_Crate).Is_Empty and then
+              Tools.Contains (RS.Releases_Providing (GNAT_Crate).First_Element)
+              )
+            is
+               when Left  => return Left;
+               when Right => return Right;
+               when Both  =>
+                  --  Prefer newest/oldest according to policy
+                  return Preferred_Version
+                    (LS.Releases_Providing (GNAT_Crate).First_Element.Version,
+                     RS.Releases_Providing (GNAT_Crate).First_Element.Version);
+               when None  =>
+                  null; -- Keep on disambiguating
+            end case;
+
+            --  At this point no installed compiler is in any solution, so we
+            --  just check first a native compiler and then any compiler, no
+            --  matter their installation status.
+
+            --  Prefer native compiler
+
+            case Compare_To_Case.Which_One
+              (L.Solution.Contains_Release (GNAT_Native_Crate),
+               R.Solution.Contains_Release (GNAT_Native_Crate))
+            is
+               when Left  => return Left;
+               when Right => return Right;
+               when Both  =>
+                  --  Prefer newest/oldest according to policy
+                  return Preferred_Version
+                    (LS.Releases.Element (GNAT_Native_Crate).Version,
+                     RS.Releases.Element (GNAT_Native_Crate).Version);
+               when None  =>
+                  null; -- Keep on disambiguating
+            end case;
+
+            --  Prefer newest installed any (cross) compiler
+
+            case Compare_To_Case.Which_One
+              (not LS.Releases_Providing (GNAT_Crate).Is_Empty,
+               not RS.Releases_Providing (GNAT_Crate).Is_Empty)
+            is
+               when Left  => return Left;
+               when Right => return Right;
+               when Both  =>
+                  --  Prefer newest/oldest according to policy
+                  return Preferred_Version
+                    (LS.Releases_Providing (GNAT_Crate).First_Element.Version,
+                     RS.Releases_Providing (GNAT_Crate).First_Element.Version);
+               when None  =>
+                  null; -- Keep on disambiguating
+            end case;
+
             return Equal;
-         end Compiler_Is_Better;
+         end Preferred_Compiler;
 
       begin
 
@@ -446,21 +611,21 @@ package body Alire.Solver is
          --  Prefer states that might lead to a complete solution (those
          --  include states that already are completely explored).
 
-         case Compare_To_Case.Which_True
+         case Compare_To_Case.Which_One
            (Is_Potentially_Complete (L),
             Is_Potentially_Complete (R))
          is
-            when Left_First  => return True;
-            when Right_First => return False;
-            when Equal       => null;
+            when Left        => return True;
+            when Right       => return False;
+            when Both | None => null;
          end case;
 
          --  Prefer states according to compiler priorities
 
-         case Compiler_Is_Better is
-            when Left_First  => return True;
-            when Right_First => return False;
-            when Equal       => null;
+         case Preferred_Compiler is
+            when Left  => return True;
+            when Right => return False;
+            when Equal => null;
          end case;
 
          --  Prefer solutions with better completions (given the first
@@ -468,9 +633,9 @@ package body Alire.Solver is
          --  incomplete solution to be found if there are no complete ones).
 
          case Compare (L.Solution.Composition, R.Solution.Composition) is
-            when Left_First  => return True;
-            when Right_First => return False;
-            when Equal       => null;
+            when Left  => return True;
+            when Right => return False;
+            when Equal => null;
          end case;
 
          --  Prefer solutions with more dependencies evaluated (depth-first
@@ -479,9 +644,9 @@ package body Alire.Solver is
          case Compare (Natural (L.Solution.All_Dependencies.Length),
                        Natural (R.Solution.All_Dependencies.Length))
          is
-            when Left_First  => return False;
-            when Right_First => return True;
-            when Equal       => null;
+            when Left  => return False;
+            when Right => return True;
+            when Equal => null;
          end case;
 
          --  Prefer solutions with fewer downgrades/upgrades. This is to
@@ -491,9 +656,9 @@ package body Alire.Solver is
          --  upgrades.)
 
          case Compare (L.Downgrade, R.Downgrade) is
-            when Left_First  => return True;
-            when Right_First => return False;
-            when Equal       => null;
+            when Left  => return True;
+            when Right => return False;
+            when Equal => null;
          end case;
 
          --  Prefer states with fewer pending dependencies. This is simply to
@@ -502,20 +667,20 @@ package body Alire.Solver is
          case Compare (L.Target.Leaf_Count + L.Remaining.Leaf_Count,
                        R.Target.Leaf_Count + R.Remaining.Leaf_Count)
          is
-            when Left_First  => return True;
-            when Right_First => return False;
-            when Equal       => null;
+            when Left  => return True;
+            when Right => return False;
+            when Equal => null;
          end case;
 
          --  All else being equal, the best solution is preferred
 
-         case Compare_To_Case.Which_True
+         case Compare_To_Case.Which_One
            (L.Solution.Is_Better (R.Solution),
             R.Solution.Is_Better (L.Solution))
          is
-            when Left_First  => return True;
-            when Right_First => return False;
-            when Equal       => null; -- Check other things
+            when Left        => return True;
+            when Right       => return False;
+            when Both | None => null; -- Check other things
          end case;
 
          --  If we have reached the same solution from two branches (should
