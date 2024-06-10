@@ -190,7 +190,8 @@ package body Alr.Commands.Pin is
                  (Crate  => Optional_Crate,
                   Origin => Cmd.URL.all,
                   Ref    => Cmd.Commit.all,
-                  Branch => Cmd.Branch.all);
+                  Branch => Cmd.Branch.all,
+                  Subdir => Cmd.Subdir.all);
 
             else
 
@@ -257,9 +258,11 @@ package body Alr.Commands.Pin is
                & " instead of looking for indexed releases."
                & " An optional reference can be specified with --commit;"
                & " the pin will be frozen at the commit currently matching"
-               & " the reference.  Alternatively, a branch to track can be"
-               & " specified with --branch. Use `alr update` to refresh the"
-               & " tracking pin contents.")
+               & " the reference. Alternatively, a branch to track can be"
+               & " specified with --branch. Finally, if pinning a monorepo,"
+               & " the relative path to the crate can be specified with"
+               & " --subdir. Use `alr update` to refresh the tracking pin"
+               & " contents.")
      );
 
    --------------------
@@ -296,6 +299,14 @@ package body Alr.Commands.Pin is
          Long_Switch => "--commit=",
          Argument    => "REF",
          Help        => "Reference to be retrieved from repository");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Subdir'Access,
+         Long_Switch => "--subdir=",
+         Argument    => "PATH",
+         Help        =>
+           "Path to the crate relative to the root of the repository");
 
       Define_Switch
         (Config      => Config,
