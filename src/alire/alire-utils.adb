@@ -16,13 +16,9 @@ package body Alire.Utils is
 
    function Command_Line_Contains (Prefix : String) return Boolean is
    begin
-      for I in 1 .. Ada.Command_Line.Argument_Count loop
-         if Has_Prefix (Ada.Command_Line.Argument (I), Prefix) then
-            return True;
-         end if;
-      end loop;
-
-      return False;
+      return
+        (for some I in 1 .. Ada.Command_Line.Argument_Count =>
+           Has_Prefix (Ada.Command_Line.Argument (I), Prefix));
    end Command_Line_Contains;
 
    -------------
