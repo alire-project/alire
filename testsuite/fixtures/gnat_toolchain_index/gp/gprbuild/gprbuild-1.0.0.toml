@@ -1,0 +1,11 @@
+description = ""
+name = "gprbuild"
+version = "1.0.0"
+licenses = "GPL-3.0-only OR MIT"
+maintainers = ["some@bo.dy"]
+maintainers-logins = ["mylogin"]
+
+# Conditional origin so it's considered a binary crate
+[origin."case(os)"."..."]
+url = "file:../../../crates/gprbuild_mock_1.0.zip"
+hashes = ["sha256:e3d52b4a441a56ab1c0175ee8ea407864b72879cf73184a9f7d68eef53a87451"]

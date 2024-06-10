@@ -1,0 +1,4 @@
+# This index describes a mock GNAT toolchain, with native and cross compiler
+# providing the virtual gnat crate.
+
+version = "1.1"

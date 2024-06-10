@@ -1,4 +1,5 @@
 name: CI Docker
+# Check builds on supported Linux distributions
 
 on:
   pull_request:
@@ -16,13 +17,14 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        tag: # Those are our dockerhub alire/gnat:tag machines
-            - centos-latest-community-latest # Test unsupported package manager 
-            - debian-stable                  # Test current stable Debian compiler
-            - fedora-latest                  # Test current Fedora compiler
-            - ubuntu-lts                     # Test current LTS Ubuntu compiler
-            - arch-rolling                   # Test Arch compiler (closest to FSF?)
+        tag: # Those are our ghcr.io/alire-project/docker/gnat:tag machines
+            - centos-stream-fsf-latest # Test unsupported package manager
+            - debian-stable            # Test current stable Debian compiler
+            - fedora-latest            # Test current Fedora compiler
+            - ubuntu-lts               # Test current LTS Ubuntu compiler
+            - arch-rolling             # Test Arch compiler (closest to FSF?)
 
     steps:
     - name: Check out repository
@@ -30,13 +32,12 @@ jobs:
       with:
         submodules: true
 
-    - name: Pull docker image
-      run: docker pull alire/gnat:${{ matrix.tag }}
-
-    - name: Run test script
-      run: >
-        docker run -v${PWD}:/alire -w /alire
-        alire/gnat:${{ matrix.tag }} scripts/ci-github.sh
+    - name: Run test script (${{ matrix.tag }})
+      uses: mosteo-actions/docker-run@v1
+      with:
+        image: ghcr.io/alire-project/docker/gnat:${{matrix.tag}}
+        command: scripts/ci-github.sh
+        params: -v${PWD}:/alire -w /alire
 
     - name: Upload logs (if failed)
       if: failure()

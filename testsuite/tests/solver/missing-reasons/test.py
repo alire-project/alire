@@ -24,7 +24,7 @@ alr_with("unobtanium")    # Unindexed crate
 alr_pin("dep", path="dep")  # Establish the conflict with this local dep
 
 match_solution(
-    """Dependencies (external):
+    """Dependencies (missing):
    hello(=1.0.1) & (=1.0.0) (direct,missed:conflict)
    libhello=777 (direct,missed:unavailable)
    unobtanium* (direct,missed:unknown)""",

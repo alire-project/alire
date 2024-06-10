@@ -1,0 +1,29 @@
+description = "\"Hello, world!\" demonstration project"
+long-description = "This is an example of long description in a multi-line string.\n\nMarkdown formating `can` be used to have \"nice\" display on the website.\n"
+name = "hello"
+version = "1.0.1"
+website = "example.com"
+authors = ["Bob", "Alice"]
+licenses = "GPL-3.0-only OR MIT"
+maintainers = ["alejandro@mosteo.com", "bob@example.com"]
+maintainers-logins = ["mylogin"]
+tags = ["tag1", "other-tag"]
+
+[[depends-on]]
+libhello = "^1.0"
+
+[configuration.variables]
+Var1={type="Boolean"}
+Var2={type="String", default="str"}
+Var3={type="Enum", values=["A", "B"], default="A"}
+Var4={type="Integer", default=0}
+Var5={type="Integer", first=-1, last=1, default=0}
+Var7={type="Real", default=0.0}
+Var6={type="Real", first=-1.0, last=1.0, default=0.0}
+
+[configuration.values]
+hello.Var1=true # So far it is possible for a crate to set its own var
+libhello.Var1=false
+
+[origin]
+url = "file:../../../crates/hello_1.0.1"

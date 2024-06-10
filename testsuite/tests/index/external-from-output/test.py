@@ -48,4 +48,14 @@ assert_eq('Kind       Description                   '
 p = run_alr('show', 'bad_switch', '--external-detect', quiet=False)
 assert_match('.*Not found: bad_switch', p.out)
 
+
+# Verify that a bad version being captured doesn't raise
+
+p = run_alr("show", "bad_version", quiet=False)
+assert_match(".*There are external definitions for the crate.", p.out)
+
+# External detection fails (no release found, but without error)
+p = run_alr('show', 'bad_version', '--external-detect', quiet=False)
+assert_match('.*Not found: bad_version', p.out)
+
 print('SUCCESS')

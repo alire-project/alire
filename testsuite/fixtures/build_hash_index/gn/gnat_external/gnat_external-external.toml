@@ -1,0 +1,11 @@
+description = "GNAT is a compiler for the Ada programming language"
+name = "gnat_external"
+
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mosteo"]
+
+[[external]]
+kind = "version-output"
+version-command = ["echo", "1.0"]
+version-regexp = "([\\d\\.]+).*"
+provides = "gnat"

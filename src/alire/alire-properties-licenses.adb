@@ -66,10 +66,11 @@ package body Alire.Properties.Licenses is
       if not SPDX.Valid (SPDX_Exp) then
          if Legacy = Licensing.Unknown then
             raise Checked_Error
-              with Errors.Set
-                ("Invalid license expression '" & From &
-                   "': " & SPDX.Error (SPDX_Exp) &
-                   " . SPDX expression expected (https://spdx.org/licenses/)");
+              with Errors.New_Wrapper
+                ("Invalid license expression '" & From)
+                .Wrap (SPDX.Error (SPDX_Exp))
+                .Wrap ("SPDX expression expected (https://spdx.org/licenses/)")
+                .Set;
          else
             Trace.Warning ("Deprecated license identifier '" & From &
                              "'. Please replace with an SPDX expression " &
@@ -121,10 +122,6 @@ package body Alire.Properties.Licenses is
       end if;
 
       return Props;
-   exception
-      when E : Checked_Error => -- May happen on unknown non-custom license.
-         From.Checked_Error (Errors.Get (E));
-         --  Re-raise with full context of From.
    end From_TOML;
 
 end Alire.Properties.Licenses;

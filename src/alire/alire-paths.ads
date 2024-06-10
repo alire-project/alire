@@ -5,15 +5,24 @@ package Alire.Paths with Preelaborate is
    Crate_File_Name : constant String := "alire.toml";
    --  Name of the manifest file in a regular workspace
 
+   Settings_File_Name : constant String := "settings.toml";
+   --  Storage of Alire settings in workspace or global location
+
+   Build_Folder_Inside_Working_Folder : constant Relative_Path := "builds";
+
    Cache_Folder_Inside_Working_Folder : constant Relative_Path := "cache";
 
    Deps_Folder_Inside_Cache_Folder : constant Relative_Path := "dependencies";
 
+   Flags_Folder_Inside_Working_Folder : constant Relative_Path := "flags";
+
+   Release_Folder_Inside_Working_Folder : constant Relative_Path := "releases";
+
    Temp_Folder_Inside_Working_Folder : constant Relative_Path := "tmp";
 
    Working_Folder_Inside_Root : constant Relative_Path := "alire";
-   --  Folder within a working release that will contain metadata/build files,
-   --  dependency releases, and session.
+   --  Folder within a workspace that will contain metadata/build files,
+   --  dependency releases, etc.
 
    Scripts_Graph_Easy            : constant String := "graph-easy";
    --  Script for ASCII graphs

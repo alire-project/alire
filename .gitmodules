@@ -51,3 +51,12 @@
 [submodule "deps/clic"]
 	path = deps/clic
 	url = https://github.com/alire-project/clic.git
+[submodule "deps/umwi"]
+	path = deps/umwi
+	url = https://github.com/mosteo/umwi
+[submodule "deps/diskflags"]
+	path = deps/diskflags
+	url = https://github.com/mosteo/diskflags
+[submodule "deps/dirty_booleans"]
+	path = deps/dirty_booleans
+	url = https://github.com/mosteo/dirty_booleans

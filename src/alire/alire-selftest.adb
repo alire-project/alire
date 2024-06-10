@@ -1,6 +1,8 @@
-with Alire.Utils;
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
+with Alire.Utils.Regex;
 with Alire.VCSs.Git;
+
+with GNAT.Regpat;
 
 package body Alire.Selftest is
 
@@ -11,9 +13,29 @@ package body Alire.Selftest is
       Key  : constant String := "test_key";
       Val  : constant String := "nominal";
    begin
-      Config.Edit.Set_Globally (Key, Val);
-      pragma Assert (Config.DB.Defined (Key));
-      pragma Assert (Config.DB.Get (Key, "snafu") = Val);
+      Settings.Edit.Set_Globally (Key, Val);
+      pragma Assert (Settings.DB.Defined (Key));
+      pragma Assert (Settings.DB.Get (Key, "snafu") = Val);
+
+      --  Check typed storing
+
+      --  Raw storing of integer
+      Settings.Edit.Set_Globally (Key, "777");
+      pragma Assert (Integer (Settings.DB.Get (Key, 0)) = 777);
+
+      --  Raw storing of boolean
+      Settings.Edit.Set_Globally (Key, "true");
+      pragma Assert (Settings.DB.Get (Key, False) = True);
+
+      --  Typed storing of boolean
+      Settings.Edit.Set_Boolean (Settings.Global, Key, False);
+      pragma Assert (Settings.DB.Get (Key, True) = False);
+
+      --  Raw storing of boolean with wrong type
+      Settings.Edit.Set_Globally (Key, "True");
+      --  This causes a string to be stored, as in TOML only "true" is bool
+      pragma Assert (Settings.DB.Get (Key, "False") = "True");
+
    end Check_Config_Changes;
 
    ------------------------
@@ -133,6 +155,42 @@ package body Alire.Selftest is
                        "https://github.com/user/project");
    end Check_Git_To_HTTP;
 
+   --------------------------
+   -- Check_Regex_Escaping --
+   --------------------------
+
+   procedure Check_Regex_Escaping is
+   begin
+      --  See issue #1545
+
+      --  This should succeed
+      declare
+         Match : constant String := Utils.Regex.First_Match
+           ("^"
+            & Utils.Regex.Escape ("libstdc++-static")
+            & "[^\s]*\s+(?:\d+:)?([0-9.]+)",
+            "libstdc++-static.x86_64    1:2.3.4-5.fc33    updates");
+      begin
+         pragma Assert (Match = "2.3.4", "Match was: " & Match);
+      end;
+
+      --  This should "fail"
+      begin
+         declare
+            Match : constant String := Utils.Regex.First_Match
+              ("^libstdc++-static"
+               & "[^\s]*\s+(?:\d+:)?([0-9.]+)",
+               "libstdc++-static.x86_64    1:2.3.4-5.fc33    updates")
+              with Unreferenced;
+         begin
+            raise Program_Error with "Previous call should have raised";
+         end;
+      exception
+         when GNAT.Regpat.Expression_Error =>
+            null; -- Expected
+      end;
+   end Check_Regex_Escaping;
+
    ---------
    -- Run --
    ---------
@@ -143,6 +201,7 @@ package body Alire.Selftest is
       Check_Email_Checks;
       Check_GitHub_Logins;
       Check_Git_To_HTTP;
+      Check_Regex_Escaping;
 
       Trace.Detail ("Self-checks passed");
    exception

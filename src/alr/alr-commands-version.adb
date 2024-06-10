@@ -1,11 +1,17 @@
-with Alire.Config.Edit;
+with Alire.Builds;
+with Alire.Settings.Edit;
+with Alire.Directories;
 with Alire.Index;
 with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
+with Alire.Origins.Deployers.System;
+with Alire.Paths.Vault;
+with Alire.Platforms.Folders;
 with Alire.Properties;
 with Alire.Roots.Optional;
 with Alire.Toolchains;
 with Alire.Utils.Tables;
+with Alire.Version;
 
 with Alr.Bootstrap;
 
@@ -16,7 +22,11 @@ with CLIC.User_Input;
 
 package body Alr.Commands.Version is
 
+   use Alire.Directories.Operators; -- "/"
+
    package GNAT_Version is new GNAT.Compiler_Version;
+
+   package Paths renames Alire.Paths;
 
    -------------
    -- Execute --
@@ -26,31 +36,52 @@ package body Alr.Commands.Version is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
+      use Alire;
       use all type Alire.Roots.Optional.States;
       Table : Alire.Utils.Tables.Table;
       Index_Outcome : Alire.Outcome;
       Indexes : constant Alire.Index_On_Disk.Loading.Set :=
                   Alire.Index_On_Disk.Loading.Find_All
-                    (Alire.Config.Edit.Indexes_Directory, Index_Outcome);
-      Root : constant Alire.Roots.Optional.Root :=
+                    (Alire.Settings.Edit.Indexes_Directory, Index_Outcome);
+      Root : Alire.Roots.Optional.Root :=
                Alire.Roots.Optional.Search_Root (Alire.Directories.Current);
+
+      Build_Path : constant String :=
+                     (if Builds.Sandboxed_Dependencies
+                      then
+                        (if Root.Is_Valid
+                         then Root.Value.Dependencies_Dir
+                         else "<workspace>"
+                         / Paths.Build_Folder_Inside_Working_Folder
+                         / Paths.Cache_Folder_Inside_Working_Folder
+                         / Paths.Deps_Folder_Inside_Cache_Folder)
+                      else Builds.Path);
    begin
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
       end if;
 
       Table.Append ("APPLICATION").Append ("").New_Row;
-      Table.Append ("alr version:").Append (Alire.Version.Current).New_Row;
+      Table.Append ("alr version:")
+        .Append (Alire.Version.Current.Image).New_Row;
       Table.Append ("libalire version:")
-        .Append (Alire.Version.Current).New_Row;
+        .Append (Alire.Version.Current.Image).New_Row;
       Table.Append ("compilation date:")
         .Append (GNAT.Source_Info.Compilation_ISO_Date & " "
                  & GNAT.Source_Info.Compilation_Time).New_Row;
-      Table.Append ("compiler version:").Append (GNAT_Version.Version).New_Row;
+      Table.Append ("compiled with version:")
+        .Append (GNAT_Version.Version).New_Row;
 
       Table.Append ("").New_Row;
       Table.Append ("CONFIGURATION").New_Row;
-      Table.Append ("config folder:").Append (Alire.Config.Edit.Path).New_Row;
+      Table.Append ("settings folder:")
+        .Append (Alire.Settings.Edit.Path).New_Row;
+      Table.Append ("cache folder:")
+        .Append (Alire.Settings.Edit.Cache_Path).New_Row;
+      Table.Append ("vault folder:").Append (Paths.Vault.Path).New_Row;
+      Table.Append ("build folder:").Append (Build_Path).New_Row;
+      Table.Append ("temp folder:")
+        .Append (Alire.Platforms.Folders.Temp).New_Row;
       Table.Append ("force flag:").Append (Alire.Force'Image).New_Row;
       Table.Append ("non-interactive flag:")
         .Append (CLIC.User_Input.Not_Interactive'Image).New_Row;
@@ -59,7 +90,7 @@ package body Alr.Commands.Version is
       Table.Append ("compatible index versions:")
         .Append (Alire.Index.Valid_Versions.Image).New_Row;
       Table.Append ("indexes folder:")
-        .Append (Alire.Config.Edit.Indexes_Directory).New_Row;
+        .Append (Alire.Settings.Edit.Indexes_Directory).New_Row;
       Table.Append ("indexes metadata:")
         .Append (if Index_Outcome.Success
                  then "OK"
@@ -69,6 +100,8 @@ package body Alr.Commands.Version is
                        & AAA.Strings.Trim (Index.Priority'Image) & ":")
            .Append ("(" & Index.Name & ") " & Index.Origin).New_Row;
       end loop;
+      Table.Append ("toolchain folder:")
+        .Append (Alire.Toolchains.Path).New_Row;
       Table.Append ("toolchain assistant:")
         .Append (if Alire.Toolchains.Assistant_Enabled
                  then "enabled"
@@ -85,6 +118,25 @@ package body Alr.Commands.Version is
                        else "not configured").New_Row;
             I := I + 1;
          end loop;
+      end;
+
+      declare
+         System_Manager : constant String :=
+                            Origins.Deployers.System.Executable_Path;
+      begin
+         Table
+           .Append ("system package manager:")
+           .Append (if System_Manager /= ""
+                    then System_Manager
+                    else "not found: "
+                    & (if Origins.Deployers.System.Executable_Name /= ""
+                      then "`" & Origins.Deployers.System.Executable_Name & "`"
+                      else "unknown package manager"))
+           .New_Row;
+         Table
+           .Append ("distro detection disabled:")
+           .Append (Platforms.Current.Disable_Distribution_Detection'Image)
+           .New_Row;
       end;
 
       Table.Append ("").New_Row;
@@ -143,7 +195,7 @@ package body Alr.Commands.Version is
 
    procedure Print_Version is
    begin
-      Trace.Always ("alr " & Alire.Version.Current);
+      Trace.Always ("alr " & Alire.Version.Current.Image);
    end Print_Version;
 
 end Alr.Commands.Version;

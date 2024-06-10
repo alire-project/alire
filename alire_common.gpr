@@ -2,8 +2,13 @@ abstract project Alire_Common is
 
    for Create_Missing_Dirs use "True";
 
-   Host_OS := external ("ALIRE_OS", "default");
-   --  Defined in alr_env.gpr.
+   type Host_OSes is ("linux",
+                      "freebsd",
+                      "macos",
+                      "windows");
+
+   Host_OS : Host_OSes := external ("ALIRE_OS");
+   --  Set by user or in alire.toml
 
    type Any_Build_Mode is ("debug", "release");
    Build_Mode : Any_Build_Mode := external ("ALIRE_BUILD_MODE", "debug");
@@ -18,11 +23,47 @@ abstract project Alire_Common is
    Style_Check_Switches := ();
    case Style_Check_Mode is
       when "enabled"  => Style_Check_Switches :=
-           ("-gnatyg",   -- Standard checks
-            "-gnatyI",   -- no IN mode
-            "-gnatyO",   -- all overrides
-            "-gnaty-s"); -- relax fwd decl
+           ( "-gnatwe" -- Warnings as errors
+            ,"-gnaty3" -- Specify indentation level of 3
+            ,"-gnatya" -- Check attribute casing
+            ,"-gnatyA" -- Use of array index numbers in array attributes
+            ,"-gnatyB" -- Check Boolean operators
+            ,"-gnatyb" -- Blanks not allowed at statement end
+            ,"-gnatyc" -- Check comments
+            ,"-gnatye" -- Check end/exit labels
+            ,"-gnatyf" -- No form feeds or vertical tabs
+            ,"-gnatyh" -- No horizontal tabs
+            ,"-gnatyi" -- Check if-then layout
+            ,"-gnatyI" -- check mode IN keywords
+            ,"-gnatyk" -- Check keyword casing
+            ,"-gnatyl" -- Check layout
+            ,"-gnatym" -- Check maximum line length
+            ,"-gnatyn" -- Check casing of entities in Standard
+            ,"-gnatyO" -- Check all overriding subprograms explicitly marked
+            ,"-gnatyp" -- Check pragma casing
+            ,"-gnatyr" -- Check identifier references casing
+            ,"-gnatyS" -- Check no statements after THEN/ELSE
+            ,"-gnatyt" -- Check token spacing
+            ,"-gnatyu" -- Check unnecessary blank lines
+            ,"-gnatyx" -- Check extra parentheses
+            );
       when "disabled" => Style_Check_Switches := ();
+   end case;
+
+   type Any_Experimental_Ada_Features is ("enabled", "disabled");
+   Experimental_Ada_Features : Any_Experimental_Ada_Features :=
+       external ("ALIRE_EXPERIMENTAL_ADA_FEATURES", "disabled");
+   --  These should only be enabled temporarily to help with debugging.
+   --  Production builds are always checked with these disabled.
+
+   Experimental_Ada_Switches := ();
+   case Experimental_Ada_Features is
+      when "enabled"  => Experimental_Ada_Switches :=
+           ("-gnat2022",
+            "-gnatx",
+            "-gnatwJ" -- Disable warnings about obsolescent "()"
+           );
+      when "disabled" => Experimental_Ada_Switches := ();
    end case;
 
    Ada_Common_Switches :=
@@ -47,9 +88,10 @@ abstract project Alire_Common is
                --  Report Elaboration Circularity Details
                "-gnatd_F",
 
-               --  Enable all warnings and treat them as errors
-               "-gnatwae")
-              & Style_Check_Switches;
+               --  Enable all warnings
+               "-gnatwa")
+              & Style_Check_Switches
+              & Experimental_Ada_Switches;
 
             for Default_Switches ("C") use ("-g", "-O0", "-Wall");
             --  Likewise for C units
@@ -75,12 +117,18 @@ abstract project Alire_Common is
    end Compiler;
 
    package Builder is
-      for Switches ("Ada") use ("-s", "-j0", "-g");
+      for Switches ("Ada") use
+        ("-s", -- Recompile if switches changed
+         "-j0" -- Full parallelism
+        );
    end Builder;
 
    package Binder is
       for Switches ("Ada") use
-        ( "-Es", "-g", "-static");
+        ("-Es",    -- Symbolic tracebacks
+         "-g",     -- Keep binder generated files (for debugging?)
+         "-static" -- Static linking
+        );
    end Binder;
 
    package Ide is

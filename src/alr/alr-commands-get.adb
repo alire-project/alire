@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.Config.Edit;
+with Alire.Settings.Builtins;
 with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Index;
@@ -11,6 +11,8 @@ with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
 with Alire.Utils.Switches;
+
+with Alr.Common;
 
 with CLIC.User_Input;
 
@@ -133,14 +135,14 @@ package body Alr.Commands.Get is
               (Rel,
                Ada.Directories.Current_Directory,
                Platform.Properties,
-               Perform_Actions => False));
+               Up_To => Alire.Roots.Deploy));
 
          --  Set the initial solution we just found
 
          Cmd.Root.Set (Solution);
 
          --  At this point, both crate and lock files must exist and
-         --  be correct, so the working session is correct. Errors with
+         --  be correct, so the workspace is correct. Errors with
          --  dependencies can still occur, but these are outside of the
          --  retrieved crate and might be corrected manipulating dependencies
          --  and updating.
@@ -161,8 +163,13 @@ package body Alr.Commands.Get is
             Trace.Info ("Because --only was used, automatic dependency" &
                           " retrieval is disabled in this workspace:" &
                           " use `alr update` to apply dependency changes");
-            Alire.Config.Edit.Set_Locally
-              (Alire.Config.Keys.Update_Manually, "true");
+            Alire.Settings.Builtins.Update_Manually_Only.Set
+              (Alire.Settings.Local, True);
+
+            if not CLIC.User_Input.Not_Interactive then
+               Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
+            end if;
+
             return;
          end if;
 
@@ -185,12 +192,9 @@ package body Alr.Commands.Get is
                  (Crate   =>  Cmd.Root.Name,
                   Profile =>  Alire.Utils.Switches.Release);
 
-               --  The complete build environment has been set up already by
-               --  Deploy_Dependencies, so we must not do it again.
                Build_OK := Cmd.Root.Build
-                 (Cmd_Args       =>  AAA.Strings.Empty_Vector,
-                  Saved_Profiles   => False,
-                  Export_Build_Env => False);
+                 (Cmd_Args         =>  AAA.Strings.Empty_Vector,
+                  Saved_Profiles   => False);
             end if;
          else
             Build_OK := True;
@@ -216,6 +220,10 @@ package body Alr.Commands.Get is
                  Level => (if not Cmd.Build or else Build_OK
                            then Info
                            else Warning));
+
+      if not CLIC.User_Input.Not_Interactive then
+         Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
+      end if;
 
       if Diff.Contains_Changes then
          Trace.Info ("Dependencies were solved as follows:");
@@ -322,19 +330,29 @@ package body Alr.Commands.Get is
          Allowed : constant Alire.Dependencies.Dependency :=
            Alire.Dependencies.From_String (Args (1));
       begin
-         if Cmd.Build and Cmd.Only then
+         if Cmd.Build and then Cmd.Only then
             Reportaise_Wrong_Arguments
               ("--only is incompatible with --build");
          end if;
 
-         if Cmd.Dirname and (Cmd.Build or else Cmd.Only) then
+         if Cmd.Dirname and then (Cmd.Build or else Cmd.Only) then
             Reportaise_Wrong_Arguments
               ("--dirname is incompatible with other switches");
          end if;
 
+         Cmd.Auto_Update_Index;
+
          if not Alire.Index.Exists (Allowed.Crate) then
-            Reportaise_Command_Failed
-              ("Crate [" & Args (1) & "] does not exist in the catalog.");
+            --  Even if the crate does not exist, it may be an abstract crate
+            --  provided by some others (e.g. gnat -> gnat_native), so inform
+            --  about it rather than saying it doesn't exist.
+            if Common.Show_Providers (Allowed) then
+               return;
+            else
+               Reportaise_Command_Failed
+                 ("Crate [" & Allowed.Crate.As_String
+                  & "] does not exist in the index.");
+            end if;
          end if;
 
          Check_Unavailable_External (Allowed.Crate);
@@ -344,7 +362,7 @@ package body Alr.Commands.Get is
          if not Query.Exists (Allowed.Crate, Allowed.Versions) then
             Reportaise_Command_Failed
               ("Release within the requested versions ["
-               & Allowed.TTY_Image & "] does not exist in the catalog.");
+               & Allowed.TTY_Image & "] does not exist in the index.");
          end if;
 
          Retrieve (Cmd, Allowed.Crate, Allowed.Versions);

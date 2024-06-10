@@ -8,8 +8,8 @@ with Alire.Dependencies.States;
 with Alire.Errors;
 with Alire.Milestones;
 with Alire.Optional;
+with Alire.Platforms.Current;
 with Alire.Releases.Containers;
-with Alire.Shared;
 with Alire.Root;
 with Alire.Toolchains;
 with Alire.Utils.TTY;
@@ -181,6 +181,33 @@ package body Alire.Solver is
                            return Boolean
    is (Resolve (Deps, Props, Pins, Options).Is_Complete);
 
+   ---------------------
+   -- Culprit_Is_Toolchain --
+   ---------------------
+   --  Say if the reason for the solution to be incomplete is that it requires
+   --  a tool from the toolchain that is not already installed
+   function Culprit_Is_Toolchain (Sol : Solutions.Solution) return Boolean is
+   begin
+      return
+        (for all Dep of Sol.Hints =>
+           Toolchains.Tools.Contains (Dep.Crate));
+   end Culprit_Is_Toolchain;
+
+   -------------
+   -- Resolve --
+   -------------
+
+   function Resolve
+     (Dep : Dependencies.Dependency;
+      Options : Query_Options :=
+        (On_Timeout => Continue_While_Complete_Then_Stop,
+         others     => <>))
+      return Solution
+   is (Resolve (Deps  => Conditional.New_Dependency (Dep),
+                Props => Platforms.Current.Properties,
+                Pins    => Solutions.Empty_Valid_Solution,
+                Options => Options));
+
    -------------
    -- Resolve --
    -------------
@@ -242,8 +269,8 @@ package body Alire.Solver is
       --  to select the solver behavior (e.g. stop after the first complete
       --  solution is found).
 
-      Installed : constant Releases.Containers.Release_Set :=
-                                  Shared.Available
+      Tools : constant Releases.Containers.Release_Set :=
+                                  Toolchains.Available
                                     (Detect_Externals =>
                                         Options.Detecting = Detect);
       --  Installed releases do not change during resolution, we make a local
@@ -303,7 +330,11 @@ package body Alire.Solver is
 
          --  Options take precedence over any interaction yet to occur
 
-         if Options.On_Timeout = Continue then
+         if Options.On_Timeout = Continue
+           or else
+             (Options.On_Timeout = Continue_While_Complete_Then_Stop
+              and then Options.Completeness < Some_Incomplete)
+         then
             User_Answer_Continue := Always;
          end if;
 
@@ -326,6 +357,36 @@ package body Alire.Solver is
             raise Solution_Timeout;
          end if;
       end Ask_User_To_Continue;
+
+      ------------------------------
+      -- Contains_All_Satisfiable --
+      ------------------------------
+      --  A solution may be incomplete but also may be only missing
+      --  impossible dependencies. In that case we can finish already, as
+      --  if the solution were complete. Otherwise, an e.g. missing crate
+      --  may force exploring all the combos of the rest of crates just
+      --  because it doesn't exist.
+      function Contains_All_Satisfiable
+        (Solution : Alire.Solutions.Solution)
+               return Boolean is
+      begin
+         for Crate of Solution.Crates loop
+            if Solution.State (Crate).Fulfilment in Missed | Hinted
+            --  So the dependency is not solved, but why?
+              and then
+                not Unavailable_Crates.Contains (Crate)
+              --  Because it does not exist at all, so "complete"
+              and then
+                not Unavailable_Direct_Deps.Contains
+                  (Solution.Dependency (Crate))
+                  --  Because no release fulfills it, so "complete"
+            then
+               return False;
+            end if;
+         end loop;
+
+         return True;
+      end Contains_All_Satisfiable;
 
       -------------
       -- Partial --
@@ -377,8 +438,7 @@ package body Alire.Solver is
          ------------------
 
          procedure Expand_Value (Dep          : Dependencies.Dependency;
-                                 Raw_Dep      : Dependencies.Dependency;
-                                 Allow_Shared : Boolean) is
+                                 Raw_Dep      : Dependencies.Dependency) is
             --  Dep is the unique dependency in the solution that aglutinates
             --  all dependencies on the same crate that have been seen to date.
             --  Raw_Dep, instead, is the simple dependency that is being tested
@@ -460,41 +520,52 @@ package body Alire.Solver is
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Specific_GNAT (St.Remaining).Value.Crate = R.Name)'Img
+                       (R.Satisfies (Specific_GNAT (St.Remaining).Value))'Img
                      & " for " & R.Milestone.TTY_Image
                      & " due to compiler already in dependencies: "
                      & Specific_GNAT (State.Remaining).Value.TTY_Image);
 
-                  return Specific_GNAT (State.Remaining).Value.Crate = R.Name;
+                  return R.Satisfies (Specific_GNAT (St.Remaining).Value);
 
-               elsif Toolchains.Tool_Is_Configured (GNAT_Crate) then
+               elsif Toolchains.Tool_Is_Configured (GNAT_Crate)
+                 and then Options.Completeness = First_Complete
+                   --  When we cannot find a complete solution in the first
+                   --  completeness level, this means we need a compiler that
+                   --  is not installed, and then we avoid this branch which
+                   --  forces the selected compiler even if unavailable.
+               then
 
                   --  There is a preferred compiler that we must use, as there
                   --  is no overriding reason not to
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Toolchains
-                        .Tool_Dependency (GNAT_Crate).Crate = R.Name)'Img
+                       (R.Satisfies
+                            (Toolchains.Tool_Dependency (GNAT_Crate)))'Img
                      & " for " & R.Milestone.TTY_Image
                      & " due to configured compiler: "
                      & Toolchains.Tool_Dependency (GNAT_Crate).TTY_Image);
 
-                  return Toolchains
-                    .Tool_Dependency (GNAT_Crate).Crate = R.Name;
+                  return R.Satisfies (Toolchains.Tool_Dependency (GNAT_Crate));
 
                elsif Dep.Crate = GNAT_Crate then
 
-                  --  For generic dependencies on gnat, we do not want to use
-                  --  a compiler that is not already installed.
+                  --  For generic dependencies on gnat, we do not want to use a
+                  --  compiler that is not already installed, unless we failed
+                  --  on the First_Complete level.
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Installed.Contains (R))'Image
+                       (Tools.Contains (R)
+                        or else Options.Completeness > First_Complete)'Image
                      & " for " & R.Milestone.TTY_Image
                      & " due to installed compiler availability.");
 
-                  return Installed.Contains (R);
+                  --  On first attempt we prefer only installed GNATs, but
+                  --  we allow a not-installed available one if no complete
+                  --  solution could be found otherwise.
+                  return Tools.Contains (R)
+                    or else Options.Completeness > First_Complete;
 
                else
 
@@ -511,10 +582,8 @@ package body Alire.Solver is
             -----------
 
             procedure Check (R         : Release;
-                             Is_Shared : Boolean;
                              Is_Reused : Boolean)
             is
-               use all type Origins.Kinds;
             begin
 
                --  Special compiler checks are hardcoded when the dependency is
@@ -595,7 +664,6 @@ package body Alire.Solver is
                        ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
                           " to satisfy " & Dep.TTY_Image &
                         (if Is_Reused then " with REUSED" else "") &
-                        (if Is_Shared then " with INSTALLED" else "") &
                         (if not R.Provides.Is_Empty
                            then " also providing " & R.Provides.Image_One_Line
                            else "") &
@@ -613,10 +681,7 @@ package body Alire.Solver is
                               Solution  => Solution.Including
                                 (R, Props,
                                  For_Dependency =>
-                                   Optional.Crate_Names.Unit (Dep.Crate),
-                                 Shared         =>
-                                   Is_Shared or else
-                                 R.Origin.Kind = Binary_Archive)));
+                                   Optional.Crate_Names.Unit (Dep.Crate))));
                   end;
                end if;
             end Check;
@@ -722,7 +787,7 @@ package body Alire.Solver is
 
                      Trace.Debug ("SOLVER short-cutting due to version pin"
                                   & " with valid release in index");
-                     Check (Release, Is_Shared => False, Is_Reused => False);
+                     Check (Release, Is_Reused => False);
                   end loop;
 
                      --  There may be no satisfying releases, or even so the
@@ -768,22 +833,6 @@ package body Alire.Solver is
             --  solver from recursive to priority queue (I guess we eventually
             --  will have to), we should do this globally since this is
             --  information common to all search states.
-
-            ------------------
-            -- Check_Shared --
-            ------------------
-
-            procedure Check_Shared is
-            begin
-
-               --  Solve with all installed dependencies that satisfy it
-
-               for R of reverse Installed.Satisfying (Dep) loop
-                  Satisfiable := True;
-                  Check (R, Is_Shared => True, Is_Reused => False);
-               end loop;
-
-            end Check_Shared;
 
             use type Alire.Dependencies.Dependency;
 
@@ -851,10 +900,7 @@ package body Alire.Solver is
                         Seen      => State.Seen.Union (To_Set (Raw_Dep)),
                         Expanded  => State.Expanded and Dep,
                         Target    => State.Remaining and
-                          (if Pins.State (Dep.Crate).Has_Release
-                           then Pins.State (Dep.Crate)
-                                    .Release.Dependencies (Props)
-                           else Empty),
+                          Pins.Pin_Dependencies (Dep.Crate, Props),
                         Remaining => Empty,
                         Solution  =>
                           Solution.Linking (Dep.Crate,
@@ -877,24 +923,11 @@ package body Alire.Solver is
                for In_Sol of Solution.Dependencies_Providing (Dep.Crate) loop
                   if In_Sol.Has_Release then
                      Check (In_Sol.Release,
-                            Is_Shared =>
-                              In_Sol.Is_Shared,
                             Is_Reused => True);
                   end if;
                end loop;
 
                return;
-
-            end if;
-
-            if Allow_Shared then
-
-               --  There is a shared release we can use for this dependency; we
-               --  prefer this option first. If more solutions than the first
-               --  complete one are sought, we can still try without the shared
-               --  release.
-
-               Check_Shared;
 
             end if;
 
@@ -906,7 +939,9 @@ package body Alire.Solver is
 
                Check_Version_Pin;
 
-            elsif Index.Exists (Dep.Crate, Index_Query_Options) or else
+            elsif Index.Exists (Dep.Crate, Index_Query_Options)
+              or else Index.All_Crate_Aliases.Contains (Dep.Crate)
+              or else
               not Index.Releases_Satisfying (Dep, Props,
                                              Index_Query_Options).Is_Empty
             then
@@ -943,9 +978,10 @@ package body Alire.Solver is
                           (R.Satisfies (Dep)
                            and then
                                (Dep.Crate /= GNAT_Crate or else
-                                Installed.Contains (R)));
+                                Tools.Contains (R) or else
+                                Options.Completeness > First_Complete));
 
-                        Check (R, Is_Shared => False, Is_Reused => False);
+                        Check (R, Is_Reused => False);
                      end Consider;
                   begin
                      Trace.Debug ("SOLVER: considering"
@@ -1023,11 +1059,11 @@ package body Alire.Solver is
 
             else
 
-               --  The crate plainly doesn't exist in our loaded catalog, so
+               --  The crate plainly doesn't exist in our loaded index, so
                --  mark it as missing an move on:
 
                Trace.Debug
-                 ("SOLVER: catalog LACKS the crate " & Raw_Dep.Image
+                 ("SOLVER: index LACKS the crate " & Raw_Dep.Image
                   & " when the search tree was "
                   & Image_One_Line (State));
 
@@ -1074,30 +1110,6 @@ package body Alire.Solver is
          --------------------
 
          procedure Store_Finished (Solution : Alire.Solutions.Solution) is
-
-            ------------------------------
-            -- Contains_All_Satisfiable --
-            ------------------------------
-            --  A solution may be incomplete but also may be only missing
-            --  impossible dependencies. In that case we can finish already, as
-            --  if the solution were complete. Otherwise, an e.g. missing crate
-            --  may force exploring all the combos of the rest of crates just
-            --  because it doesn't exist.
-            function Contains_All_Satisfiable return Boolean is
-            begin
-               return
-                 (for all Crate of Solution.Crates =>
-                    not
-                    (Solution.State (Crate).Fulfilment in Missed | Hinted
-               --  So the dependency is not solved, but why?
-
-                     and then not Unavailable_Crates.Contains (Crate)
-               --  Because it does not exist at all, so "complete"
-
-                     and then not Unavailable_Direct_Deps.Contains
-                       (Solution.Dependency (Crate))));
-            end Contains_All_Satisfiable;
-
             Pre_Length : constant Count_Type := Solutions.Length;
          begin
             Trace.Debug ("SOLVER: tree FULLY expanded as: "
@@ -1116,7 +1128,7 @@ package body Alire.Solver is
             Progress_Report; -- As we found a new solution
 
             if Options.Completeness = First_Complete
-              and then Contains_All_Satisfiable
+              and then Contains_All_Satisfiable (Solution)
             then
                raise Solution_Found; -- break recursive search
             end if;
@@ -1170,10 +1182,10 @@ package body Alire.Solver is
                               --  Add or merge dependency
                              .Dependency (State.Target.Value.Crate),
                               --  And use it in expansion
-               Raw_Dep      => State.Target.Value,
+               Raw_Dep      => State.Target.Value
                               --  We also pass the plain dependency for the
                               --  Seen collection inside the search state.
-               Allow_Shared => Options.Sharing = Allow_Shared);
+              );
 
          elsif State.Target.Is_Vector then
             if State.Target.Conjunction = Anded then
@@ -1267,7 +1279,7 @@ package body Alire.Solver is
       --  Warn if we foresee things taking a loong time...
 
       if Options.Completeness = All_Incomplete then
-         Put_Warning ("Exploring all possible solutions to dependencies,"
+         Put_Warning ("Exploring incomplete solutions to dependencies,"
                       & " this may take some time...");
       end if;
 
@@ -1304,18 +1316,31 @@ package body Alire.Solver is
       --  on options, there must exist at least one incomplete solution, or we
       --  can retry with a larger solution space.
 
-      if Solutions.Is_Empty then
-         if Options.Completeness < All_Incomplete
-           and then User_Answer_Continue /= No
-         then
-            if Options.Completeness <= All_Complete then
-               Put_Warning
-                 ("No complete solution exists, looking for  incomplete ones; "
-                  & "this may take some time...");
-               Put_Warning ("Spent " & TTY.Emph (Timer.Image) & " seconds "
-                            & "exploring complete solutions");
-            end if;
+      if Solutions.Is_Empty
+        or else not Solutions.First_Element.Is_Complete
+      then
 
+         --  Inform that no complete solution was found, only when the culprit
+         --  is not a tool from the toolchain (as that is expected when an
+         --  uninstalled compiler is needed).
+
+         if Options.Completeness <= All_Complete
+           and then not Solutions.Is_Empty
+           and then not Culprit_Is_Toolchain (Solutions.First_Element)
+         then
+            Put_Warning ("Spent " & TTY.Emph (Timer.Image) & " seconds "
+                            & "exploring complete solutions");
+         end if;
+
+         --  Now downgrade options to look for more solutions, if allowed and
+         --  if it makes sense.
+
+         if Options.Completeness < All_Incomplete
+           and then Options.Exhaustive
+           and then User_Answer_Continue /= No
+           and then (Solutions.Is_Empty or else
+                     not Contains_All_Satisfiable (Solutions.First_Element))
+         then
             Trace.Detail
               ("No solution found with completeness policy of "
                & Options.Completeness'Image
@@ -1340,20 +1365,33 @@ package body Alire.Solver is
                                All_Incomplete,
                              when All_Incomplete                =>
                                 raise Program_Error with "Unreachable code"),
+                       Exhaustive   => Options.Exhaustive,
                        Detecting    => Options.Detecting,
                        Hinting      => Options.Hinting,
-                       Sharing      => Options.Sharing,
                        Timeout      => Options.Timeout,
                        Timeout_More => Options.Timeout_More,
                        Elapsed      => Timer.Elapsed,
-                       On_Timeout   => (if User_Answer_Continue = Always
-                                        then Continue
-                                        else Options.On_Timeout))));
-         else
+                       On_Timeout   =>
+                         (if Options.On_Timeout =
+                                Continue_While_Complete_Then_Stop
+                          then Stop
+                          elsif User_Answer_Continue = Always
+                          then Continue
+                          else Options.On_Timeout))));
+         elsif Solutions.Is_Empty then
             raise Query_Unsuccessful with Errors.Set
               ("Solver failed to find any solution to fulfill dependencies "
                & "after " & Timer.Image);
          end if;
+      end if;
+
+      --  In case of finding any solution, we always want to go through this
+      --  final step of marking transitivity and reporting:
+
+      if Solutions.Is_Empty then
+         raise Query_Unsuccessful with Errors.Set
+              ("Solver failed to find any solution to fulfill dependencies "
+               & "after " & Timer.Image);
       else
 
          --  Mark direct/indirect dependencies post-hoc

@@ -42,7 +42,7 @@ package Alire.Releases.Containers is
                   Release.Satisfies (Dep));
 
    package Release_Holders
-   is new AAA.Containers.Indefinite_Holders (Releases.Release);
+   is new AAA.Containers.Indefinite_Holders (Releases.Release, Releases."=");
    subtype Release_H is Release_Holders.Holder;
 
    package Crate_Release_Maps is new Ada.Containers.Indefinite_Ordered_Maps

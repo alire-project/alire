@@ -20,11 +20,11 @@ https://alire.ada.dev/
 
 ## TL;DR ##
 
-Available for Linux/macOS/Windows.
+Available for Linux/macOS/Windows/FreeBSD.
 
 Download the latest stable version from the [Releases](https://github.com/alire-project/alire/releases) page. See the [Getting Started](doc/getting-started.md) guide for binary downloads.
 
-If, instead, you want to test the latest development version, see [Building from sources](#building-from-sources).
+If, instead, you want to test the latest development version, see [Building from sources](#building-from-sources) or, if you already have a recent `alr` in your system, [Building with `alr`](#building-with-alr).
 
 ## Installation and First Steps ##
 
@@ -32,24 +32,28 @@ See the [Getting Started](doc/getting-started.md) guide.
 
 ## Building from sources ##
 
-The build process of `alr` is straighforward and depends only on a recent GNAT Ada 2012 compiler. All dependencies are included as submodules. A project file (`alr_env.gpr`) is provided to drive the build with all necessary configuration (see the macOS extra step below, though).
+The build process of `alr` is straighforward and depends only on a recent GNAT Ada 2012 compiler. All dependencies are included as submodules. A project file (`alr_env.gpr`) is provided to drive the build with all necessary configuration (which is also valid for editing with GNAT Studio).
+
+The ALIRE_OS environment variable must be set to the OS for which `alr` is being build, taking one of the values in `freebsd`, `linux`, `macos`, `windows`.
 
 Follow these steps:
 
 1. Clone the repository: `git clone --recurse-submodules https://github.com/alire-project/alire.git`
 1. Enter the cloned repository folder.
-1. Only on macOS: define the environment variable `OS=macOS`
-1. Build the executable: `gprbuild -j0 -P alr_env`
+1. Build the executable:
+   * if you have Bash on your system: `dev/build.sh`
+   * if you don't have Bash on your system: `ALIRE_OS=<one of: freebsd, linux, macos, windows> gprbuild -j0 -p -P alr_env`
 
 The binary will be found at `bin/alr`. You can run `alr version` to see version and diagnostics information.
 
-Sourcing the `scripts/alr-completion.bash` file will provide bash tab autocompletion.
+Sourcing the `scripts/alr-completion.bash` file will provide Bash tab autocompletion.
 
 ## Building with `alr`
 
-If you already have a recent enough `alr` binary, you can alternative build
+If you already have a recent enough `alr` binary, you can alternatively build
 `alr` by simply running `alr build` at the root of the repository. This command
-will retrieve all necessary dependencies prior to launching the build.
+will retrieve all necessary dependencies prior to launching the build and 
+configure the environment.
 
 The master branch should normally be able to build itself in this fashion, as
 this is one of our integration tests.
@@ -75,6 +79,8 @@ projects to its own project GPR file with their simple name. You can check the
 environment `alr` is using with `alr printenv`.
 
 ## Supported platforms ##
+
+Alire can be built on Linux, macOS, Windows, and FreeBSD.
 
 Alire requires a recent Ada 2012 compiler. In practice, this currently means
 the latest [GNAT Community](https://www.adacore.com/download) or a somewhat

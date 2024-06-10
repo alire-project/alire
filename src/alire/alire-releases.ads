@@ -6,10 +6,12 @@ with AAA.Strings;
 with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.Containers;
+with Alire.GPR;
 with Alire.Interfaces;
 with Alire.Manifest;
 with Alire.Milestones;
 with Alire.Origins;
+with Alire.Platforms.Current;
 with Alire.Properties.Actions;
 with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
@@ -205,10 +207,24 @@ package Alire.Releases is
    --  Retrieve env vars that are set by this release, key is the var name
 
    function Executables (R : Release;
-                         P : Alire.Properties.Vector)
+                         P : Alire.Properties.Vector :=
+                           Platforms.Current.Properties)
                          return AAA.Strings.Vector;
    --  Only explicitly declared ones
    --  Under some conditions (usually current platform)
+
+   type Externals_Info is record
+      Declared : GPR.Name_Vector; -- The crate uses these vars
+      Modified : GPR.Name_Vector; -- The crate modifies these vars
+   end record;
+
+   function GPR_Externals (R : Release;
+                                     P : Alire.Properties.Vector :=
+                                       Platforms.Current.Properties)
+                                     return Externals_Info;
+   --  Returns a list of all variables that can influence the build via
+   --  GPR externals or environment variables (the `gpr-externals` and
+   --  gpr-set-externals tables in the manifest).
 
    function Pins (R : Release) return User_Pins.Maps.Map;
 
@@ -221,7 +237,9 @@ package Alire.Releases is
                            P         : Alire.Properties.Vector;
                            With_Path : Boolean)
                            return AAA.Strings.Vector;
-   --  with relative path on demand
+   --  With relative path on demand. Will always return at least the default
+   --  project file when nothing is declared in the manifest for regular
+   --  crates, but nothing for system/binary/external.
 
    function Deployment_Folder (R : Release) return Folder_String;
    --  The folder under which the release origin will be deployed
@@ -290,6 +308,10 @@ package Alire.Releases is
    function Property_Contains (R : Release; Str : String) return Boolean;
    --  True if some property contains the given string
 
+   function Property_Contains (R : Release; Str : String)
+                               return AAA.Strings.Set;
+   --  Return a set with the names of properties that contain the given string
+
    function Satisfies (R   : Release;
                        Dep : Alire.Dependencies.Dependency'Class)
                        return Boolean;
@@ -342,13 +364,16 @@ package Alire.Releases is
       Env             : Alire.Properties.Vector;
       Parent_Folder   : String;
       Was_There       : out Boolean;
-      Perform_Actions : Boolean := True;
       Create_Manifest : Boolean := False;
-      Include_Origin  : Boolean := False);
+      Include_Origin  : Boolean := False;
+      Mark_Completion : Boolean := True);
    --  Deploy the sources of this release under the given Parent_Folder. If
    --  Create_Manifest, any packaged manifest will be moved out of the way
    --  and an authoritative manifest will be generated from index information.
-   --  The created manifest may optionally Include_Origin information.
+   --  The created manifest may optionally Include_Origin information. When
+   --  Mark_Completion, a trace file will be created in ./alire/copy_complete
+   --  so future inspections of the folder can ensure the operation wasn't
+   --  interrupted. No actions for the release are run at this time.
 
 private
 

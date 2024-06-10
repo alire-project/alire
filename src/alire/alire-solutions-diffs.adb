@@ -1,3 +1,5 @@
+with Alire.Origins;
+with Alire.Toolchains;
 with Alire.Utils.Tables;
 with Alire.User_Pins;
 with Alire.Utils.TTY;
@@ -14,15 +16,17 @@ package body Alire.Solutions.Diffs is
    type Changes is
      (Added,      -- A new release
       Removed,    -- A removed dependency of any kind
-      Hinted,     -- An undetected external dependency
       Upgraded,   -- An upgraded release
       Downgraded, -- A downgraded release
       Pinned,     -- A release being pinned
       Unpinned,   -- A release being unpinned
       Unchanged,  -- An unchanged dependency/release
       Missing,    -- A missing dependency
-      Shared      -- A release used from the shared installed releases
+      Binary,     -- A binary, system or external release
+      Info        -- General info icon
      );
+
+   Missing_Flag : constant String := "missing";
 
    ----------
    -- Icon --
@@ -33,26 +37,26 @@ package body Alire.Solutions.Diffs is
          (case Change is
              when Added      => TTY.OK    (U ("+")),
              when Removed    => TTY.Emph  (U ("✗")),
-             when Hinted     => TTY.Warn  (U ("↪")),
              when Upgraded   => TTY.OK    (U ("⭧")),
              when Downgraded => TTY.Warn  (U ("⭨")),
-             when Pinned     => TTY.OK    (U ("⊙")),
-             when Unpinned   => TTY.Emph  (U ("𐩒")),
+             when Pinned     => TTY.OK    (U ("📌")), -- alts: ⊙📍📌
+             when Unpinned   => TTY.Emph  (U ("🎈")), -- alts: 𐩒🎈
              when Unchanged  => TTY.OK    (U ("=")),
-             when Missing    => TTY.Error (U ("⚠")),
-             when Shared     => TTY.Emph  (U ("♼")))
-       else
+             when Missing    => TTY.Error (U ("❗")), -- alts: ⚠️❗‼️
+             when Binary     => TTY.Warn  (U ("📦")),
+             when Info       => TTY.Emph  (U ("🛈")))
+       else "" &
          (case Change is
-             when Added      => U ("+"),
-             when Removed    => U ("-"),
-             when Hinted     => U ("~"),
-             when Upgraded   => U ("^"),
-             when Downgraded => U ("v"),
-             when Pinned     => U ("·"),
-             when Unpinned   => U ("o"),
-             when Unchanged  => U ("="),
-             when Missing    => U ("!"),
-             when Shared     => U ("i")
+             when Added      => '+',
+             when Removed    => '-',
+             when Upgraded   => '^',
+             when Downgraded => 'v',
+             when Pinned     => '.',
+             when Unpinned   => 'o',
+             when Unchanged  => '=',
+             when Missing    => '!',
+             when Binary     => 'b',
+             when Info       => 'i'
          ));
 
    --  This type is used to summarize every detected change
@@ -146,12 +150,8 @@ package body Alire.Solutions.Diffs is
          use type Alire.User_Pins.Pin;
 
       begin
-         --  New hint
-         if Gains_State (Hinted) then
-            Add_Change (Chg, Icon (Hinted), TTY.Warn ("external"));
-
          --  Changed linked dir
-         elsif Has_Latter and then Latter.Is_Linked and then
+         if Has_Latter and then Latter.Is_Linked and then
            (not Has_Former or else not Former.Is_Linked or else
             Former.Link /= Latter.Link)
          then
@@ -161,7 +161,7 @@ package body Alire.Solutions.Diffs is
          --  New unsolvable
          elsif Gains_State (Missed) then
             Add_Change (Chg, Icon (Missing),
-                        TTY.Error ("missing") & ":"
+                        TTY.Error (Missing_Flag) & ":"
                         & TTY.Warn (To_Lower_Case (Latter.Reason'Image)));
 
          --  From hint to proper release
@@ -174,25 +174,6 @@ package body Alire.Solutions.Diffs is
             Add_Change (Chg, Icon (Added), TTY.OK ("solved"));
          end if;
       end Fulfil_Change;
-
-      --------------------
-      -- Sharing_Change --
-      --------------------
-
-      procedure Sharing_Change is
-      begin
-         if (not Has_Former or else not Former.Is_Shared)
-           and then Has_Latter and then Latter.Is_Shared
-         then
-            Add_Change (Chg, Icon (Shared), TTY.Emph ("installed"));
-
-         elsif Has_Former and then Former.Is_Shared
-           and then Has_Latter and then not Latter.Is_Shared
-         then
-            Add_Change (Chg, "", TTY.Emph ("local"));
-
-         end if;
-      end Sharing_Change;
 
       --------------------------
       -- transitivity_changed --
@@ -251,7 +232,12 @@ package body Alire.Solutions.Diffs is
 
       procedure Provider_Change is
       begin
-         if Has_Latter and then Latter.Is_Provided then
+         if Has_Latter and then Latter.Is_Provided
+           and then
+             (not Has_Former or else
+                (Former.Has_Release and then
+                 Former.Release.Name_Str /= Latter.Release.Name_Str))
+         then
             Add_Change (Chg, "", TTY.Italic (Latter.Release.Name.As_String));
          end if;
       end Provider_Change;
@@ -317,10 +303,66 @@ package body Alire.Solutions.Diffs is
             --  disappearing from the solutions.
             Chg.Best_Version := +Best_Version (Former);
          else
-            raise Program_Error with "crate is neither in former or latter";
+            Recoverable_Program_Error
+              ("crate is neither in former or latter");
          end if;
 
       end Determine_Relevant_Version;
+
+      ------------------------------
+      -- Releases_Without_Sources --
+      ------------------------------
+
+      procedure Releases_Without_Sources is
+         use all type Origins.Kinds;
+         subtype Report_Kinds is Origins.Kinds with Static_Predicate =>
+           Report_Kinds in Binary_Archive | External | System;
+      begin
+         --  For "special" releases, show extra info: binaries that can be very
+         --  large, or releases that are not from sources (so harder to audit,
+         --  intrinsically shared, ...), but only if they were going to be
+         --  shown already.
+
+         if not Has_Latter or else not Latter.Has_Release or else
+           Chg.Detail.Is_Empty
+         then
+            return;
+         end if;
+
+         declare
+            Rel : constant Alire.Releases.Release :=
+                    This.Latter.Releases.Element (Crate);
+         begin
+            if Rel.Origin.Kind in Report_Kinds then
+               Add_Change (Chg, Icon (Binary),
+                           TTY.Warn
+                             (case Report_Kinds (Rel.Origin.Kind) is
+                                 when Binary_Archive => "binary",
+                                 when External       => "executable in path",
+                                 when System         => "system package"));
+            end if;
+         end;
+      end Releases_Without_Sources;
+
+      ----------------------
+      -- Missing_Releases --
+      ----------------------
+
+      procedure Missing_Releases is
+      begin
+         if not Contains (Chg.Detail.Flatten, Missing_Flag) and then
+           Has_Latter and then
+           Latter.Is_Unfulfilled
+         then
+            Add_Change (Chg, Icon (Missing),
+                        TTY.Error (Missing_Flag)
+                        & (if Latter.Is_Missing -- Has a reason
+                          then ":"
+                          & TTY.Warn (To_Lower_Case (Latter.Reason'Image))
+                          else "" -- hinted don't have a reason
+                         ));
+         end if;
+      end Missing_Releases;
 
    begin
 
@@ -332,8 +374,6 @@ package body Alire.Solutions.Diffs is
 
       Fulfil_Change;
 
-      Sharing_Change;
-
       Provider_Change;
 
       Transitivity_Changed;
@@ -342,7 +382,11 @@ package body Alire.Solutions.Diffs is
 
       Determine_Relevant_Version;
 
-      --  Final fill-in for no changes
+      Releases_Without_Sources;
+      --  This one must go after the rest, as it only appends info if the
+      --  release was going to be shown anyway.
+
+      --  Final fill-in for no changes and missing (always reported)
 
       if Length (Chg.Icon) = 0 then
          Add_Change (Chg, Icon (Unchanged), "");
@@ -351,6 +395,8 @@ package body Alire.Solutions.Diffs is
       if Chg.Detail.Is_Empty then
          Add_Change (Chg, "", "unchanged");
       end if;
+
+      Missing_Releases;
 
       return Chg;
 
@@ -374,6 +420,70 @@ package body Alire.Solutions.Diffs is
    is
       Table : Utils.Tables.Table;
       Changed    : Boolean := False;
+
+      -----------------------------
+      -- Warn_Toolchain_Download --
+      -----------------------------
+      --  If the solution requires downloading a new toolchain, warn about it
+      procedure Warn_Toolchain_Download is
+      begin
+         for Rel of This.Latter.Releases loop
+            if Toolchains.Is_Tool (Rel)
+              and then not Toolchains.Available.Contains (Rel)
+            then
+               Trace.Log (Prefix, Level);
+               Trace.Log
+                 (Prefix & Icon (Info)
+                  & "  The solution requires a toolchain that is");
+               Trace.Log
+                 (Prefix
+                  & "   not yet installed. Accepting the solution");
+               Trace.Log
+                 (Prefix
+                  & "   will download and install this toolchain.");
+               return;
+            end if;
+         end loop;
+      end Warn_Toolchain_Download;
+
+      --------------------------------------
+      -- Warn_Unsatisfiable_GNAT_External --
+      --------------------------------------
+
+      procedure Warn_Unsatisfiable_GNAT_External is
+      begin
+         for Dep of This.Latter.All_Dependencies loop
+            if Dep.Crate = GNAT_Crate
+              and then not Dep.Is_Solved
+              and then Toolchains.Tool_Is_Configured (GNAT_Crate)
+              and then Toolchains.Tool_Milestone (GNAT_Crate).Crate
+                       = GNAT_External_Crate
+              and then
+                (Toolchains.Tool_Is_Missing (GNAT_Crate)
+                 or else
+                   not Toolchains.Tool_Release (GNAT_Crate).Satisfies (Dep))
+            then
+               Trace.Log (Prefix, Level);
+               Trace.Log (Prefix & Icon (Missing)
+                          & " The explicitly configured external compiler "
+                          & Toolchains.Tool_Milestone (GNAT_Crate).TTY_Image);
+               Trace.Log (Prefix
+                          & "  cannot satisfy dependency in solution "
+                          & Dep.As_Dependency.TTY_Image,
+                          Log_Level);
+               Trace.Log (Prefix
+                          & "  You can select a different compiler for the "
+                          & "workspace with");
+               Trace.Log (Prefix & "  "
+                          & TTY.Terminal ("alr toolchain --local --select"),
+                          Log_Level);
+            end if;
+         end loop;
+      end Warn_Unsatisfiable_GNAT_External;
+
+      type Passes is (Fulfilled, Missing);
+      Missing_Header_Added : Boolean := False;
+
    begin
 
       --  Start with an empty line to separate from previous output
@@ -388,42 +498,65 @@ package body Alire.Solutions.Diffs is
                     Level);
       end if;
 
-      --  Detailed changes otherwise
+      --  Detailed changes, showing separately missing dependencies
 
-      for Crate of This.Former.Crates.Union (This.Latter.Crates) loop
-         declare
-            Changes : constant Crate_Changes := Find_Changes (This, Crate);
-         begin
+      for Pass in Passes'Range loop
+         for Crate of This.Former.Crates.Union (This.Latter.Crates) loop
+            declare
+               Changes : constant Crate_Changes := Find_Changes (This, Crate);
+            begin
 
-            if not Changed_Only or else
-              Changes.Detail.Flatten /= "unchanged"
-            then
-               Changed := Changed or True;
+               if not Changed_Only or else
+                 Changes.Detail.Flatten /= "unchanged" or else
+                 Pass = Missing -- Always show missing ones to raise awareness
+               then
 
-               --  Show icon of change
+                  if (Pass = Fulfilled and then
+                        not Contains (Changes.Detail.Flatten, Missing_Flag))
+                    or else
+                      (Pass = Missing and then
+                       Contains (Changes.Detail.Flatten, Missing_Flag))
+                  then
+                     Changed := Changed or True;
 
-               Table.Append (Prefix & (+Changes.Icon));
+                     --  Header for missing section on first missing
 
-               --  Always show crate name
+                     if Pass = Missing and then not Missing_Header_Added then
+                        Missing_Header_Added := True;
+                        Table.Append (Prefix & TTY.Warn ("Missing:")).New_Row;
+                     end if;
 
-               Table.Append (Utils.TTY.Name (Crate));
+                     --  Show icon of change
 
-               --  Show most precise version available
+                     Table.Append (Prefix & (+Changes.Icon));
 
-               Table.Append (+Changes.Best_Version);
+                     --  Always show crate name
 
-               --  Finally show an explanation of the change depending on
-               --  status changes.
+                     Table.Append (Utils.TTY.Name (Crate));
 
-               Table.Append ("(" & Changes.Detail.Flatten (",") & ")");
+                     --  Show most precise version available
 
-               Table.New_Row;
-            end if;
-         end;
+                     Table.Append (+Changes.Best_Version);
+
+                     --  Show an explanation of the change depending on
+                     --  status changes.
+
+                     Table.Append ("(" & Changes.Detail.Flatten (",") & ")");
+
+                     Table.New_Row;
+                  end if;
+               end if;
+            end;
+         end loop;
       end loop;
 
       if Changed then
          Table.Print (Level);
+
+         Warn_Toolchain_Download;
+         Warn_Unsatisfiable_GNAT_External;
+         --  Only one of those two can happen and emit their warning, so the
+         --  order doesn't matter.
       else
          Trace.Log (Prefix & "No changes between former and new solution.",
                     Level);

@@ -45,9 +45,8 @@ private
    function Image (This : Run) return String
    is (AAA.Strings.To_Mixed_Case (This.Moment'Img)
        & (if This.Name /= "" then " (" & This.Name & ")" else "")
-       & " run: ${CRATE_DIR}" &
-        (if This.Working_Folder /= "" then "/" else "") &
-        This.Working_Folder & "/" & This.Relative_Command_Line.Flatten);
+       & " run: " & This.Relative_Command_Line.Flatten
+       & " (from ${CRATE_ROOT}/" & This.Working_Folder & ")");
 
    overriding
    function To_YAML (This : Run) return String

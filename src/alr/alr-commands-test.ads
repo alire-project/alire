@@ -1,7 +1,5 @@
 with AAA.Strings;
 
-with GNAT.Strings;
-
 package Alr.Commands.Test is
 
    type Command is new Commands.Command with private;
@@ -35,7 +33,6 @@ private
 
    type Command is new Commands.Command with record
       Cont   : aliased Boolean := False;
-      Docker : aliased GNAT.Strings.String_Access;
       Full   : aliased Boolean := False;
       Last   : aliased Boolean := False;
       Redo   : aliased Boolean := False;

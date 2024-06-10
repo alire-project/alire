@@ -1,7 +1,10 @@
+with Alire.Crate_Configuration;
 with Alire.Environment;
 with Alire.Platforms;
 
 package body Alr.Commands.Printenv is
+
+   Last_Build_Switch : constant String := "--last-build";
 
    -------------
    -- Execute --
@@ -27,7 +30,12 @@ package body Alr.Commands.Printenv is
          Reportaise_Wrong_Arguments ("Specify at most one subcommand");
       end if;
 
-      Cmd.Requires_Valid_Session;
+      Cmd.Requires_Workspace;
+
+      if To_Boolean (Cmd.Last_Build, "--last-build", True) then
+         Cmd.Root.Set_Build_Profiles
+           (Alire.Crate_Configuration.Last_Build_Profiles);
+      end if;
 
       declare
          Context : constant Alire.Environment.Context :=
@@ -57,9 +65,19 @@ package body Alr.Commands.Printenv is
                  " This command can be used to setup a build environment," &
                  " for instance before starting an IDE.")
       .New_Line
+      .Append ("When using " & TTY.Terminal ("alr printenv") & " in scripts, "
+        & "to ensure no unwanted output is intermixed with the environment "
+        & "definitions, the recommendation is to run it twice and and use the "
+        & "output of the second run in quiet non-interactive mode. This is "
+        & "because running " & TTY.Terminal ("alr printenv") & " after "
+        & "manifest editions may trigger an automatic synchronization that "
+        & "could produce extra output not intended as environment variables.")
+      .New_Line
       .Append ("Examples:")
-      .Append ("  - eval $(alr printenv --unix)")
-      .Append ("  - alr printenv --powershell | Invoke-Expression")
+      .Append ("  - eval $(alr -n -q printenv --unix)")
+      .Append ("  - alr -n -q printenv --powershell | Invoke-Expression")
+      .Append ("  - for /F ""usebackq delims="" %x "
+               & "in (`alr -n -q printenv --wincmd`) do %x")
      );
 
    --------------------
@@ -89,6 +107,11 @@ package body Alr.Commands.Printenv is
                      Cmd.Cmd_Shell'Access,
                      "", "--wincmd",
                      "Use a Windows CMD shell format for the export");
+      Define_Switch (Config,
+                     Cmd.Last_Build'Access,
+                     "", Last_Build_Switch & "?",
+                     "Use last build profiles (default) or manifest profiles",
+                     Argument => "=BOOLEAN");
    end Setup_Switches;
 
 end Alr.Commands.Printenv;

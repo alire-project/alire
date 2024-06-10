@@ -3,6 +3,7 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 
 with Alire.Containers;
 with Alire.Index_On_Disk.Loading;
+with Alire.Publish;
 with Alire.Utils.TTY;
 
 package body Alire.Index is
@@ -117,6 +118,31 @@ package body Alire.Index is
    package Name_Sets is
      new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
    Already_Detected : Name_Sets.Set;
+
+   --------------------
+   -- Check_Contents --
+   --------------------
+
+   procedure Check_Contents is
+      OK : Boolean := True;
+   begin
+      for Crate of All_Crates.all loop
+         for Rel of Crate.Releases loop
+            if Rel.Origin.Kind in Origins.VCS_Kinds then
+               if not Publish.Is_Trusted (Rel.Origin.URL) then
+                  OK := False;
+                  Put_Warning ("Release " & Rel.Milestone.TTY_Image
+                               & " has URL not in known hosts: "
+                                 & TTY.URL (Rel.Origin.URL));
+               end if;
+            end if;
+         end loop;
+      end loop;
+
+      if not OK then
+         Raise_Checked_Error ("Issues were found in index contents");
+      end if;
+   end Check_Contents;
 
    ----------------------
    -- Detect_Externals --
@@ -360,7 +386,7 @@ package body Alire.Index is
 
    function Releases_Satisfying
      (Dep              : Dependencies.Dependency;
-      Env              : Properties.Vector;
+      Env              : Properties.Vector := Platforms.Current.Properties;
       Opts             : Query_Options := Query_Defaults;
       Use_Equivalences : Boolean := True;
       Available_Only   : Boolean := True;
@@ -399,5 +425,25 @@ package body Alire.Index is
 
       return Result;
    end Releases_Satisfying;
+
+   ------------------------
+   -- Releases_For_Crate --
+   ------------------------
+
+   function Releases_For_Crate
+     (Crate            : Crate_Name;
+      Env              : Properties.Vector := Platforms.Current.Properties;
+      Opts             : Query_Options := Query_Defaults;
+      Use_Equivalences : Boolean := True;
+      Available_Only   : Boolean := True;
+      With_Origin      : Origins.Kinds_Set := (others => True))
+      return Releases.Containers.Release_Set
+   is (Releases_Satisfying
+         (Dep              => Dependencies.New_Dependency (Crate),
+          Env              => Env,
+          Opts             => Opts,
+          Use_Equivalences => Use_Equivalences,
+          Available_Only   => Available_Only,
+          With_Origin      => With_Origin));
 
 end Alire.Index;

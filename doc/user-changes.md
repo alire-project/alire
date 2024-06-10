@@ -4,7 +4,338 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
-## Release 1.3-dev
+## Release `2.1`
+
+## Release `2.0`
+
+### `ALIRE_SETTINGS_DIR` replaces `ALR_CONFIG`
+
+PR [1625](https://github.com/alire-project/alire/pull/1625)
+
+This reflects the new nomenclature of Alire settings versus crate
+configuration. Also, it better reflects that the effect is on the whole library
+and not only the `alr` command-line tool.
+
+### `alr settings` replaces `alr config`
+
+PR [1617](https://github.com/alire-project/alire/pull/1617)
+
+The `alr settings` command replaces the `alr config` command. This change is
+introduced to tackle the confusion between the configuration of the Alire
+commands and operations, and the configuration of crates.
+
+`alr config` is still available and should work as before with the exception of
+a deprecation warning message.
+
+### Deprecation of `toolchain --install/--uninstall/--install-dir`
+
+PR [#1614](https://github.com/alire-project/alire/pull/1614)
+
+Toolchain selection for use by Alire is still done by using
+`alr toolchain --select`.
+
+For the installation of toolchains outside of Alire management (i.e., for
+direct use with other tools, but not with Alire), the recommended
+method now is to use `alr install`, e.g.:
+```
+# Install to the default location, <user home>/.alire/bin
+$ alr install gnat_native gprbuild
+
+# Install elsewhere
+$ alr install --prefix=/path/to/installation gnat_native gprbuild
+```
+
+Removal of managed toolchains can be done by simply removing their folders
+inside the toolchain cache (reported by `alr version`).
+
+### Cache and toolchain storage location overridding
+
+PR [#1593](https://github.com/alire-project/alire/pull/1593)
+
+The cache directory can now be set independently of the configuration
+directory, by setting the `cache.dir` config builtin to an absolute path. For
+example:
+```
+alr config --global --set cache.dir /path/to/my/global/cache
+```
+Since the cache by default also contains installed toolchains, which may not be
+needed to be moved elsewhere, the `toolchain.dir` can be used to dissociate
+toolchain location from cache location in a similar way:
+```
+alr config --global --set toolchain.dir /path/to/my/toolchains
+```
+
+### New switch `alr build --stop-after=<build stage>`
+
+PR [#1573](https://github.com/alire-project/alire/pull/1573)
+
+From `alr help build`:
+
+**Build stages**
+
+   Instead of always doing a full build, the process can be stopped early using `--stop-after=<stage>`, where `<stage>` is one of:
+
+   * sync: sync pristine sources to build location
+   * generation: generate configuration-dependent files
+   * post-fetch: running of post-fetch actions
+   * pre-build: running of pre-build actions
+   * build: actual building of sources
+   * post-build: running of post-build actions
+
+### Enable shared dependencies by default
+
+PR [#1449](https://github.com/alire-project/alire/pull/1449)
+
+Pre-2.0, Alire worked always in "sandboxed" mode; that is, all source
+dependencies were found under `<workspace>/alire/cache`. This behavior can be
+now enabled with `alr config --set dependencies.shared false`, locally or
+globally.
+
+By default, post-2.0, Alire works in "shared" mode, where sources are
+downloaded once (to `~/.cache/alire/releases`) and unique builds are created
+(under `~/.cache/alire/builds`) for unique configurations. This should minimize
+rebuilds across crate configurations and workspaces, and eliminate risks of
+inconsistencies.
+
+Disk use is decreased by unique source downloads, but might be increased by
+unique build configurations. Cache management and cleanup will be provided down
+the road. The build cache can always be deleted to retrieve disk space, at the
+cost of triggering rebuilds.
+
+Unique builds are identified by a build hash which takes into account the
+following inputs for a given release:
+
+- Build profile
+- Environment variables modified in the manifest
+- GPR external variables declared or set
+- Configuration variables declared or set
+- Compiler version
+- Vaue of `LIBRARY_TYPE` and `<CRATE>_LIBRARY_TYPE` variables.
+- Hash of dependencies
+
+### Automatic index updates
+
+PR [#1447](https://github.com/alire-project/alire/pull/1447)
+
+A new configuration option, `index.auto_update`, allows setting the refresh
+period of indexes. It defaults to 24 hours and the user will be asked the first
+time to allow automatic updates. Setting this option to 0 will also disable
+automatic updates.
+
+When enabled, updates may happen before executing commands that rely on
+indexes: `get`, `search`, `with`, etc.
+
+### Deprecation of `dependencies.dir` in favor of `dependencies.shared`
+
+PR [#1419](https://github.com/alire-project/alire/pull/1419)
+
+A new system of shared sources and builds is being implemented, which will
+ensure full consistency and reuse of builds.
+
+In the new system (still disabled; enable it by setting `alr config --set
+dependencies.shared true`), dependencies will no longer be stored under
+`<workspace>/alire/cache/dependencies`. Instead, three new directories are
+introduced:
+
+- `$HOME/.cache/alire/releases`: contains sources for read-only purposes and
+  binary releases (except toolchains, see below).
+- `$HOME/.cache/alire/builds`: contains source builds for a unique combination
+  of build profile, GPR externals and environment variables.
+- `$HOME/.cache/alire/toolchains`: contains downloaded toolchains.
+
+The previous `$HOME/.cache/alire/dependencies` that contained both toolchains
+and binary releases is no longer in use.
+
+Users wanting to modify dependencies in tandem within a workspace are
+encouraged to use the pin system.
+
+If these default locations for shared dependencies must be relocated, this can
+be achieved by using a new configuration path (`ALR_CONFIG` or `-c` global
+switch). In that case, the aforementioned paths will be found under
+`/path/to/config/cache`.
+
+### Set working directory with `--chdir`
+
+PR [#1479](https://github.com/alire-project/alire/pull/1479)
+
+A new switch `--chdir` (short form `-C`) is introduced which requires a target
+directory argument. `alr` then runs as though it were invoked in that
+directory.
+
+### Request review of an index submission with `alr publish --request-review`
+
+PR [#1409](https://github.com/alire-project/alire/pull/1409)
+
+When a submission has passed all server-side tests, for the time being it must
+be reviewed and merged manually. This can now be done with `alr publish
+--request-review <num>`.
+
+### Cancel an index submission with `alr publish --cancel`
+
+PR [#1406](https://github.com/alire-project/alire/pull/1406)
+
+A pending submission can be closed with
+`alr publish --cancel <num> --reason <text>`.
+
+### Track user's index submissions with `alr publish --status`
+
+PR [#1400](https://github.com/alire-project/alire/pull/1400)
+
+The new `alr publish --status` switch will print a table with unmerged pull
+requests opened by the user against the community index repository.
+
+### Automatic release submission during `alr publish`
+
+PR [#1398](https://github.com/alire-project/alire/pull/1398)
+
+`alr publish` will now prompt to continue after manifest creation into a series
+of steps culminating on the creation of a draft pull request on the community
+index repository.
+
+The new steps will perform all necessary actions: forking of the community
+repository into the user account, cloning, committing of the new manifest, and
+pull request creation.
+
+For `alr` to be able to do these steps on the user's behalf, the user has to
+provide a 'Personal Access Token (PAT)' with 'repo' permissions.
+
+The old behavior, ending the assistant after manifest creation, can be achieved
+with the new `--skip-submit` flag.
+
+### Removal of `alr test --docker`
+
+PR [#1366](https://github.com/alire-project/alire/pull/1366)
+
+The option to test indexed releases with the local `alr` using a Docker image
+has been removed, as it never made too much sense for `alr` to invoke itself,
+and it introduced unwanted complexity into the `alr test` command.
+
+### Global sharing of dependencies via config setting
+
+PR [#1367](https://github.com/alire-project/alire/pull/1367)
+
+A new built-in configuration key can be used to define a directory where all
+dependencies will be stored:
+
+`alr config --set --global dependencies.dir /abs/path/to/existing/dir`
+
+Without `--global`, as usual, the setting will only affect the working crate.
+
+The use of this feature entails a penalty in that crate configuration files will
+be regenerated before every build to ensure consistent build profiles.
+
+Caveat emptor: dependencies built by several dependents with different
+configuration options or scenario variables might cause race conditions or
+other unexpected issues. Use this feature with caution.
+
+### Test of a working crate with `alr test`
+
+PR [#1356](https://github.com/alire-project/alire/pull/1356)
+
+This PR enables the use of `alr test` on local crates. Previously, it could only
+be used on indexed ones.
+
+By default, running `alr test` will build the crate in release mode. This
+behavior can be overridden by defining one or more [test
+actions](https://alire.ada.dev/docs/#release-information).
+
+### Binary releases moved to system cache from system config directory
+
+PR [#1349](https://github.com/alire-project/alire/pull/1349)
+
+Alire was storing large binary releases like compilers in the config location,
+which is against best practices.
+
+Users are advised to delete the old location to recover disk space, or to
+manually move the contents to avoid redownloading toolchains.
+
+- Old location: `<user home>/.config/alire/cache`
+- New location: `<user home>/.cache/alire`
+
+### Installation of indexed crates
+
+PR [#1335](https://github.com/alire-project/alire/pull/1335)
+
+It is now possible to install an indexed crate directly:
+```
+$ alr install hello
+```
+This is roughly equivalent to
+```alr get hello && cd hello* && alr install```
+
+The main differences are:
+- Cleanup is automatic.
+- Several crates can be installed in one go, e.g.: `alr install hello hangman`.
+- `alr get` will always retrieve the latest version, whereas `alr install` will
+also require a complete solution to dependencies.
+
+### Installation of local crates
+
+PR [#1322](https://github.com/alire-project/alire/pull/1322)
+
+`alr install` without arguments performs the installation of the current crate.
+With `--info`, it shows the contents of an installation prefix. For example:
+
+```
+$ alr -n init --bin mycrate && cd mycrate
+$ alr install
+$ alr install --info
+Installation prefix found at /home/user/.alire
+Contents:
+   mycrate=0.1.0-dev
+```
+
+Or, to install the hangman game:
+
+```
+$ alr get hangman && cd hangman*
+$ alr install
+```
+
+### New subcommand `alr install`
+
+PR [#1302](https://github.com/alire-project/alire/pull/1302)
+
+A new subcommand `alr install` allows the installation of binaries to a location
+intended to be added to the user's PATH. The default install location is
+`$HOME/.alire`, with binaries going into `$HOME/.alire/bin`.
+
+This is a experimental feature that will see improvements and tweaks in further
+PRs and as we gather feedback on its usage.
+
+At present, only binary releases can be installed (e.g., compilers, `gprbuild`,
+`gnatprove`). There is no ability to uninstall releases either
+(but reinstallation can be forced).
+
+Only one version per executable can be installed, meaning that, for example,
+only one toolchain version can exist in an installation prefix. So, this
+feature is intended to make the user's preferred version of a crate generally
+available in the system for use outside of Alire, but not to replace e.g. the
+ability of Alire to use several compilers, or to reuse compiled libraries as
+dependencies in several workspaces.
+
+Examples:
+
+```
+$ alr install gnatprove
+ⓘ Installing gnatprove=12.1.1...
+ⓘ Installation complete.
+
+$ alr install
+Installation prefix found at /home/jano/.alire
+Contents:
+   gnatprove=12.1.1
+
+$ PATH+=:$HOME/.alire/bin gnatprove --version
+Usage: gnatprove -Pproj [switches] [-cargs switches]
+...
+
+$ alr install gnatprove^11
+error: Requested release gnatprove=11.2.3 has another version already
+installed: gnatprove=12.1.1. (This error can be overridden with --force.)
+
+$ alr --force install gnatprove^11  # Downgrade installation
+```
 
 ### Find dependents of a release with `alr show --dependents
 
@@ -83,7 +414,7 @@ PR [#1080](https://github.com/alire-project/alire/pull/1080)
 this PR this was always a development build. Now, the last profile used during
 an `alr build` will be reused.
 
-## Release 1.2
+## Release `1.2`
 
 ### New subcommand for listing and manual triggering of actions
 
@@ -387,8 +718,8 @@ crate_1.var2 = true
 crate_2.var1 = "Debug"
 ```
 
-Check more examples and details in the catalog specification section ["Using
-configuration"](https://github.com/mosteo/alire/blob/master/doc/catalog-format-spec.md#using-crate-configuration).
+Check more examples and details in the catalog specification section
+[Using configuration](catalog-format-spec#using-crate-configuration).
 
 ## Release `1.0`
 
@@ -468,13 +799,13 @@ PR [#611](https://github.com/alire-project/alire/pull/611).
 
 The code editor launched by `alr edit` can now be configured instead of using
 the hard-coded GNATstudio. Use
-`alr config --set --global editor.cmd "<BINARY> <ARGS>"`
+`alr config --set --global editor.cmd '<BINARY> <ARGS>'`
 for custom editor and command line arguments. The token ${GPR_FILE} is
 replaced by a path to the project file to open.
 
 For instance:
 ```shell
-$ alr config --set --global editor.cmd "emacs ${GPR_FILE}"
+$ alr config --set --global editor.cmd 'emacs ${GPR_FILE}'
 ```
 
 The default editor is still GNATstudio.
@@ -513,7 +844,7 @@ to be submitted to the community index via pull request. An upload link is
 provided for convenience that can be used to create this pull request.
 
 Complete information about this feature is available in the updated
-[Publishing](publishing.md) page.
+[Publishing](publishing) page.
 
 Other features of the assistant are that, in the local mode, a branch or tag
 can be specified to pinpoint a commit, and that the test build of the crate can
@@ -537,8 +868,8 @@ files, executables, maintainers, etc.).
 The manifest internal format has been simplified by eliminating the possibility
 of multiple releases from its contents, which removes some nesting, and
 removing or making optional some fields that only make sense at the time of
-publishing a crate to some index. Check the [catalog-format-spec.md] file for
-details.
+publishing a crate to some index. Check the [catalog-format-spec](catalog-format-spec)
+file for details.
 
 The `alire` directory continues to exist, and it is used to store the source
 code of dependencies, local configuration and backup files. It can be safely

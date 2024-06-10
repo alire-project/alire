@@ -39,7 +39,7 @@ package Alire.Roots.Optional is
    function Outside (This : Root) return Boolean;
    --  True when there is no root at all, broken or valid
 
-   function Value (This : aliased Root) return Reference with
+   function Value (This : in out Root) return Reference with
      Pre => This.Is_Valid;
 
    function Brokenness (This : Root) return String with
@@ -55,7 +55,7 @@ package Alire.Roots.Optional is
 
    --  UTILITIES
 
-   function Updatable_Dependency (This : Root)
+   function Updatable_Dependency (This : in out Root)
                                   return Dependencies.Dependency
      with Pre => This.Is_Valid;
    --  If This.Is_Valid, get the corresponding updatable

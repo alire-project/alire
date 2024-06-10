@@ -6,6 +6,8 @@ with Ada.Strings.Maps;
 with GNAT.OS_Lib;
 with GNAT.Regpat;
 
+with Alire.Utils.TTY;
+
 package body Alire.Utils is
 
    ---------------------------
@@ -123,43 +125,6 @@ package body Alire.Utils is
       end return;
    end Count_True;
 
-   -----------------
-   -- First_Match --
-   -----------------
-
-   function First_Match (Regex : String; Text : String) return String is
-
-      -----------------------
-      -- Count_Parentheses --
-      -----------------------
-
-      function Count_Parentheses return Positive is
-         Count : Natural := 0;
-      begin
-         for Char of Regex loop
-            if Char = '(' then
-               Count := Count + 1;
-            end if;
-         end loop;
-         return Count;
-      end Count_Parentheses;
-
-      use GNAT.Regpat;
-      Matches : Match_Array (1 .. Count_Parentheses);
-      --  This is a safe estimation, as some '(' may not be part of a capture
-
-   begin
-      Match (Regex, Text, Matches);
-
-      for I in Matches'Range loop
-         if Matches (I) /= No_Match then
-            return Text (Matches (I).First .. Matches (I).Last);
-         end if;
-      end loop;
-
-      return "";
-   end First_Match;
-
    -------------------------------
    -- Is_Valid_Full_Person_Name --
    -------------------------------
@@ -180,15 +145,40 @@ package body Alire.Utils is
       and then not AAA.Strings.Contains (User, "--"));
 
    ------------------
+   -- Error_In_Tag --
+   ------------------
+
+   function Error_In_Tag (Tag : String) return String
+   is
+      Err : UString;
+      use type UString;
+   begin
+      if Tag'Length < 1 then
+         Err := +"Tag too short (Min " & Min_Tag_Length'Img & ").";
+      elsif Tag'Length > Max_Tag_Length then
+         Err := +"Tag too long (Max " & Max_Tag_Length'Img & ").";
+      elsif Tag (Tag'First) = '-' or else Tag (Tag'Last) = '-' then
+         Err := +"Tags must not begin/end with an hyphen.";
+      elsif AAA.Strings.Contains (Tag, "--") then
+         Err := +"Tags cannot have two consecutive hyphens.";
+      elsif (for some C of Tag => C not in Tag_Character) then
+         Err := +"Tags must be lowercase ASCII alphanumerical" &
+           " with optional hyphens.";
+      end if;
+
+      if Err /= "" then
+         return "Invalid Tag '" & Utils.TTY.Name (Tag) & "': " & (+Err);
+      else
+         return "";
+      end if;
+   end Error_In_Tag;
+
+   ------------------
    -- Is_Valid_Tag --
    ------------------
 
-   function Is_Valid_Tag (Tag : String) return Boolean is
-     ((for all C of Tag => C in '0' .. '9' | 'a' .. 'z' | '-')
-      and then Tag'Length in 1 .. Max_Tag_Length
-      and then Tag (Tag'First) /= '-'
-      and then Tag (Tag'Last) /= '-'
-      and then not AAA.Strings.Contains (Tag, "--"));
+   function Is_Valid_Tag (Tag : String) return Boolean
+   is (Error_In_Tag (Tag) = "");
 
    --------------------
    -- Image_One_Line --
@@ -258,5 +248,24 @@ package body Alire.Utils is
          end;
       end if;
    end Image_Keys_One_Line;
+
+   ------------------------
+   -- Finalize_Exception --
+   ------------------------
+
+   procedure Finalize_Exception (E : Ada.Exceptions.Exception_Occurrence) is
+
+      --  Import a Last_Chance_Handler procedure that will either be the one
+      --  declared by Alr, or the default GNAT last chance handler.
+
+      procedure Last_Chance_Handler (E : Ada.Exceptions.Exception_Occurrence);
+      pragma Import (C,
+                     Last_Chance_Handler,
+                     "__gnat_last_chance_handler");
+      pragma No_Return (Last_Chance_Handler);
+
+   begin
+      Last_Chance_Handler (E);
+   end Finalize_Exception;
 
 end Alire.Utils;

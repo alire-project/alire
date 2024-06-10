@@ -6,7 +6,7 @@ maintainers-logins = ["mosteo"]
 
 [[external]]
 kind = "version-output"
-# We look for make instead that should be always installed.
-version-command = ["make", "--version"]
-version-regexp = ".*Make ([\\d\\.]+).*"
+# We mock a 3.3.3 version as external compiler
+version-command = ["echo", "3.3.3"]
+version-regexp = "([\\d\\.]+).*"
 provides = "gnat"

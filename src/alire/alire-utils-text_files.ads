@@ -8,6 +8,8 @@ package Alire.Utils.Text_Files is
 
    type File (<>) is tagged limited private;
 
+   function Create (Name : Any_Path) return File;
+
    function Load (From       : Any_Path;
                   Backup     : Boolean := True;
                   Backup_Dir : Any_Path := "")
@@ -19,11 +21,20 @@ package Alire.Utils.Text_Files is
    function Lines (This : aliased in out File)
                    return access AAA.Strings.Vector;
 
+   function Lines (Filename : Any_Path)
+                   return AAA.Strings.Vector;
+
    procedure Append_Lines (File       : Any_Path;
                            Lines      : AAA.Strings.Vector;
                            Backup     : Boolean  := True;
                            Backup_Dir : Any_Path := "");
    --  Add the given lines to the end of the file
+
+   procedure Replace_Lines (File       : Any_Path;
+                            Lines      : AAA.Strings.Vector;
+                            Backup     : Boolean  := True;
+                            Backup_Dir : Any_Path := "");
+   --  Replace contents of File with the new lines.
 
 private
 

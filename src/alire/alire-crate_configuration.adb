@@ -8,12 +8,10 @@ with AAA.Strings; use AAA.Strings;
 with Alire.Containers;
 with Alire_Early_Elaboration;
 with Alire.Solutions;
-with Alire.Releases;
 with Alire.Roots;
 with Alire.Origins;
 with Alire.Warnings;
-with Alire.Config;
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 
 with Alire.Properties.Build_Profiles;
 with Alire.Properties.Build_Switches;
@@ -41,6 +39,11 @@ package body Alire.Crate_Configuration is
    use Config_Type_Definition_Holder;
 
    subtype Crate_Name_Set is Containers.Crate_Name_Sets.Set;
+
+   procedure Make_Switches_Map (This     : in out Global_Config;
+                                Root     : in out Alire.Roots.Root;
+                                Rel_Vect : Crate_Name_Set);
+   --  Prepare the list of switches that apply to a release
 
    --  The Host info types below could be Enums instead of Strings. This would
    --  have the advantage of providing users the entire list of potential
@@ -91,6 +94,23 @@ package body Alire.Crate_Configuration is
                            return Utils.Switches.Profile_Kind
    is (This.Profile_Map (Crate));
 
+   --------------------
+   -- Build_Switches --
+   --------------------
+
+   function Build_Switches (This  : in out Global_Config;
+                            Root  : in out Roots.Root;
+                            Crate : Crate_Name)
+                            return Utils.Switches.Switch_List
+   is
+   begin
+      --  Ensure they're up to date
+      Make_Switches_Map (This, Root,
+                         Containers.Crate_Name_Sets.To_Set (Crate));
+
+      return This.Switches_Map (Crate);
+   end Build_Switches;
+
    -----------------------
    -- Build_Profile_Key --
    -----------------------
@@ -104,7 +124,8 @@ package body Alire.Crate_Configuration is
 
    procedure Set_Build_Profile (This    : in out Global_Config;
                                 Crate   : Crate_Name;
-                                Profile : Profile_Kind)
+                                Profile : Profile_Kind;
+                                Set_By  : String := "library client")
    is
       Key : constant String := Build_Profile_Key (Crate);
       Val : Config_Setting  := This.Var_Map (+Key);
@@ -113,7 +134,7 @@ package body Alire.Crate_Configuration is
    begin
       --  Update config value that holds the profile value
       Val.Value  := TOML.Create_String (To_Lower_Case (Profile'Image));
-      Val.Set_By := +"library client";
+      Val.Set_By := +Set_By;
       This.Var_Map (+Key) := Val;
 
       --  Update profile itself
@@ -235,7 +256,8 @@ package body Alire.Crate_Configuration is
            (Profile_Maps.Key (Cursor),
             (Name => +Builtin_Build_Profile.Name,
              Value => TOML.Create_String
-               (To_Lower_Case (Profile_Maps.Element (Cursor)'Img))));
+               (To_Lower_Case (Profile_Maps.Element (Cursor)'Img))),
+            Set_By => "Build profile map");
       end loop;
 
    end Make_Build_Profile_Map;
@@ -258,8 +280,8 @@ package body Alire.Crate_Configuration is
 
             Config : Alire.Utils.Switches.Switches_Configuration
               := (case Profile is
-                     when Release => Default_Release_Switches,
-                     when Validation => Default_Validation_Switches,
+                     when Release     => Default_Release_Switches,
+                     when Validation  => Default_Validation_Switches,
                      when Development => Default_Development_Switches);
 
             Modif : Properties.Build_Switches.Profile_Modifier;
@@ -289,7 +311,7 @@ package body Alire.Crate_Configuration is
                   Properties.Build_Switches.Apply (Config, Modif.Development);
             end case;
 
-            This.Switches_Map.Insert (Rel.Name, Get_List (Config));
+            This.Switches_Map.Include (Rel.Name, Get_List (Config));
          end;
       end loop;
    end Make_Switches_Map;
@@ -317,8 +339,6 @@ package body Alire.Crate_Configuration is
 
       Make_Build_Profile_Map (This, Root, Rel_Vect);
 
-      Make_Switches_Map (This, Root, Rel_Vect);
-
       for Create of Rel_Vect loop
          This.Load_Settings (Root, Create);
       end loop;
@@ -340,7 +360,7 @@ package body Alire.Crate_Configuration is
    ------------------------
    -- Is_Config_Complete --
    ------------------------
-   --  Say if all variables in configuration are set, for all or one crate
+
    function Is_Config_Complete (This  : Global_Config;
                                 Crate : String := "")
                                 return Boolean
@@ -373,13 +393,46 @@ package body Alire.Crate_Configuration is
    -- Generate_Config_Files --
    ---------------------------
 
-   procedure Generate_Config_Files (This : Global_Config;
-                                    Root : in out Alire.Roots.Root)
+   procedure Generate_Config_Files (This : in out Global_Config;
+                                    Root : in out Alire.Roots.Root;
+                                    Full : Boolean)
    is
+      Solution : constant Solutions.Solution := Root.Solution;
+   begin
+      if not Solution.Is_Complete then
+         Warnings.Warn_Once ("Generating possibly incomplete configuration"
+                             & " because of missing dependencies");
+      end if;
+
+      Trace.Detail ("Generating crate config files");
+
+      This.Save_Last_Build_Profiles;
+
+      for Crate of Root.Nonabstract_Crates loop
+         declare
+            Rel : constant Releases.Release := Root.Release (Crate);
+         begin
+            This.Generate_Config_Files (Root, Rel, Full);
+         end;
+      end loop;
+   end Generate_Config_Files;
+
+   ---------------------------
+   -- Generate_Config_Files --
+   ---------------------------
+
+   procedure Generate_Config_Files (This : in out Global_Config;
+                                    Root : in out Alire.Roots.Root;
+                                    Rel  : Releases.Release;
+                                    Full : Boolean)
+   is
+
       use Alire.Directories;
       use Alire.Origins;
 
-      Solution : constant Solutions.Solution := Root.Solution;
+      ----------------------
+      -- Get_Config_Entry --
+      ----------------------
 
       function Get_Config_Entry (Rel : Releases.Release) return Config_Entry is
       begin
@@ -396,72 +449,78 @@ package body Alire.Crate_Configuration is
             return Ret;
          end;
       end Get_Config_Entry;
+
+      Ent : constant Config_Entry := Get_Config_Entry (Rel);
+
+      Conf_Dir : constant Absolute_Path :=
+                   Root.Release_Base (Rel.Name, Roots.For_Build)
+                   / Ent.Output_Dir;
+
    begin
+      --  We don't create config files for external releases, since they
+      --  are not sources built by Alire.
+      if Rel.Origin.Requires_Build then
 
-      if not Solution.Is_Complete then
-         Warnings.Warn_Once ("Generating possibly incomplete configuration"
-                             & " because of missing dependencies");
-      end if;
+         --  Check completeness before generating anything
 
-      Trace.Detail ("Generating crate config files");
+         if not This.Is_Config_Complete (Rel.Name_Str) then
+            Warnings.Warn_Once
+              ("Skipping generation of incomplete configuration files "
+               & "for crate " & Utils.TTY.Name (Rel.Name_Str));
 
-      This.Save_Last_Build_Profiles;
+         elsif not Full
+           and then Directories.Is_Directory (Conf_Dir)
+           and then This.Is_Config_Complete -- avoid hashing in Config_Outdated
+           and then not Root.Config_Outdated (Rel.Name)
+         then
+            Trace.Debug ("Skipping generation of up-to-date config for "
+                         & Rel.Milestone.TTY_Image);
 
-      for Crate of Root.Nonabstract_Crates loop
-         declare
-            Rel : constant Releases.Release := Root.Release (Crate);
-         begin
-            --  We don't create config files for external releases, since they
-            --  are not sources built by Alire.
-            if Rel.Origin.Kind /= Alire.Origins.External then
+         else
+            Trace.Debug ("Generating config files for release: "
+                         & Rel.Milestone.TTY_Image);
 
-               --  Check completeness before generating anything
+            --  Update switches to match profile
+            This.Make_Switches_Map
+              (Root,
+               Containers.Crate_Name_Sets.To_Set (Rel.Name));
 
-               if not This.Is_Config_Complete (Rel.Name_Str) then
-                  Warnings.Warn_Once
-                    ("Skipping generation of incomplete configuration files "
-                     & "for crate " & Utils.TTY.Name (Rel.Name_Str));
-               else
-                  declare
-                     Ent : constant Config_Entry := Get_Config_Entry (Rel);
+            declare
+               Version_Str : constant String := Rel.Version.Image;
+            begin
+               if not Ent.Disabled then
+                  Ada.Directories.Create_Path (Conf_Dir);
 
-                     Conf_Dir : constant Absolute_Path :=
-                                 Root.Release_Base (Rel.Name) / Ent.Output_Dir;
+                  if Ent.Generate_Ada then
+                     This.Generate_Ada_Config
+                       (Rel.Name,
+                        Conf_Dir / (+Rel.Name & "_config.ads"),
+                        Version_Str);
+                  end if;
 
-                     Version_Str : constant String := Rel.Version.Image;
-                  begin
-                     if not Ent.Disabled then
-                        Ada.Directories.Create_Path (Conf_Dir);
+                  if Ent.Generate_GPR then
+                     This.Generate_GPR_Config
+                       (Rel.Name,
+                        Conf_Dir / (+Rel.Name & "_config.gpr"),
+                        (if Ent.Auto_GPR_With
+                         then Root.Direct_Withs (Rel)
+                         else AAA.Strings.Empty_Set),
+                        Version_Str);
+                  end if;
 
-                        if Ent.Generate_Ada then
-                           This.Generate_Ada_Config
-                             (Rel.Name,
-                              Conf_Dir / (+Rel.Name & "_config.ads"),
-                              Version_Str);
-                        end if;
-
-                        if Ent.Generate_GPR then
-                           This.Generate_GPR_Config
-                             (Rel.Name,
-                              Conf_Dir / (+Rel.Name & "_config.gpr"),
-                              (if Ent.Auto_GPR_With
-                               then Root.Direct_Withs (Rel)
-                               else AAA.Strings.Empty_Set),
-                              Version_Str);
-                        end if;
-
-                        if Ent.Generate_C then
-                           This.Generate_C_Config
-                             (Rel.Name,
-                              Conf_Dir / (+Rel.Name & "_config.h"),
-                              Version_Str);
-                        end if;
-                     end if;
-                  end;
+                  if Ent.Generate_C then
+                     This.Generate_C_Config
+                       (Rel.Name,
+                        Conf_Dir / (+Rel.Name & "_config.h"),
+                        Version_Str);
+                  end if;
                end if;
-            end if;
-         end;
-      end loop;
+            end;
+         end if;
+      else
+         Trace.Debug ("Not generating config files for non-buildable release: "
+                      & Rel.Milestone.TTY_Image);
+      end if;
    end Generate_Config_Files;
 
    -------------------------
@@ -539,17 +598,6 @@ package body Alire.Crate_Configuration is
    function Is_Valid (This : Global_Config) return Boolean
    is (not This.Profile_Map.Is_Empty);
    --  Because at a minimum it must contain the root crate profile
-
-   ---------------------
-   -- Must_Regenerate --
-   ---------------------
-
-   function Must_Regenerate (This : Global_Config) return Boolean
-   is
-      use type Profile_Maps.Map;
-   begin
-      return This.Profile_Map /= Last_Build_Profiles;
-   end Must_Regenerate;
 
    ---------------------------
    -- Pretty_Print_Switches --
@@ -730,6 +778,13 @@ package body Alire.Crate_Configuration is
       TIO.Close (File);
    end Generate_C_Config;
 
+   ---------
+   -- Key --
+   ---------
+
+   function Key (Crate : Crate_Name; Var_Name : String) return String
+   is (To_Lower_Case (Crate.As_String & "." & Var_Name));
+
    --------------------
    -- Add_Definition --
    --------------------
@@ -740,7 +795,7 @@ package body Alire.Crate_Configuration is
    is
       Type_Name_Lower : constant String := To_Lower_Case (Type_Def.Name);
 
-      Name : constant Unbounded_String := +(+Crate & "." & Type_Name_Lower);
+      Name : constant Unbounded_String := +Key (Crate, Type_Def.Name);
    begin
 
       if Is_Reserved_Name (Type_Name_Lower) then
@@ -789,15 +844,13 @@ package body Alire.Crate_Configuration is
    -- Set_Value --
    ---------------
 
-   procedure Set_Value (This  : in out Global_Config;
-                        Crate : Crate_Name;
-                        Val   : Assignment)
+   procedure Set_Value (This   : in out Global_Config;
+                        Crate  : Crate_Name;
+                        Val    : Assignment;
+                        Set_By : String)
    is
-      Val_Name_Lower : constant String := To_Lower_Case (+Val.Name);
-      Crate_Str : constant String := +Crate;
-      Name : constant Unbounded_String := (+Crate_Str) & "." & Val_Name_Lower;
+      Name : constant Unbounded_String := +Key (Crate, +Val.Name);
    begin
-
       --  TODO check if setting configuration of a dependency
 
       if not This.Var_Map.Contains (Name) then
@@ -812,18 +865,20 @@ package body Alire.Crate_Configuration is
 
          if not Valid (Ref.Type_Def.Element, Val.Value) then
             Raise_Checked_Error
-              ("Invalid value from '" & Crate_Str &
+              ("Invalid value from '" & Crate.As_String &
                  "'" & " for type " & Image (Ref.Type_Def.Element));
          end if;
 
-         if Ref.Value /= No_TOML_Value and then Ref.Value /= Val.Value then
+         if Ref.Value.Is_Present and then not Ref.Value.Equals (Val.Value)
+         then
             Raise_Checked_Error
               ("Conflicting value for configuration variable '" &
-               (+Name) & "' from '" & (+Ref.Set_By) & "' and '"
-               & (+Crate) & "'.");
+               (+Name) & "' from '" & (+Ref.Set_By) & "' (" &
+                 Image (Ref.Value) & ") and '"
+               & Set_By & "' (" & Image (Val.Value) & ").");
          else
             Ref.Value  := Val.Value;
-            Ref.Set_By := +(+Crate);
+            Ref.Set_By := +(Set_By);
          end if;
       end;
    end Set_Value;
@@ -849,7 +904,8 @@ package body Alire.Crate_Configuration is
               Config_Value_Assignment (Prop);
          begin
             for Elt of List.List loop
-               This.Set_Value (To_Name (+List.Crate), Elt);
+               This.Set_Value (To_Name (+List.Crate), Elt,
+                               Set_By => As_String (Crate));
             end loop;
          end;
       end loop;
@@ -896,7 +952,7 @@ package body Alire.Crate_Configuration is
    -------------------------
 
    function Last_Build_Profiles return Profile_Maps.Map is
-      Str : constant String := Config.DB.Get ("last_build_profile", "");
+      Str : constant String := Settings.DB.Get ("last_build_profile", "");
       Profiles : Parsed_Profiles;
    begin
       Profiles := Parse_Profiles (Str, Accept_Wildcards => False);
@@ -929,6 +985,7 @@ package body Alire.Crate_Configuration is
          else
             Raise_Checked_Error ("Invalid profile value: " & TTY.Error (Img)
                                  & " in profile list: " & Parse_Profiles.Img);
+            pragma Warnings (Off, "unreachable code");
             raise Program_Error; -- Unreachable
          end if;
       end To_Profile;
@@ -999,7 +1056,7 @@ package body Alire.Crate_Configuration is
            (String'(Key (I).As_String & Profile_Assign & Element (I)'Image));
       end loop;
 
-      Config.Edit.Set_Locally ("last_build_profile",
+      Settings.Edit.Set_Locally ("last_build_profile",
                                Profiles.Flatten (Profile_Split));
    end Save_Last_Build_Profiles;
 

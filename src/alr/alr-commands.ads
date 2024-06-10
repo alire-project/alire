@@ -1,3 +1,4 @@
+private with AAA.Enum_Tools;
 with AAA.Strings;
 
 with Alire.Directories;
@@ -7,7 +8,8 @@ with Alire.Version;
 
 with CLIC.Subcommand;
 
-private with Ada.Text_IO;
+private with GNAT.IO;
+private with GNAT.Strings;
 private with CLIC.Subcommand.Instance;
 
 private with Alr.OS_Lib; -- For the benefit of many child packages that use it
@@ -59,13 +61,17 @@ package Alr.Commands is
    --  Unless Force_Reload, if the index is not empty we no nothing. When
    --  strict, don't allow unknown values in enums.
 
-   procedure Requires_Valid_Session (Cmd          : in out Command'Class;
-                                     Sync         : Boolean := True);
-   --  Verifies that a valid working dir is in scope. After calling it,
+   procedure Requires_Workspace (Cmd   : in out Command'Class;
+                                 Sync  : Boolean := True;
+                                 Error : String := "");
+   --  Verifies that a valid workspace is in scope. After calling it,
    --  Cmd.Root will be usable if alr was run inside a Root. If Sync, enforce
    --  that the manifest, lockfile and dependencies on disk are in sync, by
    --  performing a silent update. If not Sync, only a minimal empty lockfile
-   --  is created.
+   --  is created. If Error, replace the first generic error message with it.
+
+   function Has_Root (Cmd : in out Command'Class) return Boolean;
+   --  True when Requires_Workspace would succeed, false otherwise
 
    procedure Load (Cmd       : Command'Class;
                    Crate     : Alire.Crate_Name;
@@ -91,8 +97,8 @@ package Alr.Commands is
    --  Returns the instructions to restrict version sets, for use in
    --  Long_Description help functions.
 
-   function Enter_Working_Folder return Alire.Directories.Destination;
-   --  Attempt to find the root alire working dir if deeper inside it
+   function Enter_Workspace_Root return Alire.Directories.Destination;
+   --  Attempt to find the root alire workspace if deeper inside it
 
 private
 
@@ -105,8 +111,8 @@ private
    --  Facilities for command/argument identification. These are available to
    --  commands.
 
-   procedure Reportaise_Command_Failed  (Message : String);
-   procedure Reportaise_Wrong_Arguments (Message : String);
+   procedure Reportaise_Command_Failed  (Message : String) with No_Return;
+   procedure Reportaise_Wrong_Arguments (Message : String) with No_Return;
    --  Report and Raise :P
 
    --  Folder guards conveniences for commands:
@@ -118,11 +124,14 @@ private
 
    --  Common generalities
 
-   procedure New_Line (Spacing : Ada.Text_IO.Positive_Count := 1)
-   renames Ada.Text_IO.New_Line;
+   procedure New_Line (Spacing : Positive := 1)
+   renames GNAT.IO.New_Line;
 
    procedure Put_Line (S : String)
-   renames Ada.Text_IO.Put_Line;
+   renames GNAT.IO.Put_Line;
+
+   procedure Put (S : String)
+   renames GNAT.IO.Put;
 
    procedure Put_Error (Str : String);
    procedure Set_Global_Switches
@@ -130,9 +139,9 @@ private
 
    package Sub_Cmd is new CLIC.Subcommand.Instance
      (Main_Command_Name   => "alr",
-      Version             => Alire.Version.Current,
-      Put                 => Ada.Text_IO.Put,
-      Put_Line            => Ada.Text_IO.Put_Line,
+      Version             => Alire.Version.Current.Image,
+      Put                 => GNAT.IO.Put,
+      Put_Line            => GNAT.IO.Put_Line,
       Put_Error           => Put_Error,
       Error_Exit          => OS_Lib.Bailout,
       Set_Global_Switches => Set_Global_Switches,
@@ -140,6 +149,28 @@ private
       TTY_Description     => Alire.TTY.Description,
       TTY_Version         => Alire.TTY.Version,
       TTY_Underline       => Alire.TTY.Underline,
-      TTY_Emph            => Alire.TTY.Emph);
+      TTY_Emph            => Alire.TTY.Emph,
+      Global_Options_In_Subcommand_Help => False);
+
+   procedure Auto_Update_Index (This : Command);
+
+   Unset : constant String := "unset";
+   --  Canary for when a string switch is given without value
+
+   subtype GNAT_String is GNAT.Strings.String_Access;
+   --  Convenience for commands that use string arguments
+
+   function Is_Boolean is new AAA.Enum_Tools.Is_Valid (Boolean);
+
+   function To_Boolean (Image   : GNAT_String;
+                        Switch  : String;
+                        Default : Boolean)
+                        return Boolean
+     with Post =>
+       (if Image in null or else Image.all = "" or else Image.all = Unset
+        then To_Boolean'Result = Default);
+   --  Convert a switch value to a boolean, if explicitly given, or use the
+   --  default otherwise. If not a valid boolean or empty, raise Checked_Error
+   --  with an appropriate error message.
 
 end Alr.Commands;

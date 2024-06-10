@@ -1,3 +1,5 @@
+with Alire.Utils.Did_You_Mean;
+
 package body Alire.Properties.Labeled is
 
    ------------
@@ -47,7 +49,18 @@ package body Alire.Properties.Labeled is
                return L;
             end if;
          end loop;
-         From.Checked_Error ("Key is not a valid property: " & K);
+
+         declare
+            Possible_Values : AAA.Strings.Vector;
+         begin
+            for L in Labels loop
+               Possible_Values.Append (Labeled.Key (L));
+            end loop;
+
+            From.Checked_Error ("Key is not a valid property: " & K & "'" &
+                                  Utils.Did_You_Mean.Suggestion
+                                  (K, Possible_Values));
+         end;
       end Key_To_Label;
 
       --  For conditional loading, we use specific conditional loaders that

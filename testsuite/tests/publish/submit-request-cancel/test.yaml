@@ -1,0 +1,7 @@
+driver: python-script
+build_mode: both
+control:
+    - [SKIP, "skip_local",   "Local tests disabled"]
+    - [SKIP, "skip_network", "Network-requiring tests disabled"]
+indexes:
+    compiler_only_index: {}

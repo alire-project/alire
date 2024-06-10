@@ -1,7 +1,5 @@
 with AAA.Strings;
 
-private with GNAT.Strings;
-
 package Alr.Commands.Search is
 
    type Command is new Commands.Command with private;
@@ -38,7 +36,6 @@ private
       Full     : aliased Boolean := False;
       List     : aliased Boolean := False;
       External : aliased Boolean := False;
-      Prop     : aliased GNAT.Strings.String_Access;
    end record;
 
 end Alr.Commands.Search;

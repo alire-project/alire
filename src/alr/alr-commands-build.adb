@@ -1,4 +1,7 @@
+with AAA.Enum_Tools;
+
 with Alire.Crate_Configuration;
+with Alire.TOML_Adapters;
 with Alire.Utils.Switches;
 
 with Stopwatch;
@@ -6,6 +9,7 @@ with Stopwatch;
 package body Alr.Commands.Build is
 
    Switch_Profiles : constant String := "--profiles";
+   Switch_Stop     : constant String := "--stop-after";
 
    --------------------
    -- Apply_Profiles --
@@ -50,16 +54,37 @@ package body Alr.Commands.Build is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
+      function Is_Valid_Stage is
+        new AAA.Enum_Tools.Is_Valid (Alire.Builds.Stop_Points);
+
       use Alire.Utils.Switches;
       Profiles_Selected : constant Natural :=
                             Alire.Utils.Count_True ((Cmd.Release_Mode,
                                                      Cmd.Validation_Mode,
                                                      Cmd.Dev_Mode));
       Profile : Profile_Kind;
+      Stop_After : Alire.Builds.Stop_Points := Alire.Builds.Stop_Points'Last;
    begin
+      --  Validation
+
       if Profiles_Selected > 1 then
          Reportaise_Wrong_Arguments ("Only one build profile can be selected");
       end if;
+
+      if Cmd.Stop_After.all /= "" then
+         if Is_Valid_Stage (Alire.TOML_Adapters.Adafy (Cmd.Stop_After.all))
+         then
+            Stop_After := Alire.Builds.Stop_Points'Value
+              (Alire.TOML_Adapters.Adafy (Cmd.Stop_After.all));
+         else
+            Reportaise_Wrong_Arguments
+              ("Stopping stage is invalid: " & TTY.Error (Cmd.Stop_After.all)
+               & "; see " & TTY.Terminal ("alr help build")
+               & " for valid values");
+         end if;
+      end if;
+
+      Cmd.Requires_Workspace;
 
       --  Build profile in the command line takes precedence. The configuration
       --  will have been loaded at this time with all profiles found in
@@ -85,9 +110,7 @@ package body Alr.Commands.Build is
 
       --  And redirect to actual execution procedure
 
-      if not Execute (Cmd, Args,
-                      Export_Build_Env => True)
-      then
+      if not Execute (Cmd, Args, Stop_After) then
          Reportaise_Command_Failed ("Compilation failed.");
       end if;
    end Execute;
@@ -98,24 +121,44 @@ package body Alr.Commands.Build is
 
    function Execute (Cmd              : in out Commands.Command'Class;
                      Args             :        AAA.Strings.Vector;
-                     Export_Build_Env :        Boolean)
+                     Stop             :        Alire.Builds.Stop_Points :=
+                       Alire.Builds.Stop_Points'Last)
                      return Boolean
    is
+      use type Alire.Builds.Stop_Points;
    begin
+      --  Prevent premature update of dependencies, as the exact folders
+      --  will depend on the build hashes, which are yet unknown until
+      --  build profiles are applied.
+      Cmd.Requires_Workspace (Sync => Alire.Builds.Sandboxed_Dependencies);
+      --  TODO: remove sync once config generation is per crate.
 
       declare
          Timer : Stopwatch.Instance;
+         Build_Kind : constant String :=
+                        (if Stop < Alire.Builds.Stop_Points'Last
+                         then TTY.Warn ("Partial") & " build"
+                         else "Build");
       begin
          if Cmd.Root.Build (Args,
-                            Export_Build_Env,
-                            Saved_Profiles => Cmd not in Build.Command'Class)
+                            Saved_Profiles => Cmd not in Build.Command'Class,
+                            Stop_After     => Stop)
            --  That is, we apply the saved profiles unless the user is
            --  explicitly invoking `alr build`.
          then
 
-            Trace.Info ("Build finished successfully in "
-                        & TTY.Bold (Timer.Image) & " seconds.");
-            Trace.Detail ("Use alr run --list to check available executables");
+            Alire.Put_Success (Build_Kind & " finished successfully in "
+                               & TTY.Bold (Timer.Image) & " seconds.");
+
+            if Stop < Alire.Builds.Stop_Points'Last then
+               Alire.Put_Info
+                 ("Build was requested to stop after stage: "
+                  & TTY.Emph (AAA.Strings.To_Lower_Case (Stop'Image))
+                  & "; build artifacts may be missing.");
+            else
+               Trace.Detail
+                 ("Use alr run --list to check available executables");
+            end if;
 
             return True;
 
@@ -133,9 +176,29 @@ package body Alr.Commands.Build is
    overriding
    function Long_Description (Cmd : Command)
                               return AAA.Strings.Vector
-   is (AAA.Strings.Empty_Vector
+   is
+      use all type Alire.Builds.Stop_Points;
+
+      -----------
+      -- Stage --
+      -----------
+
+      function Stage (Name        : Alire.Builds.Stop_Points;
+                      Description : String)
+                      return String
+      is ("* "
+          & TTY.Emph (Alire.TOML_Adapters.Tomify (Name'Image))
+          & ": " & Description);
+
+      function Building return Alire.Builds.Stop_Points
+      is (Alire.Builds.Build);
+
+   begin
+      return AAA.Strings.Empty_Vector
        .Append ("Invokes gprbuild to compile all targets in the current"
          & " crate.")
+       .New_Line
+       .Append (TTY.Bold ("Build profiles"))
        .New_Line
        .Append ("A build profile can be selected with the appropriate switch."
          & " The profile is applied to the root release only, "
@@ -154,7 +217,33 @@ package body Alr.Commands.Build is
          & " (dependencies). Indirect builds through, e.g., '"
          & TTY.Terminal ("alr run") & "' will use the last '"
          & TTY.Terminal ("alr build") & "' configuration.")
-      );
+       .New_Line
+         .Append (TTY.Bold ("Build stages"))
+         .New_Line
+         .Append ("Instead of a full build, the process can be stopped early "
+           & "using " & TTY.Terminal (Switch_Stop) & "=<stage>, where <stage> "
+                  & "is one of:")
+        .New_Line
+        .Append (Stage (Sync, "      sync pristine sources to build location"))
+        .Append (Stage (Generation, "generate configuration-dependent files"))
+        .Append (Stage (Post_Fetch, "running of post-fetch actions"))
+        .Append (Stage (Pre_Build, " running of pre-build actions"))
+        .Append (Stage (Building, "     actual building of sources"))
+        .Append (Stage (Post_Build, "running of post-build actions"))
+        .New_Line
+        .Append ("These stages are always run in the given order. A premature"
+                 & " stop will likely not produce the complete build "
+                 & "artifacts, so it is intended for advanced usage when "
+                 & "debugging or testing specific build stages, or to ensure "
+                 & "generated files are up-to-date without launching a "
+                 & "costly build, for example.")
+        .New_Line
+        .Append ("After a partial build, to ensure a proper full build is"
+                 & " performed, just run a regular "
+                 & TTY.Terminal ("alr build") &  " without "
+                 & Switch_Stop & ".")
+      ;
+   end Long_Description;
 
    --------------------
    -- Setup_Switches --
@@ -184,7 +273,15 @@ package body Alr.Commands.Build is
         (Config,
          Cmd.Profiles'Access,
          "", Switch_Profiles & "=",
-         "Comma-separated list of <crate>=<profile> values (see description)");
+         "Comma-separated list of <crate>=<profile> values (see description)",
+         Argument => "LIST");
+
+      Define_Switch
+        (Config,
+         Cmd.Stop_After'Access,
+         "", Switch_Stop & "=",
+         "Build stage after which to stop (see description)",
+         Argument => "STAGE");
 
    end Setup_Switches;
 

@@ -32,6 +32,25 @@ package body Alire.Hashes.Common is
          raise;
    end Hash_File;
 
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (C          : in out Context;
+                     S          : String;
+                     Append_Nul : Boolean := True)
+   is
+      use Ada.Streams;
+      Bytes : Stream_Element_Array (1 .. S'Length)
+        with Address => S (S'First)'Address, Import;
+      pragma Assert (Bytes'Size = S (S'Range)'Size);
+   begin
+      Update (C, Bytes);
+      if Append_Nul then
+         Update (C, Stream_Element_Array'(1 .. 1 => 0));
+      end if;
+   end Update;
+
 begin
    Hashes.Hash_Functions (Kind) := Hash_File'Access;
 end Alire.Hashes.Common;

@@ -12,7 +12,7 @@ from re import escape as e
 # This test relies on three crates in the toolchain_index:
 # crate_conflict=1.2.3 conflicts with crate_lone* and crate_virtual*
 # crate_lone is a regular crate
-# crate_virtual has no releases, but is provided by crate_conflict_1
+# crate_virtual has no releases, but is provided by crate_conflict=1.2.3
 # Crate conflict cannot appear with any of the others in a solution, because of
 # its [forbids] table.
 

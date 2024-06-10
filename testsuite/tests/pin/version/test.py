@@ -36,7 +36,7 @@ Dependencies (direct):
    hello*
 Pins (direct):
    hello = { version='7.7.7' }
-Dependencies (external):
+Dependencies (missing):
    hello=7.7.7 (direct,missed:unavailable,pin=7.7.7) (pinned)
 Dependencies (graph):
    xxx=0.1.0-dev --> hello*

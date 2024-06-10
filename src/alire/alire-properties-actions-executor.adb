@@ -1,9 +1,57 @@
 with Alire.Directories;
+with Alire.Errors;
+with Alire.Flags;
 with Alire.OS_Lib.Subprocess;
 with Alire.Properties.Actions.Runners;
+with Alire.Roots;
 with Alire.Utils.TTY;
 
 package body Alire.Properties.Actions.Executor is
+
+   ---------------------
+   -- Execute_Actions --
+   ---------------------
+
+   procedure Execute_Actions (Root    : in out Roots.Root;
+                              State   : Dependencies.States.State;
+                              Moment  : Moments)
+   is
+      Rel : constant Releases.Release := State.Release;
+
+      CWD : constant Absolute_Path :=
+              Root.Release_Base (Rel.Name, Roots.For_Build);
+
+      CD  : Directories.Guard (Directories.Enter (CWD)) with Unreferenced;
+   begin
+      if Moment = Post_Fetch and then
+        Flags.Post_Fetch (CWD).Exists
+      then
+         Trace.Debug
+           ("Skipping already ran " &
+              Utils.TTY.Name (TOML_Adapters.Tomify (Moment'Image))
+            & " actions for " & Rel.Milestone.TTY_Image & "...");
+         return;
+      end if;
+
+      Execute_Actions
+        (Release => Rel,
+         Env     => Root.Environment,
+         Moment  => Moment);
+
+      if Moment = Post_Fetch then
+         Flags.Post_Fetch (CWD).Mark_Done;
+      end if;
+   exception
+      when Checked_Error =>
+         raise;
+      when E : others =>
+         Log_Exception (E);
+         Trace.Warning ("A " & TOML_Adapters.Tomify (Moment'Image)
+                        & " for release " & Rel.Milestone.TTY_Image
+                        & " action failed, " &
+                          "re-run with -vv -d for details");
+         raise Action_Failed;
+   end Execute_Actions;
 
    -----------------
    -- Execute_Run --
@@ -28,7 +76,18 @@ package body Alire.Properties.Actions.Executor is
 
       Cmd   : constant AAA.Strings.Vector := Prefix.Append (This.Command_Line);
 
+      Exec : String renames Cmd.First_Element;
    begin
+      if Alire.OS_Lib.Locate_Exec_On_Path (Exec) = "" and then
+        not GNAT.OS_Lib.Is_Executable_File (Exec)
+      then
+         Raise_Checked_Error
+           (Errors.New_Wrapper ("Cannot run action:")
+            .Wrap ("Command not found  [" & TTY.Terminal (Exec) & "]")
+            .Wrap ("Working directory  [" & TTY.URL (Current) & "]")
+            .Wrap ("Action description [" & This.Image & "]").Get);
+      end if;
+
       if Capture then
          Code := Subprocess.Unchecked_Spawn_And_Capture
            (Command             => Cmd.First_Element,
@@ -63,6 +122,16 @@ package body Alire.Properties.Actions.Executor is
          Err_To_Out => False,
          Code       => Unused_Code,
          Output     => Unused_Output);
+   exception
+      when Checked_Error =>
+         raise;
+      when E : others =>
+         Log_Exception (E);
+         Trace.Warning ("A " & TOML_Adapters.Tomify (Moment'Image)
+                        & " for release " & Release.Milestone.TTY_Image
+                        & " action failed, " &
+                          "re-run with -vv -d for details");
+         raise Action_Failed;
    end Execute_Actions;
 
    ---------------------
@@ -85,12 +154,13 @@ package body Alire.Properties.Actions.Executor is
 
       if not Release.On_Platform_Actions (Env, Now).Is_Empty then
          Put_Info ("Running " &
-                     Utils.TTY.Name (AAA.Strings.To_Lower_Case (Moment'Image))
+                     Utils.TTY.Name (TOML_Adapters.Tomify (Moment'Image))
                    & " actions for " & Release.Milestone.TTY_Image & "...");
       end if;
 
       for Act of Release.On_Platform_Actions (Env, Now) loop
-         Trace.Detail ("Running action: " & Act.Image);
+         Trace.Detail ("Running action: " & Act.Image
+                       & " (cwd:" & Directories.Current & ")");
          Execute_Run (This       => Runners.Run (Act),
                       Capture    => Capture,
                       Err_To_Out => Err_To_Out,

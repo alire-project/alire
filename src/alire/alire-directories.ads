@@ -2,11 +2,16 @@ with Ada.Directories;
 
 with AAA.Strings;
 
+with Alire.Errors;
 with Alire.OS_Lib;
 
 private with Ada.Finalization;
 
+with GNAT.OS_Lib;
+
 package Alire.Directories is
+
+   package Adirs renames Ada.Directories;
 
    function "/" (L, R : String) return String renames OS_Lib."/";
 
@@ -27,10 +32,17 @@ package Alire.Directories is
    --  equivalent to "cp -r src/* dst/". Excluding may be a single name that
    --  will not be copied (if file) or recursed into (if folder).
 
+   procedure Copy_Link (Src, Dst : Any_Path)
+     with Pre => GNAT.OS_Lib.Is_Symbolic_Link (Src);
+   --  Copy a softlink into a new place preserving its relative path to target
+
    function Current return String renames Ada.Directories.Current_Directory;
 
    function Parent (Path : Any_Path) return String
                     renames Ada.Directories.Containing_Directory;
+
+   function Full_Name (Path : Any_Path) return String
+                       renames Ada.Directories.Full_Name;
 
    function Detect_Root_Path (Starting_At : Absolute_Path := Current)
                               return String;
@@ -39,15 +51,15 @@ package Alire.Directories is
    procedure Create_Tree (Path : Any_Path);
    --  Create Path and all necessary intermediate folders
 
-   procedure Delete_Tree (Path : Any_Path);
-   --  Equivalent to Ensure_Deletable + Ada.Directories.Delete_Tree
-
    procedure Ensure_Deletable (Path : Any_Path);
    --  In Windows, git checkouts are created with read-only file that do not
    --  sit well with Ada.Directories.Delete_Tree.
 
-   procedure Force_Delete (Path : Any_Path);
-   --  Calls Ensure_Deletable and then Adirs.Delete_Tree
+   procedure Force_Delete (Path : Absolute_Path);
+   --  Calls Ensure_Deletable and then uses GNATCOLL.VFS deletion
+
+   procedure Delete_Tree (Path : Absolute_Path) renames Force_Delete;
+   --  Delete Path, and anythin below if it was a dir
 
    function Find_Files_Under (Folder    : String;
                               Name      : String;
@@ -73,18 +85,45 @@ package Alire.Directories is
    --  Finds a single file in a folder with the given extension and return its
    --  absolute path.  If more than one, or none, returns "".
 
-   procedure Touch (File : File_Path);
-   --  If the file exists, update last edition time; otherwise create it. If
-   --  File denotes anything else than a regular file, raise.
+   function Is_Directory (Path : Any_Path) return Boolean;
+   --  Returns false for non-existing paths too
 
-   procedure Traverse_Tree (Start   : Relative_Path;
+   function Is_File (Path : Any_Path) return Boolean;
+   --  False if Path does not designate a regular file
+
+   procedure Merge_Contents (Src, Dst              : Any_Path;
+                             Skip_Top_Level_Files  : Boolean;
+                             Fail_On_Existing_File : Boolean;
+                             Remove_From_Source    : Boolean);
+   --  Move all contents from Src into Dst, recursively. Dirs already existing
+   --  on Dst tree will be merged. For existing regular files, either log
+   --  at debug level or fail. If Skip, discard files at the Src top-level.
+   --  This is what we want when manually unpacking binary releases, as
+   --  the top-level only contains "doinstall", "README" and so on that
+   --  are unusable and would be confusing in a binary prefix.
+
+   procedure Touch (File : File_Path; Create_Tree : Boolean := False)
+     with Pre => Create_Tree or else Is_Directory (Parent (File));
+   --  If the file exists, update last edition time; otherwise create it.
+   --  If File denotes anything else than a regular file, raise.
+
+   Traverse_Tree_Prune_Dir : exception;
+   --  In Traverse_Tree, the Doing procedure can raise this exception to
+   --  signal that a directory must not be entered, but without stopping
+   --  the traversal.
+
+   procedure Traverse_Tree (Start   : Any_Path;
                             Doing   : access procedure
                               (Item : Ada.Directories.Directory_Entry_Type;
                                Stop : in out Boolean);
-                            Recurse : Boolean := False);
+                            Recurse : Boolean := False;
+                            Spinner : Boolean := False);
    --  Traverse all items in a folder, optionally recursively If recursively,
-   --  the directory entry is passed before entering it "." and ".." are
-   --  ignored. If Stop is set to True, traversal will not continue.
+   --  the directory entry is passed before entering it. "." and ".."
+   --  are ignored. NOTE: Softlinks to directories are ignored. If Stop is set
+   --  to True, traversal will not continue. See also the comments in
+   --  Traverse_Tree_Prune_Dir. If Spinner, show a busy spinner with
+   --  the current dir being explored.
 
    function Tree_Size (Path : Any_Path) return Ada.Directories.File_Size;
    --  Size of files under a given point, in bytes. Will return 0 for an
@@ -99,7 +138,7 @@ package Alire.Directories is
    --  This type simplifies staying in a folder during the life of a scope.
    --  Once the scope ends, the current folder is set back to the one it was.
 
-   type Destination is access String;
+   type Destination is access Absolute_Path;
    Stay : constant Destination;
 
    type Guard (Enter : Destination := Stay) is limited private;
@@ -133,6 +172,12 @@ package Alire.Directories is
    --  The user is responsible for using the temp file name as they see fit.
    --  The file is deleted once an object of this type goes out of scope.
    --  If the file/folder was never created on disk nothing will happen.
+
+   function Create (This : in out Temp_File) return GNAT.OS_Lib.File_Descriptor
+     with Post => Create'Result not in GNAT.OS_Lib.Invalid_FD
+     or else raise Checked_Error
+       with Errors.Set ("Could not create temporary file at " & This.Filename);
+   --  Actually creates the file and returns its file descriptor. Idempotent.
 
    function Filename (This : Temp_File) return Absolute_Path;
    --  The filename is a random sequence of 8 characters + ".tmp"
@@ -200,10 +245,12 @@ private
    type Temp_File is new Ada.Finalization.Limited_Controlled with record
       Keep : Boolean := False;
       Name : Unbounded_Absolute_Path;
+      FD   : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
    end record;
 
    overriding
    procedure Initialize (This : in out Temp_File);
+
    overriding
    procedure Finalize (This : in out Temp_File);
 

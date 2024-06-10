@@ -1,5 +1,6 @@
 with Ada.Tags;
 
+with Alire.Errors;
 with Alire.Utils;
 
 with Alr.OS_Lib;
@@ -38,8 +39,9 @@ package body Alr.Actions is
       if This in Run'Class then
          Execute_Run (Run (This));
       else
-         raise Program_Error
-           with "Unknown action class: " & Ada.Tags.External_Tag (This'Tag);
+         Alire.Errors.Report_Program_Error
+           ("Unknown action class: " & Ada.Tags.External_Tag (This'Tag),
+            Survivable => False);
       end if;
    end Execute;
 

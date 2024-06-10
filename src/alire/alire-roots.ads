@@ -3,9 +3,12 @@ private with Ada.Finalization;
 
 with AAA.Strings;
 
+with Alire.Builds;
+private with Alire.Builds.Hashes;
 with Alire.Containers;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.States;
+with Alire.Directories;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
 with Alire.Paths;
@@ -19,14 +22,21 @@ package Alire.Roots is
    Crate_File_Name : String renames Paths.Crate_File_Name;
 
    --  Type used to encapsulate the information about the working context.
-   --  A valid alire working dir is one containing an alire/crate.toml file.
+   --  A valid alire workspace is one containing an alire/crate.toml file.
 
    type Root (<>) is tagged private;
 
-   function Create_For_Release (This            : Releases.Release;
-                                Parent_Folder   : Any_Path;
-                                Env             : Properties.Vector;
-                                Perform_Actions : Boolean := True)
+   --  When creating a root for a release, this type is used to say how many
+   --  post-download steps to take. Each level includes previous ones.
+   type Creation_Levels is
+     (Deploy, -- Do nothing besides fetching the root release
+      Update  -- Solve and fetch dependencies for the solution
+     );
+
+   function Create_For_Release (This          : Releases.Release;
+                                Parent_Folder : Any_Path;
+                                Env           : Properties.Vector;
+                                Up_To         : Creation_Levels)
                                 return Root;
    --  Prepare a workspace with This release as the root one, with manifest and
    --  lock files. IOWs, does everything but deploying dependencies. Intended
@@ -34,12 +44,13 @@ package Alire.Roots is
    --  the Root is usable. For when retrieval is with --only (e.g., in a
    --  platform where it is unavailable, but we want to inspect the sources),
    --  Perform_Actions allow disabling these operations that make no sense for
-   --  the Release on isolation.
+   --  the Release on isolation. When Solve, a best-effort solution will be
+   --  computed, either complete or doing a single-timeout period to have a
+   --  decent incomplete one. If Update, dependencies will be deployed after
 
    function Load_Root (Path : Any_Path) return Root;
    --  Attempt to detect a root at the given path. The root will be valid if
-   --  path/alire exists, path/alire/*.toml is unique and loadable as a crate
-   --  containing a single release. Otherwise, Checked_Error.
+   --  path/alire.toml exists and is a valid manifest. Otherwise Checked_Error.
 
    --  See Alire.Directories.Detect_Root_Path to use with the following
 
@@ -52,7 +63,7 @@ package Alire.Roots is
                       Path : Absolute_Path;
                       Env  : Properties.Vector) return Root;
    --  From existing release
-   --  Path must point to the session folder (parent of alire metadata folder)
+   --  Path must point to the workspace (parent of alire metadata folder)
 
    procedure Set (This     : in out Root;
                   Solution : Solutions.Solution) with
@@ -83,6 +94,11 @@ package Alire.Roots is
    function Build_Context (This : in out Root)
                            return Alire.Environment.Context;
 
+   function Compiler (This : in out Root) return Releases.Release;
+   --  Return the compiler that would be used to compile this solution,
+   --  either because of an explicit dependency or with the actual toolchain
+   --  configuration.
+
    procedure Export_Build_Environment (This : in out Root);
    --  Export the build environment (PATH, GPR_PROJECT_PATH) of the given root
 
@@ -109,16 +125,39 @@ package Alire.Roots is
        Post => Release'Result.Provides (Crate);
    --  Retrieve a release, that can be either the root or any in the solution
 
+   type Usages is (For_Deploy, For_Build);
+
+   function Release_Parent (This  : in out Root;
+                            Rel   : Releases.Release;
+                            Usage : Usages)
+                            return Absolute_Path
+     with Pre => This.Solution.Contains_Release (Rel.Name);
+   --  The dir into which a release is deployed taking into account all config
+   --  and release particulars (binary...)
+
    function Release_Base (This  : in out Root;
-                          Crate : Crate_Name)
-                          return Any_Path;
+                          Crate : Crate_Name;
+                          Usage : Usages)
+                          return Absolute_Path;
    --  Find the base folder in which a release can be found for the given root
+
+   function Requires_Build_Sync (This : in out Root;
+                                 Rel  : Releases.Release)
+                                 return Boolean
+     with Pre =>
+       This.Solution.Contains_Release (Rel.Name) or else
+       raise Program_Error with "Release not in solution: " & Rel.Name_Str;
+   --  Says if the release requires a build copy taking into account everything
 
    function Nonabstract_Crates (This : in out Root)
                                 return Containers.Crate_Name_Sets.Set;
    --  Return names of crates in the solution that have a buildable release,
    --  including root, excluding those that are provided by another crate.
    --  I.e., only actual regular releases.
+
+   function Nonabstract_Releases (This : in out Root)
+                                  return Releases.Containers.Release_Set;
+   --  Same as Nonabstract_Crates, but the releases themselves
 
    function Solution (This : in out Root) return Solutions.Solution with
      Pre => This.Has_Lockfile;
@@ -136,6 +175,16 @@ package Alire.Roots is
    --  requires being updated. This currently relies on timestamps, but (TODO)
    --  conceivably we could use checksums to make it more robust against
    --  automated changes within the same second.
+
+   function Is_Root_Release (This : in out Root;
+                             Dep  : Dependencies.States.State)
+                             return Boolean;
+   --  Say if a state during Traverse is the Root release itself
+
+   function Is_Root_Release (This : in out Root;
+                             Name : Crate_Name)
+                             return Boolean;
+   --  Say if the root release matches the given name
 
    procedure Sync_From_Manifest (This     : in out Root;
                                  Silent   : Boolean;
@@ -173,7 +222,7 @@ package Alire.Roots is
    procedure Deploy_Dependencies (This : in out Root);
    --  Download all dependencies not already on disk from This.Solution
 
-   procedure Sync_Dependencies
+   procedure Update_Dependencies
      (This     : in out Root;
       Silent   : Boolean; -- Do not output anything
       Interact : Boolean; -- Request confirmation from the user
@@ -215,19 +264,55 @@ package Alire.Roots is
 
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
-                   Export_Build_Env : Boolean;
-                   Saved_Profiles   : Boolean := True)
+                   Build_All_Deps   : Boolean := False;
+                   Saved_Profiles   : Boolean := True;
+                   Stop_After       : Builds.Stop_Points :=
+                     Builds.Stop_Points'Last)
                    return Boolean;
    --  Recursively build all dependencies that declare executables, and finally
    --  the root release. Also executes all pre-build/post-build actions for
-   --  all releases in the solution (even those not built). Returns True on
-   --  successful build. By default, profiles stored in the persistent crate
-   --  configuration are used (i.e. last explicit build); otherwise the ones
-   --  given in This.Configuration are used. These come in order of increasing
-   --  priority from: defaults -> manifests -> explicit set via API.
+   --  all releases in the solution (even those not built). Returns True
+   --  on successful build. When Build_All_Deps, all dependencies are built
+   --  explicitly; otherwise only those declaring executables are built.
+   --  This is useful when we are going to gprinstall dependencies
+   --  containing undeclared executables, which otherwise wouldn't be built.
+   --  Unfortunately, it's not mandatory to declare the default executable.
+   --  Saved_Profiles determines whether profiles stored in the persistent
+   --  crate configuration are used (i.e. last explicit build); otherwise
+   --  the ones given in This.Configuration are used. These come in order of
+   --  increasing priority from: defaults -> manifests -> explicit set via API.
+
+   function Build_Hash (This : in out Root;
+                        Name : Crate_Name)
+                        return String;
+   --  Returns the build hash of a crate if the solution; computes on demand.
+
+   procedure Build_Prepare (This           : in out Root;
+                            Saved_Profiles : Boolean;
+                            Force_Regen    : Boolean;
+                            Stop_After     : Builds.Stop_Points :=
+                              Builds.Stop_Points'Last);
+   --  Perform all preparations but the building step itself. This will require
+   --  complete configuration, and will leave all files on disk as if an actual
+   --  build were attempted. May optionally use saved profiles from the command
+   --  line (instead of manifests) and force full regeneration (for example,
+   --  during `alr update`)
+
+   function Config_Outdated (This : in out Root;
+                             Name : Crate_Name)
+                             return Boolean;
+   --  Say if the config on disk must be regenerated, comparing the hash on
+   --  disk with the newly computed hash.
+
+   procedure Install
+     (This           : in out Root;
+      Prefix         : Absolute_Path;
+      Build          : Boolean := True;
+      Print_Solution : Boolean := True);
+   --  Call gprinstall on the releases in solution using --prefix=Prefix
 
    function Configuration (This : in out Root)
-                           return Crate_Configuration.Global_Config;
+                           return access Crate_Configuration.Global_Config;
    --  Returns the global configuration for the root and dependencies. This
    --  configuration is computed the first time it is requested.
 
@@ -248,8 +333,16 @@ package Alire.Roots is
       Profiles : Crate_Configuration.Profile_Maps.Map);
    --  Give explicit profiles per crate. These are always overriding.
 
-   procedure Generate_Configuration (This : in out Root);
-   --  Generate or re-generate the crate configuration files
+   procedure Generate_Configuration (This : in out Root;
+                                     Full : Boolean);
+   --  Generate or re-generate the crate configuration files. If Full,
+   --  overwrite even if existing (so `alr update` can deal with any
+   --  corner case).
+
+   procedure Print_Nested_Crates (Path : Any_Path)
+     with Pre => Directories.Is_Directory (Path);
+   --  Look for nested crates below the given path and print a summary of
+   --  path/milestone:description for each one found. Won't enter `alire` dirs.
 
    --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 
@@ -258,6 +351,12 @@ package Alire.Roots is
 
    function Cache_Dir (This : Root) return Absolute_Path;
    --  The "alire/cache" dir inside the root path, containing releases and pins
+
+   function Dependencies_Dir (This  : in out Root) return Absolute_Path;
+   --  The path at which dependencies are deployed, which will
+   --  be either Paths.Vault.Path if dependencies are shared, or
+   --  <workspace>/alire/cache/dependencies when dependencies are
+   --  sandboxed (legacy pre-2.0 mode).
 
    function Crate_File (This : Root) return Absolute_Path;
    --  The "/path/to/alire.toml" file inside Working_Folder
@@ -274,11 +373,11 @@ private
    --  Force loading of the configuration; useful since the auto-load is not
    --  triggered when doing This.Configuration here.
 
-   function Load_Solution (Lockfile : String) return Solutions.Solution
+   function Load_Solution (Lockfile : Absolute_Path) return Solutions.Solution
    is (Lockfiles.Read (Lockfile).Solution);
 
    procedure Write_Solution (Solution : Solutions.Solution;
-                             Lockfile : String);
+                             Lockfile : Absolute_Path);
    --  Wrapper for use with Cached_Solutions
 
    package Cached_Solutions is new AAA.Caches.Files
@@ -305,13 +404,17 @@ private
       --  versions. As a data point, with the stock Ubuntu 20.04 GNAT (9.3),
       --  there is no problem.
 
+      Build_Hasher    : Builds.Hashes.Hasher;
+      --  Used to compute the build hashes of releases in the solution
+
       Pins            : Solutions.Solution;
       --  Closure of all pins that are recursively found
 
       --  These values, if different from "", mean this is a temporary root
       Manifest        : Unbounded_Absolute_Path;
       Lockfile        : Unbounded_Absolute_Path;
-   end record;
+   end record
+     with Type_Invariant => Check_Absolute_Path (+Root.Path);
 
    overriding
    procedure Adjust (This : in out Root);
@@ -347,10 +450,10 @@ private
    --  Renames the manifest and lockfile to their regular places, making this
    --  root a regular one to all effects.
 
-   function Dependencies_Dir (This  : in out Root;
-                              Crate : Crate_Name)
-                              return Any_Path;
-   --  The path at which dependencies have to be deployed, which for regular
-   --  releases is simply ./alire/cache/dependencies.
+   procedure Sync_Builds (This : in out Root);
+   --  Sync from vault to final build location, and generate config
+
+   procedure Compute_Build_Hashes (This : in out Root);
+   --  Trigger computation of build hashes
 
 end Alire.Roots;

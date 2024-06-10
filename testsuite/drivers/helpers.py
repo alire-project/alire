@@ -2,19 +2,18 @@
 Assorted helpers that are reused by several tests.
 """
 
+import hashlib
+import os
+import platform
+import re
+import shutil
+import stat
 from subprocess import run
 from zipfile import ZipFile
 
-import hashlib
-import re
-import os
-import platform
-import shutil
-import stat
-
 
 # Return the entries (sorted) under a given folder, both folders and files
-# Optionally, return only those matching regex
+# Optionally, return only those matching regex. Uses '/' always as separator.
 def contents(dir, regex=""):
     assert os.path.exists(dir), "Bad path for enumeration: {}".format(dir)
     if regex != "":
@@ -46,7 +45,7 @@ def lines_of(filename):
 
 # Assert two values are equal or format the differences
 def compare(found, wanted):
-    assert found == wanted, 'Got:    {}\nWanted: {}'.format(found, wanted)
+    assert found == wanted, '\nGot:\n{}\nWanted:\n{}'.format(found, wanted)
 
 
 # Check line appears in file
@@ -64,6 +63,10 @@ def check_line_in(filename, line):
                 repr(line), filename, content_of(filename))
 
 
+def on_linux():
+    return platform.system() == "Linux"
+
+
 def on_macos():
     return platform.system() == "Darwin"
 
@@ -74,7 +77,7 @@ def on_windows():
 
 def distribution():
 
-    if os.environ.get('ALIRE_DISABLE_DISTRO') == 'true':
+    if 'ALIRE_TESTSUITE_DISABLE_DISTRO' in os.environ:
         return 'DISTRO_UNKNOWN'
 
     known_distro = ["debian", "ubuntu", "msys2", "arch", "rhel", "centos", "fedora"]
@@ -94,8 +97,10 @@ def distribution():
         return 'DISTRO_UNKNOWN'
 
     elif on_macos():
-        if os.environ.get('HOMEBREW_PREFIX'):
+        if shutil.which('brew'):
             return 'HOMEBREW'
+        elif shutil.which('port'):
+            return 'MACPORTS'
         else:
             return 'DISTRO_UNKNOWN'
 
@@ -172,6 +177,14 @@ def git_blast(path):
     shutil.rmtree(path)
 
 
+def git_init_user():
+    """
+    Initialize git user and email
+    """
+    run(["git", "config", "user.email", "alr@testing.com"]).check_returncode()
+    run(["git", "config", "user.name", "Alire Testsuite"]).check_returncode()
+
+
 def init_git_repo(path):
     """
     Initialize and commit everything inside a folder, returning the HEAD commit
@@ -179,10 +192,10 @@ def init_git_repo(path):
     start_cwd = os.getcwd()
     os.chdir(path)
     assert run(["git", "init", "."]).returncode == 0
-    assert run(["git", "config", "user.email", "alr@testing.com"]) \
-        .returncode == 0
-    assert run(["git", "config", "user.name", "Alire Testsuite"]) \
-        .returncode == 0
+    # You might think to init with --initial-branch=master, but
+    # e.g. Centos's git doesn't support this.
+    assert run(["git", "checkout", "-b", "master"]).returncode == 0
+    git_init_user()
 
     # Workaround for Windows, where somehow we get undeletable files in temps:
     with open(".gitignore", "wt") as file:
@@ -228,3 +241,55 @@ def md5sum(file):
             file_hash.update(chunk)
 
     return file_hash.hexdigest()
+
+
+def prepend_to_file(filename : str, lines : []) -> None:
+    """
+    Prepend the given lines to a file
+    """
+    old_contents = content_of(filename)
+    with open(filename, "wt") as file:
+        file.write("\n".join(lines) + "\n" + old_contents)
+
+
+def replace_in_file(filename : str, old : str, new : str):
+    """
+    Replace all occurrences of a string in a file
+    """
+    old_contents = content_of(filename)
+    with open(filename, "wt") as file:
+        file.write(old_contents.replace(old, new))
+
+
+def neutral_path(path : str) -> str:
+    """
+    Return a path with all separators replaced by '/'.
+    """
+    return path.replace('\\', '/')
+
+class FileLock():
+    """
+    A filesystem-level lock for tests executed from different threads but
+    without shared memory space. Only used on Linux.
+    """
+    def __init__(self, lock_file_path):
+        if not on_linux():
+            raise Exception("FileLock is only supported on Linux")
+
+        self.lock_file_path = lock_file_path
+
+    def __enter__(self):
+        # Create the lock file if it doesn't exist
+        open(self.lock_file_path, 'a').close()
+
+        # Reopen in read mode
+        self.lock_file = open(self.lock_file_path, 'r')
+        # Acquire the file lock or wait for it
+        import fcntl
+        fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_EX)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Release the file lock
+        import fcntl
+        fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_UN)
+        self.lock_file.close()

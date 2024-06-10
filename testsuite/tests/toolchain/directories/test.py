@@ -1,5 +1,5 @@
 """
-Check created folders are where expected when installing binary compiler crates
+Check created folders are where expected when downloading binary compiler crates
 """
 
 import os
@@ -11,7 +11,7 @@ from drivers.helpers import contents
 
 # Identify config location
 p = run_alr("version")
-config_dir = re.search("config folder:([^\n]*)", p.out).group(1).strip()
+config_dir = re.search("settings folder:([^\n]*)", p.out).group(1).strip()
 config_dir = config_dir.replace("\\", "/")
 cache_dir = os.path.join(config_dir, "cache")
 
@@ -22,7 +22,7 @@ unk_re = "[0-9]+\.[0-9]+\.[0-9]+_[0-9a-f]{8}"  # Unknown version + Unknown hash
 
 
 def config_path_re(crate):
-    return re.escape(f"{config_dir}/cache/dependencies/{crate}_") + unk_re
+    return re.escape(f"{config_dir}/cache/toolchains/{crate}_") + unk_re
 
 def check_content(crate):
     paths = contents(cache_dir, crate)
@@ -37,19 +37,14 @@ def check_content(crate):
 
 
 # First we test manual installation
-run_alr("toolchain", "--install", "gnat_native")
+run_alr("toolchain", "--select", "gnat_native")
 check_content("gnat_native")
-
-# Uninstall the compiler and verify absence
-run_alr("toolchain", "--uninstall", "gnat_native", quiet=False)
-paths = contents(cache_dir, "gnat_native")
-assert len(paths) == 0, "Unexpected contents: " + str(paths)
 
 # Require the external compiler and verify no trace appears in install folder
 # nor in local folder
 init_local_crate("xxx")
 alr_with("gnat_external")
-match_solution("gnat_external=.* \(installed\)")
+match_solution("gnat_external=.*")
 paths = contents(cache_dir, "gnat_external")
 assert len(paths) == 0, "Unexpected contents: " + str(paths)
 paths = contents(".", "gnat_external")
@@ -58,7 +53,7 @@ assert len(paths) == 0, "Unexpected contents: " + str(paths)
 # Require a cross compiler and verify it is automatically installed
 alr_with("gnat_external", delete=True, manual=False)
 alr_with("gnat_cross_1")
-match_solution("gnat_cross_1=.* \(installed\)")
+match_solution("gnat_cross_1=.*")
 check_content("gnat_cross_1")
 
 print('SUCCESS')

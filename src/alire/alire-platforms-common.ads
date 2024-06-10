@@ -15,24 +15,40 @@ private package Alire.Platforms.Common is
    function On_Windows return Boolean;
    --  Says if we are on Windows
 
+   ---------------------
+   -- Unix_Home_Folder --
+   ---------------------
+
+   function Unix_Home_Folder return String
+   is (OS_Lib.Getenv ("HOME", Default => "/tmp"));
+
    ----------------------
-   -- XDG_Cache_Folder --
+   -- Unix_Temp_Folder --
    ----------------------
 
-   function XDG_Cache_Folder return String
+   function Unix_Temp_Folder return String
+   is (OS_Lib.Getenv ("XDG_RUNTIME_DIR",
+                      Default => OS_Lib.Getenv ("TMPDIR",
+                                                Default => ".")));
+
+   -------------------
+   -- XDG_Data_Home --
+   -------------------
+
+   function XDG_Data_Home return String
    is (OS_Lib.Getenv
-         ("XDG_CACHE_HOME",
-          Default => OS_Lib.Getenv ("HOME") / ".cache")
+         ("XDG_DATA_HOME",
+          Default => Unix_Home_Folder / ".local/share")
        / "alire");
 
-   -----------------------
-   -- XDG_Config_Folder --
-   -----------------------
+   ---------------------
+   -- XDG_Config_Home --
+   ---------------------
 
-   function XDG_Config_Folder return String
+   function XDG_Config_Home return String
    is (OS_Lib.Getenv
          ("XDG_CONFIG_HOME",
-          Default => OS_Lib.Getenv ("HOME", Default => "/tmp") / ".config")
+          Default => Unix_Home_Folder / ".config")
        / "alire");
 
 private

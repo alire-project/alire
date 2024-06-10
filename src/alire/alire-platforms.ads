@@ -42,7 +42,8 @@ package Alire.Platforms with Preelaborate is
                           Fedora,
                           Suse,
                           Homebrew,
-                          Distro_Unknown);
+                          Macports,
+                          Distribution_Unknown);
 
    subtype Known_Distributions is
      Distributions range Distributions'First ..
@@ -58,6 +59,7 @@ package Alire.Platforms with Preelaborate is
                              Dnf,
                              Zypper,
                              Homebrew,
+                             Macports,
                              Packager_Unknown);
 
    Distro_Manager : constant array (Distributions) of Package_Managers :=
@@ -67,7 +69,8 @@ package Alire.Platforms with Preelaborate is
       Centos | Fedora => Dnf,
       Suse            => Zypper,
       Homebrew        => Homebrew,
-      Distro_Unknown  => Packager_Unknown);
+      Macports        => Macports,
+      Distribution_Unknown  => Packager_Unknown);
 
    type Toolchains is (System,
                        --  Provided through system packages, able to use other

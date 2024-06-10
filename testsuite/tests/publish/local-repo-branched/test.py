@@ -3,9 +3,7 @@ Test that publishing from a branch other than the default one works
 """
 
 from drivers.alr import init_local_crate, run_alr
-from drivers.asserts import assert_match
 from drivers.helpers import init_git_repo
-from glob import glob
 from shutil import copyfile
 from subprocess import run
 
@@ -29,6 +27,6 @@ assert run(["git", "commit", "-m", "commit-msg"]).returncode == 0
 assert run(["git", "push", "-u", "origin", "devel"]).returncode == 0
 
 # Check that the publishing assistant completes without complaining
-run_alr("--force", "publish")
+run_alr("--force", "publish", "--skip-submit")
 
 print('SUCCESS')

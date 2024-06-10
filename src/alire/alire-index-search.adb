@@ -1,5 +1,6 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with Alire.Conditional;
 with Alire.Utils.Tables;
@@ -82,7 +83,9 @@ package body Alire.Index.Search is
          end loop;
 
          return Result.Flatten
-           (if CLIC.TTY.Is_TTY then "»" else ",");
+           (if CLIC.TTY.Is_TTY
+            then Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode ("»")
+            else ",");
       end Image;
 
       ---------

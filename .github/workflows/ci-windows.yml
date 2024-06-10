@@ -8,7 +8,15 @@ on:
       - '**.rst'
       - '**.txt'
   release:
-    types: [created]
+    types: [published]
+  workflow_dispatch:
+
+env:
+  ALIRE_OS:     windows
+  MSYS64_ROOT:  C:\Users\runneradmin\AppData\Local\alire\cache\msys64
+  MINGW64_PATH: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\mingw64\bin
+  MSYS2_PATH:   C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin
+  PACMAN:       C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin\pacman --noconfirm
 
 jobs:
 
@@ -23,19 +31,25 @@ jobs:
       with:
         submodules: true
 
-    - name: Install toolchain
-      uses: ada-actions/toolchain@ce2021
+    - name: Install FSF toolchain
+      uses: alire-project/alr-install@v1
       with:
-        distrib: community
+        crates: gnat_native gprbuild
 
     - name: Build alr
       run: gprbuild -j0 -p -P alr_env
 
-    - name: alr first run to install msys2
-      run: ./bin/alr --non-interactive help get
+    - name: Remove previous alr's msys2 (so a new one can be tested)
+      shell: pwsh
+      run: |
+        if (Test-Path "${{env.MSYS64_ROOT}}") {
+          Remove-Item "${{env.MSYS64_ROOT}}" -Recurse -Force }
+
+    - name: Display built alr and trigger install of msys2
+      run: ./bin/alr version
 
     - name: install tar from msys2 (Git tar in Actions VM does not seem to work)
-      run: C:\Users\runneradmin\.cache\alire\msys64\usr\bin\pacman --noconfirm -S tar
+      run: ${{env.PACMAN}} -S tar
 
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2
@@ -53,19 +67,19 @@ jobs:
       run: gprinstall -p -P alr_env --prefix=${{ runner.temp }}/alr_install
 
     - name: Install qt-installer-framework in msys2
-      run: C:\Users\runneradmin\.cache\alire\msys64\usr\bin\pacman --noconfirm -S mingw64/mingw-w64-x86_64-qt-installer-framework
+      run: ${{env.PACMAN}} -S mingw64/mingw-w64-x86_64-qt-installer-framework
 
     - name: Add msys2 /mingw64/bin to the path (for qt-installer-framework)
-      run: echo 'C:\Users\runneradmin\.cache\alire\msys64\mingw64\bin' >> $GITHUB_PATH
+      run: echo '${{env.MINGW64_PATH}}' >> $GITHUB_PATH
       shell: bash
 
     - name: Install zip in msys2
-      run: C:\Users\runneradmin\.cache\alire\msys64\usr\bin\pacman --noconfirm -S zip
+      run: ${{env.PACMAN}} --noconfirm -S zip
 
     - name: Add msys2 /usr/bin to the path (for zip)
-      run: echo 'C:\Users\runneradmin\.cache\alire\msys64\usr\bin' >> $GITHUB_PATH
+      run: echo '${{env.MSYS2_PATH}}' >> $GITHUB_PATH
       shell: bash
-      
+
     - name: Run installer build script
       run: bash make-alire-installer
       shell: bash
@@ -104,7 +118,7 @@ jobs:
     - name: Retrieve upload URL for the release
       if: github.event_name == 'release'
       id: get_release
-      uses: bruceadams/get-release@v1.2.1
+      uses: bruceadams/get-release@v1.3.2
       env:
         GITHUB_TOKEN: ${{ github.token }}
 

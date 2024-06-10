@@ -1,21 +1,27 @@
 with AAA.Directories;
 
-with Ada.Exceptions;
+with Ada.Directories.Hierarchical_File_Names;
 with Ada.Numerics.Discrete_Random;
+with Ada.Real_Time;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
-with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platforms.Current;
+with Alire.Platforms.Folders;
+with Alire.VFS;
+with Alire.Utils;
+
+with GNAT.String_Hash;
 
 with GNATCOLL.VFS;
+
+with Interfaces;
 
 with SI_Units.Binary;
 
 package body Alire.Directories is
-
-   package Adirs renames Ada.Directories;
 
    -------------------
    -- Temp_Registry --
@@ -81,7 +87,7 @@ package body Alire.Directories is
                                 else File & ".prev");
    begin
       if Exists (File) then
-         if not Exists (Base_Dir) then
+         if Base_Dir /= "" and then not Exists (Base_Dir) then
             Create_Directory (Base_Dir);
          end if;
 
@@ -130,6 +136,28 @@ package body Alire.Directories is
       End_Search (Search);
    end Copy;
 
+   ---------------
+   -- Copy_Link --
+   ---------------
+
+   procedure Copy_Link (Src, Dst : Any_Path) is
+      use AAA.Strings;
+      use all type Platforms.Operating_Systems;
+      Keep_Links : constant String
+        := (case Platforms.Current.Operating_System is
+               when Linux           => "-d",
+               when FreeBSD | MacOS => "-R",
+               when others          =>
+                  raise Program_Error with "Unsupported operation");
+   begin
+      --  Given that we are here because Src is indeed a link, we should be in
+      --  a Unix-like platform able to do this.
+      OS_Lib.Subprocess.Checked_Spawn
+        ("cp",
+         To_Vector (Keep_Links)
+         & Src & Dst);
+   end Copy_Link;
+
    -----------------
    -- Create_Tree --
    -----------------
@@ -166,16 +194,6 @@ package body Alire.Directories is
          end loop;
       end if;
    end Delete_Temporaries;
-
-   -----------------
-   -- Delete_Tree --
-   -----------------
-
-   procedure Delete_Tree (Path : Any_Path) is
-   begin
-      Ensure_Deletable (Path);
-      Ada.Directories.Delete_Tree (Path);
-   end Delete_Tree;
 
    ----------------------
    -- Detect_Root_Path --
@@ -221,18 +239,26 @@ package body Alire.Directories is
    procedure Ensure_Deletable (Path : Any_Path) is
       use Ada.Directories;
    begin
-      if Exists (Path) and then
-        Kind (Path) = Directory and then
-        Platforms.Current.Operating_System in Platforms.Windows
+      if Platforms.Current.Operating_System in Platforms.Windows
+        and then Exists (Path)
       then
-         Trace.Debug ("Forcing writability of dir " & Path);
-         OS_Lib.Subprocess.Checked_Spawn
-           ("attrib",
-            AAA.Strings.Empty_Vector
-            .Append ("-R") -- Remove read-only
-            .Append ("/D") -- On dirs
-            .Append ("/S") -- Recursively
-            .Append (Path & "\*"));
+         if Kind (Path) = Directory then
+            Trace.Debug ("Forcing writability of dir " & Path);
+            OS_Lib.Subprocess.Checked_Spawn
+              ("attrib",
+               AAA.Strings.Empty_Vector
+               .Append ("-R") -- Remove read-only
+               .Append ("/D") -- On dirs
+               .Append ("/S") -- Recursively
+               .Append (Path & "\*"));
+         elsif Kind (Path) = Ordinary_File then
+            Trace.Debug ("Forcing writability of dir " & Path);
+            OS_Lib.Subprocess.Checked_Spawn
+              ("attrib",
+               AAA.Strings.Empty_Vector
+               .Append ("-R") -- Remove read-only
+               .Append (Path));
+         end if;
       end if;
    end Ensure_Deletable;
 
@@ -240,31 +266,121 @@ package body Alire.Directories is
    -- Force_Delete --
    ------------------
 
-   procedure Force_Delete (Path : Any_Path) is
+   procedure Force_Delete (Path : Absolute_Path) is
       use Ada.Directories;
       use GNATCOLL.VFS;
-      Success : Boolean := False;
+
+      procedure Delete_Links is
+         procedure Delete_Links (Path : Absolute_Path) is
+            Contents : File_Array_Access :=
+                         VFS.New_Virtual_File (Path).Read_Dir;
+         begin
+            for Item of Contents.all loop
+               if Item.Is_Symbolic_Link then
+                  --  Delete it here and now before normalization, as after
+                  --  normalization links are resolved and the original link
+                  --  name is lost.
+                  declare
+                     Deleted : Boolean := False;
+                     Target  : constant Virtual_File :=
+                                 VFS.New_Virtual_File (+Item.Full_Name);
+                  begin
+                     Target.Normalize_Path (Resolve_Symlinks => True);
+                     Item.Delete (Deleted);
+                     if Deleted then
+                        Trace.Debug ("Deleted softlink: "
+                                     & Item.Display_Full_Name
+                                     & " --> "
+                                     & Target.Display_Full_Name);
+                     else
+                        --  Not deleting a link is unsafe, as it may point
+                        --  outside the target tree. Fail in this case.
+                        Raise_Checked_Error
+                          ("Failed to delete softlink: "
+                           & Item.Display_Full_Name);
+                     end if;
+                  end;
+               elsif Item.Is_Directory
+                 and then Item.Display_Base_Name not in "." | ".."
+               then
+                  Delete_Links (+Item.Full_Name);
+               end if;
+            end loop;
+
+            Unchecked_Free (Contents);
+         end Delete_Links;
+
+      begin
+         if Adirs.Exists (Path) then
+            Delete_Links (Path);
+         end if;
+      end Delete_Links;
+
+      ----------------------
+      -- Report_Remaining --
+      ----------------------
+
+      procedure Report_Remaining is
+      begin
+         Trace.Warning ("Could not completely remove " & Path);
+         Trace.Debug ("Remains follow: ");
+         declare
+            use AAA.Strings;
+            use Platforms.Current;
+            Output : Vector;
+            Code   : constant Integer :=
+                       OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
+                         ((if On_Windows then "dir" else "ls"),
+                          (if On_Windows
+                           then To_Vector ("/a/o/q/r/s")
+                           else To_Vector ("-alRF"))
+                          & Path,
+                          Output,
+                          Err_To_Out => True);
+         begin
+            if Code = 0 then
+               Trace.Debug (Output.Flatten (New_Line));
+            else
+               Trace.Warning ("Contents listing failed with code: "
+                              & Code'Image);
+            end if;
+         end;
+      end Report_Remaining;
+
    begin
+
+      --  Given that we never delete anything outside one of our folders, the
+      --  conservatively shortest thing we can be asked to delete is something
+      --  like "/c/alire". This is for peace of mind.
+
+      if Path'Length < 8 then
+         Recoverable_User_Error
+           ("Suspicious deletion request for path: " & Path);
+      end if;
+
       if Exists (Path) then
          if Kind (Path) = Ordinary_File then
             Trace.Debug ("Deleting file " & Path & "...");
             Delete_File (Path);
          elsif Kind (Path) = Directory then
-            Trace.Debug ("Deleting temporary folder " & Path & "...");
-
+            Trace.Debug ("Deleting folder " & Path & "...");
             Ensure_Deletable (Path);
-
-            --  Ada.Directories fails when there are softlinks in a tree, so we
-            --  use GNATCOLL instead.
-            GNATCOLL.VFS.Remove_Dir (Create (+Path),
-                                     Recursive => True,
-                                     Success   => Success);
-            if not Success then
-               raise Program_Error with
-                 Errors.Set ("Could not delete: " & TTY.URL (Path));
-            end if;
+            Delete_Links;
+            --  By first deleting any softlinks, we ensure that the remaining
+            --  tree is safe to delete, that no malicious link is followed
+            --  outside the target tree, and that broken/recursive links
+            --  confuse the tree removal procedure.
+            Adirs.Delete_Tree (Path);
+         else
+            Raise_Checked_Error ("Cannot delete special file:" & Path);
          end if;
       end if;
+   exception
+      when E : others =>
+         Trace.Debug ("Exception attempting deletion of " & Path);
+         Log_Exception (E);
+         Report_Remaining;
+         raise;
    end Force_Delete;
 
    ----------------------
@@ -398,9 +514,9 @@ package body Alire.Directories is
    overriding
    procedure Finalize (This : in out Guard) is
       use Ada.Directories;
-      use Ada.Exceptions;
       use Ada.Strings.Unbounded;
-      procedure Free is new Ada.Unchecked_Deallocation (String, Destination);
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Absolute_Path, Destination);
       Freeable : Destination := This.Enter;
    begin
       if This.Enter /= null
@@ -413,23 +529,107 @@ package body Alire.Directories is
       Free (Freeable);
    exception
       when E : others =>
-         Trace.Debug
-           ("FG.Finalize: unexpected exception: " &
-              Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
-              Exception_Information (E));
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
+
+   ------------------
+   -- Is_Directory --
+   ------------------
+
+   function Is_Directory (Path : Any_Path) return Boolean
+   is (Adirs.Exists (Path) and then Adirs.Kind (Path) in Adirs.Directory);
+
+   -------------
+   -- Is_File --
+   -------------
+
+   function Is_File (Path : Any_Path) return Boolean
+   is (Adirs.Exists (Path) and then Adirs.Kind (Path) in Adirs.Ordinary_File);
 
    ----------------
    -- TEMP FILES --
    ----------------
+
+   Epoch : constant Ada.Real_Time.Time :=
+             Ada.Real_Time.Time_Of (0, Ada.Real_Time.To_Time_Span (0.0));
+
+   -------------
+   -- Counter --
+   -------------
+
+   protected Counter is
+      procedure Get (Value : out Interfaces.Unsigned_32);
+   private
+      Next : Interfaces.Unsigned_32 := 0;
+   end Counter;
+
+   protected body Counter is
+      procedure Get (Value : out Interfaces.Unsigned_32) is
+         use type Interfaces.Unsigned_32;
+      begin
+         Value := Next;
+         Next  := Next + 1;
+      end Get;
+   end Counter;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next return String is
+      Val : Interfaces.Unsigned_32;
+   begin
+      Counter.Get (Val);
+      return Val'Image;
+   end Next;
+
+   ---------------
+   -- Temp_Name --
+   ---------------
 
    function Temp_Name (Length : Positive := 8) return String is
       subtype Valid_Character is Character range 'a' .. 'z';
       package Char_Random is new
         Ada.Numerics.Discrete_Random (Valid_Character);
       Gen : Char_Random.Generator;
+
+      --  The default random seed has a granularity of 1 second, which is not
+      --  enough when we run our tests with high parallelism. Increasing the
+      --  resolution to nanoseconds is less collision-prone. On top, we add
+      --  the current working directory path to the hash input, which should
+      --  disambiguate even further for our most usual case which is during
+      --  testsuite execution, and a counter to avoid clashes in the same
+      --  process.
+
+      --  It would be safer to use an atomic OS call that returns a unique file
+      --  name, but we would need native versions for all OSes we support and
+      --  that may be too much hassle? since GNAT.OS_Lib doesn't do it either.
+
+      use Ada.Real_Time;
+
+      Nano : constant String :=
+               AAA.Strings.Replace (To_Duration (Clock - Epoch)'Image,
+                                    ".", "");
+      --  This gives us an image without loss of precision and without
+      --  having to be worried about overflows
+
+      type Hash_Type is mod 2 ** 32;
+      pragma Compile_Time_Error (Hash_Type'Size > Integer'Size,
+                                 "Hash_Type is too large");
+
+      function Hash is new GNAT.String_Hash.Hash
+        (Char_Type => Character,
+         Key_Type  => String,
+         Hash_Type => Hash_Type);
+
+      function To_Integer is new Ada.Unchecked_Conversion (Hash_Type, Integer);
+      --  Ensure unsigned -> signed conversion doesn't bite us
+
+      Seed : constant Hash_Type := Hash (Nano & " at " & Current & "#" & Next);
+
    begin
-      Char_Random.Reset (Gen);
+
+      Char_Random.Reset (Gen, To_Integer (Seed));
 
       return Result : String (1 .. Length + 4) do
          Result (1 .. 4) := "alr-";
@@ -473,12 +673,37 @@ package body Alire.Directories is
 
       else
 
-         This.Name := +Ada.Directories.Full_Name (Simple_Name);
+         --  Default to the system temp folder. Note that spawns that capture
+         --  output may fail if the temp folder is unset (e.g., git commands
+         --  that clean the current repository).
+
+         This.Name := +Ada.Directories.Full_Name (Platforms.Folders.Temp
+                                                  / Simple_Name);
 
       end if;
 
+      Trace.Debug ("Selected name for tempfile: " & (+This.Name)
+                   & " when at dir: " & Current);
+
       Temp_Registry.Add (+This.Name);
    end Initialize;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create (This : in out Temp_File) return GNAT.OS_Lib.File_Descriptor
+   is
+   begin
+      if This.FD in GNAT.OS_Lib.Invalid_FD then
+         --  Ensure parent location exists
+         Create_Tree (Parent (This.Filename));
+
+         This.FD := GNAT.OS_Lib.Create_Output_Text_File (This.Filename);
+      end if;
+
+      return This.FD;
+   end Create;
 
    --------------
    -- Filename --
@@ -512,6 +737,11 @@ package body Alire.Directories is
       --  We are deleting it here, so remove from "live" temp files registry
       Temp_Registry.Del (+This.Name);
 
+      --  Close it first, if created and opened by us
+      if This.FD not in GNAT.OS_Lib.Invalid_FD then
+         GNAT.OS_Lib.Close (This.FD);
+      end if;
+
       --  Force writability of folder when in Windows, as some tools (e.g. git)
       --  that create read-only files will cause a Use_Error
 
@@ -523,59 +753,283 @@ package body Alire.Directories is
             Delete_File (This.Filename);
          elsif Kind (This.Filename) = Directory then
             Trace.Debug ("Deleting temporary folder " & This.Filename & "...");
-            Delete_Tree (This.Filename);
+
+            begin
+               --  May fail in rare circumstances, like containing
+               --  a softlink to a parent folder or itself.
+               --  GNATCOLL.VFS.Remove_Dir also fails.
+               Delete_Tree (This.Filename);
+            exception
+               when E : others =>
+                  Log_Exception (E);
+                  Put_Warning
+                    ("Unable to delete temp dir: " & This.Filename);
+            end;
+
          end if;
       end if;
 
       --  Remove temp dir if empty to keep things tidy, and avoid modifying
-      --  lots of tests.
+      --  lots of tests, but only when within <>/alire/tmp
 
-      if Ada.Directories.Simple_Name (Parent (This.Filename)) =
-        Paths.Temp_Folder_Inside_Working_Folder
-      then
-         AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
-      end if;
+      begin
+         if not Adirs.Hierarchical_File_Names.Is_Root_Directory_Name
+            (Parent (This.Filename))
+           and then
+             Adirs.Simple_Name (Parent (Parent (This.Filename))) =
+               Paths.Working_Folder_Inside_Root
+         then
+            AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
+         end if;
+      exception
+         when Use_Error =>
+            --  May be raised by Adirs.Containing_Directory
+            Trace.Debug ("Failed to identify location of temp file: "
+                         & This.Filename);
+      end;
 
    exception
       when E : others =>
-         Log_Exception (E);
-         raise;
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
+
+   --------------------
+   -- Merge_Contents --
+   --------------------
+
+   procedure Merge_Contents (Src, Dst              : Any_Path;
+                             Skip_Top_Level_Files  : Boolean;
+                             Fail_On_Existing_File : Boolean;
+                             Remove_From_Source    : Boolean)
+   is
+
+      Base   : constant Absolute_Path := Adirs.Full_Name (Src);
+      Target : constant Absolute_Path := Adirs.Full_Name (Dst);
+
+      -----------
+      -- Merge --
+      -----------
+
+      procedure Merge
+        (Item : Ada.Directories.Directory_Entry_Type;
+         Stop : in out Boolean)
+      is
+         use all type Adirs.File_Kind;
+
+         Rel_Path : constant Relative_Path :=
+                      Find_Relative_Path (Base, Adirs.Full_Name (Item));
+         --  If this proves to be too slow, we should do our own recursion,
+         --  building the relative path along the way, as this is recomputing
+         --  it for every file needlessly.
+
+         Dst : constant Absolute_Path := Target / Rel_Path;
+         Src : constant Absolute_Path := Adirs.Full_Name (Item);
+      begin
+         Stop := False;
+
+         --  Check if we must skip (we delete source file)
+
+         if Adirs.Kind (Item) = Ordinary_File
+           and then Skip_Top_Level_Files
+           and then Base = Parent (Src)
+         then
+            Trace.Debug ("   Merge: Not merging top-level file " & Src);
+            return;
+         end if;
+
+         --  Create a new dir if necessary
+
+         if Adirs.Kind (Item) = Directory then
+            if not Is_Directory (Dst) then
+               Trace.Debug ("   Merge: Creating destination dir " & Dst);
+               Create_Tree (Dst);
+            end if;
+
+            return;
+            --  Nothing else to do for a directory. If we controlled the
+            --  recursion we could more efficiently rename now into place.
+         end if;
+
+         --  Copy file into place
+
+         Trace.Debug ("   Merge: copying "
+                     & Adirs.Full_Name (Item)
+                     & " into " & Dst);
+
+         if Adirs.Exists (Dst) then
+            if Fail_On_Existing_File then
+               Recoverable_User_Error ("Cannot copy " & TTY.URL (Src)
+                                  & " into place, file already exists: "
+                                  & TTY.URL (Dst));
+            elsif Adirs.Kind (Dst) /= Ordinary_File then
+               Raise_Checked_Error ("Cannot overwrite " & TTY.URL (Dst)
+                                    & " as it is not a regular file");
+            else
+               Trace.Debug ("   Merge: Deleting in preparation to replace: "
+                            & Dst);
+               Adirs.Delete_File (Dst);
+            end if;
+         end if;
+
+         --  We use GNAT.OS_Lib here as some binary packages contain softlinks
+         --  to .so libs that we must copy too, and these are troublesome
+         --  with regular Ada.Directories (that has no concept of softlink).
+         --  Also, some of these softlinks are broken and although they are
+         --  presumably safe to discard, let's just go for an identical copy.
+
+         if GNAT.OS_Lib.Is_Symbolic_Link (Src) then
+            Trace.Debug ("   Merge (softlink): " & Src);
+
+            Copy_Link (Src, Dst);
+            if not GNAT.OS_Lib.Is_Symbolic_Link (Dst) then
+               Raise_Checked_Error ("Failed to copy softlink: "
+                                    & TTY.URL (Src)
+                                    & " to " & TTY.URL (Dst)
+                                    & " (dst not a link)");
+            end if;
+         else
+            begin
+               Adirs.Copy_File (Source_Name => Src,
+                                Target_Name => Dst,
+                                Form        => "preserve=all_attributes");
+            exception
+               when E : others =>
+                  Trace.Error
+                    ("When copying " & Src & " --> " & Dst & ": ");
+                  Log_Exception (E, Error);
+                  raise;
+            end;
+         end if;
+      end Merge;
+
+   begin
+      Traverse_Tree (Start   => Src,
+                     Doing   => Merge'Access,
+                     Recurse => True);
+
+      --  This is space-inefficient since we use 2x the actual size, but this
+      --  is the only way we have unless we want to go into platform-dependent
+      --  details and radical changes due to softlinks .
+
+      --  TODO: remove this limitation on a non-patch release.
+
+      if Remove_From_Source then
+         Force_Delete (Src);
+      end if;
+   end Merge_Contents;
 
    -------------------
    -- Traverse_Tree --
    -------------------
 
-   procedure Traverse_Tree (Start   : Relative_Path;
+   procedure Traverse_Tree (Start   : Any_Path;
                             Doing   : access procedure
                               (Item : Ada.Directories.Directory_Entry_Type;
                                Stop : in out Boolean);
-                            Recurse : Boolean := False)
+                            Recurse : Boolean := False;
+                            Spinner : Boolean := False)
    is
       use Ada.Directories;
 
-      procedure Go_Down (Item : Directory_Entry_Type) is
-         Stop : Boolean := False;
+      Visited : AAA.Strings.Set;
+      --  To avoid infinite recursion in case of softlinks pointed to parent
+      --  folders
+
+      Progress : Simple_Logging.Ongoing :=
+                   Simple_Logging.Activity (Text  => "Exploring " & Start,
+                                            Level => (if Spinner
+                                                      then Info
+                                                      else Debug));
+
+      procedure Go_Down (Item : Directory_Entry_Type);
+
+      ----------------------------
+      -- Traverse_Tree_Internal --
+      ----------------------------
+
+      procedure Traverse_Tree_Internal
+        (Start   : Any_Path;
+         Doing   : access procedure
+           (Item : Ada.Directories.Directory_Entry_Type;
+            Stop : in out Boolean);
+         Recurse : Boolean := False)
+      is
+         pragma Unreferenced (Doing, Recurse);
       begin
+         Search (Start,
+                 "",
+                 (Directory => True, Ordinary_File => True, others => False),
+                 Go_Down'Access);
+      end Traverse_Tree_Internal;
+
+      -------------
+      -- Go_Down --
+      -------------
+
+      procedure Go_Down (Item : Directory_Entry_Type) is
+         Stop  : Boolean := False;
+         Prune : Boolean := False;
+         VF    : constant VFS.Virtual_File :=
+                   VFS.New_Virtual_File (VFS.From_FS (Full_Name (Item)));
+         --  We use this later to check whether this is a soft link
+      begin
+
+         --  Ada.Directories reports softlinks not as special files but as the
+         --  target of the link. This confuses users of Traverse_Tree that may
+         --  see files within a folder that has never been visited before.
+
+         --  Short of introducing new file kinds for softlinks and reporting
+         --  them to clients, for now we just ignore softlinks to dirs, and
+         --  this way only actual folders are traversed.
+
+         if VF.Is_Symbolic_Link and then Kind (Item) = Directory then
+            Trace.Warning ("Skipping softlink dir during tree traversal: "
+                           & Full_Name (Item));
+            return;
+         end if;
+
          if Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".." then
-            Doing (Item, Stop);
+            begin
+               Doing (Item, Stop);
+            exception
+               when Traverse_Tree_Prune_Dir =>
+                  Prune := True;
+            end;
             if Stop then
                return;
             end if;
 
-            if Recurse and then Kind (Item) = Directory then
-               Traverse_Tree (Start / Simple_Name (Item), Doing, Recurse);
+            if not Prune and then Recurse and then Kind (Item) = Directory then
+               declare
+                  Normal_Name : constant Absolute_Path
+                    :=
+                      String (GNATCOLL.VFS.Full_Name
+                              (VFS.New_Virtual_File (Full_Name (Item)),
+                                   Normalize        => True,
+                                   Resolve_Links    => True).all);
+               begin
+                  if Visited.Contains (Normal_Name) then
+                     Trace.Debug ("Not revisiting " & Normal_Name);
+                  else
+                     Visited.Insert (Normal_Name);
+                     if Spinner then
+                        Progress.Step ("Exploring .../" & Simple_Name (Item));
+                     end if;
+                     Traverse_Tree_Internal (Normal_Name, Doing, Recurse);
+                  end if;
+               end;
+            elsif Prune and then Kind (Item) = Directory then
+               Trace.Debug ("Skipping dir: " & Full_Name (Item));
+            elsif Prune and then Kind (Item) /= Directory then
+               Trace.Warning ("Pruning of non-dir entry has no effect: "
+                              & Full_Name (Item));
             end if;
          end if;
       end Go_Down;
 
    begin
-      Trace.Debug ("Traversing folder: " & Start);
-
-      Search (Start,
-              "",
-              (Directory => True, Ordinary_File => True, others => False),
-              Go_Down'Access);
+      Trace.Debug ("Traversing folder: " & Adirs.Full_Name (Start));
+      Traverse_Tree_Internal (Start, Doing, Recurse);
    end Traverse_Tree;
 
    ---------------
@@ -633,7 +1087,16 @@ package body Alire.Directories is
          Default_Aft => 1,
          Unit        => "B");
    begin
-      return TTY.Emph (Image (Modular_File_Size (Size)));
+      --  The SI_Units library returns a UTF-8 string, sometimes using special
+      --  characters for non-breaking space and degrees/micro signs. To avoid
+      --  having to update all of CLIC to Unicode (although we should at some
+      --  point), just filter it out here
+
+      return TTY.Emph
+        (AAA.Strings.Replace
+           (Text  => Image (Modular_File_Size (Size)),
+            Match => Character'Val (16#C2#) & Character'Val (16#A0#),
+            Subst => " "));
    end TTY_Image;
 
    ---------------
@@ -645,6 +1108,7 @@ package body Alire.Directories is
       return Temp : constant Temp_File :=
         (Temp_File'(Ada.Finalization.Limited_Controlled with
                     Keep => <>,
+                    FD   => <>,
                     Name => +Adirs.Full_Name (Name)))
       do
          Temp_Registry.Add (+Temp.Name);
@@ -715,10 +1179,14 @@ package body Alire.Directories is
    -- Touch --
    -----------
 
-   procedure Touch (File : File_Path) is
+   procedure Touch (File : File_Path; Create_Tree : Boolean := False) is
       use GNAT.OS_Lib;
       Success : Boolean := False;
    begin
+      if Create_Tree then
+         Directories.Create_Tree (Parent (File));
+      end if;
+
       if Is_Regular_File (File) then
          Set_File_Last_Modify_Time_Stamp (File, Current_Time);
       elsif Ada.Directories.Exists (File) then

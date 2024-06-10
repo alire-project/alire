@@ -35,12 +35,14 @@ package body Alr.Commands.Update is
       end Parse_Allowed;
 
    begin
-      Cmd.Requires_Valid_Session (Sync => False);
+      Cmd.Requires_Workspace (Sync => False);
       --  The user has explicitly requested an update, so it makes no sense to
       --  sync previously, or the update would never find changes.
 
       if Cmd.Online then
          Index.Update_All;
+      else
+         Cmd.Auto_Update_Index;
       end if;
 
       Cmd.Root.Update (Parse_Allowed,

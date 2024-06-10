@@ -4,9 +4,9 @@ with Ada.Exceptions;
 with Ada.Containers;
 
 with Alire.Crates;
-with Alire.Defaults;
 with Alire.Dependencies;
 with Alire.Directories;
+with Alire.Errors;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Origins;
@@ -17,7 +17,6 @@ with Alire.Properties.Actions.Executor;
 with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
-with Alire.Utils;
 
 with Alr.Files;
 with Alr.Testing.Collections;
@@ -38,21 +37,23 @@ package body Alr.Commands.Test is
    package Platform renames Alire.Platforms.Current;
    package Query    renames Alire.Solver;
 
-   Docker_Switch : constant String := "--docker";
-
    -----------------
    -- Check_Files --
    -----------------
 
-   function Check_Files (Output : in out AAA.Strings.Vector;
-                         R      : Alire.Index.Release) return Boolean
+   function Check_Files (Cmd    : in out Command;
+                         Output : in out AAA.Strings.Vector;
+                         R      : Alire.Index.Release;
+                         Local  : Boolean) return Boolean
    is
       use AAA.Strings;
       use Ada.Directories;
    begin
       --  Declared GPR files in include paths
       declare
-         Guard : Folder_Guard (Enter_Folder (R.Base_Folder))
+         Guard : Folder_Guard (Enter_Folder (if Local
+                                             then Cmd.Root.Path
+                                             else R.Base_Folder))
            with Unreferenced;
       begin
 
@@ -82,7 +83,7 @@ package body Alr.Commands.Test is
       --  Generated executables
 
       for Exe of R.Executables (Platform.Properties) loop
-         if Files.Locate_File_Under (Folder    => R.Base_Folder,
+         if Files.Locate_File_Under (Folder    => Alire.Directories.Current,
                                      Name      => Exe,
                                      Max_Depth => Natural'Last).Is_Empty
          then
@@ -101,9 +102,9 @@ package body Alr.Commands.Test is
    -------------
 
    procedure Do_Test
-     (Cmd          : Command;
+     (Cmd          : in out Command;
       Releases     : Alire.Releases.Containers.Release_Sets.Set;
-      Docker_Image : String)
+      Local        : Boolean)
    is
       use Ada.Calendar;
       use GNATCOLL.VFS;
@@ -123,6 +124,9 @@ package body Alr.Commands.Test is
           (Long_Long_Integer'Image
              (Long_Long_Integer (Clock - Time_Of (1970, 1, 1))));
 
+      Test_Name : constant String
+        := "alr_test_" & (if Local then "local" else Timestamp);
+
       Newline : constant String := "" & ASCII.LF;
 
       ------------------
@@ -133,6 +137,12 @@ package body Alr.Commands.Test is
          Output : AAA.Strings.Vector;
          Start  : Time;
 
+         --  When testing the local crate, we must ensure being at the root
+         CD     : Folder_Guard (if Local
+                                then Enter_Folder (Cmd.Root.Path)
+                                else Alire.Directories.Stay)
+           with Unreferenced;
+
          -----------------
          -- Test_Action --
          -----------------
@@ -140,24 +150,7 @@ package body Alr.Commands.Test is
          procedure Test_Action is
             use AAA.Strings;
 
-            use Ada.Directories;
             use Alire.OS_Lib.Subprocess;
-
-            Docker_Prefix : constant AAA.Strings.Vector :=
-                              Empty_Vector
-                              & "sudo"
-                              & "docker"
-                              & "run"
-                              & String'("-v"
-                                        & Locate_In_Path ("alr")
-                                        & ":/usr/bin/alr")
-                              --  Map executable
-                              & String'("-v" & Current_Directory & ":/work")
-                              --  Map working folder
-                              & "-w" & "/work"
-                              & "--user" & Alire.OS_Lib.Getenv ("UID", "1000")
-                              --  Map current user
-                              & Docker_Image;
 
             Regular_Alr_Switches : constant AAA.Strings.Vector :=
                                  Empty_Vector
@@ -167,21 +160,13 @@ package body Alr.Commands.Test is
                                         then To_Vector ("--force")
                                         else Empty_Vector);
 
-            Custom_Alr : constant AAA.Strings.Vector :=
-                           Empty_Vector
-                           & "alr"
-                           & (if Alire.Force
-                              then To_Vector ("--force")
-                              else Empty_Vector)
-                           & "-c" & "/tmp/alire";
-            --  When running inside docker as regular user we need config to be
-            --  stored in a writable folder.
-
             ------------------
             -- Default_Test --
             ------------------
 
             procedure Default_Test is
+
+               --  Used to test indexed crates
                Alr_Args : constant AAA.Strings.Vector :=
                             Empty_Vector &
                             Regular_Alr_Switches &
@@ -191,30 +176,26 @@ package body Alr.Commands.Test is
                              else To_Vector ("--build")) &
                             R.Milestone.Image;
 
-               Docker_Default : constant AAA.Strings.Vector :=
-                                  Docker_Prefix
-                                  & Custom_Alr
-                                  & Alr_Args;
+               --  Used to test the local crate
+               Alr_Local : constant AAA.Strings.Vector :=
+                             Empty_Vector &
+                             Regular_Alr_Switches &
+                             "build" &
+                             "--release";
 
-               Alr_Default : constant AAA.Strings.Vector := "alr" & Alr_Args;
+               Alr_Default : constant AAA.Strings.Vector
+                 := (if Local
+                     then "alr" & Alr_Local
+                     else "alr" & Alr_Args);
 
                Exit_Code : Integer;
             begin
-               if Alire.Utils.Command_Line_Contains (Docker_Switch) then
-                  Output.Append_Line ("Spawning: " & Docker_Default.Flatten);
-                  Exit_Code := Unchecked_Spawn_And_Capture
-                    (Docker_Default.First_Element,
-                     Docker_Default.Tail,
-                     Output,
-                     Err_To_Out => True);
-               else
-                  Output.Append_Line ("Spawning: " & Alr_Default.Flatten);
-                  Exit_Code := Unchecked_Spawn_And_Capture
-                    (Alr_Default.First_Element,
-                     Alr_Default.Tail,
-                     Output,
-                     Err_To_Out => True);
-               end if;
+               Output.Append_Line ("Spawning: " & Alr_Default.Flatten);
+               Exit_Code := Unchecked_Spawn_And_Capture
+                  (Alr_Default.First_Element,
+                  Alr_Default.Tail,
+                  Output,
+                  Err_To_Out => True);
 
                if Exit_Code /= 0 then
                   raise Child_Failed;
@@ -222,7 +203,7 @@ package body Alr.Commands.Test is
 
                --  Check declared gpr/executables in place
                if not R.Origin.Is_System and then
-                  not Check_Files (Output, R)
+                  not Cmd.Check_Files (Output, R, Local)
                then
                   raise Child_Failed with "Declared executable(s) missing";
                end if;
@@ -238,40 +219,32 @@ package body Alr.Commands.Test is
                                   "alr"
                                   & Regular_Alr_Switches
                                   & "get" & R.Milestone.Image;
-               Dkr_Custom_Cmd : constant Vector :=
-                                  Docker_Prefix
-                                  & Custom_Alr
-                                  & "get"
-                                  & R.Milestone.Image;
             begin
 
-               --  Fetch the crate
+               --  Fetch the crate if not local test
 
-               if Alire.Utils.Command_Line_Contains (Docker_Switch) then
-                  Output.Append_Line ("Spawning: " & Dkr_Custom_Cmd.Flatten);
+               if not Local then
+                  Output.Append_Line
+                     ("Spawning: " & Alr_Custom_Cmd.Flatten);
                   Exit_Code := Unchecked_Spawn_And_Capture
-                    (Dkr_Custom_Cmd.First_Element,
-                     Dkr_Custom_Cmd.Tail,
-                     Output,
-                     Err_To_Out => True);
-               else
-                  Output.Append_Line ("Spawning: " & Alr_Custom_Cmd.Flatten);
-                  Exit_Code := Unchecked_Spawn_And_Capture
-                    (Alr_Custom_Cmd.First_Element,
+                     (Alr_Custom_Cmd.First_Element,
                      Alr_Custom_Cmd.Tail,
                      Output,
                      Err_To_Out => True);
-               end if;
 
-               if Exit_Code /= 0 then
-                  raise Child_Failed;
+                  if Exit_Code /= 0 then
+                     raise Child_Failed;
+                  end if;
                end if;
 
                --  And run its actions in its working directory
 
                declare
                   Guard : Alire.Directories.Guard
-                    (Alire.Directories.Enter (R.Base_Folder))
+                    (Alire.Directories.Enter
+                       (if Local
+                        then Cmd.Root.Path
+                        else R.Base_Folder))
                     with Unreferenced;
                begin
                   for Action of R.On_Platform_Actions
@@ -286,11 +259,7 @@ package body Alr.Commands.Test is
                         Capture    => True,
                         Err_To_Out => True,
                         Code       => Exit_Code,
-                        Output     => Output,
-                        Prefix     =>
-                          (if Alire.Utils.Command_Line_Contains (Docker_Switch)
-                           then Docker_Prefix
-                           else AAA.Strings.Empty_Vector));
+                        Output     => Output);
 
                      if Exit_Code /= 0 then
                         raise Child_Failed;
@@ -319,8 +288,8 @@ package body Alr.Commands.Test is
 
          Start := Clock;
 
-         Is_Available  := R.Is_Available (Platform.Properties);
-         Is_Resolvable := Query.Is_Resolvable
+         Is_Available  := Local or else R.Is_Available (Platform.Properties);
+         Is_Resolvable := Local or else Query.Is_Resolvable
            (R.Dependencies (Platform.Properties),
             Platform.Properties,
             Alire.Solutions.Empty_Valid_Solution);
@@ -331,7 +300,7 @@ package body Alr.Commands.Test is
             Some_Failed := True;
             Reporters.End_Test
               (R, Testing.Unresolvable, Clock - Start, No_Log);
-         elsif not R.Origin.Is_System and then
+         elsif not Local and then not R.Origin.Is_System and then
            Ada.Directories.Exists (R.Base_Folder) and then
            not Cmd.Redo
          then
@@ -371,23 +340,41 @@ package body Alr.Commands.Test is
             end;
          end if;
 
-         Make_Dir
-           (Create (+R.Base_Folder)
-            / Create (+Paths.Working_Folder_Inside_Root));
-         --  Might not exist for system/failed/skipped
-         Output.Write (R.Base_Folder
-                       / Paths.Working_Folder_Inside_Root
-                       / "alr_test_" & Timestamp & ".log");
+         if not Local then
+            Make_Dir
+              (Create (+R.Base_Folder)
+               / Create (+Paths.Working_Folder_Inside_Root));
+            --  Might not exist for system/failed/skipped
+         end if;
+
+         --  For local testing we can already use the local 'alire' folder. For
+         --  batch testing instead we create one folder per release.
+         declare
+            Common_Path : constant Alire.Relative_Path :=
+                            Paths.Working_Folder_Inside_Root
+                            / Test_Name & ".log";
+         begin
+            Output.Write (if Local
+                          then Common_Path
+                          else R.Base_Folder / Common_Path);
+         end;
       end Test_Release;
 
    begin
-      Reporters.Add (Testing.Console.New_Reporter);
-      Reporters.Add (Testing.JUnit.New_Reporter);
-      Reporters.Add (Testing.Markdown.New_Reporter);
-      Reporters.Add (Testing.Text.New_Reporter);
+      if not Local then
+         --  These don't make much sense for single crate testing
+         Reporters.Add (Testing.Console.New_Reporter);
+         Reporters.Add (Testing.Markdown.New_Reporter);
+         Reporters.Add (Testing.Text.New_Reporter);
+      end if;
 
-      Reporters.Start_Run ("alr_test_" & Timestamp,
-                           Natural (Releases.Length));
+      Reporters.Add (Testing.JUnit.New_Reporter);
+
+      Reporters.Start_Run
+        ((if Local
+          then Cmd.Root.Working_Folder / Test_Name
+          else Test_Name),
+         Natural (Releases.Length));
 
       declare
          Old_Level : constant Simple_Logging.Levels := Alire.Log_Level;
@@ -401,9 +388,13 @@ package body Alr.Commands.Test is
             Alire.Log_Level := Simple_Logging.Warning;
          end if;
 
-         for R of Releases loop
-            Test_Release (R);
-         end loop;
+         if Local then
+            Test_Release (Cmd.Root.Release);
+         else
+            for R of Releases loop
+               Test_Release (R);
+            end loop;
+         end if;
 
          Alire.Log_Level := Old_Level;
       end;
@@ -411,7 +402,23 @@ package body Alr.Commands.Test is
       Reporters.End_Run;
 
       if Some_Failed then
-         Reportaise_Command_Failed ("Some releases failed to pass testing");
+         if Local then
+            Reportaise_Command_Failed
+              (Alire.Errors.Wrap (
+               "Local test of "
+               & Cmd.Root.Release.Milestone.TTY_Image & " failed.",
+               "Check " & Alire.TTY.URL
+                 (Alire.Paths.Working_Folder_Inside_Root
+                  / Test_Name & ".log")
+               & " for details."));
+         else
+            Reportaise_Command_Failed ("Some releases failed to pass testing");
+         end if;
+      elsif Local then
+         Alire.Put_Success ("Test ended successfully.");
+         Alire.Put_Info ("Check log at "
+                         & TTY.URL (Cmd.Root.Working_Folder / Test_Name
+                                    & ".log"));
       end if;
    end Do_Test;
 
@@ -423,7 +430,11 @@ package body Alr.Commands.Test is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      Test_All : constant Boolean := Args.Count = 0;
+      No_Args : constant Boolean := Args.Count = 0;
+
+      ---------------
+      -- Not_Empty --
+      ---------------
 
       procedure Not_Empty (Item : Ada.Directories.Directory_Entry_Type;
                            Stop : in out Boolean)
@@ -436,11 +447,6 @@ package body Alr.Commands.Test is
       end Not_Empty;
 
       Candidates : Alire.Releases.Containers.Release_Sets.Set;
-
-      Docker_Image : constant String :=
-                       (if Cmd.Docker.all = ""
-                        then Alire.Defaults.Docker_Test_Image
-                        else AAA.Strings.Replace (Cmd.Docker.all, "=", ""));
 
       use Alire.Releases.Containers.Release_Sets;
 
@@ -464,10 +470,10 @@ package body Alr.Commands.Test is
          --  need to match the search term against crate names. Otherwise, we
          --  can directly retrieve the given crates.
 
-         if Test_All or else Cmd.Search then
+         if No_Args or else Cmd.Search then
             for Crate of Alire.Index.All_Crates.all loop
                if not Crate.Releases.Is_Empty then
-                  if Test_All or else Is_Match (Crate.Name) then
+                  if No_Args or else Is_Match (Crate.Name) then
                      if Cmd.Last then
                         Candidates.Include (Crate.Releases.Last_Element);
                      else
@@ -504,39 +510,6 @@ package body Alr.Commands.Test is
          end if;
       end Find_Candidates;
 
-      --------------------
-      -- Prepare_Docker --
-      --------------------
-
-      procedure Pull_Docker is
-         use Alire.OS_Lib.Subprocess;
-         use AAA.Strings;
-
-         Output    : AAA.Strings.Vector;
-         Exit_Code : Integer;
-      begin
-         if Alire.Utils.Command_Line_Contains (Docker_Switch) then
-
-            Trace.Info ("Running builds in docker image: " & Docker_Image);
-
-            Exit_Code := Unchecked_Spawn_And_Capture
-              ("sudo",
-               Empty_Vector
-               & "docker"
-               & "pull"
-               & Docker_Image,
-               Output,
-               Err_To_Out => True);
-
-            if Exit_Code /= 0 then
-               Reportaise_Command_Failed
-                 ("Failed to pull docker image " & Docker_Image
-                  & " with output: "
-                  & Output.Flatten (Separator => "" & ASCII.LF));
-            end if;
-         end if;
-      end Pull_Docker;
-
    begin
       --  Validate command line
       if not Cmd.Search then
@@ -557,20 +530,22 @@ package body Alr.Commands.Test is
            ("Either use --full or specify crate names, but not both");
       end if;
 
-      --  Check in empty folder!
-      if Cmd.Cont then
-         Trace.Detail ("Resuming tests");
-      elsif Cmd.Redo then
-         Trace.Detail ("Redoing tests");
-      else
-         Alire.Directories.Traverse_Tree
-           (Ada.Directories.Current_Directory, Not_Empty'Access);
+      --  When doing testing over index contents, we request an empty dir
+      if not No_Args then
+         if Cmd.Cont then
+            Trace.Detail ("Resuming tests");
+         elsif Cmd.Redo then
+            Trace.Detail ("Redoing tests");
+         else
+            Alire.Directories.Traverse_Tree
+              (Ada.Directories.Current_Directory, Not_Empty'Access);
+         end if;
       end if;
 
       CLIC.User_Input.Not_Interactive := True;
 
       --  Start testing
-      if Test_All then
+      if No_Args then
          if Cmd.Full then
             if Cmd.Last then
                Trace.Detail ("Testing newest release of every crate");
@@ -578,24 +553,32 @@ package body Alr.Commands.Test is
                Trace.Detail ("Testing all releases");
             end if;
          else
-            Reportaise_Command_Failed
-              ("No releases specified; use --full to test'em all!");
+            if Cmd.Has_Root then
+               Alire.Put_Info ("Testing local crate: "
+                               & Cmd.Root.Release.Milestone.TTY_Image);
+            else
+               Reportaise_Wrong_Arguments
+                 ("Not inside a local crate and no releases specified "
+                  & "(use --full to test'em all!)");
+            end if;
          end if;
       end if;
 
       --  Pre-find candidates to not have duplicate tests if overlapping
       --  requested.
-      Find_Candidates;
-
-      if Candidates.Is_Empty then
-         Reportaise_Command_Failed ("No releases for the requested crates");
+      if No_Args then
+         Candidates.Include (Cmd.Root.Release);
       else
-         Trace.Detail ("Testing" & Candidates.Length'Img & " releases");
+         Find_Candidates;
+
+         if Candidates.Is_Empty then
+            Reportaise_Command_Failed ("No releases for the requested crates");
+         else
+            Trace.Detail ("Testing" & Candidates.Length'Img & " releases");
+         end if;
       end if;
 
-      Pull_Docker;
-
-      Do_Test (Cmd, Candidates, Docker_Image);
+      Do_Test (Cmd, Candidates, No_Args);
    end Execute;
 
    ----------------------
@@ -633,14 +616,6 @@ package body Alr.Commands.Test is
          Cmd.Cont'Access,
          Long_Switch => "--continue",
          Help        => "Skip testing of releases already in folder");
-
-      Define_Switch
-        (Config,
-         Cmd.Docker'Access,
-         Long_Switch => Docker_Switch & "?", -- ? for optional image tag
-         Help        => "Test releases within docker IMAGE"
-                        & " (or " & Alire.Defaults.Docker_Test_Image & ")",
-         Argument    => "=IMAGE");
 
       Define_Switch
         (Config,

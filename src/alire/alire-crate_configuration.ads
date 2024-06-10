@@ -2,6 +2,7 @@ with TOML;
 
 with Alire.Utils.Switches;
 with Alire.Properties.Configurations;
+with Alire.Releases;
 limited with Alire.Roots;
 
 private with Ada.Strings.Unbounded;
@@ -32,6 +33,11 @@ package Alire.Crate_Configuration is
    function Is_Valid (This : Global_Config) return Boolean;
    --  False until Load is called
 
+   function Is_Config_Complete (This  : Global_Config;
+                                Crate : String := "")
+                                return Boolean;
+   --  Say if all variables in configuration are set, for all or one crate
+
    procedure Ensure_Complete (This : Global_Config);
    --  Verify all variables have a value, or report and raise
 
@@ -40,6 +46,14 @@ package Alire.Crate_Configuration is
                            return Utils.Switches.Profile_Kind
      with Pre => This.Is_Valid;
 
+   function Build_Switches (This  : in out Global_Config;
+                            Root  : in out Roots.Root;
+                            Crate : Crate_Name)
+                            return Utils.Switches.Switch_List
+     with Pre => This.Is_Valid;
+   --  The exact switches that apply to a crate (the ones that will be written
+   --  to their config .gpr files)
+
    function Is_Default_Profile (This  : Global_Config;
                                 Crate : Crate_Name)
                                 return Boolean;
@@ -47,14 +61,23 @@ package Alire.Crate_Configuration is
 
    procedure Set_Build_Profile (This    : in out Global_Config;
                                 Crate   : Crate_Name;
-                                Profile : Profile_Kind)
+                                Profile : Profile_Kind;
+                                Set_By  : String := "library client")
      with Pre => This.Is_Valid;
 
    procedure Load (This : in out Global_Config;
                    Root : in out Alire.Roots.Root);
 
-   procedure Generate_Config_Files (This : Global_Config;
-                                    Root : in out Alire.Roots.Root);
+   procedure Generate_Config_Files (This : in out Global_Config;
+                                    Root : in out Alire.Roots.Root;
+                                    Full : Boolean);
+   --  When Full, overwrite
+
+   procedure Generate_Config_Files (This : in out Global_Config;
+                                    Root : in out Alire.Roots.Root;
+                                    Rel  : Releases.Release;
+                                    Full : Boolean);
+   --  Generate config files only for the given release. When Full, overwrite.
 
    procedure Save_Last_Build_Profiles (This : Global_Config);
    --  Record in local user configuration the last profiles used in crate
@@ -63,9 +86,6 @@ package Alire.Crate_Configuration is
    function Last_Build_Profiles return Profile_Maps.Map;
    --  Get the last profile used from user configuration. Note that we can have
    --  more/fewer crates in a new run if dependencies have changed.
-
-   function Must_Regenerate (This : Global_Config) return Boolean;
-   --  Say if some profile has changed so config files must be regenerated
 
    type Profile_Wildcards is (To_None,    --  No wildcard given
                               To_Unset, --  '%' (not set otherwise)
@@ -123,6 +143,7 @@ private
    type Global_Config is tagged record
       Var_Map : Config_Maps.Map;
       --  Mapping "crate.var" --> setting
+      --  Includes the Build_Profile var added by Alire
 
       Profile_Map  : Profile_Maps.Map;
       --  Mapping crate -> profile, exists for all crates in solution
@@ -145,9 +166,10 @@ private
                                Root  : in out Roots.Root;
                                Crate : Crate_Name);
 
-   procedure Set_Value (This  : in out Global_Config;
-                        Crate : Crate_Name;
-                        Val   : Assignment);
+   procedure Set_Value (This   : in out Global_Config;
+                        Crate  : Crate_Name;
+                        Val    : Assignment;
+                        Set_By : String);
 
    procedure Load_Settings (This  : in out Global_Config;
                             Root  : in out Roots.Root;
@@ -168,5 +190,8 @@ private
                                 Crate    : Crate_Name;
                                 Filepath : Absolute_Path;
                                 Version  : String);
+
+   function Key (Crate : Crate_Name; Var_Name : String) return String;
+   --  Keys in the var map are normalized as "crate.var" lowercased
 
 end Alire.Crate_Configuration;

@@ -5,6 +5,14 @@ if ! builtin type -P alr &>/dev/null; then
     return
 fi
 
+# Disable index auto-update to avoid interference with commands below
+if alr settings --global | grep -q index.auto_update= ; then
+    update_period=$(alr settings --global | grep index.auto_update= | cut -f2 -d=)
+else
+    update_period=unset
+fi
+alr settings --global --set index.auto_update 0
+
 # Commands/Topics: all line-first words not starting with capital letter, after # COMMANDS
 _alr_commands=$(alr | grep COMMANDS -A 99 | awk '{print $1}' | grep -v '[[:upper:]]' | xargs)
 
@@ -46,7 +54,7 @@ function _alr_completion() {
     # Command-specific completions
     $found &&\
     case $cmd in
-        get | show | toolchain)
+        get | install | show | toolchain)
             # Suggest crate names
             COMPREPLY+=($(compgen -W "$_alr_crates" -- $curr))
             ;;
@@ -80,3 +88,8 @@ function _alr_completion() {
 
 # Bind the function that performs context-aware completion
 complete -F _alr_completion alr
+
+# Re-enable index auto-update to avoid interference with commands below
+if [ "$update_period" != "unset" ]; then
+    alr settings --global --set index.auto_update $update_period
+fi

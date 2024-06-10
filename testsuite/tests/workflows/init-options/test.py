@@ -15,10 +15,22 @@ p = run_alr('init', '--bin', 'invalid-name',
             complain_on_error=False)
 assert_match(".*Identifiers must be.*", p.out)
 
+# In the following, config files must already exist so the project is
+# immediately loadable by editors. Other artifacts under 'alire/' are created
+# during configuration generation.
+
 # Plain init
 run_alr('init', '--bin', 'xxx')
 compare(contents('xxx'), ['xxx/.gitignore',
+                          'xxx/alire',
                           'xxx/alire.toml',
+                          'xxx/alire/alire.lock',
+                          'xxx/alire/build_hash_inputs',
+                          'xxx/alire/settings.toml',
+                          'xxx/config',
+                          'xxx/config/xxx_config.ads',
+                          'xxx/config/xxx_config.gpr',
+                          'xxx/config/xxx_config.h',
                           'xxx/share',
                           'xxx/share/xxx',
                           'xxx/src',
@@ -30,7 +42,15 @@ os.mkdir('aaa')
 run_alr('init', '--bin', 'aaa')
 compare(contents('aaa'), ['aaa/.gitignore',
                           'aaa/aaa.gpr',
+                          'aaa/alire',
                           'aaa/alire.toml',
+                          'aaa/alire/alire.lock',
+                          'aaa/alire/build_hash_inputs',
+                          'aaa/alire/settings.toml',
+                          'aaa/config',
+                          'aaa/config/aaa_config.ads',
+                          'aaa/config/aaa_config.gpr',
+                          'aaa/config/aaa_config.h',
                           'aaa/share',
                           'aaa/share/aaa',
                           'aaa/src',
@@ -65,7 +85,15 @@ os.mkdir('zzz')
 os.chdir('zzz')
 run_alr('init', '--bin', '--in-place', 'zzz')
 compare(contents('.'), ['./.gitignore',
+                        './alire',
                         './alire.toml',
+                        './alire/alire.lock',
+                        './alire/build_hash_inputs',
+                        './alire/settings.toml',
+                        './config',
+                        './config/zzz_config.ads',
+                        './config/zzz_config.gpr',
+                        './config/zzz_config.h',
                         './share',
                         './share/zzz',
                         './src',

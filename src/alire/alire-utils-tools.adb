@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 with Alire.OS_Lib.Subprocess; use Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib;
 with Alire.Platforms.Current;
@@ -52,23 +54,22 @@ package body Alire.Utils.Tools is
    begin
       case Distribution is
 
-         when Distro_Unknown =>
+         when Distribution_Unknown =>
             --  Cannot have package for an unknown distribution
             return "";
 
          when Msys2 | Debian | Ubuntu | Arch | Centos | Fedora | Rhel | Suse
-           | Homebrew =>
+           | Homebrew | Macports =>
             return (case Tool is
                        when Easy_Graph =>
-                      (if Distribution = Centos or else
-                          Distribution = Fedora or else
-                          Distribution = Rhel or else
-                          Distribution = Suse
-                       then "perl-Graph-Easy"
-                       elsif Distribution /= Msys2 and Distribution /= Arch
-                       then "libgraph-easy-perl"
-                       else ""),
-                       when Git | Tar | Unzip | Curl => Exec_For_Tool (Tool),
+                         (if Distribution in Centos | Fedora | Rhel | Suse
+                          then "perl-Graph-Easy"
+                          elsif Distribution /= Msys2 and then
+                                Distribution /= Arch
+                          then "libgraph-easy-perl"
+                          else ""),
+                       when Git | Tar | Unzip | Curl =>
+                          Exec_For_Tool (Tool),
                        when Mercurial  => "mercurial",
                        when Subversion => "subversion");
       end case;
@@ -158,5 +159,19 @@ package body Alire.Utils.Tools is
 
       Install_From_Distrib (Tool, Fail);
    end Check_Tool;
+
+   ----------------
+   -- Is_BSD_Tar --
+   ----------------
+
+   function Is_BSD_Tar return Boolean is
+      use AAA.Strings;
+   begin
+      return Contains
+        (To_Lower_Case
+           (Checked_Spawn_And_Capture
+                ("tar", To_Vector ("--version")).Flatten),
+         "bsdtar");
+   end Is_BSD_Tar;
 
 end Alire.Utils.Tools;
