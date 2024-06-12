@@ -5,7 +5,6 @@ Test that a tool built by a dependency is available to a dependent crate
 from drivers.alr import run_alr, init_local_crate, alr_with, alr_manifest
 from drivers.alr import add_action
 from os import chdir
-from os.path import join
 from shutil import rmtree, which
 
 # We test with a locally pinned dependency, which should make no difference as
@@ -18,7 +17,6 @@ alr_with("depended", path="depended")
 
 # Add a pre-build action to the root crate that attempts to run bin/depended
 add_action("pre-build", ["depended/bin/depended"])
-
 run_alr("build")
 
 # Now, add the executable to the path in the depended crate, and an action that
@@ -38,6 +36,7 @@ rmtree("alire")
 rmtree("depended/alire")
 
 add_action("pre-build", ["depended"])
+run_alr("build")
 
 # Finally verify that a non-existant executable is actually failing. We do this
 # using "root" as an intermediate crate, to ensure that "pre-build" is also
@@ -50,7 +49,7 @@ alr_with("root", path="..")
 
 p = run_alr("build", complain_on_error=False)
 assert p.status != 0, "Command should have failed"
-assert 'Command ["fake_alr_test_exec"] exited with code' in p.out, \
+assert 'Command not found  [fake_alr_test_exec]' in p.out, \
     "Output does not contain expected error, but: " + p.out
 
 print('SUCCESS')

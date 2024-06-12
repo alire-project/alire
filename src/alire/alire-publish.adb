@@ -3,9 +3,9 @@ with Ada.Text_IO;
 
 with AAA.Strings;
 
-with Alire.Config;
+with Alire.Settings.Builtins;
 with Alire.Crates;
-with Alire.Directories;
+with Alire.Environment;
 with Alire.Errors;
 with Alire.Index_On_Disk.Loading;
 with Alire.GitHub;
@@ -17,22 +17,21 @@ with Alire.Origins.Deployers;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Properties.From_TOML;
+with Alire.Publish.Submit;
 with Alire.Releases;
 with Alire.Root;
-with Alire.Roots.Optional;
 with Alire.TOML_Adapters;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.User_Pins.Maps;
+with Alire.Utils.Tools;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
 with Alire.VFS;
 
 with CLIC.User_Input;
-
-with GNATCOLL.OS.Constants;
 
 with Semantic_Versioning;
 
@@ -54,27 +53,54 @@ package body Alire.Publish is
                        .Append ("bitbucket.org")
                        .Append ("github.com")
                        .Append ("gitlab.com")
+                       .Append ("savannah.gnu.org")
                        .Append ("savannah.nongnu.org")
                        .Append ("sf.net");
 
-   type Data is limited record
-      Options : All_Options;
+   Early_Stop : exception;
+   --  Raise this exception from a step to terminate prematurely but without
+   --  generating an error. E.g., if the user doesn't want to submit online
+   --  after successful manifest generation.
 
-      Origin : Origins.Origin := Origins.New_External ("undefined");
-      --  We use external as "undefined" until a proper origin is provided.
+   -----------------------
+   -- Check_Root_Status --
+   -----------------------
 
-      Path : UString := +".";
-      --  Where to find the local workspace
+   procedure Check_Root_Status (Path    : Any_Path;
+                                Root    : Roots.Optional.Root;
+                                Options : All_Options)
+   is
+      --  Path is supplied by the user and may not be a good path. Root has
+      --  been attempted to be detected at Path.
+      use all type Roots.Optional.States;
 
-      Subdir : Unbounded_Relative_Path;
-      --  Subdir inside the root repo, for monorepo crates
+      ---------------
+      -- Full_Path --
+      ---------------
 
-      Revision : UString := +"HEAD";
-      --  A particular revision for publishing from a git repo
+      function Full_Path (Path : Any_Path) return Any_Path
+      is (if Directories.Adirs.Exists (Path)
+          then Directories.Adirs.Full_Name (Path)
+          else Path);
 
-      Tmp_Deploy_Dir : Directories.Temp_File;
-      --  Place to check the sources
-   end record;
+   begin
+      case Root.Status is
+         when Outside =>
+            if Options.Nonstandard_Manifest then
+               Trace.Debug ("Using non-standard manifest location: "
+                            & Options.Manifest);
+            else
+               Raise_Checked_Error ("No Alire workspace found at "
+                                    & TTY.URL (Full_Path (Path)));
+            end if;
+         when Broken =>
+            Raise_Checked_Error
+              (Errors.Wrap
+                 ("Invalid metadata found at " & TTY.URL (Full_Path (Path)),
+                  Root.Brokenness));
+         when Valid => null;
+      end case;
+   end Check_Root_Status;
 
    ---------------
    -- Base_Path --
@@ -82,9 +108,19 @@ package body Alire.Publish is
    --  The workspace root path. To support out-of-alire packaging, this
    --  defaults to the current directory when using a nonstandard manifest.
    function Base_Path (This : Data) return Any_Path
-   is (if This.Options.Nonstandard_Manifest
-       then +This.Path
-       else Root.Current.Path);
+   is
+   begin
+      if This.Options.Nonstandard_Manifest then
+         return +This.Path;
+      else
+         declare
+            Root : Roots.Optional.Root := Alire.Root.Current;
+         begin
+            Check_Root_Status (+This.Path, Root, This.Options);
+            return Root.Value.Path;
+         end;
+      end if;
+   end Base_Path;
 
    -----------------
    -- Deploy_Path --
@@ -114,15 +150,35 @@ package body Alire.Publish is
    function Packaged_Manifest (This : Data) return Any_Path
    is (Deploy_Path (This) / Roots.Crate_File_Name);
 
+   ------------------------
+   -- Generated_Filename --
+   ------------------------
+
+   function Generated_Filename (This : in out Data) return String
+   is (TOML_Index.Manifest_File
+       (This.Root.Value.Name,
+          This.Root.Value.Release.Version));
+
+   ------------------------
+   -- Generated_Manifest --
+   ------------------------
+
+   function Generated_Manifest (This : in out Data) return Absolute_Path
+   is (This.Root.Value.Working_Folder
+       / Paths.Release_Folder_Inside_Working_Folder
+       / This.Generated_Filename);
+
    -----------------
    -- New_Options --
    -----------------
 
-   function New_Options (Skip_Build : Boolean := False;
-                         Manifest   : String  := Roots.Crate_File_Name)
+   function New_Options (Skip_Build  : Boolean := False;
+                         Skip_Submit : Boolean := False;
+                         Manifest    : String  := Roots.Crate_File_Name)
                          return All_Options
    is (Manifest_File => +Manifest,
-       Skip_Build    => Skip_Build);
+       Skip_Build    => Skip_Build,
+       Skip_Submit   => Skip_Submit);
 
    ---------------
    -- Git_Error --
@@ -188,7 +244,7 @@ package body Alire.Publish is
 
       Index_On_Disk.Loading.Load_All (Strict => True).Assert;
       if Index.Exists (Release.Name, Release.Version) then
-         Recoverable_Error
+         Recoverable_User_Error
             ("Target release " & Release.Milestone.TTY_Image
              & " already exist in a loaded index");
       end if;
@@ -338,7 +394,7 @@ package body Alire.Publish is
          --  Will have raised if the release is not loadable or incomplete
       else
          declare
-            Root : constant Roots.Optional.Root := Alire.Root.Current;
+            Root : Roots.Optional.Root := Alire.Root.Current;
          begin
             case Root.Status is
             when Outside =>
@@ -438,7 +494,7 @@ package body Alire.Publish is
 
    procedure Generate_Index_Manifest (Context : in out Data) is
       User_Manifest : constant Any_Path := Packaged_Manifest (Context);
-      Workspace     : constant Roots.Optional.Root := Root.Current;
+      Workspace     :          Roots.Optional.Root := Root.Current;
    begin
       if not GNAT.OS_Lib.Is_Read_Accessible_File (User_Manifest) then
          Raise_Checked_Error
@@ -448,6 +504,7 @@ package body Alire.Publish is
 
       declare
          use Ada.Text_IO;
+         use all type CLIC.User_Input.Answer_Kind;
          use TOML;
          TOML_Manifest  : constant TOML_Value :=
                             TOML_Load.Load_File (User_Manifest);
@@ -462,7 +519,7 @@ package body Alire.Publish is
                             (if Workspace.Is_Valid
                              then Workspace.Value.Working_Folder
                              else "." / Paths.Working_Folder_Inside_Root)
-                            / "releases"
+                            / Paths.Release_Folder_Inside_Working_Folder
                             / TOML_Index.Manifest_File (Name, Version);
          Index_File     : File_Type;
       begin
@@ -498,15 +555,35 @@ package body Alire.Publish is
            ("Your index manifest file has been generated at "
             & TTY.URL (Index_Manifest));
 
-         --  Show the upload URL in normal circumstances, or a more generic
-         --  message otherwise (when lacking a github login).
+         --  Ask to submit, or show the upload URL if submission skipped, or a
+         --  more generic message otherwise (when lacking a github login).
 
-         if Config.DB.Defined (Config.Keys.User_Github_Login) then
+         if not Context.Options.Skip_Submit then
+            --  Safeguard to avoid tests creating a live pull request, unless
+            --  explicitly desired
+            if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset"
+              and then
+                OS_Lib.Getenv (Environment.Testsuite_Allow, "unset") = "unset"
+            then
+               raise Constraint_Error
+                 with "Attempting to go online to create a PR during tests";
+            end if;
+
+            --  Go ahead?
+            if CLIC.User_Input.Query
+              ("Do you want to continue onto submission to the online "
+               & "community index?",
+               Valid => (Yes | No => True, others => False),
+               Default => Yes) = No
+            then
+               raise Early_Stop;
+            end if;
+         elsif not Settings.Builtins.User_Github_Login.Is_Empty then
             Put_Info
               ("Please upload this file to "
                & TTY.URL
                  (Index.Community_Host & "/"
-                  & Config.DB.Get (Config.Keys.User_Github_Login, "") & "/"
+                  & Settings.Builtins.User_Github_Login.Get & "/"
                   & Index.Community_Repo_Name
                   & "/upload/"
                   & Index.Community_Branch & "/"
@@ -554,12 +631,10 @@ package body Alire.Publish is
                                                With_Extension => False);
       Git        : constant VCSs.Git.VCS := VCSs.Git.Handler;
       Is_Repo    : constant Boolean := Git.Is_Repository (Base_Path (Context));
-      Archive    : constant Relative_Path :=
-                     Target_Dir
-                       / (Milestone
-                          & (if Is_Repo
-                             then ".tgz"
-                             else ".tbz2"));
+      Archive    : constant Relative_Path := Target_Dir / (Milestone & ".tgz");
+      --  We used to use tbz2 for locally tar'ed files, but that has an
+      --  implicit dependency on bzip2 that we are not managing yet, so for
+      --  now we err on the safe side of built-in tar gzip capabilities.
 
       -----------------
       -- Git_Archive --
@@ -592,14 +667,15 @@ package body Alire.Publish is
          OS_Lib.Subprocess.Checked_Spawn
            ("tar",
             Empty_Vector
-            & "cfj"
+            & "cfz"
             & Archive --  Destination file at alire/archives/crate-version.tbz2
 
             & String'("--exclude=./alire")
             --  Exclude top-level alire folder, before applying prefix
 
-            --  exclude .git and the like, with workaround for macOS bsd tar
-            & (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.MacOS
+            --  exclude .git and the like, with workaround for bsdtar used by
+            --  macOS and Windows without MSYS2
+            & (if Utils.Tools.Is_BSD_Tar
                then Empty_Vector
                     & "--exclude=./.git"
                     & "--exclude=./.hg"
@@ -723,7 +799,6 @@ package body Alire.Publish is
    -------------------
 
    procedure Verify_Github (Context : in out Data) is
-      pragma Unreferenced (Context);
    begin
 
       --  Early return if forcing
@@ -735,7 +810,7 @@ package body Alire.Publish is
 
       --  User has an account
 
-      if not Config.DB.Defined (Config.Keys.User_Github_Login) then
+      if Settings.Builtins.User_Github_Login.Is_Empty then
          Put_Info ("Publishing to the community index"
                    & " requires a GitHub account.");
       else
@@ -753,41 +828,23 @@ package body Alire.Publish is
          --  User must exist
 
          if not GitHub.User_Exists (Login) then
-            Raise_Checked_Error
+            Recoverable_User_Error
               ("Your GitHub login does not seem to exist: "
                & TTY.Emph (Login));
          end if;
 
          --  It has to have its own fork of the repo
 
-         if not GitHub.Repo_Exists (Login, Index.Community_Repo_Name) then
-            Raise_Checked_Error
-              ("You must fork the community index to your GitHub account"
+         if GitHub.Repo_Exists (Login, Index.Community_Repo_Name) then
+            Put_Success ("User has forked the community repository");
+         else
+            if not Submit.Ask_To_Fork (Context) then
+               Recoverable_User_Error
+                 ("You must fork the community index to your GitHub account"
                & ASCII.LF & "Please visit "
                & TTY.URL (Tail (Index.Community_Repo, '+'))
-               & " and fork the repository.");
-         else
-            Put_Success ("User has forked the community repository");
-         end if;
-
-         --  The repo must contain the base branch, or otherwise GitHub
-         --  redirects to the main repository page with an error banner on top.
-
-         if not GitHub.Branch_Exists (User   => Login,
-                                      Repo   => Index.Community_Repo_Name,
-                                      Branch => Index.Community_Branch)
-         then
-            Raise_Checked_Error
-              ("Your index fork is missing the current base branch ("
-               & TTY.Emph (Index.Community_Branch) & ")"
-               & " for pull requests to the community repository" & ASCII.LF
-               & "Please synchronize this branch and try again" & ASCII.LF
-               & "Your fork URL is: "
-               & TTY.URL (Index.Community_Host
-                 & "/" & Login & "/" & Index.Community_Repo_Name));
-         else
-            Put_Success ("User's fork contains base branch: "
-                         & TTY.Emph (Index.Community_Branch));
+               & " if you want to fork manually.");
+            end if;
          end if;
       end;
    end Verify_Github;
@@ -812,7 +869,7 @@ package body Alire.Publish is
 
          --  Otherwise we assume this is a local path
 
-         Recoverable_Error
+         Recoverable_User_Error
            ("The origin must be a definitive remote location, but is " & URL);
          --  For testing we may want to allow local URLs, or may be for
          --  internal use with network drives? So allow forcing it.
@@ -831,9 +888,7 @@ package body Alire.Publish is
              --  for local file on Windows, where drive letters are interpreted
              --  as the scheme).
            or else
-            (for some Site of Trusted_Sites =>
-               URI.Authority_Without_Credentials (URL) = Site or else
-               Has_Suffix (URI.Authority (URL), "." & Site))
+            Is_Trusted (URL)
          then
             Put_Success ("Origin is hosted on trusted site: "
                          & URI.Authority_Without_Credentials (URL));
@@ -858,7 +913,12 @@ package body Alire.Publish is
       Step_Deploy_Sources,
       Step_Check_Build,
       Step_Show_And_Confirm,
-      Step_Generate_Index_Manifest);
+      Step_Generate_Index_Manifest,
+      Step_Check_Exists,
+      Step_Fork,
+      Step_Clone,
+      Step_Push,
+      Step_Submit);
 
    type Step_Array is array (Positive range <>) of Step_Names;
 
@@ -871,7 +931,12 @@ package body Alire.Publish is
         Step_Deploy_Sources          => Deploy_Sources'Access,
         Step_Check_Build             => Check_Build'Access,
         Step_Show_And_Confirm        => Show_And_Confirm'Access,
-        Step_Generate_Index_Manifest => Generate_Index_Manifest'Access);
+        Step_Generate_Index_Manifest => Generate_Index_Manifest'Access,
+        Step_Check_Exists            => Submit.Exists'Access,
+        Step_Fork                    => Submit.Fork'Access,
+        Step_Clone                   => Submit.Clone'Access,
+        Step_Push                    => Submit.Push'Access,
+        Step_Submit                  => Submit.Request_Pull'Access);
 
    function Step_Description (Step : Step_Names) return String
    is (case Step is
@@ -882,7 +947,21 @@ package body Alire.Publish is
           when Step_Deploy_Sources          => "Deploy sources",
           when Step_Check_Build             => "Build release",
           when Step_Show_And_Confirm        => "User review",
-          when Step_Generate_Index_Manifest => "Generate index manifest");
+          when Step_Generate_Index_Manifest => "Generate index manifest",
+          when Step_Check_Exists            => "Check existing PR",
+          when Step_Fork                    => "Fork community index",
+          when Step_Clone                   => "Clone community index",
+          when Step_Push                    => "Upload manifest",
+          when Step_Submit                  => "Submit manifest for review");
+
+   Submit_Steps : constant Step_Array :=
+                    (Step_Check_Exists,
+                     Step_Fork,
+                     Step_Clone,
+                     Step_Push,
+                     Step_Submit);
+
+   No_Steps : constant Step_Array (1 .. 0) := (others => <>);
 
    ---------------
    -- Run_Steps --
@@ -903,6 +982,9 @@ package body Alire.Publish is
 
          Step_Calls (Steps (Current)) (Context);
       end loop;
+   exception
+      when Early_Stop =>
+         Trace.Info ("Publishing assistant stopped");
    end Run_Steps;
 
    -------------------
@@ -919,7 +1001,9 @@ package body Alire.Publish is
                    Path           => +Path,
                    Subdir         => <>,
                    Revision       => +Revision,
-                   Tmp_Deploy_Dir => <>);
+                   Tmp_Deploy_Dir => <>,
+                   Root           => <>,
+                   Token          => <>);
 
       Guard   : Directories.Guard (Directories.Enter (Base_Path (Context)))
         with Unreferenced;
@@ -932,8 +1016,22 @@ package body Alire.Publish is
                   Step_Deploy_Sources,
                   Step_Check_Build,
                   Step_Show_And_Confirm,
-                  Step_Generate_Index_Manifest));
+                  Step_Generate_Index_Manifest)
+                 &
+                 (if not Options.Skip_Submit
+                    then Submit_Steps
+                    else No_Steps));
    end Directory_Tar;
+
+   ----------------
+   -- Is_Trusted --
+   ----------------
+
+   function Is_Trusted (URL : Alire.URL) return Boolean
+   is (for some Site of Trusted_Sites =>
+          URI.Authority_Without_Credentials (URL) = Site
+       or else
+          Has_Suffix (URI.Authority (URL), "." & Site));
 
    ----------------------
    -- Local_Repository --
@@ -943,38 +1041,13 @@ package body Alire.Publish is
                                Revision : String   := "HEAD";
                                Options  : All_Options := New_Options)
    is
-      Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
+      Root : Roots.Optional.Root   := Roots.Optional.Search_Root (Path);
       Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
-      use all type Roots.Optional.States;
 
       Subdir : Unbounded_Relative_Path;
       --  In case we are publishing a nested crate (monorepo), its relative
       --  path in regard to the git worktree will be stored here by
       --  Check_Nested_Crate.
-
-      -----------------------
-      -- Check_Root_Status --
-      -----------------------
-
-      procedure Check_Root_Status is
-      begin
-         case Root.Status is
-         when Outside =>
-            if Options.Nonstandard_Manifest then
-               Trace.Debug ("Using non-standard manifest location: "
-                            & Options.Manifest);
-            else
-               Raise_Checked_Error ("No Alire workspace found at "
-                                    & TTY.URL (Path));
-            end if;
-         when Broken =>
-            Raise_Checked_Error
-              (Errors.Wrap
-                 ("Invalid metadata found at " & TTY.URL (Path),
-                  Root.Brokenness));
-         when Valid => null;
-         end case;
-      end Check_Root_Status;
 
       ------------------------
       -- Check_Nested_Crate --
@@ -1013,7 +1086,8 @@ package body Alire.Publish is
 
    begin
 
-      Check_Root_Status;
+      --  Early report and exit if there's any trouble with the supplied path
+      Check_Root_Status (Path, Root, Options);
 
       declare
          Root_Path : constant Absolute_Path :=
@@ -1021,7 +1095,6 @@ package body Alire.Publish is
                         then Ada.Directories.Full_Name (Path)
                         else Ada.Directories.Full_Name (Root.Value.Path));
       begin
-
          if not Git.Is_Repository (Root_Path) then
             Git_Error ("no git repository found", Root_Path);
          end if;
@@ -1039,7 +1112,7 @@ package body Alire.Publish is
          --  already. No matter what, it will be checked again on the
          --  deployed sources step.
 
-         if Revision = "" or Revision = "HEAD" then
+         if Revision = "" or else Revision = "HEAD" then
             declare
                Tmp_Context : Data := (Options => Options, others => <>);
             begin
@@ -1165,7 +1238,9 @@ package body Alire.Publish is
 
                       Revision       => +Commit,
 
-                      Tmp_Deploy_Dir => <>);
+                      Tmp_Deploy_Dir => <>,
+                      Root           => <>,
+                      Token          => <>);
       begin
          Run_Steps (Context,
                     (Step_Verify_Origin,
@@ -1173,7 +1248,11 @@ package body Alire.Publish is
                      Step_Deploy_Sources,
                      Step_Check_Build,
                      Step_Show_And_Confirm,
-                     Step_Generate_Index_Manifest));
+                     Step_Generate_Index_Manifest)
+                    &
+                    (if not Options.Skip_Submit
+                       then Submit_Steps
+                       else No_Steps));
       end;
    exception
       when E : Checked_Error | Origins.Unknown_Source_Archive_Format_Error =>

@@ -1,0 +1,10 @@
+description = "Sample crate"
+name = "crate2"
+version = "1.0.0"
+licenses = []
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin."case(os)"."..."]
+url = "file:../../../crates/crate/crate2.tgz"
+hashes = ["sha256:8a814f2f0683b3b4db10a1c1e08e951d81de0deff2fa0f70a29295e45184b795"]

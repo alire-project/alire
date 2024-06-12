@@ -1,9 +1,11 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
-with Alire.Config.Edit;
+with Alire.Settings.Builtins;
+with Alire.Settings.Edit;
 with Alire.Containers;
 with Alire.Index;
+with Alire.Index_On_Disk.Updates;
 with Alire.Platforms.Current;
 with Alire.Provides;
 with Alire.TOML_Adapters;
@@ -44,10 +46,6 @@ package body Alire.Index_On_Disk.Loading is
    --  Load crate providers for all indexes (unless already loaded). If this
    --  metadata file doesn't exist, a full index load will be triggered and
    --  the file will be rebuilt.
-
-   procedure Invalidate_Providers (Indexes_Dir : Any_Path);
-   --  Whenever an index is added or updated, we must invalidate the cache on
-   --  disk containing crate virtual providers.
 
    procedure Save_Providers (Indexes_Dir : Any_Path);
    --  Write to disk the providers info already in memory (generated after a
@@ -191,16 +189,31 @@ package body Alire.Index_On_Disk.Loading is
       Result : Outcome with Warnings => Off;
       --  Spurious warning to be silenced in Debian stable/Ubuntu LTS GNATs.
       Indexes : constant Set :=
-                  Find_All (Config.Edit.Indexes_Directory,
+                  Find_All (Settings.Edit.Indexes_Directory,
                             Result,
                             Cached => False);
       use Sets;
+
+      ------------------
+      -- Actually_Add --
+      ------------------
+
+      function Actually_Add (Before : String := "") return Outcome is
+      begin
+         Updates.Reset_Update_Time;
+
+         return Add (Origin => Alire.Index.Community_Repo &
+                       "#" & Alire.Index.Community_Branch,
+                     Name   => Alire.Index.Community_Name,
+                     Under  => Settings.Edit.Indexes_Directory,
+                     Before => Before);
+      end Actually_Add;
+
    begin
-      if not Config.DB.Get (Config.Keys.Index_Auto_Community, Default => True)
-      then
+      if not Settings.Builtins.Index_Auto_Community.Get then
          Warnings.Warn_Once
            ("Not configuring the community index, disabled via "
-            & Config.Keys.Index_Auto_Community);
+            & Settings.Builtins.Index_Auto_Community.Key);
          return Outcome_Success;
       end if;
 
@@ -212,13 +225,9 @@ package body Alire.Index_On_Disk.Loading is
             Trace.Debug ("Index was already set, deleting and re-adding...");
             Assert (Indexes (I).Delete);
 
-            return Add (Origin => Alire.Index.Community_Repo &
-                          "#" & Alire.Index.Community_Branch,
-                        Name   => Alire.Index.Community_Name,
-                        Under  => Config.Edit.Indexes_Directory,
-                        Before => (if Has_Element (Next (I))
-                                   then Indexes (Next (I)).Name
-                                   else ""));
+            return Actually_Add (Before => (if Has_Element (Next (I))
+                                            then Indexes (Next (I)).Name
+                                            else ""));
          end if;
       end loop;
 
@@ -228,10 +237,7 @@ package body Alire.Index_On_Disk.Loading is
       --  Reset cache so next detection finds the new index
 
       Trace.Debug ("Index was not set, adding it...");
-      return Add (Origin => Alire.Index.Community_Repo &
-                    "#" & Alire.Index.Community_Branch,
-                  Name   => Alire.Index.Community_Name,
-                  Under  => Config.Edit.Indexes_Directory);
+      return Actually_Add;
    exception
       when E : Checked_Error =>
          return Outcome_From_Exception (E);
@@ -251,7 +257,7 @@ package body Alire.Index_On_Disk.Loading is
    ------------------
 
    function Default_Path return Absolute_Path
-   is (Config.Edit.Indexes_Directory);
+   is (Settings.Edit.Indexes_Directory);
 
    -----------
    -- Setup --
@@ -279,7 +285,6 @@ package body Alire.Index_On_Disk.Loading is
             if not Outcome.Success then
                Raise_Checked_Error
                  ("Could not add community index: " & Message (Outcome));
-               return;
             end if;
          end;
       end if;
@@ -373,6 +378,20 @@ package body Alire.Index_On_Disk.Loading is
       return Indexes;
    end Find_All;
 
+   ---------------------
+   -- Index_Available --
+   ---------------------
+
+   function Index_Available (Under : Absolute_Path := Default_Path)
+                             return Boolean
+   is
+      Result  : Outcome;
+      Index   : constant Set := Find_All (Under, Result);
+   begin
+      Result.Assert;
+      return not Index.Is_Empty;
+   end Index_Available;
+
    ----------
    -- Load --
    ----------
@@ -401,7 +420,7 @@ package body Alire.Index_On_Disk.Loading is
 
       if From.Is_Empty and then Path = "" then
          Load (Crate, Detect_Externals, Strict, From,
-               Config.Edit.Indexes_Directory);
+               Settings.Edit.Indexes_Directory);
          return;
       elsif Path /= "" then
          Setup (Path);
@@ -628,39 +647,5 @@ package body Alire.Index_On_Disk.Loading is
             Ada.Directories.Delete_File (Filename);
          end if;
    end Save_Providers;
-
-   ----------------
-   -- Update_All --
-   ----------------
-
-   function Update_All (Under : Absolute_Path) return Outcome is
-      Result  : Outcome;
-      Indexes : constant Set := Find_All (Under, Result);
-   begin
-      if not Result.Success then
-         return Result;
-      end if;
-
-      --  First, invalidate providers metadata as this may change with the
-      --  update.
-
-      Invalidate_Providers (Under);
-
-      --  Now update normally
-
-      for Index of Indexes loop
-         declare
-            Result : constant Outcome := Index.Update;
-         begin
-            if Result.Success then
-               Trace.Detail ("Updated successfully: " & Index.Origin);
-            else
-               return Result;
-            end if;
-         end;
-      end loop;
-
-      return Outcome_Success;
-   end Update_All;
 
 end Alire.Index_On_Disk.Loading;

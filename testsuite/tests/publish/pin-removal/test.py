@@ -38,7 +38,7 @@ assert_match(".*\[\[pins\]\].*", content_of(alr_manifest()))
 # We publish with the pin in the manifest
 p = alr_publish(crate, "0.1.0-dev",
                 index_path=os.path.join(start_dir, "my_index"),
-                submit=False,
+                copy_to_index=False,
                 quiet=False)
 
 # Verify warning during publishing

@@ -8,14 +8,15 @@ on:
       - '**.rst'
       - '**.txt'
   release:
-    types: [created]
+    types: [published]
+  workflow_dispatch:
 
 jobs:
 
   build:
     name: CI on macOS
 
-    runs-on: macos-latest
+    runs-on: macos-12
 
     steps:
     - name: Check out repository
@@ -23,27 +24,18 @@ jobs:
       with:
         submodules: true
 
-    - name: Install toolchain
-      uses: ada-actions/toolchain@ce2020
+    - name: Install FSF toolchain
+      uses: alire-project/alr-install@v1
       with:
-        distrib: community
+        crates: gnat_native gprbuild
 
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
 
-    - name: Run test script (without Homebrew)
+    - name: Run test script
       run: scripts/ci-github.sh
-      shell: bash
-      env:
-        BRANCH: ${{ github.base_ref }}
-        INDEX: ""
-
-    - name: Run test script (with Homebrew)
-      run: |
-        eval $(brew shellenv)
-        scripts/ci-github.sh
       shell: bash
       env:
         BRANCH: ${{ github.base_ref }}
@@ -69,7 +61,7 @@ jobs:
     - name: Retrieve upload URL for the release
       if: github.event_name == 'release'
       id: get_release
-      uses: bruceadams/get-release@v1.2.1
+      uses: bruceadams/get-release@v1.3.2
       env:
         GITHUB_TOKEN: ${{ github.token }}
 

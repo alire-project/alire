@@ -27,7 +27,7 @@ run_alr('with', 'hello^3', force=True)
 p = run_alr('with', '--solve')
 assert_match('.*Dependencies \(solution\):\n'
              '   hello=3\.0\.0.*'  # skip origin
-             'Dependencies \(external\):\n'
+             'Dependencies \(missing\):\n'
              '   libhello\^3.*'    # skip flags
              '   unobtanium\*.*',
              p.out, flags=re.S)

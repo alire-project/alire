@@ -24,6 +24,13 @@ package Alire.URI with Preelaborate is
    --        / \ /                        \
    --        urn:example:animal:ferret:nose
 
+   package Operators is
+
+      function "/" (L, R : String) return String;
+      --  Concatenate with forward slash
+
+   end Operators;
+
    type Schemes is
      (None,
       --  For URLs without scheme (to be interpreted as local paths)

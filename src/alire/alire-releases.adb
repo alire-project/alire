@@ -1,15 +1,16 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
-with Alire.Config;
+with Alire.Settings.Builtins;
 with Alire.Crates;
 with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
-with Alire.Origins.Deployers;
+with Alire.Flags;
+with Alire.Origins.Deployers.System;
 with Alire.Paths;
 with Alire.Properties.Bool;
-with Alire.Properties.Actions.Executor;
+with Alire.Properties.Scenarios;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
 with Alire.Warnings;
@@ -84,7 +85,7 @@ package body Alire.Releases is
       Newline    : constant String := ASCII.LF & "   ";
    begin
       for Dep of This.Flat_Dependencies loop
-         if Config.DB.Get (Config.Keys.Warning_Caret, Default => True)
+         if Settings.Builtins.Warning_Caret.Get
            and then
            AAA.Strings.Contains (Dep.Versions.Image, "^0")
          then
@@ -97,7 +98,7 @@ package body Alire.Releases is
                & "The suspicious dependency is: " & TTY.Version (Dep.Image)
                & Newline
                & "You can disable this warning by setting the option "
-               & TTY.Emph (Config.Keys.Warning_Caret) & " to false.",
+               & TTY.Emph (Settings.Builtins.Warning_Caret.Key) & " to false.",
                Warnings.Caret_Or_Tilde);
             return True;
          end if;
@@ -200,8 +201,8 @@ package body Alire.Releases is
            & (case R.Origin.Kind is
                  when Git | Hg => R.Origin.Short_Unique_Id,
                  when SVN => R.Origin.Commit,
-                 when others => raise Program_Error
-                   with "monorepo folder only applies to VCS origins");
+                 when others => raise Program_Error with
+                   "monorepo folder only applies to VCS origins");
       end Monorepo_Path;
 
       ------------------
@@ -245,33 +246,44 @@ package body Alire.Releases is
       Env             : Alire.Properties.Vector;
       Parent_Folder   : String;
       Was_There       : out Boolean;
-      Perform_Actions : Boolean := True;
       Create_Manifest : Boolean := False;
-      Include_Origin  : Boolean := False)
+      Include_Origin  : Boolean := False;
+      Mark_Completion : Boolean := True)
    is
       use Alire.Directories;
-      use all type Alire.Properties.Actions.Moments;
-      Folder : constant Any_Path := Parent_Folder / This.Deployment_Folder;
+      Repo_Folder : constant Any_Path :=
+                      Parent_Folder / This.Deployment_Folder;
+      Rel_Folder  : constant Any_Path :=
+                      Parent_Folder / This.Base_Folder;
+      Completed   : Flags.Flag := Flags.Complete_Copy (Repo_Folder);
 
       ------------------------------
       -- Backup_Upstream_Manifest --
       ------------------------------
 
       procedure Backup_Upstream_Manifest is
-         Working_Dir : Guard (Enter (Folder)) with Unreferenced;
+         Working_Dir : Guard (Enter (Rel_Folder)) with Unreferenced;
       begin
          Ada.Directories.Create_Path (Paths.Working_Folder_Inside_Root);
 
          if GNAT.OS_Lib.Is_Regular_File (Paths.Crate_File_Name) then
-            Trace.Debug ("Backing up bundled manifest file as *.upstream");
+            Trace.Debug ("Backing up bundled manifest file at "
+                         & Adirs.Current_Directory & " as *.upstream");
             declare
                Upstream_File : constant String :=
                                  Paths.Working_Folder_Inside_Root
                                  / (Paths.Crate_File_Name & ".upstream");
             begin
+               --  Backup if already there
                Alire.Directories.Backup_If_Existing
                  (Upstream_File,
                   Base_Dir => Paths.Working_Folder_Inside_Root);
+               --  Remove just backed up file
+               if Directories.Is_File (Upstream_File) then
+                  Directories.Delete_Tree
+                    (Directories.Full_Name (Upstream_File));
+               end if;
+               --  And rename the original manifest into upstream
                Ada.Directories.Rename
                  (Old_Name => Paths.Crate_File_Name,
                   New_Name => Upstream_File);
@@ -287,62 +299,67 @@ package body Alire.Releases is
       begin
          Trace.Debug ("Generating manifest file for "
                       & This.Milestone.TTY_Image & " with"
-                      & This.Dependencies.Leaf_Count'Img & " dependencies");
+                      & This.Dependencies.Leaf_Count'Img & " dependencies "
+                      & " at " & (Rel_Folder / Paths.Crate_File_Name));
 
-         This.Whenever (Env).To_File (Folder / Paths.Crate_File_Name,
+         This.Whenever (Env).To_File (Rel_Folder / Paths.Crate_File_Name,
                                       Kind);
       end Create_Authoritative_Manifest;
 
    begin
 
       Trace.Debug ("Deploying " & This.Milestone.TTY_Image
-                   & " into " & TTY.URL (Folder));
+                   & " into " & TTY.URL (Repo_Folder));
 
-      --  Deploy if the target dir is not already there
+      --  Deploy if the target dir is not already there. We only skip for
+      --  releases that require a folder to be deployed; system releases
+      --  require the deploy attempt as the installation check is done by
+      --  the deployer.
 
-      if Ada.Directories.Exists (Folder) then
+      if This.Origin.Is_Index_Provided and then Completed.Exists then
          Was_There := True;
          Trace.Detail ("Skipping checkout of already available " &
                          This.Milestone.Image);
+
+      elsif This.Origin.Kind not in Origins.Deployable_Kinds then
+         Was_There := True;
+         Trace.Detail ("External requires no deployment for " &
+                         This.Milestone.Image);
+
+      elsif This.Origin.Is_System
+        and then Origins.Deployers.System.Already_Installed (This.Origin)
+      then
+         Was_There := True;
+         Trace.Detail ("Skipping install of already available system origin " &
+                         This.Milestone.Image);
+
       else
          Was_There := False;
          Put_Info ("Deploying " & This.Milestone.TTY_Image & "...");
-         Alire.Origins.Deployers.Deploy (This, Folder).Assert;
-
-         --  For deployers that do nothing, we ensure the folder exists so all
-         --  dependencies leave a trace in the cache/dependencies folder, and
-         --  a place from where to run their actions by default.
-
-         Ada.Directories.Create_Path (Folder);
-
-         --  Backup a potentially packaged manifest, so our authoritative
-         --  manifest from the index is always used.
-
-         Backup_Upstream_Manifest;
-
-         if Create_Manifest then
-            Create_Authoritative_Manifest (if Include_Origin
-                                           then Manifest.Index
-                                           else Manifest.Local);
-         end if;
+         Alire.Origins.Deployers.Deploy (This, Repo_Folder).Assert;
       end if;
 
-      --  Run post-fetch actions on first retrieval
+      --  For deployers that do nothing, we ensure the folder exists so all
+      --  dependencies leave a trace in the cache/dependencies folder, and
+      --  a place from where to run their actions by default.
 
-      if Perform_Actions and then not Was_There then
-         declare
-            Work_Dir : Guard (Enter (Folder)) with Unreferenced;
-         begin
-            Alire.Properties.Actions.Executor.Execute_Actions
-              (Release => This,
-               Env     => Env,
-               Moment  => Post_Fetch);
-         exception
-            when E : others =>
-               Log_Exception (E);
-               Trace.Warning ("A post-fetch action failed, " &
-                                "re-run with -vv -d for details");
-         end;
+      Ada.Directories.Create_Path (Repo_Folder);
+
+      --  Backup a potentially packaged manifest, so our authoritative
+      --  manifest from the index is always used.
+
+      Backup_Upstream_Manifest;
+
+      --  Create manifest if requested
+
+      if Create_Manifest then
+         Create_Authoritative_Manifest (if Include_Origin
+                                        then Manifest.Index
+                                        else Manifest.Local);
+      end if;
+
+      if Mark_Completion then
+         Completed.Mark (Done => True);
       end if;
 
    exception
@@ -351,10 +368,10 @@ package body Alire.Releases is
          --  during an action).
          Log_Exception (E);
 
-         if Ada.Directories.Exists (Folder) then
+         if Ada.Directories.Exists (Repo_Folder) then
             Trace.Debug ("Cleaning up failed release deployment of "
                          & This.Milestone.TTY_Image);
-            Directories.Force_Delete (Folder);
+            Directories.Force_Delete (Repo_Folder);
          end if;
 
          raise;
@@ -641,7 +658,8 @@ package body Alire.Releases is
    ----------------
 
    function Executables (R : Release;
-                         P : Alire.Properties.Vector)
+                         P : Alire.Properties.Vector :=
+                           Platforms.Current.Properties)
                          return AAA.Strings.Vector
    is
       Exes : constant AAA.Strings.Vector :=
@@ -661,6 +679,36 @@ package body Alire.Releases is
    end Executables;
 
    -------------------
+   -- GPR_Externals --
+   -------------------
+
+   function GPR_Externals (R : Release;
+                                     P : Alire.Properties.Vector :=
+                                       Platforms.Current.Properties)
+                                     return Externals_Info
+   is
+   begin
+      return Result : Externals_Info do
+         for Prop of R.On_Platform_Properties
+           (P, Alire.Properties.Scenarios.Property'Tag)
+         loop
+            declare
+               Var : Alire.Properties.Scenarios.Property'Class renames
+                       Alire.Properties.Scenarios.Property'Class (Prop);
+            begin
+               case Var.Value.Kind is
+                  when GPR.Enumeration | GPR.Free_String =>
+                     --  This is a declaration of an external that affects R
+                     Result.Declared.Include (Var.Value.Name);
+                  when GPR.External =>
+                     Result.Modified.Include (Var.Value.Name);
+               end case;
+            end;
+         end loop;
+      end return;
+   end GPR_Externals;
+
+   -------------------
    -- Project_Files --
    -------------------
 
@@ -670,6 +718,7 @@ package body Alire.Releases is
                            return AAA.Strings.Vector
    is
       use AAA.Strings;
+      use all type Origins.Kinds;
 
       With_Paths : AAA.Strings.Vector :=
         Props_To_Strings (R.All_Properties (P), Project_File);
@@ -677,10 +726,10 @@ package body Alire.Releases is
    begin
       if With_Paths.Is_Empty
         and then
-         R.Origin.Kind not in Origins.External | Origins.System
+         R.Origin.Kind not in Binary_Archive | External | System
       then
          --  Default project file if no one is specified by the crate. Only if
-         --  the create is not external nor system.
+         --  the create is not binary, external nor system.
          With_Paths.Append (String'((+R.Name) & ".gpr"));
       end if;
 
@@ -875,6 +924,42 @@ package body Alire.Releases is
       return False;
    end Property_Contains;
 
+   -----------------------
+   -- Property_Contains --
+   -----------------------
+
+   function Property_Contains (R : Release; Str : String)
+                               return AAA.Strings.Set
+   is
+      Results : AAA.Strings.Set;
+      use AAA.Strings;
+
+      Search : constant String := To_Lower_Case (Str);
+   begin
+      for P of Conditional.Enumerate (R.Properties) loop
+         declare
+            Image : constant String := P.Image;
+         begin
+            if Contains (Image, ":") then
+               declare
+                  Prop  : constant String := Head (Image, ':');
+                  Value : constant String := Trim (Tail (Image, ':'));
+               begin
+                  if Contains (To_Lower_Case (Value), Search) then
+                     Results.Include (Prop);
+                  end if;
+               end;
+            else
+               if Contains (To_Lower_Case (Image), Search) then
+                  Results.Include (Image);
+               end if;
+            end if;
+         end;
+      end loop;
+
+      return Results;
+   end Property_Contains;
+
    -------------------
    -- From_Manifest --
    -------------------
@@ -915,6 +1000,15 @@ package body Alire.Releases is
       return This : Release := New_Empty_Release
         (Name => +From.Unwrap.Get (TOML_Keys.Name).As_String)
       do
+         --  Extract the version ASAP to show it properly during logging
+
+         if From.Contains (TOML_Keys.Version) then
+            This := This.Retagging
+              (Version => Semver.Parse
+                 (From.Unwrap.Get (TOML_Keys.Version).As_String,
+                  Relaxed => True));
+         end if;
+
          Assert (This.From_TOML (From, Source, Strict, File));
       end return;
    end From_TOML;

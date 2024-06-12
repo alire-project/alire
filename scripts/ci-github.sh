@@ -8,13 +8,13 @@ set -o nounset
 
 export PATH+=:${PWD}/bin
 
-# For Darwin, have to define OS=macOS for alr_env.gpr
-# Windows defines it anyway
-# Linux (undefined) selects the default
-
-[ `uname -s` == "Darwin" ] && export OS=macOS
+# Import reusable bits
+pushd $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    . ../dev/functions.sh
+popd
 
 # Build alr
+export ALIRE_OS=$(get_OS)
 gprbuild -j0 -p -P alr_env
 
 # Disable distro detection if supported
@@ -51,21 +51,30 @@ echo TESTSUITE:
 echo
 cd testsuite
 
-# On Windows, python3/pip3 don't explicitly exist
+# On Windows, python3/pip3 don't explicitly exist. Also we don't need a venv.
 if [ "${OS:-}" == "Windows_NT" ]; then
     run_python=python
     run_pip=pip
 else
     run_python=python3
     run_pip=pip3
+    # Some distros complain that we are trying to install packages globally,
+    # e.g. latest Debian, so use a virtualenv:
+    $run_python -m venv venv && . venv/bin/activate
 fi
+
+echo PYTHON installing testsuite dependencies...
 
 echo Python version: $($run_python --version)
 echo Pip version: $($run_pip --version)
 
-$run_pip install --upgrade e3-testsuite
+$run_pip install --upgrade -r requirements.txt
 echo Python search paths:
 $run_python -c "import sys; print('\n'.join(sys.path))"
+
+echo Check Finalize exception handling :
+$run_python ../scripts/python/check_finalize_exceptions.py ../src
+echo ............................
 
 echo Running test suite now:
 $run_python ./run.py -E || { echo Test suite failures, unstable build!; exit 1; }

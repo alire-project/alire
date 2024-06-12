@@ -4,8 +4,10 @@ with Ada.Directories;
 with Ada.Wide_Wide_Text_IO;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Alire.Config;
+with Alire.Settings.Builtins;
+with Alire.Roots.Optional;
 with Alire.Utils.User_Input.Query_Config;
+
 with CLIC.User_Input;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
@@ -17,6 +19,7 @@ with CLIC.TTY; use CLIC.TTY;
 
 package body Alr.Commands.Init is
 
+   package TIO renames Ada.Wide_Wide_Text_IO;
    package UI renames Alire.Utils.User_Input;
 
    type Crate_Kind is (Library, Binary);
@@ -40,8 +43,6 @@ package body Alr.Commands.Init is
    procedure Generate (Cmd  : Command;
                        Info : Crate_Init_Info)
    is
-
-      package TIO renames Ada.Wide_Wide_Text_IO;
       use AAA.Strings;
 
       For_Library : constant Boolean := Info.Kind = Library;
@@ -76,15 +77,22 @@ package body Alr.Commands.Init is
          Table.Set ("key", TOML.Create_String (S));
 
          --  Remove excess whitespace and quotation
-         return
-           Trim
-             (Trim
-                (Trim (Tail (TOML.Dump_As_String (Table), '=')),
-                 ASCII.LF),
-              '"');
+         declare
+            Result : constant String :=
+                       Trim
+                         (Trim
+                            (Tail (TOML.Dump_As_String (Table), '='),
+                            ASCII.LF));
+         begin
+            --  Trimming the TOML quotes at the extremes fails for a
+            --  string with quotes at the extremes of the string because
+            --  Ada.Strings.Trim removes those too! So just remove the
+            --  quotes we know are there.
+            return Result (Result'First + 1 .. Result'Last - 1);
+         end;
       end Escape;
 
-      function Q (S : String) return String is ("""" & S & """");
+      function Q (S : String) return String is ('"' & Escape (S) & '"');
       --  Quote string
 
       function Q (S : Unbounded_String) return String
@@ -240,29 +248,13 @@ package body Alr.Commands.Init is
       -----------------------
 
       procedure Generate_Manifest is
-         use Alire.Config;
       begin
-         if not DB.Defined (Keys.User_Email) or else
-           not DB.Defined (Keys.User_Name) or else
-           not DB.Defined (Keys.User_Github_Login)
-         then
-            AAA.Text_IO.Put_Paragraph
-              ("Alire needs some user information to initialize the crate"
-               & " author and maintainer, for eventual submission to"
-               & " the Alire community index. This information will be"
-               & " interactively requested now.");
-            TIO.New_Line;
-            TIO.Put_Line
-              ("You can edit this information at any time with 'alr config'");
-            TIO.New_Line;
-         end if;
-
          declare
             --  Retrieve initial values from config or user. Only the name may
             --  require encoding, as emails and logins cannot contain strange
             --  characters.
             Login    : constant String := To_String (Info.GitHub_Login);
-            Username : constant String := Escape (To_String (Info.Username));
+            Username : constant String := To_String (Info.Username);
             Email    : constant String := To_String (Info.Email);
             Filename : constant String :=
               +Full_Name (Directory / (+Alire.Roots.Crate_File_Name));
@@ -325,6 +317,18 @@ package body Alr.Commands.Init is
          TIO.Put_Line (File, WW (S));
       end Put_Line;
 
+      ---------------------
+      -- Generate_Config --
+      ---------------------
+
+      procedure Generate_Config is
+         Root : Alire.Roots.Optional.Root :=
+                  Alire.Roots.Optional.Detect_Root (+Directory.Full_Name);
+      begin
+         Root.Value.Build_Prepare (Saved_Profiles => False,
+                                   Force_Regen    => False);
+      end Generate_Config;
+
    begin
       --  Crate dir
       Directory.Make_Dir;
@@ -342,6 +346,10 @@ package body Alr.Commands.Init is
       end if;
 
       Generate_Manifest;
+
+      if not Cmd.No_Skel then
+         Generate_Config;
+      end if;
 
       Alire.Put_Success (TTY.Emph (Lower_Name) & " initialized successfully.");
    end Generate;
@@ -368,7 +376,7 @@ package body Alr.Commands.Init is
                      Info.Name := To_Unbounded_String (Tentative_Name);
                      exit;
                   else
-                     Ada.Text_IO.Put_Line
+                     Put_Line
                        ("Invalid crate name '"
                         & Tentative_Name & "': "
                         & Alire.Error_In_Name (Tentative_Name));
@@ -406,13 +414,13 @@ package body Alr.Commands.Init is
       if SPDX.Valid (SP) then
          return True;
       else
-         Ada.Text_IO.Put_Line
+         Put_Line
            ("Invalid SPDX license expression '" & Str
             & "': " & SPDX.Error (SP));
-         Ada.Text_IO.Put_Line
+         Put_Line
            ("SPDX expression expected (https://spdx.org/licenses/).");
-         Ada.Text_IO.Put_Line ("(Use 'custom-' prefix for custom"
-                               & " license identifier)");
+         Put_Line ("(Use 'custom-' prefix for custom"
+                   & " license identifier)");
 
          return False;
       end if;
@@ -427,16 +435,18 @@ package body Alr.Commands.Init is
 
       License_Vect : constant AAA.Strings.Vector :=
         AAA.Strings.Empty_Vector
-        .Append ("MIT OR Apache-2.0")
+        .Append ("MIT OR Apache-2.0 WITH LLVM-exception")
         .Append ("MIT")
+        .Append ("Apache-2.0 WITH LLVM-exception")
         .Append ("Apache-2.0")
         .Append ("BSD-3-Clause")
         .Append ("LGPL-3.0-or-later")
-        .Append ("GPL-3.0-or-later WITH GPL-3.0-with-GCC-exception")
+        .Append ("GPL-3.0-or-later WITH GCC-exception-3.1")
         .Append ("GPL-3.0-or-later")
         .Append (License_Other);
 
-      Answer : Natural;
+      Answer : Natural := 0;
+      function Chosen return String is (License_Vect (Answer));
    begin
       Answer := CLIC.User_Input.Query_Multi
         (Question  => "Select a software " & Emph ("license") &
@@ -455,7 +465,11 @@ package body Alr.Commands.Init is
                  Default    => "",
                  Validation => License_Validation'Access));
       else
-         Info.Licenses := To_Unbounded_String (License_Vect (Answer));
+         if not License_Validation (Chosen) then
+            raise Program_Error with
+              "Invalid license among choices: " & Chosen;
+         end if;
+         Info.Licenses := To_Unbounded_String (Chosen);
       end if;
    end Query_License;
 
@@ -486,9 +500,9 @@ package body Alr.Commands.Init is
    function Description_Validation (Str : String) return Boolean is
    begin
       if Str'Length > Alire.Max_Description_Length then
-         Ada.Text_IO.Put_Line ("Description too long:"
-                               & Str'Length'Img & " (max"
-                               & Alire.Max_Description_Length'Img & ")");
+         Put_Line ("Description too long:"
+                   & Str'Length'Img & " (max"
+                   & Alire.Max_Description_Length'Img & ")");
          return False;
       else
          return True;
@@ -521,9 +535,15 @@ package body Alr.Commands.Init is
       Tags_Ok : Boolean := True;
    begin
       for Elt of Vect loop
-         if Elt /= "" and then not Alire.Utils.Is_Valid_Tag (Elt) then
-            Ada.Text_IO.Put_Line ("Invalid tag: '" & Elt & "'");
-            Tags_Ok := False;
+         if Elt /= "" then
+            declare
+               Tag_Error : constant String := Alire.Utils.Error_In_Tag (Elt);
+            begin
+               if Tag_Error /= "" then
+                  Put_Line (Tag_Error);
+                  Tags_Ok := False;
+               end if;
+            end;
          end  if;
       end loop;
 
@@ -560,11 +580,27 @@ package body Alr.Commands.Init is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
+      use Alire.Settings;
       Info : Crate_Init_Info;
    begin
 
       if Cmd.Bin and then Cmd.Lib then
          Reportaise_Wrong_Arguments ("Please provide either --bin or --lib");
+      end if;
+
+      if Builtins.User_Email.Is_Empty or else
+        Builtins.User_Name.Is_Empty or else
+        Builtins.User_Github_Login.Is_Empty
+      then
+         AAA.Text_IO.Put_Paragraph
+           ("Alire needs some user information to initialize the crate"
+            & " author and maintainer, for eventual submission to"
+            & " the Alire community index. This information will be"
+            & " interactively requested now.");
+         TIO.New_Line;
+         TIO.Put_Line
+           ("You can edit this information at any time with 'alr config'");
+         TIO.New_Line;
       end if;
 
       Query_Crate_Name (Args, Info);
@@ -591,7 +627,7 @@ package body Alr.Commands.Init is
 
       Info.Website := To_Unbounded_String
         (CLIC.User_Input.Query_String
-           (Question   => "Enter a opional " & Emph ("Website URL") &
+           (Question   => "Enter an optional " & Emph ("Website URL") &
               " for the crate:",
             Default    => "",
             Validation => null));

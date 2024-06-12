@@ -1,8 +1,8 @@
 with Ada.Containers.Vectors;
 
 with Alire.Directories;
+private with Alire.OS_Lib;
 
-private with GNATCOLL.OS.Constants;
 with GNATCOLL.VFS;
 with AAA.Strings; use AAA.Strings;
 
@@ -52,6 +52,10 @@ package Alire.VFS is
    --  A virtual file is the portable wrapper over file/dir names, that may
    --  then exists or not on disk.
 
+   function New_Virtual_File (Path : Any_Path) return Virtual_File
+   is (New_Virtual_File (From_FS (Path)));
+   --  Just a shortcut
+
    --  Name retrieval
 
    function Simple_Name (File : Virtual_File) return Filesystem_String with
@@ -81,8 +85,6 @@ package Alire.VFS is
 
 private
 
-   use all type GNATCOLL.OS.OS_Type;
-
    -----------------
    -- Is_Portable --
    -----------------
@@ -97,18 +99,15 @@ private
    -----------------
 
    function To_Portable (Path : Relative_Path) return Portable_Path
-   is (case GNATCOLL.OS.Constants.OS is
-          when MacOS | Unix => Portable_Path (Path),
-          when Windows      => Portable_Path (Replace (Path, "\", "/")));
+   is (Portable_Path
+       (OS_Lib.To_Portable
+          (Path)));
 
    ---------------
    -- To_Native --
    ---------------
 
    function To_Native (Path : Portable_Path) return Relative_Path
-   is (case GNATCOLL.OS.Constants.OS is
-          when MacOS | Unix => Relative_Path (Path),
-          when Windows      => Relative_Path
-                                 (Replace (String (Path), "/", "\")));
+   is (Relative_Path (OS_Lib.To_Native (OS_Lib.Portable_Path_Like (Path))));
 
 end Alire.VFS;

@@ -10,3 +10,4 @@
 # Mark some misidentified files as always binaries
 *.pdf -text
 *.png -text
+*.tgz -text

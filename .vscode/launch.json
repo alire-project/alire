@@ -1,0 +1,52 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: run.py",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/testsuite",
+            "program": "run.py",
+            "args": [
+                "local-docker" // Replace with the test you want to debug
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "(gdb) Launch alr at /tmp/a/xxx",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/alr",
+            "args": ["-d", "-vv", "with", "libfoo"],
+            "stopAtEntry": true,
+            "cwd": "/tmp/a/xxx",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}

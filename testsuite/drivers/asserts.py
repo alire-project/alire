@@ -7,9 +7,11 @@ import difflib
 import os
 import re
 import difflib
+import sys
 
 from drivers.alr import run_alr
 from drivers.helpers import contents, lines_of
+from typing import List
 
 def indent(text, prefix='  '):
     """
@@ -44,21 +46,27 @@ def assert_eq(expected, actual, label=None):
 
 def assert_contents(dir: str, expected, regex: str = ""):
     """
-    Check that entries in dir filtered by regex match the list in contents
+    Check that entries in dir filtered by regex match the list in expected.
+    Transforms all paths to use forward slashes, and sorts the contents.
     """
     real = contents(dir, regex)
-    assert real == expected, \
-        f"Wanted contents: {expected}\nBut got: {real}\n"
+
+    assert real == sorted([path.replace('\\', '/') for path in expected]), \
+        f"Wanted contents:\n{expected}\nBut got:\n{real}\n"
 
 
 def assert_match(expected_re, actual, label=None, flags=re.S):
-    if not re.match(expected_re, actual, flags=flags):
-        text = ['Unexpected {}'.format(label or 'output'),
-                'Expecting a match on:',
-                indent(expected_re),
-                'But got:',
-                indent(actual)]
-        assert False, '\n'.join(text)
+    try:
+        if not re.match(expected_re, actual, flags=flags):
+            text = ['Unexpected {}'.format(label or 'output'),
+                    'Expecting a match on:',
+                    indent(expected_re),
+                    'But got:',
+                    indent(actual)]
+            assert False, '\n'.join(text)
+    except re.error as e:
+        print(f"Invalid regex at assert_match: {expected_re}", file=sys.stderr)
+        raise
 
 
 def assert_profile(profile: str, crate: str, root: str = "."):
@@ -66,11 +74,11 @@ def assert_profile(profile: str, crate: str, root: str = "."):
     Verify that a crate was built with a certain profile
     root: path to where the crate root is
     """
-    line = f'   Build_Profile : Build_Profile_Kind := "{profile}";\n'
+    line = f'   Build_Profile : Build_Profile_Kind := "{profile.lower()}";\n'
     file = os.path.join(root, "config", f"{crate}_config.gpr")
     assert line in lines_of(file), \
         f"Unexpected contents: missing line '{line}' in {file}:\n" + \
-        f"{content_of(file)}"
+        f"{lines_of(file)}"
 
 
 def match_solution(regex, escape=False, whole=False):
@@ -81,3 +89,57 @@ def match_solution(regex, escape=False, whole=False):
                  (regex if not escape else re.escape(regex)) +
                  wrap,
                  p.out)
+
+def assert_installed(prefix : str, milestones : List[str]):
+    """
+    Check that installed releases match those given in milestones
+    """
+
+    p = run_alr("install", "--info", f"--prefix={prefix}", quiet=False)
+
+    milestones.sort()
+
+    assert_eq(f"Installation prefix found at {prefix}\n"
+              "Contents:\n"
+              "   " + "\n   ".join(milestones) + "\n",
+              p.out)
+
+
+def assert_file_exists(path : str, wanted : bool = True):
+    """
+    Check that a file exists
+    """
+    if wanted:
+        assert os.path.exists(path), f"Missing expected file {path}"
+    else:
+        assert not os.path.exists(path), f"Unexpected file {path}"
+
+
+def assert_in_file(path : str, expected : str):
+    """
+    Check that a file contains a string
+    """
+    with open(path, "r") as f:
+        contents = f.read()
+    assert expected in contents, \
+        f"Missing expected string '{expected}' in file {path}:\n{contents}"
+
+
+def match_deploy_dir(crate : str, path_fragment : str):
+    """
+    Check that a deployment directory for a crate matches a regex. The path
+    fragment must be anything between the variable name and the crate name in
+    the output of printenv, e.g.: MAKE_ALIRE_PREFIX=<matchable part><crate name>
+    """
+    p = run_alr("printenv")
+    assert_match(f".*[: ]{crate.upper()}_ALIRE_PREFIX=[^\\n]*"
+                 f"{re.escape(path_fragment)}[^\\n]*{crate}_.*",
+                 p.out)
+
+
+def assert_substring(target: str, text: str):
+    """
+    Check that a string is contained in another string
+    """
+    assert target in text, \
+        f"Missing expected string '{target}' in text:\n{text}"

@@ -1,4 +1,5 @@
 with Alire.Outcomes.Definite;
+with Alire.Platforms.Current;
 
 with Semantic_Versioning;
 
@@ -46,20 +47,50 @@ package Alire.Origins.Deployers.System is
    --  This procedure tells the deployer not to ask user permission before
    --  deployment.
 
+   not overriding
+   function Executable_Name (This : Deployer) return String is abstract;
+   --  Must return the name of the executable used for installations (apt,
+   --  pacman, etc). For platforms that use several, the top-most wrapper
+   --  should be returned (i.e., apt instead of dpkg, yum instead of rpm...).
+
    -------------
    -- Factory --
    -------------
 
-   function Platform_Deployer (From : Origins.Origin) return Deployer'Class
+   function Platform_Deployer
+     (From   : Origins.Origin;
+      Distro : Platforms.Distributions := Platforms.Current.Distribution)
+      return Deployer'Class
      with Pre => From.Is_System;
+   --  Returns the deployer for a current system. Defaults to current one,
+   --  unless distro detection is disabled.
 
    function Platform_Deployer (Package_Name : String) return Deployer'Class is
      (Platform_Deployer (Origins.New_System (Package_Name)));
+
+   --  Classwide facilities
+
+   function Already_Installed (This : Origins.Origin) return Boolean
+     with Pre => This.Is_System;
+
+   function Executable_Name return String;
+   --  Returns the simple name of the executable package manager on the system
+
+   function Executable_Path return Optional_Absolute_Path;
+   --  Identifies the full path to the package manager executable found in the
+   --  current platform, even if distro detection is disabled.
 
 private
 
    type Deployer is abstract new Deployers.Deployer with record
       Ask_Permission : Boolean := True;
    end record;
+
+   -----------------------
+   -- Already_Installed --
+   -----------------------
+
+   function Already_Installed (This : Origins.Origin) return Boolean
+   is (Platform_Deployer (This).Already_Installed);
 
 end Alire.Origins.Deployers.System;

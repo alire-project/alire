@@ -22,11 +22,15 @@ package body Alr.Commands.Action is
       -----------
 
       function Build (Moment : Alire.Properties.Actions.Moments) return String
-      is ((if Moment /= Moments'First then "|" else "")
-          & AAA.Strings.To_Lower_Case (Moment'Image)
-          & (if Moment = Moments'Pred (On_Demand)
-            then ""
-            else Build (Moments'Succ (Moment))));
+      is
+         use AAA.Strings;
+      begin
+         return (if Moment /= Moments'First then "|" else "")
+                & To_Lower_Case (Replace (Moment'Image, "_", "-"))
+                & (if Moment = Moments'Pred (On_Demand)
+                  then ""
+                  else Build (Moments'Succ (Moment)));
+      end Build;
 
    begin
       return Build (Alire.Properties.Actions.Moments'First);
@@ -122,7 +126,9 @@ package body Alr.Commands.Action is
             then
                Some_Output := True;
                declare
-                  CWD : Guard (Enter (Cmd.Root.Release_Base (Rel.Name)))
+                  use all type Alire.Roots.Usages;
+                  CWD : Guard (Enter (Cmd.Root.Release_Base (Rel.Name,
+                                                             For_Build)))
                     with Unreferenced;
                begin
                   Alire.Properties.Actions.Executor.Execute_Actions
@@ -153,6 +159,10 @@ package body Alr.Commands.Action is
       else
          Reportaise_Wrong_Arguments ("Invalid action: " & Arg);
       end if;
+
+      --  Ensure that all directories are ready
+      Cmd.Root.Build_Prepare (Saved_Profiles => False,
+                              Force_Regen    => False);
 
       Cmd.Root.Traverse (Doing => Run_One'Access);
       if not Some_Output then

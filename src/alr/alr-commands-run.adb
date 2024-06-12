@@ -24,7 +24,6 @@ package body Alr.Commands.Run is
 
    procedure Check_Report (Cmd      : in out Command;
                            Exe_Name : String) is
-      use Ada.Text_IO;
 
       Found_At : constant AAA.Strings.Vector :=
         Files.Locate_File_Under (Cmd.Root.Path,
@@ -103,7 +102,7 @@ package body Alr.Commands.Run is
       end List;
 
    begin
-      Cmd.Requires_Valid_Session;
+      Cmd.Requires_Workspace;
 
       --  Validation
       if Cmd.List
@@ -134,8 +133,7 @@ package body Alr.Commands.Run is
          --  COMPILATION  --
          if not Cmd.No_Compile then
             if not Commands.Build.Execute (Cmd,
-                                           Args => AAA.Strings.Empty_Vector,
-                                           Export_Build_Env => True)
+                                           Args => AAA.Strings.Empty_Vector)
             then
                Reportaise_Command_Failed ("Build failed");
             end if;

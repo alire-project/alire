@@ -25,7 +25,7 @@ os.chdir("xxx")
 # Publish it. We need to give input to alr, so we directly call it. We use the
 # generated location as the "online" location, and this works because we are
 # forcing. ".tgz" is used, as bzip2 is not supported by `git archive`.
-p = run(["alr", "-q", "-f", "-n", "publish", "--skip-build", "--tar",
+p = run(["alr", "-q", "-f", "-n", "publish", "--skip-build", "--skip-submit", "--tar",
          "--manifest", "xxx.toml"],
         input=f"file:{os.getcwd()}/alire/archives/xxx-0.1.0-dev.tgz\n".encode())
 p.check_returncode()

@@ -48,4 +48,37 @@ package body Alire.Spawn is
                Understands_Verbose => True);
    end Gprbuild;
 
+   ----------------
+   -- Gprinstall --
+   ----------------
+
+   procedure Gprinstall
+     (Release      : Releases.Release;
+      Project_File : Absolute_File;
+      Prefix       : Absolute_Path;
+      Recursive    : Boolean;
+      Quiet        : Boolean;
+      Force        : Boolean := Alire.Force;
+      Extra_Args   : AAA.Strings.Vector := AAA.Strings.Empty_Vector)
+   is
+      use AAA.Strings;
+   begin
+      Spawn.Command
+        ("gprinstall",
+         AAA.Strings.Empty_Vector
+         & (if Recursive then To_Vector ("-r") else Empty_Vector)
+         & (if Quiet     then To_Vector ("-q") else Empty_Vector)
+         & (if Force     then To_Vector ("-f") else Empty_Vector)
+         & String'("--install-name=" & Release.Milestone.Image)
+         & "-m" -- minimal install (only needed sources)
+         & "-p" -- create missing dirs
+         & "--link-lib-subdir=bin"
+         --  Softlinks in same dir as executables, saves a path on Windows
+         & "--mode=usage" -- omit unwanted devel files
+         & String'("--prefix=" & Prefix)
+         & "-P" & Project_File
+         & Extra_Args
+        );
+   end Gprinstall;
+
 end Alire.Spawn;

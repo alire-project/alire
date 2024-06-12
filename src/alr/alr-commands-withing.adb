@@ -228,6 +228,10 @@ package body Alr.Commands.Withing is
    is
       Flags : Natural := 0;
 
+      -----------
+      -- Check --
+      -----------
+
       procedure Check (Flag : Boolean) is
       begin
          if Flag then
@@ -241,7 +245,7 @@ package body Alr.Commands.Withing is
       end Check;
 
    begin
-      Cmd.Requires_Valid_Session;
+      Cmd.Requires_Workspace;
 
       if Cmd.URL.all /= "" then
          Flags := Flags + 1;
@@ -303,12 +307,14 @@ package body Alr.Commands.Withing is
             if Cmd.URL.all /= "" then
                Cmd.Add_With_Pin (New_Root, Args);
             else
+               Cmd.Auto_Update_Index;
                Add (New_Root, Args);
             end if;
 
          elsif Cmd.Del then
             Del (New_Root, Args);
          elsif Cmd.From then
+            Cmd.Auto_Update_Index;
             From (New_Root, Args);
          else
             raise Program_Error with "List should have already happened";

@@ -316,6 +316,10 @@ static, i.e. they cannot depend on the context.
    PATH.append = "${DISTRIB_ROOT}/usr/bin"
    ```
 
+   Path fragments in this table must use portable format, that is, '/' for path
+   separation. Alire will take care of using the native separator when setting
+   these variables.
+
    Predefined variables are provided by Alire and will be replaced in the
    value:
 
@@ -324,6 +328,9 @@ static, i.e. they cannot depend on the context.
      distribution. On UNIX systems it will be `/`, on Windows `msys2` it will
      be the `msys2` installation directory (e.g.
      `C:\Users\user_name\.cache\alire\msys2`).
+
+   The escaping `"\$"` can be used to prevent the expansion of a
+   dollar-bracketed expression.
 
    Environment entries can use dynamic expressions:
 
@@ -455,6 +462,12 @@ static, i.e. they cannot depend on the context.
         several crates from the same repository (sometimes referred to as a
         *monorepo*).
 
+      - `binary`: optional (defauts to false) boolean used to design the origin
+        as binary. Binary origins are not compiled and can optionally use dynamic
+        expressions to narrow down the platform to which they apply. An origin
+        using a dynamic expression must be tagged as binary; see the
+        example below.
+
    Examples of origin tables:
 
    ```toml
@@ -477,6 +490,14 @@ static, i.e. they cannot depend on the context.
    url = "git+https://github.com/example-user/example-project"
    commit = "ec8b267bb8b777c6887059059924d823e9443439"
    subdir = "examples"
+   ```
+
+   ```toml
+   # A binary origin denoting a compiler
+   [origin."case(os)".linux."case(host-arch)".x86-64]
+   url = "https://github.com/alire-project/GNAT-FSF-builds/releases/download/gnat-12.1.0-1/gnat-x86_64-linux-12.1.0-1.tar.gz"
+   hashes = ["sha256:df1f36b306359d528799b1de8629a793523347a90c9d4b72efd23c62a7279555"]
+   binary = true
    ```
 
  - `available`: optional dynamic boolean expression.  If it evaluates to
@@ -640,6 +661,9 @@ static, i.e. they cannot depend on the context.
       - `Ada12`
       - `Ada2022`
       - `GNAT_Extensions`
+    - `Source_Encoding`
+      - `Compiler_Default`
+      - `UTF-8`
 
    For example, to enable all run-time checks in the release profile:
    ```toml
@@ -826,9 +850,10 @@ provides = "another_crate_name"
 
 Systems that have their own package manager (e.g. Linux) can readily provide
 many complex dependencies still unpackaged as source code in Alire. Alire can
-use these on supported platforms (at this time, Debian & Ubuntu. Do not
-hesitate to contact us if you would like to maintain other distributions)
-during resolution.
+use these on supported platforms during resolution. At this time, the supported
+platforms are Arch, CentOS, Debian, Fedora, Homebrew, MacPorts, MSYS2, RHEL,
+SUSE/openSUSE, and Ubuntu; do not hesitate to contact us if you would like to
+maintain other distributions.
 
 A system external gives a list of platform package names that supply the
 dependency natively. The platform package manager will be used to detect their
@@ -853,11 +878,14 @@ available.'case(toolchain)'.user = false
 
 ## Parameters
 
- - `os`: name of the OS. Currently supported values are: `linux`, `macos` and
-   `windows`.
+ - `os`: name of the OS. Currently supported values are: `freebsd`, `linux`,
+   `macos`, `windows`, and `os-unknown`.
 
- - `distribution`: name of the Linux distribution, or `none` if running on a
-   different OS. Currently supported values are: `debian`, `ubuntu`.
+ - `distribution`: name of the Linux distribution or name of the software
+   distribution platform if running on a different OS. Currently supported
+   values are: `arch`, `centos`, `debian`, `fedora`,
+   `homebrew`, `macports`, `msys2`, `rhel`, `suse`, `ubuntu`, and
+   `distribution-unknown`.
 
  - `toolchain`: takes `system` value in distributions with the system Ada
    compiler first in PATH (GNAT FSF in Debian/Ubuntu), `user` otherwise (GNAT
@@ -1141,7 +1169,7 @@ project My_Crate is
 
 Dependencies in Alire are used also to deal with compiler versions and
 cross-compilers. Also related is the information on toolchains available in the
-[Toolchain management](./toolchains.md) document or via `alr help toolchains`.
+[Toolchain management](toolchains) document or via `alr help toolchains`.
 
 ### Excluding compiler versions
 

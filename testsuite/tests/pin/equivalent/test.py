@@ -3,7 +3,7 @@ Verify that using manual edition and `alr pin` result in equivalent outputs
 """
 
 from drivers.alr import run_alr, alr_pin, init_local_crate
-from drivers.asserts import assert_eq, assert_match
+from drivers.asserts import assert_eq
 from drivers.helpers import init_git_repo, git_branch
 
 import os

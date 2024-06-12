@@ -26,4 +26,18 @@ package body Alire.Warnings is
    function Already_Warned (Id : Warning_Id) return Boolean
    is (Already_Emitted.Contains (String (Id)));
 
+   ----------------------
+   -- Warn_With_Result --
+   ----------------------
+
+   function Warn_With_Result (Text   : String;
+                  Result : Returned;
+                  Level  : Trace.Levels := Trace.Warning)
+                  return Returned
+   is
+   begin
+      Trace.Log (Text, Level);
+      return Result;
+   end Warn_With_Result;
+
 end Alire.Warnings;

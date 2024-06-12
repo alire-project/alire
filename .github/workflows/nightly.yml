@@ -1,0 +1,100 @@
+name: Nightly
+# Create a nightly build from master and upload to the corresponding pre-release
+
+on:
+  push:
+    branches:
+      - 'feat/nightly' # Allows to be tested before merging
+      - 'fix/nightly'
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    name: ${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false # Attempt to generate as many of them as possible
+      matrix:
+        os:
+          - macos-12
+          - ubuntu-20.04
+          - windows-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Install FSF toolchain
+      uses: alire-project/alr-install@v1
+      with:
+        crates: gnat_native gprbuild
+
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Run test script
+      run: scripts/ci-github.sh
+      shell: bash
+
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@master
+      with:
+        name: e3-log-linux.zip
+        path: testsuite/out
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: alr-bin-${{ matrix.os }}.zip
+        path: |
+          bin/alr*
+          LICENSE.txt
+
+    # Release steps start here
+
+    - name: Get date
+      id: date
+      run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Get metadata
+      run: |
+        touch alr-date-is-${{steps.date.outputs.date}}.txt
+        touch alr-commit-is-${{github.sha}}.txt
+      shell: bash
+
+    - name: Package binaries (Linux)
+      if: startsWith(matrix.os, 'ubuntu')
+      run: zip alr-nightly-bin-x86_64-linux.zip bin/alr* LICENSE.txt alr-*.txt
+
+    - name: Package binaries (macOS)
+      if: startsWith(matrix.os, 'macos')
+      run: zip alr-nightly-bin-x86_64-macos.zip bin/alr* LICENSE.txt alr-*.txt
+
+    # There's no zip on windows
+    - name: Install zip (Windows)
+      if: startsWith(matrix.os, 'windows')
+      run: choco install zip
+
+    - name: Package binaries (Windows)
+      if: startsWith(matrix.os, 'windows')
+      run: zip alr-nightly-bin-x86_64-windows.zip bin/alr* LICENSE.txt alr-*.txt
+
+    - name: Upload to release
+      uses: pyTooling/Actions/releaser/composite@main
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        files: |
+          alr-nightly-*.zip
+        tag: nightly
+        rm: false

@@ -5,6 +5,7 @@ Test the environment set for a basic crate
 from glob import glob
 import os
 
+from drivers import builds
 from drivers.alr import run_alr
 from drivers.asserts import assert_eq, assert_match
 
@@ -27,10 +28,22 @@ def make_path(list):
     else:
         return "/".join(list)
 
-expected_hello_path = make_path(['.*', 'hello_1.0.1_filesystem'])
-expected_libhello_path = make_path(['.*', 'alire', 'cache', 'dependencies', 'libhello_1\.0\.0_filesystem'])
+#  Force dependency syncing for the shared case
+run_alr("update")
 
-expected_gpr_path = os.pathsep.join([expected_hello_path, expected_libhello_path])
+expected_hello_path = make_path(['.*', 'hello_1.0.1_filesystem'])
+expected_libhello_path = \
+make_path(['.*', os.path.basename(builds.find_dir('libhello'))]) \
+if builds.are_shared() else \
+make_path(['.*', 'alire', 'cache', 'dependencies', 'libhello_1\.0\.0_filesystem'])
+
+#  Depending on the dependency location, both orders may occur
+expected_gpr_path = \
+    "(" \
+    f"{os.pathsep.join([expected_hello_path, expected_libhello_path])}" \
+    "|" \
+    f"{os.pathsep.join([expected_libhello_path, expected_hello_path])}" \
+    ")"
 
 assert_match('export ALIRE="True"\n'
              '.*'

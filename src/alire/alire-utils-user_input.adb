@@ -79,7 +79,7 @@ package body Alire.Utils.User_Input is
       if not Check_Absolute_Path (User_Path) and then
         not VFS.Is_Portable (User_Path)
       then
-         Recoverable_Error
+         Recoverable_User_Error
            (Error_When_Relative_Native & ": " & TTY.URL (User_Path));
       end if;
 

@@ -37,8 +37,15 @@ package Alire.Origins is
    subtype Archive_Kinds is Kinds
      with Static_Predicate => Archive_Kinds in Binary_Archive | Source_Archive;
 
+   subtype Deployable_Kinds is Kinds
+     with Static_Predicate => Deployable_Kinds not in External;
+   --  Origins that require deployment
+
    subtype External_Kinds is Kinds
      with Static_Predicate => External_Kinds in External | System;
+
+   subtype Source_Kinds is Kinds range Filesystem .. Source_Archive;
+   --  These are kinds that have actual sources that are deployed and built
 
    subtype VCS_Kinds is Kinds range Git .. SVN;
 
@@ -100,10 +107,16 @@ package Alire.Origins is
    function Package_Name (This : Origin) return String
      with Pre => This.Kind = System;
 
-   function Is_Regular (This : Origin) return Boolean is
+   function Is_Index_Provided (This : Origin) return Boolean is
      (This.Kind not in External | System);
-   --  A regular origin is one that is compiled from sources, instead of coming
-   --  from external definitions (detected or not).
+   --  One that is deployed via built sources or fetched binaries pointed to by
+   --  an index, instead of coming from locally detected executables or system
+   --  packages.
+
+   function Requires_Build (This : Origin) return Boolean
+   is (case This.Kind is
+          when Binary_Archive | External  | System     => False,
+          when Source_Archive | VCS_Kinds | Filesystem => True);
 
    function Short_Unique_Id (This : Origin) return String with
      Pre => This.Kind in Git | Hg | Archive_Kinds;
@@ -262,6 +275,7 @@ private
    package Conditional_Archives is
      new Conditional_Trees (Values => Archive_Data,
                             Image  => Binary_Image);
+   --  Conditional origins must be binary in the current implementation
 
    type Conditional_Archive is new Conditional_Archives.Tree with null record;
    package Binary_Loader is new Conditional_Archives.TOML_Load;

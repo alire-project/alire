@@ -27,7 +27,7 @@ package Alr.Commands.Show is
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
      ("[<crate>[allowed versions]] [--system] [--external[-detect]]"
-      & " | --graph | --jekyll | --solve | --tree "
+      & " | --graph | --jekyll | --solve | --tree | --nested"
       & "| --dependents[=direct|shortest|all]");
 
 private
@@ -45,6 +45,7 @@ private
       System     : aliased Boolean := False;
       Tree       : aliased Boolean := False;
       Jekyll     : aliased Boolean := False;
+      Nested     : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Show;

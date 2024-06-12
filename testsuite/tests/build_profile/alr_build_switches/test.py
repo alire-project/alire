@@ -18,6 +18,18 @@ def check_config(path, profile):
     assert_match('.*Build_Profile : Build_Profile_Kind := "%s"' % profile,
                  conf)
 
+    # Extra check for the compiler switches
+    profile = profile.lower()
+    if profile == 'development':
+        assert_match('.*"-Og"', conf)
+    elif profile == 'release':
+        assert_match('.*"-O3"', conf)
+    elif profile == 'validation':
+        assert_match('.*"-gnata"', conf)
+    else:
+        raise Exception("Unknown profile: %s" % profile)
+
+
 lib1_config = "../lib_1/config/lib_1_config.gpr"
 bin_config = "config/bin_1_config.gpr"
 
@@ -28,14 +40,14 @@ def check_config_changed():
     global mtime
     last_mtime = mtime
     mtime = os.path.getmtime(bin_config)
-    assert last_mtime != mtime, "config file did not change"
+    assert last_mtime != mtime, "config file timestamp did not change"
 
 
 def check_config_not_changed():
     global mtime
     last_mtime = mtime
     mtime = os.path.getmtime(bin_config)
-    assert last_mtime == mtime, "config file did not change"
+    assert last_mtime == mtime, "config file timestamp did unexpectedly change"
 
 
 # Check default profiles for root and dependency
@@ -59,13 +71,13 @@ run_alr('build', '--release')
 check_config_changed()
 check_config(bin_config, 'release')
 
-# Alr with will re-generate the crate config and default to DEVELOPMENT
+# Alr with does not touch config, that happens at build time
 alr_with('lib_1', path='../lib_1')
+check_config_not_changed()
+
+# Build with default profile, the config should change and revert to development
+run_alr('build')
 check_config_changed()
 check_config(bin_config, 'development')
-
-# Build with default profile, the config should not change
-run_alr('build')
-check_config_not_changed()
 
 print('SUCCESS')

@@ -8,7 +8,7 @@ The user can now select a preferred compiler via `alr toolchain --select`.
 Releases may still override this selection (for example to use a
 cross-compiler).  
 
-There are two kind of dependencies on GNAT compilers: generic dependencies on
+There are two kinds of dependencies on GNAT compilers: generic dependencies on
 the `gnat` crate, which apply to every compiler, and dependencies on a precise
 native or cross-compiler.
 
@@ -19,8 +19,9 @@ the host platform.
 
 ## Identifying available compilers
 
-Compilers available for download can be listed with `alr search --full
---external-detect gnat_`. They will also be shown by the selection assistant,
+Compilers available for download can be listed with
+`alr search --full --external-detect gnat_`.
+They will also be shown by the selection assistant,
 `alr toolchain --select`.
 
 Running `alr toolchain` without arguments will show the installed compilers and

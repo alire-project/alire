@@ -28,7 +28,7 @@ run_alr('build')
 p = run_alr('with', '--solve')
 # For this match we don't know where the test is temporarily put, so we skip
 # over some parts of the output
-assert_match('.*Dependencies \(external\):.*'
+assert_match('.*Dependencies \(solution\):.*'
              'libhello\^1\.0\.0 \(direct,linked'
              ',path=.*/my_index/crates/libhello_1.0.0\).*',
              p.out, flags=re.S)

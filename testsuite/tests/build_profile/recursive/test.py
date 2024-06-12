@@ -7,7 +7,6 @@ from drivers.helpers import lines_of, content_of
 
 import os
 
-
 def check_profile(profile: str, file: str):
     line = f'   Build_Profile : Build_Profile_Kind := "{profile}";\n'
     assert line in lines_of(file), \

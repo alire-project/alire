@@ -1,10 +1,13 @@
 with AAA.Debug;
 
+with Alire.Environment;
 with Alire.Errors;
 with Alire.Warnings;
 with Alire.Utils.TTY;
 
 with GNAT.IO;
+
+with GNATCOLL.OS.Constants;
 
 package body Alire is
 
@@ -47,6 +50,16 @@ package body Alire is
       Put_Line (Standard_Error, "stderr: " & S);
    end Err_Log;
 
+   ---------
+   -- Log --
+   ---------
+
+   function Log (Text : String; Level : Trace.Levels := Info) return String is
+   begin
+      Trace.Log (Text, Level);
+      return Text;
+   end Log;
+
    -------------------
    -- Log_Exception --
    -------------------
@@ -64,7 +77,7 @@ package body Alire is
       Log (Exception_Information (E), Level);
       Log ("--->8--- Exception dump end ----->8---", Level);
 
-      if Log_Debug then
+      if Log_Debug or else Environment.Traceback_Enabled then
          Err_Log (Exception_Name (E));
          Err_Log (Full_Msg);
          Err_Log (Exception_Information (E));
@@ -104,18 +117,21 @@ package body Alire is
    -- Put_Warning --
    -----------------
 
-   procedure Put_Warning (Text           : String;
-                          Level          : Trace.Levels := Info;
-                          Disable_Config : String := "")
+   procedure Put_Warning (Text            : String;
+                          Level           : Trace.Levels := Warning;
+                          Disable_Setting : String := "")
    is
+      Prefix : constant String :=
+                 (if Level = Warning
+                  then "" -- because the logging will add its own "Warning:"
+                  else TTY.Text_With_Fallback (TTY.Warn (U ("⚠ ")),
+                                               "Warning: "));
    begin
-      Trace.Log (TTY.Text_With_Fallback (TTY.Warn (U ("⚠ ")), "warning: ")
-                 & Text,
-                 Level);
-      if Disable_Config /= "" then
-         Trace.Log (TTY.Text_With_Fallback (TTY.Warn (U ("⚠ ")), "warning: ")
-                    & "You can disable this warning with configuration key '"
-                    & TTY.Emph (Disable_Config) & "'",
+      Trace.Log (Prefix & Text, Level);
+      if Disable_Setting /= "" then
+         Trace.Log (Prefix
+                    & "You can disable this warning with settings key '"
+                    & TTY.Emph (Disable_Setting) & "'",
                     Level);
       end if;
    end Put_Warning;
@@ -152,9 +168,9 @@ package body Alire is
       use type UString;
    begin
       if S'Length < Min_Name_Length then
-         Err := +"Identifier too short.";
+         Err := +"Identifier too short (Min " & Min_Name_Length'Img & ").";
       elsif S'Length > Max_Name_Length then
-         Err := +"Identifier too long.";
+         Err := +"Identifier too long (Max " & Max_Tag_Length'Img & ").";
       elsif S (S'First) = '_' then
          Err := +"Identifiers must not begin with an underscore.";
       elsif (for some C of S => C not in Crate_Character) then
@@ -167,7 +183,11 @@ package body Alire is
            & " with 'alr help identifiers'";
       end if;
 
-      return +Err;
+      if Err /= "" then
+         return "Invalid name '" & Utils.TTY.Name (S) & "': " & (+Err);
+      else
+         return "";
+      end if;
    end Error_In_Name;
 
    -------------------
@@ -256,12 +276,14 @@ package body Alire is
    -- Recoverable_Error --
    -----------------------
 
-   procedure Recoverable_Error (Msg : String; Recover : Boolean := Force) is
+   procedure Recoverable_User_Error (Msg     : String;
+                                     Recover : Boolean := Force)
+   is
       Info : constant String := " (This error can be overridden with "
                                 & TTY.Terminal ("--force") & ".)";
    begin
       if Msg'Length > 0 and then Msg (Msg'Last) /= '.' then
-         Recoverable_Error (Msg & ".", Recover);
+         Recoverable_User_Error (Msg & ".", Recover);
          return;
       end if;
 
@@ -270,6 +292,33 @@ package body Alire is
       else
          Raise_Checked_Error (Msg & Info);
       end if;
-   end Recoverable_Error;
+   end Recoverable_User_Error;
+
+   -------------------------------
+   -- Recoverable_Program_Error --
+   -------------------------------
+
+   procedure Recoverable_Program_Error (Explanation : String := "") is
+   begin
+      Errors.Program_Error (Explanation,
+                            Recoverable  => True,
+                            Stack_Offset => 1);
+      --  Offset is 1 because this procedure adds its own stack frame
+   end Recoverable_Program_Error;
+
+   --------------
+   -- New_Line --
+   --------------
+
+   function New_Line return String
+   is
+      use all type GNATCOLL.OS.OS_Type;
+   begin
+      case GNATCOLL.OS.Constants.OS is
+         when Unix | MacOS => return (1 .. 1 => Character'Val (16#0A#));
+         when Windows      => return (Character'Val (16#0D#),
+                                      Character'Val (16#0A#));
+      end case;
+   end New_Line;
 
 end Alire;

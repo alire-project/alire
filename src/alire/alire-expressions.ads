@@ -21,6 +21,9 @@ package Alire.Expressions with Preelaborate is
    function Is_Valid (This : Variable; Value : String) return Boolean;
    --  Says if Value is among the values in This
 
+   function Suggestion (This : Variable; Value : String) return String;
+   --  Return a " Did you mean?" message for a given invalid value
+
    function Key (This : Variable) return String;
    --  The key that is used in TOML files for this variable
 
@@ -56,6 +59,8 @@ private
 
    function Is_Valid (V : Values; Image : String) return Boolean is abstract;
    --  Say if a value, given as its string image, matches a value of a type
+
+   function Possible_Values (V : Values) return AAA.Strings.Vector is abstract;
 
    procedure Register (Var_Key    : String;
                        Var_Name   : String;

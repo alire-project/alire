@@ -4,6 +4,9 @@ with Alire.TOML_Keys;
 
 package Alire.Properties.Actions with Preelaborate is
 
+   Action_Failed : exception;
+   --  Raised by the action runner when an action fails
+
    type Moments is
      (
       Post_Fetch, -- After being downloaded/on dependency updates

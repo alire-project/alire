@@ -20,7 +20,7 @@ package Alr.Commands.Publish is
    function Long_Description (Cmd : Command)
                               return AAA.Strings.Vector
    is (AAA.Strings.Empty_Vector
-       .Append ("Checks a release and generates an index manifest")
+       .Append ("Checks a release and generates an index manifest.")
        .New_Line
        .Append ("See full details at")
        .New_Line
@@ -33,6 +33,10 @@ package Alr.Commands.Publish is
        .Append ("For the common use case of a github-hosted repository,"
                 & " issue `alr publish` after committing and pushing"
                 & " the new release version.")
+       .New_Line
+       .Append ("See the above link for instructions on how to create a "
+         & "Github Personal Access Token (PAT), needed to allow `alr` to "
+         & "interact with Github (forking, PR creation) on your behalf.")
        .New_Line
        .Append ("Use --tar to create a source archive ready to be uploaded.")
        .New_Line
@@ -51,7 +55,8 @@ package Alr.Commands.Publish is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--skip-build] [--tar] [--manifest <file>] [<URL> [commit]]]");
+   is ("[--skip-build] [--skip-submit] [--tar] "
+       & "[--manifest <file>] [<URL> [commit]]] [--request-review NUM]");
 
 private
 
@@ -63,6 +68,21 @@ private
 
       Skip_Build : aliased Boolean := False;
       --  Skip the build check
+
+      Skip_Submit : aliased Boolean := False;
+      --  Stop after generation instead of asking the user to continue
+
+      Cancel     : aliased GNAT.Strings.String_Access := new String'(Unset);
+      --  Number of a PR to prematurely close
+
+      Reason     : aliased GNAT.Strings.String_Access := new String'(Unset);
+      --  Reason to give when closing the PR
+
+      Review     : aliased GNAT.Strings.String_Access := new String'(Unset);
+      --  True when requesting a review for a PR
+
+      Status     : aliased Boolean := False;
+      --  Retrieve the status of PRs opened by the user
 
       Tar        : aliased Boolean := False;
       --  Start the assistant from a local folder to be tar'ed and uploaded

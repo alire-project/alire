@@ -4,14 +4,15 @@ Helpers to run alr in the testsuite.
 
 import os
 import os.path
-
-from shutil import copytree
-from e3.os.process import Run, quote_arg
-from e3.fs import mkdir
-from e3.testsuite.driver.classic import ProcessResult
-
+import platform
+import pexpect
 import re
+import sys
 
+from e3.fs import mkdir
+from e3.os.process import Run, quote_arg
+from e3.testsuite.driver.classic import ProcessResult
+from shutil import copytree
 
 TESTSUITE_ROOT = os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))
@@ -23,11 +24,11 @@ class CalledProcessError(Exception):
 
 def distro_is_known():
     p = run_alr('version')
-    return not re.match('.*distribution:.*DISTRO_UNKNOWN.*',
+    return not re.match('.*distribution:.*DISTRIBUTION_UNKNOWN.*',
                         p.out, flags=re.S)
 
 
-def prepare_env(config_dir, env):
+def prepare_env(settings_dir, env):
     """
     Prepare the environment to run "alr".
 
@@ -40,31 +41,51 @@ def prepare_env(config_dir, env):
     env["GIT_CONFIG_GLOBAL"] = "/dev/null"
     env["GIT_CONFIG_SYSTEM"] = "/dev/null"
 
-    config_dir = os.path.abspath(config_dir)
-    mkdir(config_dir)
-    env['ALR_CONFIG'] = config_dir
-    #  We pass config location explicitly in the following calls since env is
-    #  not yet applied.
+    settings_dir = os.path.abspath(settings_dir)
+    mkdir(settings_dir)
+    env['ALIRE_SETTINGS_DIR'] = settings_dir
+    #  We pass settings location explicitly in the following calls since env is
+    #  not yet applied (it's just a dict to be passed later to subprocess)
+
+    if platform.system() == "Windows":
+        # Disable msys inadvertent installation
+        run_alr("-s", settings_dir, "settings", "--global",
+                "--set", "msys2.do_not_install", "true")
+
+        # And configure the one set up in the environment so it is used by
+        # tests that need it.
+        run_alr("-s", settings_dir, "settings", "--global",
+                "--set", "msys2.install_dir",
+                os.path.join(
+                    os.environ.get("LocalAppData"), "alire", "cache", "msys64"))
 
     # Disable autoconfig of the community index, to prevent unintended use of
     # it in tests, besides the overload of fetching it
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr(f"-s", settings_dir, "settings", "--global",
             "--set", "index.auto_community", "false")
 
     # Disable selection of toolchain to preserve older behavior. Tests that
     # require a configured compiler will have to set it up explicitly.
-    run_alr("-c", config_dir, "toolchain", "--disable-assistant")
+    run_alr("-s", settings_dir, "toolchain", "--disable-assistant")
 
     # Disable warning on old index, to avoid having to update index versions
     # when they're still compatible.
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr("-s", settings_dir, "settings", "--global",
             "--set", "warning.old_index", "false")
 
+    # Disable shared dependencies (keep old pre-2.0 behavior) not to break lots
+    # of tests. The post-2.0 behavior will have its own tests.
+    run_alr("-s", settings_dir, "settings", "--global",
+            "--set", "dependencies.shared", "false")
+
+    # Disable index auto-updates, which is not expected by most tests
+    run_alr("-s", settings_dir, "settings", "--global",
+            "--set", "index.auto_update", "0")
+
     # If distro detection is disabled via environment, configure so in alr
-    if "ALIRE_DISABLE_DISTRO" in env:
-        if env["ALIRE_DISABLE_DISTRO"] == "true":
-            run_alr("-c", config_dir, "config", "--global",
-                    "--set", "distribution.disable_detection", "true")
+    if "ALIRE_TESTSUITE_DISABLE_DISTRO" in env:
+        run_alr("-s", settings_dir, "settings", "--global",
+                "--set", "distribution.disable_detection", "true")
 
 
 def run_alr(*args, **kwargs):
@@ -92,7 +113,7 @@ def run_alr(*args, **kwargs):
         first_unknown_kwarg = sorted(kwargs)[0]
         raise ValueError('Invalid argument: {}'.format(first_unknown_kwarg))
 
-    argv = ['alr']
+    argv = [os.environ['ALR_PATH']]
     argv.insert(1, '-n')  # always non-interactive
     if debug:
         argv.insert(1, '-d')
@@ -105,7 +126,7 @@ def run_alr(*args, **kwargs):
     if (p.status != 0 and complain_on_error) or (p.status == 0 and not complain_on_error):
         print('The following command:')
         print('  {}'.format(' '.join(quote_arg(arg) for arg in argv)))
-        print('Exitted with status code {}'.format(p.status))
+        print('Exited with status code {}'.format(p.status))
         print('Output:')
         print(p.out)
         if complain_on_error:
@@ -118,6 +139,50 @@ def run_alr(*args, **kwargs):
     # canonicalization is necessary to make output comparison work on all
     # platforms.
     return ProcessResult(p.status, p.out.replace('\r\n', '\n'))
+
+
+def run_alr_interactive(args: [str], output: [str], input: [str], timeout=5) -> str:
+    """
+    NON-WINDOWS-ONLY
+    Run "alr" with the given arguments, feeding it the given input. No other
+    arguments like -q or -d are added (except --no-color).
+
+    :param args: List of arguments to pass to "alr".
+    :param output: List of strings expected to be output by the subprocess.
+    :param input: List of strings to feed to the subprocess's standard input.
+    :param timeout: Timeout in seconds for the subprocess to complete.
+    """
+    # Check whether on Windows to fail early (revisit if pexpect is updated?)
+    if platform.system() == "Windows":
+        print('SKIP: pexpect unavailable on Windows')
+        sys.exit(0)
+
+    # Run interactively using pexpect (run with input fails as it is not
+    # detected as tty and input is closed prematurely)
+    args.insert(0, "--no-color")
+    child = pexpect.spawn('alr',  args=args, timeout=timeout)
+
+    try:
+        # Alternate between expected output and given input
+        for out, inp in zip(output, input):
+            child.expect(out)
+            child.sendline(inp)
+
+        # Wait for the process to finish
+        child.expect(pexpect.EOF)  # Match all output before ending
+        child.wait()
+        child.close()
+    except pexpect.exceptions.TIMEOUT:
+        raise RuntimeError(f"pexpect timeout with alr output:\n"
+                           f"{child.before.decode('utf-8')}")
+
+    # Assert proper output code
+    assert child.exitstatus == 0, \
+        f"Unexpected exit status: {child.exitstatus}\n" + \
+        f"Output: {child.before.decode('utf-8')}"
+
+    # Return command output with CRLF replaced by LF (as does run_alr)
+    return child.before.decode('utf-8').replace('\r\n', '\n')
 
 
 def fixtures_path(*args):
@@ -236,6 +301,10 @@ def init_local_crate(name="xxx", binary=True, enter=True, update=True):
 
     if enter:
         os.chdir(name)
+
+
+def alr_workspace_cache():
+    return os.path.join("alire", "cache")
 
 
 def alr_lockfile():
@@ -435,7 +504,7 @@ def alr_with(dep="", path="", url="", commit="", branch="",
             return run_alr(*args, force=force)
 
 
-def add_action(type, command, name="", directory=""):
+def add_action(type: str, command: [str], name="", directory=""):
     """
     Add an action to the manifest in the current directory.
     :param str type: "pre-build", etc
@@ -454,7 +523,7 @@ def add_action(type, command, name="", directory=""):
             manifest.write(f"directory = '{directory}'\n")
 
 
-def alr_submit(manifest, index_path):
+def alr_copy_to_index(manifest, index_path):
     """
     Move a manifest with origin into its proper location in an index
     """
@@ -479,18 +548,72 @@ def alr_submit(manifest, index_path):
 
 def alr_publish(name,
                 version="0.0.0",
-                submit=True,
+                copy_to_index=True,
+                create_pr=False,
                 index_path=os.path.join("..", "my_index"),
                 quiet=True):
     """
     Run `alr publish` at the current location and optionally move the produced
     manifest to its intended location in a local index.
     """
-    p = run_alr("publish", force=True, quiet=quiet)
+
+    args = ["publish"]
+    if not create_pr:
+        args.append("--skip-submit")
+
+    p = run_alr(*args, force=True, quiet=quiet)
     # Force due to missing optional crate info by `alr init`
 
-    if submit:
-        alr_submit(os.path.join("alire", "releases", f"{name}-{version}.toml"),
-                   index_path)
+    if copy_to_index:
+        alr_copy_to_index(
+            os.path.join("alire", "releases", f"{name}-{version}.toml"),
+            index_path)
 
     return p
+
+
+def alr_settings_dir() -> str:
+    """
+    Return the path to the alr configuration directory
+    """
+    return os.environ.get("ALIRE_SETTINGS_DIR")
+
+
+def alr_vault_dir() -> str:
+    """
+    Return the path to the vault for release pristine sources
+    """
+    return os.path.join(alr_settings_dir(), "cache", "releases")
+
+
+def alr_builds_dir() -> str:
+    """
+    Return the path to the builds directory
+    """
+    return os.path.join(alr_settings_dir(), "cache", "builds")
+
+
+def crate_dirname(crate):
+    """
+    Return the deployment dir of a crate, obtained with `alr get --dirname`
+    """
+    return run_alr("get", "--dirname", crate).out.strip()
+
+
+def external_compiler_version() -> str:
+    """
+    Return the version of the external compiler
+    """
+    # Obtain available compilers
+    p = run_alr("toolchain")
+
+    # Capture version
+    return re.search("gnat_external ([0-9.]+)", p.out, re.MULTILINE).group(1)
+
+def unselect_compiler():
+    """
+    Leave compiler configuration as if "None" was selected by the user in the
+    assistant.
+    """
+    run_alr("settings", "--global", "--unset", "toolchain.use.gnat")
+    run_alr("settings", "--global", "--unset", "toolchain.external.gnat")

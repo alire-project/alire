@@ -1,0 +1,12 @@
+description = "\"Hello, world!\" demonstration project support library"
+name = "libhello"
+version = "0.9.0"
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+tags = ["libhello-tag1"]
+
+[configuration.variables]
+Var1={type="Boolean"}  # Without default on purpose
+
+[origin]
+url = "file:../../../crates/libhello_1.0.0"

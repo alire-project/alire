@@ -27,7 +27,6 @@ p = run_alr('with', '--solve')
 # over some parts of the output
 assert_match('.*Dependencies \(solution\):.*'
              'libhello=1\.0\.0.*'
-             'Dependencies \(external\):.*'
              'unobtanium\* \(direct,linked,.*',
              p.out, flags=re.S)
 

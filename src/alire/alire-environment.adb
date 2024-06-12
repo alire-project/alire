@@ -2,21 +2,11 @@ with GNAT.OS_Lib;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Alire_Early_Elaboration;
-with Alire.Environment.Formatting;
 with Alire.Errors;
 with Alire.Properties.Environment; use Alire.Properties.Environment;
 with Alire.OS_Lib;
-with Alire.GPR;
-with Alire.Properties.Scenarios;
-with Alire.Releases;
-with Alire.Roots.Editable;
-with Alire.Solutions;
-with Alire.Toolchains.Solutions;
-with Alire.Utils.TTY;
-with Alire.Platforms.Current;
 
-with GNAT.IO;
+with Dirty_Booleans;
 
 package body Alire.Environment is
 
@@ -77,151 +67,6 @@ package body Alire.Environment is
       This.Add (Name, Action);
    end Prepend;
 
-   ----------
-   -- Load --
-   ----------
-
-   Already_Warned : Boolean := False;
-
-   procedure Load (This : in out Context;
-                   Root : in out Alire.Roots.Root)
-   is
-      Solution : constant Solutions.Solution :=
-                   Toolchains.Solutions.Add_Toolchain (Root.Solution);
-      Tool_Root : Roots.Editable.Root :=
-                    Roots.Editable.New_Root (Root);
-      --  We use a copy of the base root to add the toolchain elements that
-      --  might be missing from its solution
-   begin
-      Tool_Root.Set (Solution);
-
-      --  Load platform environment
-      Alire.Platforms.Current.Load_Environment (This);
-
-      --  Warnings when setting up an incomplete environment
-
-      if not Solution.Is_Complete then
-         Trace.Debug ("Generating possibly incomplete environment"
-                      & " because of missing dependencies");
-
-         --  Normally we would generate a warning, but since that will pollute
-         --  the output making it unusable, for once we write directly to
-         --  stderr (unless quiet is in effect):
-
-         if not Alire_Early_Elaboration.Switch_Q and then not Already_Warned
-         then
-            Already_Warned := True;
-
-            GNAT.IO.Put_Line
-              (GNAT.IO.Standard_Error,
-               TTY.Warn ("warn:")
-               & " Generating possibly incomplete environment"
-               & " because of missing dependencies");
-         end if;
-      end if;
-
-      --  Project paths for all releases in the solution, implicitly defined by
-      --  supplied project files.
-
-      declare
-         Sorted_Paths : constant AAA.Strings.Set :=
-                          Tool_Root.Current.Project_Paths;
-      begin
-         if not Sorted_Paths.Is_Empty then
-            for Path of reverse Sorted_Paths loop
-               --  Reverse should not matter as our paths shouldn't overlap,
-               --  but at least is nicer for user inspection to respect
-               --  alphabetical order.
-
-               This.Prepend ("GPR_PROJECT_PATH", Path, "crates");
-            end loop;
-         end if;
-      end;
-
-      --  Custom definitions provided by each release
-
-      for Rel of Solution.Releases.Including (Root.Release) loop
-         This.Load (Root            => Tool_Root,
-                    Crate           => Rel.Name);
-      end loop;
-
-      This.Set ("ALIRE", "True", "Alire");
-   end Load;
-
-   ----------
-   -- Load --
-   ----------
-
-   procedure Load (This            : in out Context;
-                   Root            : in out Roots.Editable.Root;
-                   Crate           : Crate_Name)
-   is
-      Env    : constant Properties.Vector := Root.Current.Environment;
-      Rel    : constant Releases.Release := Root.Current.Release (Crate);
-      Origin : constant String := Rel.Name_Str;
-
-      Release_Base : constant String := Root.Current.Release_Base (Rel.Name);
-   begin
-      Trace.Debug ("Loading environment for crate "
-                   & Alire.Utils.TTY.Name (Crate)
-                   & " release: " & Rel.Milestone.TTY_Image);
-
-      --  Environment variables defined in the crate manifest
-      for Act of Rel.Environment (Env) loop
-         Trace.Debug ("Processing env entry: " & Act.Name
-                      & " of type " & Act.Action'Image
-                      & " with value " & Act.Value);
-         begin
-            declare
-               Value : constant String :=
-                 Formatting.Format (Release_Base, Act.Value);
-            begin
-               case Act.Action is
-
-               when Properties.Environment.Set =>
-
-                  This.Set (Act.Name, Value, Origin & " (env)");
-
-               when Properties.Environment.Append =>
-
-                  This.Append (Act.Name, Value, Origin & " (env)");
-
-               when Properties.Environment.Prepend =>
-
-                  This.Prepend (Act.Name, Value, Origin & " (env)");
-
-               end case;
-            end;
-         exception
-            when Formatting.Unknown_Formatting_Key =>
-               Raise_Checked_Error
-                 ("Unknown environment variable formatting key in var '" &
-                    Act.Name & " of '" & Origin & "'");
-         end;
-      end loop;
-
-      --  Environment variables for GPR external scenario variables
-      for Property of Rel.On_Platform_Properties (Env) loop
-         if Property in Alire.Properties.Scenarios.Property'Class then
-            declare
-               use all type Alire.GPR.Variable_Kinds;
-               Variable : constant Alire.GPR.Variable :=
-                 Alire.Properties.Scenarios.Property (Property).Value;
-            begin
-               if Variable.Kind = External then
-                  This.Set (Variable.Name, Variable.External_Value,
-                           Origin & " (gpr ext)");
-               end if;
-            end;
-         end if;
-      end loop;
-
-      --  Set the crate PREFIX location for access to resources
-      This.Set (AAA.Strings.To_Upper_Case (+Rel.Name) & "_ALIRE_PREFIX",
-                Release_Base,
-                "Crate prefix for resources location");
-   end Load;
-
    -----------------
    -- Print_Shell --
    -----------------
@@ -230,7 +75,7 @@ package body Alire.Environment is
    begin
       --  TODO: PowerShell or CMD version for Windows. Is it possible to detect
       --  the kind of shell we are running in?
-      for Elt of This.Compile loop
+      for Elt of This.Compile (Check_Conflicts => True) loop
          case Kind is
          when Platforms.Unix =>
             Trace.Always (To_String ("export " & Elt.Key & "=""" &
@@ -281,8 +126,9 @@ package body Alire.Environment is
    -- Compile --
    -------------
 
-   function Compile (Key  : Unbounded_String;
-                     Vect : Action_Vectors.Vector)
+   function Compile (Key             : Unbounded_String;
+                     Vect            : Action_Vectors.Vector;
+                     Check_Conflicts : Boolean)
                      return Var
    is
       Separator : constant Character := GNAT.OS_Lib.Path_Separator;
@@ -327,7 +173,7 @@ package body Alire.Environment is
                   --  twice. Long-term, something like Boost.Process would be
                   --  more robust to call subprocesses without pilfering our
                   --  own environment.
-               else
+               elsif Check_Conflicts then
                   Raise_Checked_Error
                     (Errors.Wrap
                        ("Trying to set an already defined environment "
@@ -362,12 +208,16 @@ package body Alire.Environment is
    -- Compile --
    -------------
 
-   function Compile (This : Context) return Var_Array is
+   function Compile (This            : Context;
+                     Check_Conflicts : Boolean)
+                     return Var_Array is
       Result : Var_Array (1 .. Natural (This.Actions.Length));
       Index  : Natural := Result'First;
    begin
       for C in This.Actions.Iterate loop
-         Result (Index) := Compile (Action_Maps.Key (C), This.Actions (C));
+         Result (Index) := Compile (Action_Maps.Key (C),
+                                    This.Actions (C),
+                                    Check_Conflicts);
          Index := Index + 1;
       end loop;
 
@@ -383,9 +233,36 @@ package body Alire.Environment is
 
    procedure Export (This : Context) is
    begin
-      for Var of This.Compile loop
+      for Var of This.Compile (Check_Conflicts => True) loop
          OS_Lib.Setenv (+Var.Key, +Var.Value);
       end loop;
    end Export;
+
+   -------------
+   -- Get_All --
+   -------------
+
+   function Get_All (This            : Context;
+                     Check_Conflicts : Boolean := False)
+                     return Env_Map is
+   begin
+      return Result : Env_Map do
+         for Var of This.Compile (Check_Conflicts) loop
+            Result.Insert (+Var.Key, +Var.Value);
+         end loop;
+      end return;
+   end Get_All;
+
+   -----------------------
+   -- Traceback_Enabled --
+   -----------------------
+
+   function Traceback_Enabled return Boolean
+   is
+      package Dirty is new Dirty_Booleans;
+      use type Dirty.Boolean;
+   begin
+      return Dirty.Value (OS_Lib.Getenv (Traceback, "false")) = True;
+   end Traceback_Enabled;
 
 end Alire.Environment;

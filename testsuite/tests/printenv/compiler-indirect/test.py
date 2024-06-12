@@ -35,7 +35,7 @@ s = re.escape(dir_separator())
 # Ensure the compiler-set flag is in there:
 assert_match(".*export TEST_PATH=.*"
              f"printenv__compiler-indirect{s}alr-config{s}cache{s}"
-             f"dependencies{s}gnat_native_8888\.0\.0_99fa3a55{s}bin",
+             f"toolchains{s}gnat_native_8888\.0\.0_15743d73{s}bin",
              p.out)
 
 print('SUCCESS')

@@ -9,4 +9,4 @@ from drivers.alr import run_alr
 run_alr()
 
 
-print('SUCCESS')
+print("SUCCESS")

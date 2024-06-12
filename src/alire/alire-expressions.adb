@@ -3,6 +3,7 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Alire.Errors;
 with Alire.TOML_Adapters;
 with Alire.Utils;
+with Alire.Utils.Did_You_Mean;
 
 package body Alire.Expressions is
 
@@ -42,6 +43,16 @@ package body Alire.Expressions is
          Errors.Set ("Expression variable '" & Key (This) & "' is unknown (" &
              Key_Variables_Image (Variables) & ")")
        else Variable_Values (Key (This)).Is_Valid (Value));
+
+   ----------------
+   -- Suggestion --
+   ----------------
+
+   function Suggestion (This : Variable; Value : String) return String is
+   begin
+      return Utils.Did_You_Mean.Suggestion
+        (Value, Variable_Values (Key (This)).Possible_Values);
+   end Suggestion;
 
    -----------------------
    -- Register_Variable --

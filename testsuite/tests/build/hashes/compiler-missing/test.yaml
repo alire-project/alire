@@ -1,0 +1,4 @@
+driver: python-script
+build_mode: shared
+indexes:
+    basic_no_compiler_index: {}

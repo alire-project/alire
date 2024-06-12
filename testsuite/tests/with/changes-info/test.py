@@ -7,7 +7,6 @@ import re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
-from drivers.helpers import path_separator, with_project
 
 # Initialize a workspace for the test
 run_alr('init', '--bin', 'xxx')
@@ -27,18 +26,29 @@ Changes to dependency solution:
              p.out, flags=re.S)
 
 ###############################################################################
-# Check adding a missing crate
-p = run_alr('with', 'unobtanium', quiet=False)
+# Check adding a missing crate (with forcing)
+p = run_alr('with', 'unobtanium', quiet=False, force=True)
 assert_match(".*" +
-             re.escape("""Requested changes:
+             re.escape("""\
+Requested changes:
 
    + unobtanium * (add)
 
 Changes to dependency solution:
 
    New solution is incomplete.
-   +! unobtanium * (new,missing:unknown)""") + ".*",
+   Missing:
+   +!       unobtanium * (new,missing:unknown)\
+""") + ".*",
              p.out, flags=re.S)
+
+# Remove the missing crate for following tests
+run_alr("with", "--del", "unobtanium")
+
+# Check adding without forcing for simpler error message
+p = run_alr('with', 'unobtanium', force=False, complain_on_error=False)
+assert_match(".*Cannot add crate 'unobtanium' not found in index",
+             p.out)
 
 ###############################################################################
 # Check adding a pinned dir (the dir must exist)
@@ -51,7 +61,7 @@ assert_match(".*" +
 
 Changes to dependency solution:
 
-   +· local_crate unknown (new,path=local_crate)""") + ".*",
+   +. local_crate unknown (new,path=local_crate)""") + ".*",
              p.out, flags=re.S)
 
 ###############################################################################
@@ -60,7 +70,7 @@ p = run_alr('pin', 'libhello', quiet=False)
 assert_match(".*" +
              re.escape("""Changes to dependency solution:
 
-   · libhello 2.0.0 (pin=2.0.0)""") + ".*",
+   . libhello 2.0.0 (pin=2.0.0)""") + ".*",
              p.out, flags=re.S)
 
 ###############################################################################

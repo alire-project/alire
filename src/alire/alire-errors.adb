@@ -1,5 +1,10 @@
-with Ada.Containers.Indefinite_Doubly_Linked_Lists;
+with AAA.Debug;
+with AAA.Strings;
+
 with Ada.Containers.Indefinite_Ordered_Maps;
+
+with Alire.OS_Lib;
+with Alire.Utils;
 
 package body Alire.Errors is
 
@@ -128,18 +133,25 @@ package body Alire.Errors is
          declare
             Line : constant String := Trim (Lines (I));
          begin
-            Trace.Error ((if I > Lines.First_Index then "   " else "")
-                         --  Indentation
+            if Line /= "" then
+               Trace.Error
+                 ((if I > Lines.First_Index then "   " else "")
+                  --  Indentation
 
-                         & Line
-                         --  The error proper
+                  & (if I < Lines.Last_Index and then Line (Line'Last) = '.'
+                    then Line (Line'First .. Line'Last - 1)
+                    else Line)
+                  --  The error proper, trimming unwanted final '.'
 
-                         & (if I < Lines.Last_Index
-                              and then Line (Line'Last) /= ':'
-                           then ":"
-                           else "")
-                           --  Trailing ':' except for last line
-                        );
+                  & (if I < Lines.Last_Index
+                    and then Line (Line'Last) /= ':'
+                    then ":"
+                    else "")
+                  --  Trailing ':' except for last line
+                 );
+            else
+               Trace.Error (Line);
+            end if;
          end;
       end loop;
    end Pretty_Print;
@@ -151,14 +163,20 @@ package body Alire.Errors is
    function Wrap (Upper, Lower : String) return String
    is (Upper & ASCII.LF & Lower);
 
+   -----------
+   -- Print --
+   -----------
+
+   procedure Print (This : Wrapper) is
+   begin
+      Pretty_Print (This.Text);
+   end Print;
+
    --------------------
    -- ERROR STACKING --
    --------------------
 
-   package String_Lists is
-     new Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
-
-   Error_Stack : String_Lists.List;
+   Error_Stack : AAA.Strings.Vector;
 
    ----------
    -- Open --
@@ -166,7 +184,7 @@ package body Alire.Errors is
 
    function Open (Text : String) return Scope is
    begin
-      Error_Stack.Append (Text);
+      Open (Text);
       return (Ada.Finalization.Limited_Controlled with null record);
    end Open;
 
@@ -197,6 +215,9 @@ package body Alire.Errors is
       pragma Unreferenced (This);
    begin
       Close;
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    -----------
@@ -208,11 +229,92 @@ package body Alire.Errors is
       Msg : UString;
       use UStrings;
    begin
-      for Item of Error_Stack loop
-         Append (Msg, Item & ASCII.LF);
+      --  Remove duplicates that may have creeped in when generating the final
+      --  stack:
+
+      for I in Error_Stack.First_Index .. Error_Stack.Last_Index loop
+         if I = Error_Stack.First_Index
+           or else Error_Stack (I) /= Error_Stack (I - 1)
+         then
+            Append (Msg, Error_Stack (I) & ASCII.LF);
+         end if;
       end loop;
 
       return +Msg & Text;
    end Stack;
+
+   -------------------
+   -- Program_Error --
+   -------------------
+
+   procedure Program_Error (Explanation  : String  := "";
+                            Recoverable  : Boolean := True;
+                            Stack_Trace  : String  := "";
+                            Stack_Offset : Natural := 0)
+   is
+      Stack  : constant AAA.Strings.Vector :=
+                 AAA.Strings.Split
+                   ((if Stack_Trace /= ""
+                    then Stack_Trace
+                    else AAA.Debug.Stack_Trace),
+                    ASCII.LF);
+
+      Caller : constant Positive :=
+                 5 + Stack_Offset - (if Stack_Trace /= "" then 2 else 0);
+      --  The minus 2 is because in stacks obtained from an exception:
+      --  1) Except name 2) exec name 3) stack start
+      --  If instead we use AAA.Debug.Stack_Trace:
+      --  1) Except name 2) exec name 3) AAA.Debug 4) here 5) caller
+
+      URL    : constant String
+      := "https://github.com/alire-project/alire/issues/new?title=[Bug%20box]";
+
+      Level  : constant Trace.Levels :=
+                 (if Recoverable then Warning else Error);
+
+      ---------
+      -- Put --
+      ---------
+
+      procedure Put (Msg : String) is
+      begin
+         Trace.Log (Msg, Level);
+      end Put;
+
+   begin
+      if Stack_Trace = "" then
+         Trace.Debug (AAA.Debug.Stack_Trace);
+      end if;
+      --  Otherwise, the exception has been logged elsewhere
+
+      Put ("******************* BEGIN Alire bug detected *******************");
+      Put ("Location  : "
+           & (if Integer (Stack.Length) >= Caller
+             then Stack (Caller)
+             else "<unknown>"));
+
+      if Explanation /= "" then
+         Put ("Extra info: " & Explanation);
+      end if;
+
+      Put ("Report at : " & URL);
+
+      if Log_Level < Debug or else not Log_Debug then
+         Put ("Re-run with `-vv -d` for a full log and stack trace.");
+      end if;
+
+      if Recoverable then
+         Put
+           (TTY.Bold
+              ("Alire will now continue as the error might be recoverable."));
+      end if;
+
+      Put ("******************** END Alire bug detected ********************");
+
+      if not Recoverable then
+         --  Do not re-raise as we would end repeating the -vv -d info
+         OS_Lib.Bailout (1);
+      end if;
+   end Program_Error;
 
 end Alire.Errors;

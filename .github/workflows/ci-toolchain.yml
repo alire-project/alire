@@ -1,7 +1,6 @@
 name: CI self+toolchain
 # Build Alire with `alr build` and using a toolchain installed from Alire
-# NOTE that tests are not run, this test only checks alr is able to self build.
-# (Should we also run self-tests here or is it overkill?)
+# The `alr` being tested is the one which is being submitted in the PR
 
 on:
   pull_request:
@@ -14,47 +13,71 @@ on:
 jobs:
 
   build:
-    name: ${{ matrix.os }}
+
+    name: ${{ matrix.os }} gcc^${{ matrix.gcc_version }}
 
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        os: 
-          - macos-latest
+        os:
+          - macos-12
           - ubuntu-latest
           - windows-latest
+        gcc_version: [10, 11, 12, 13, 14]
 
     steps:
     - name: Check out
-      uses: actions/checkout@v2
-
-    - uses: actions/cache@v2
+      uses: actions/checkout@v3
       with:
-        path: ./cache/gnat-ce-2020
-        key: ${{ runner.os }}-gnat-ce-2020
+        submodules: true
 
-    - name: Install toolchain
-      uses: ada-actions/toolchain@ce2020 # macOS hasn't 2021
-      with:
-        distrib: community
-        install_dir: ./cache/gnat-ce-2020
+    # Use a stock alr to make the latest toolchain available
 
-    - name: Build alr with default indexed toolchain
-      uses: alire-project/setup-alire@v1
+    - name: Install FSF toolchain
+      uses: alire-project/alr-install@v1
       with:
-        branch: master
+        crates: gnat_native^${{matrix.gcc_version}} gprbuild
+
+    - name: Build alr with default toolchain
+      shell: bash
+      run: dev/build.sh
+
+    # We can start using the alr we just built
+
+    - name: Update dependencies
+      run: ./bin/alr -d -n update
 
     - name: Show dependencies/pins
-      run: alr -n -q with --solve || alr -n -v -d with --solve
+      run: ./bin/alr -d -n -q with --solve || ./bin/alr -n -v -d with --solve
 
-    - name: Show build environment
-      run: alr -n printenv
+    - name: Show build environment, with debug fallback
+      run: ./bin/alr -d -n printenv || ./bin/alr -n -v -d printenv
 
-    - run: alr -n build
+    - shell: bash
+      run: mv ./bin ./bin-old || { sleep 5s && mv ./bin ./bin-old; }
+      # Windows doesn't allow to replace a running exe so the next command
+      # fails otherwise. Also, this mv fails sometimes so we try twice JIC.
 
-    # For some reason I cannot pinpoint, the Windows build is seeing two
-    # different environments that mess things up. The build succeeds though.
+
+    - name: SELF-BUILD
+      run: ./bin-old/alr -d -n build
+
     - name: Show built version
-      if: matrix.os != 'windows-latest'
-      run: ./bin/alr -n version
+      run: ./bin/alr -d -n version
+
+    # Run the testsuite with the just build alr. The testsuite picks the proper
+    # alr in the ./bin/alr location.
+
+    - name: Install Python 3.x # required by testsuite
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install e3
+      run: pip install --upgrade -r testsuite/requirements.txt
+
+    - name: Run testsuite
+      run: cd testsuite; ./run.py -E
+      shell: bash

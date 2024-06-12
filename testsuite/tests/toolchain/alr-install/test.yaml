@@ -1,0 +1,4 @@
+driver: python-script
+indexes:
+    toolchain_index:
+        in_fixtures: true

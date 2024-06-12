@@ -1,0 +1,12 @@
+description = ""
+name = "gnat_native"
+provides = ["gnat=1.0"]
+version = "1.0.0"
+licenses = "GPL-3.0-only OR MIT"
+maintainers = ["some@bo.dy"]
+maintainers-logins = ["mylogin"]
+
+# Conditional origin so it's considered a binary crate
+[origin."case(os)"."..."]
+url = "file:../../../crates/gnat_native_mock_1.0.zip"
+hashes = ["sha256:db87865b59d7d733e4104b3c0f29c8bf590d5ff0b3ea2d61bded4e47beabf1a3"]

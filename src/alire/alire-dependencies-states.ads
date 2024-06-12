@@ -33,6 +33,8 @@ package Alire.Dependencies.States is
 
    type State (<>) is new Dependency with private;
 
+   overriding function "=" (L, R : State) return Boolean;
+
    ------------------
    -- Constructors --
    ------------------
@@ -68,8 +70,7 @@ package Alire.Dependencies.States is
    --  Modify transitivity in a copy of Base
 
    function Solving (Base   : State;
-                     Using  : Releases.Release;
-                     Shared : Boolean := False)
+                     Using  : Releases.Release)
                      return State
      with Pre => Using.Provides (Base.Crate);
    --  Uses release to fulfill this dependency in a copy of Base
@@ -108,12 +109,17 @@ package Alire.Dependencies.States is
    function Is_Provided (This : State) return Boolean;
    --  True when the release name is different from the dependency crate
 
-   function Is_Shared (This : State) return Boolean;
-
    function Is_User_Pinned (This : State) return Boolean;
    --  From the POV of users, pinning to version or linking to dir is a pin
 
    function Is_Solved (This : State) return Boolean;
+   --  With a regular release from the index
+
+   function Is_Fulfilled (This : State) return Boolean;
+   --  Either solved or linked
+
+   function Is_Unfulfilled (This : State) return Boolean;
+   --  Neither solved nor linked
 
    --  Case-specific info
 
@@ -214,7 +220,7 @@ private
       return State;
 
    package Link_Holders is
-     new AAA.Containers.Indefinite_Holders (Softlink);
+     new AAA.Containers.Indefinite_Holders (Softlink, User_Pins."=");
 
    type Link_Holder is new Link_Holders.Holder with null record;
 
@@ -227,7 +233,6 @@ private
             Opt_Rel : Stored_Release; -- This might not be filled-in
          when Solved =>
             Release : Stored_Release; -- This is always valid
-            Shared  : Boolean;        -- The release is from shared install
          when Missed =>
             Reason  : Missed_Reasons := Skipped; -- Until solving is attempted
          when others => null;
@@ -246,6 +251,9 @@ private
    -----------
 
    type State (Name_Len : Natural) is new Dependency (Name_Len) with record
+      --  NOTE: check "=" implementation if adding fields to this record.
+      --  There seems to be some trouble with the default "=" operator so its
+      --  overridden.
       Fulfilled    : Fulfillment_Data;
       Pinning      : Pinning_Data;
       Transitivity : Transitivities := Unknown;
@@ -319,9 +327,6 @@ private
                    & (if This.Has_Release
                       then ",release"
                    else "")
-                   & (if This.Is_Shared
-                      then ",installed"
-                      else "")
           else "")
        & (if This.Pinning.Pinned
           then ",pin=" & This.Pinning.Version.Image
@@ -334,6 +339,16 @@ private
 
    function Is_Direct (This : State) return Boolean
    is (This.Transitivity = Direct);
+
+   function Is_Fulfilled (This : State) return Boolean
+   is (case This.Fulfilment is
+          when Solved | Linked => True,
+          when Hinted | Missed => False);
+
+   function Is_Unfulfilled (This : State) return Boolean
+   is (case This.Fulfilment is
+          when Solved | Linked => False,
+          when Hinted | Missed => True);
 
    function Is_Hinted (This : State) return Boolean
    is (This.Fulfilled.Fulfillment = Hinted);
@@ -352,9 +367,6 @@ private
 
    function Is_Provided (This : State) return Boolean
    is (This.Has_Release and then This.Release.Name /= This.Crate);
-
-   function Is_Shared (This : State) return Boolean
-   is (This.Fulfilled.Fulfillment = Solved and then This.Fulfilled.Shared);
 
    function Is_Solved (This : State) return Boolean
    is (This.Fulfilled.Fulfillment = Solved);
@@ -538,14 +550,12 @@ private
    -------------
 
    function Solving (Base   : State;
-                     Using  : Releases.Release;
-                     Shared : Boolean := False)
+                     Using  : Releases.Release)
                      return State
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
        Fulfilled    => (Fulfillment => Solved,
-                        Release     => To_Holder (Using),
-                        Shared      => Shared),
+                        Release     => To_Holder (Using)),
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 
@@ -581,9 +591,6 @@ private
                       else "," & TTY.Error ("broken"))
                    & (if This.Has_Release
                       then "," & TTY.OK ("release")
-                      else "")
-                   & (if This.Is_Shared
-                      then "," & TTY.Emph ("installed")
                       else "")
           else "")
        & (if This.Pinning.Pinned

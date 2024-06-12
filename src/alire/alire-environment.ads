@@ -2,7 +2,6 @@ with Ada.Strings.Unbounded;
 
 with Alire.Properties;
 with Alire.Platforms;
-limited with Alire.Roots.Editable;
 
 private with Ada.Strings.Unbounded.Hash;
 private with Ada.Containers.Vectors;
@@ -10,14 +9,30 @@ private with Ada.Containers.Hashed_Maps;
 private with Alire.Properties.Environment;
 private with Ada.Containers.Generic_Array_Sort;
 
-package Alire.Environment is
+package Alire.Environment with Preelaborate is
+
+   --  ANY NEW VARIABLES SHOULD USE "ALIRE" IF THIS IS SOMETHING AFFECTING THE
+   --  BASE LIBRARY. CONSIDER USING A SETTING INSTEAD, UNLESS AN ENVIRONMENT
+   --  VARIABLE MAKES ABSOLUTE SENSE.
 
    Config : constant String := "ALR_CONFIG";
    --  Folder where current alr will look for configuration
+   --  DEPRECATED on 3.0
 
-   Source : constant String := "ALR_SOURCE";
-   --  Folder that overrides where alr sources are checked out
-   --  Intended to help developers by pointing it to their sources
+   Settings : constant String := "ALIRE_SETTINGS_DIR";
+   --  Folder where Alire will look for configuration
+
+   Testsuite : constant String := "ALR_TESTSUITE";
+   --  If defined, we are running under the testsuite harness
+
+   Testsuite_Allow : constant String := "ALR_TESTSUITE_ALLOW";
+   --  If defined, we want to allow operations normally disabled forbidden
+   --  during testsuite runs, like creating a PR in a public server.
+
+   Traceback : constant String := "ALR_TRACEBACK_ENABLED";
+   --  If set to True/1, dump unexpected exceptions to console (same as `-d`)
+
+   function Traceback_Enabled return Boolean;
 
    type Context is tagged limited private;
 
@@ -30,14 +45,9 @@ package Alire.Environment is
    procedure Prepend (This : in out Context; Name, Value, Origin : String);
    --  Prepend a value to a variable in the context
 
-   procedure Load (This : in out Context;
-                   Root : in out Alire.Roots.Root);
-   --  Load the environment variables of a releases found in the workspace
-   --  Solution (GPR_PROJECT_PATH and custom variables) in the context.
-
    procedure Export (This : Context);
    --  Export the environment variables built from the variables previously
-   --  loaded and defined in the context.
+   --  loaded and defined in the context to the OS.
 
    procedure Print_Shell (This : Context; Kind : Platforms.Shells);
    --  Print the shell commands that can be used to export the environment
@@ -46,6 +56,18 @@ package Alire.Environment is
    procedure Print_Details (This : Context);
    --  Print details about the environment context. What are the variables
    --  definitions and their origin.
+
+   --  Bulk export
+
+   subtype Env_Map is AAA.Strings.Map;
+   --  key --> value map
+
+   function Get_All (This            : Context;
+                     Check_Conflicts : Boolean := False)
+                     return Env_Map;
+   --  Build a map for all variables in the solution (both GPR and
+   --  environment). Since this is used during hash computation, we must
+   --  skip conflict checks at this time as definitive paths aren't yet known.
 
 private
 
@@ -64,9 +86,13 @@ private
       Element_Type => Var,
       Array_Type   => Var_Array);
 
-   function Compile (This : Context) return Var_Array;
+   function Compile (This            : Context;
+                     Check_Conflicts : Boolean)
+                     return Var_Array;
    --  Return an array of environment variable key/value built from the
-   --  variables previously loaded and defined in the context.
+   --  variables previously loaded and defined in the context. During
+   --  hashing, we know some paths will conflict with the definitive ones,
+   --  so Check_Conflicts allows to skip those checks.
 
    type Env_Action is record
       Kind   : Alire.Properties.Environment.Actions;
@@ -90,11 +116,5 @@ private
    end record;
 
    procedure Add (This : in out Context; Name : String; Action : Env_Action);
-
-   procedure Load (This            : in out Context;
-                   Root            : in out Roots.Editable.Root;
-                   Crate           : Crate_Name);
-   --  Load the environment variables of a release (GPR_PROJECT_PATH and custom
-   --  variables) in the context.
 
 end Alire.Environment;
