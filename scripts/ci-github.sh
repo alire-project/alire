@@ -9,9 +9,12 @@ set -o nounset
 export PATH+=:${PWD}/bin
 
 # Import reusable bits
-pushd $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+pushd "$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
     . ../dev/functions.sh
 popd
+
+# Patch version
+scripts/version-patcher.sh
 
 # Build alr
 export ALIRE_OS=$(get_OS)
@@ -37,7 +40,7 @@ echo ............................
 
 # Set up index if not default:
 if [ "${INDEX:-}" != "" ]; then
-    echo Setting default index to: $INDEX
+    echo Setting default index to: "$INDEX"
     alr index --name default --add "$INDEX"
 fi
 
@@ -65,8 +68,8 @@ fi
 
 echo PYTHON installing testsuite dependencies...
 
-echo Python version: $($run_python --version)
-echo Pip version: $($run_pip --version)
+echo "Python version: $($run_python --version)"
+echo "Pip version: $($run_pip --version)"
 
 $run_pip install --upgrade -r requirements.txt
 echo Python search paths:
