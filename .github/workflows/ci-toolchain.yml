@@ -25,11 +25,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        gcc_version:
-          - 10
-          - 11
-          - 12
-          - 13
+        gcc_version: [10, 11, 12, 13, 14]
 
     steps:
     - name: Check out
