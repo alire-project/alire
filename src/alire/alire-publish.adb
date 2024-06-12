@@ -3,7 +3,7 @@ with Ada.Text_IO;
 
 with AAA.Strings;
 
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Crates;
 with Alire.Environment;
 with Alire.Errors;
@@ -25,14 +25,13 @@ with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.User_Pins.Maps;
+with Alire.Utils.Tools;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
 with Alire.VFS;
 
 with CLIC.User_Input;
-
-with GNATCOLL.OS.Constants;
 
 with Semantic_Versioning;
 
@@ -245,7 +244,7 @@ package body Alire.Publish is
 
       Index_On_Disk.Loading.Load_All (Strict => True).Assert;
       if Index.Exists (Release.Name, Release.Version) then
-         Recoverable_Error
+         Recoverable_User_Error
             ("Target release " & Release.Milestone.TTY_Image
              & " already exist in a loaded index");
       end if;
@@ -563,9 +562,10 @@ package body Alire.Publish is
             --  Safeguard to avoid tests creating a live pull request, unless
             --  explicitly desired
             if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset"
-              and then OS_Lib.Getenv (Environment.Testsuite_Allow, "unset") = "unset"
+              and then
+                OS_Lib.Getenv (Environment.Testsuite_Allow, "unset") = "unset"
             then
-               raise Program_Error
+               raise Constraint_Error
                  with "Attempting to go online to create a PR during tests";
             end if;
 
@@ -578,12 +578,12 @@ package body Alire.Publish is
             then
                raise Early_Stop;
             end if;
-         elsif not Config.Builtins.User_Github_Login.Is_Empty then
+         elsif not Settings.Builtins.User_Github_Login.Is_Empty then
             Put_Info
               ("Please upload this file to "
                & TTY.URL
                  (Index.Community_Host & "/"
-                  & Config.Builtins.User_Github_Login.Get & "/"
+                  & Settings.Builtins.User_Github_Login.Get & "/"
                   & Index.Community_Repo_Name
                   & "/upload/"
                   & Index.Community_Branch & "/"
@@ -631,12 +631,10 @@ package body Alire.Publish is
                                                With_Extension => False);
       Git        : constant VCSs.Git.VCS := VCSs.Git.Handler;
       Is_Repo    : constant Boolean := Git.Is_Repository (Base_Path (Context));
-      Archive    : constant Relative_Path :=
-                     Target_Dir
-                       / (Milestone
-                          & (if Is_Repo
-                             then ".tgz"
-                             else ".tbz2"));
+      Archive    : constant Relative_Path := Target_Dir / (Milestone & ".tgz");
+      --  We used to use tbz2 for locally tar'ed files, but that has an
+      --  implicit dependency on bzip2 that we are not managing yet, so for
+      --  now we err on the safe side of built-in tar gzip capabilities.
 
       -----------------
       -- Git_Archive --
@@ -669,14 +667,15 @@ package body Alire.Publish is
          OS_Lib.Subprocess.Checked_Spawn
            ("tar",
             Empty_Vector
-            & "cfj"
+            & "cfz"
             & Archive --  Destination file at alire/archives/crate-version.tbz2
 
             & String'("--exclude=./alire")
             --  Exclude top-level alire folder, before applying prefix
 
-            --  exclude .git and the like, with workaround for macOS bsd tar
-            & (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.MacOS
+            --  exclude .git and the like, with workaround for bsdtar used by
+            --  macOS and Windows without MSYS2
+            & (if Utils.Tools.Is_BSD_Tar
                then Empty_Vector
                     & "--exclude=./.git"
                     & "--exclude=./.hg"
@@ -811,7 +810,7 @@ package body Alire.Publish is
 
       --  User has an account
 
-      if Config.Builtins.User_Github_Login.Is_Empty then
+      if Settings.Builtins.User_Github_Login.Is_Empty then
          Put_Info ("Publishing to the community index"
                    & " requires a GitHub account.");
       else
@@ -829,7 +828,7 @@ package body Alire.Publish is
          --  User must exist
 
          if not GitHub.User_Exists (Login) then
-            Recoverable_Error
+            Recoverable_User_Error
               ("Your GitHub login does not seem to exist: "
                & TTY.Emph (Login));
          end if;
@@ -840,7 +839,7 @@ package body Alire.Publish is
             Put_Success ("User has forked the community repository");
          else
             if not Submit.Ask_To_Fork (Context) then
-               Recoverable_Error
+               Recoverable_User_Error
                  ("You must fork the community index to your GitHub account"
                & ASCII.LF & "Please visit "
                & TTY.URL (Tail (Index.Community_Repo, '+'))
@@ -870,7 +869,7 @@ package body Alire.Publish is
 
          --  Otherwise we assume this is a local path
 
-         Recoverable_Error
+         Recoverable_User_Error
            ("The origin must be a definitive remote location, but is " & URL);
          --  For testing we may want to allow local URLs, or may be for
          --  internal use with network drives? So allow forcing it.
@@ -1096,7 +1095,6 @@ package body Alire.Publish is
                         then Ada.Directories.Full_Name (Path)
                         else Ada.Directories.Full_Name (Root.Value.Path));
       begin
-
          if not Git.Is_Repository (Root_Path) then
             Git_Error ("no git repository found", Root_Path);
          end if;
@@ -1114,7 +1112,7 @@ package body Alire.Publish is
          --  already. No matter what, it will be checked again on the
          --  deployed sources step.
 
-         if Revision = "" or Revision = "HEAD" then
+         if Revision = "" or else Revision = "HEAD" then
             declare
                Tmp_Context : Data := (Options => Options, others => <>);
             begin

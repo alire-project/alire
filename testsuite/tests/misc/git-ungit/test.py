@@ -37,7 +37,7 @@ for wanted in [False, True]:
 
     if not wanted:
         # Enable for next round
-        run_alr("config", "--global", "--set",
+        run_alr("settings", "--global", "--set",
                 "dependencies.git.keep_repository", "true")
 
         # Cleanup for next round

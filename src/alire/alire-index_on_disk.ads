@@ -22,6 +22,7 @@ package Alire.Index_On_Disk is
 
    File_Prefix        : constant String := "file://";
    HTTP_Prefix        : constant String := "http";
+   SSH_Prefix         : constant String := "ssh://";
 
    subtype Priorities is Integer; -- Lower is loaded before
 
@@ -36,7 +37,7 @@ package Alire.Index_On_Disk is
                          Result   : out Outcome;
                          Priority :     Priorities := Default_Priority)
                          return Index'Class
-     with Post => Name in Restricted_Name or not Result.Success;
+     with Post => Name in Restricted_Name or else not Result.Success;
    pragma Warnings (On);
    --  Factory function.
    --  Name is a user given name used to denote the index (like a git origin).

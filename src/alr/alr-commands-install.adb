@@ -122,8 +122,8 @@ package body Alr.Commands.Install is
          & "templates, should be able to coexist in a same installation prefix"
          & " without issue.")
        .New_Line
-       .Append ("You can use the --force to reinstall already installed "
-         & "releases.")
+       .Append ("You can use the --force global option to reinstall "
+         & "already installed releases.")
       );
 
    --------------------
@@ -141,7 +141,8 @@ package body Alr.Commands.Install is
                      Cmd.Prefix'Access,
                      "", "--prefix=",
                      "Override installation prefix (default is "
-                     & TTY.URL (Alire.Install.Default_Prefix) & ")");
+                     & TTY.URL (Alire.Install.Default_Prefix) & ")",
+                     Argument => "DIR");
 
       Define_Switch (Config,
                      Cmd.Info'Access,

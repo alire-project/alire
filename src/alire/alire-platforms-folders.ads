@@ -2,6 +2,10 @@ package Alire.Platforms.Folders is
 
    --  This spec must be fulfilled by bodies for each different OS we support
 
+   --  IMPORTANT NOTE: these are not intended to be used directly in most
+   --  cases; instead, use the ones in Alire.Settings.Edit that take into
+   --  account user overriding of the config location.
+
    function Config return Absolute_Path;
    --  Folder where alire will store its global configuration, indexes, and
    --  any other global data. Deleting it is akin to running alr afresh for

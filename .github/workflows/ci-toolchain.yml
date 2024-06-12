@@ -22,14 +22,10 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-latest
+          - macos-12
           - ubuntu-latest
           - windows-latest
-        gcc_version:
-          - 10
-          - 11
-          - 12
-          - 13
+        gcc_version: [10, 11, 12, 13, 14]
 
     steps:
     - name: Check out
@@ -60,8 +56,10 @@ jobs:
       run: ./bin/alr -d -n printenv || ./bin/alr -n -v -d printenv
 
     - shell: bash
-      run: mv ./bin ./bin-old
-      # Windows doesn't allow to replace a running exe so the next command fails otherwise
+      run: mv ./bin ./bin-old || { sleep 5s && mv ./bin ./bin-old; }
+      # Windows doesn't allow to replace a running exe so the next command
+      # fails otherwise. Also, this mv fails sometimes so we try twice JIC.
+
 
     - name: SELF-BUILD
       run: ./bin-old/alr -d -n build

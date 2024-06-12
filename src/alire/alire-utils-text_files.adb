@@ -20,6 +20,20 @@ package body Alire.Utils.Text_Files is
       F.Lines.Append (Lines);
    end Append_Lines;
 
+   -------------------
+   -- Replace_Lines --
+   -------------------
+
+   procedure Replace_Lines (File       : Any_Path;
+                            Lines      : AAA.Strings.Vector;
+                            Backup     : Boolean  := True;
+                            Backup_Dir : Any_Path := "")
+   is
+      F : Text_Files.File := Load (File, Backup, Backup_Dir);
+   begin
+      F.Lines := Lines;
+   end Replace_Lines;
+
    --------------
    -- Finalize --
    --------------
@@ -31,6 +45,8 @@ package body Alire.Utils.Text_Files is
       if This.Lines = This.Orig then
          Trace.Debug ("No changes to save in " & This.Name);
          return;
+      else
+         Trace.Debug ("Replacing contents of " & This.Name);
       end if;
 
       declare
@@ -46,6 +62,10 @@ package body Alire.Utils.Text_Files is
          Close (File);
          Replacer.Replace;
       end;
+
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    -----------
@@ -55,6 +75,18 @@ package body Alire.Utils.Text_Files is
    function Lines (This : aliased in out File)
                    return access AAA.Strings.Vector
    is (This.Lines'Access);
+
+   -----------
+   -- Lines --
+   -----------
+
+   function Lines (Filename : Any_Path)
+                   return AAA.Strings.Vector
+   is
+      F : constant File := Load (Filename);
+   begin
+      return F.Lines;
+   end Lines;
 
    ------------
    -- Create --

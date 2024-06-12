@@ -1,8 +1,8 @@
 with Ada.Containers.Vectors;
 
 with Alire.Directories;
+private with Alire.OS_Lib;
 
-private with GNATCOLL.OS.Constants;
 with GNATCOLL.VFS;
 with AAA.Strings; use AAA.Strings;
 
@@ -85,8 +85,6 @@ package Alire.VFS is
 
 private
 
-   use all type GNATCOLL.OS.OS_Type;
-
    -----------------
    -- Is_Portable --
    -----------------
@@ -96,14 +94,20 @@ private
        and then
        not Check_Absolute_Path (Path));
 
+   -----------------
+   -- To_Portable --
+   -----------------
+
+   function To_Portable (Path : Relative_Path) return Portable_Path
+   is (Portable_Path
+       (OS_Lib.To_Portable
+          (Path)));
+
    ---------------
    -- To_Native --
    ---------------
 
    function To_Native (Path : Portable_Path) return Relative_Path
-   is (case GNATCOLL.OS.Constants.OS is
-          when MacOS | Unix => Relative_Path (Path),
-          when Windows      => Relative_Path
-                                 (Replace (String (Path), "/", "\")));
+   is (Relative_Path (OS_Lib.To_Native (OS_Lib.Portable_Path_Like (Path))));
 
 end Alire.VFS;

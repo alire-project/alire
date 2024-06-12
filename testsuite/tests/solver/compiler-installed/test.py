@@ -3,9 +3,7 @@ Check that, for generic gnat dependencies, uninstalled compilers are used only
 as last resort, and a warning is shown
 """
 
-import re
-
-from drivers.alr import run_alr, init_local_crate, alr_with
+from drivers.alr import run_alr, init_local_crate, alr_with, unselect_compiler
 from drivers.asserts import assert_match, match_solution
 
 # With no compiler selected, the external compiler in the environment should be
@@ -39,19 +37,17 @@ assert_match(".*solution requires a toolchain", p.out)
 match_solution(f"gnat=8888.0.0 (gnat_native) (origin: binary_archive)",
                escape=True)
 
-# Now, if the user installs a cross compiler, it will be used in preference to
-# the 8888 newer one, because it's installed (but we need to uninstall the 8888
-# one first)
-run_alr("toolchain", "--uninstall", "gnat_native=8888")
+# Now, if the user selects a cross compiler, it will be used in preference
 
-run_alr("toolchain", "--install", "gnat_cross_2")
+run_alr("toolchain", "--select", "gnat_cross_2")
 run_alr("update")
 match_solution("gnat=1.0.0 (gnat_cross_2)", escape=True)
 
-# Likewise, if we install a native compiler, it will be preferred to a
-# cross-compiler.
+# If we install a native compiler, it will be preferred to a cross-compiler,
+# even if no compiler is explicitly selected ("none" in assistant)
 
-run_alr("toolchain", "--install", "gnat_native")
+run_alr("toolchain", "--select", "gnat_native")
+unselect_compiler()
 run_alr("update")
 match_solution("gnat=8888.0.0 (gnat_native)", escape=True)
 
@@ -64,7 +60,7 @@ match_solution(f"gnat={version} (gnat_external)", escape=True)
 
 # But, if the user selects a compiler as preferred, it will be used first
 
-run_alr("config", "--set", "toolchain.use.gnat", "gnat_cross_2=7777.0.0")
+run_alr("toolchain", "--select", "gnat_cross_2")
 run_alr("update")
 match_solution("gnat=1.0.0 (gnat_cross_2)", escape=True)
 

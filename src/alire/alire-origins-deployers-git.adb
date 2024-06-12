@@ -1,4 +1,4 @@
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Directories;
 with Alire.VCSs.Git;
 
@@ -15,7 +15,7 @@ package body Alire.Origins.Deployers.Git is
    begin
       VCSs.Git.Handler.Clone (This.Base.URL_With_Commit, Folder).Assert;
 
-      if Config.Builtins.Dependencies_Git_Keep_Repository.Get then
+      if Settings.Builtins.Dependencies_Git_Keep_Repository.Get then
 
          Trace.Debug ("Keeping git repo from " & This.Base.TTY_URL_With_Commit
                       & " at " & TTY.URL (Folder));

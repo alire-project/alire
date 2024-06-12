@@ -21,21 +21,6 @@ package body Alire.VFS is
       end if;
    end Attempt_Portable;
 
-   -----------------
-   -- To_Portable --
-   -----------------
-
-   function To_Portable (Path : Relative_Path) return Portable_Path
-   is
-   begin
-      case GNATCOLL.OS.Constants.OS is
-         when MacOS | Unix =>
-            return Portable_Path (Path);
-         when Windows      =>
-            return Portable_Path (Replace (Path, "\", "/"));
-      end case;
-   end To_Portable;
-
    --------------
    -- Read_Dir --
    --------------

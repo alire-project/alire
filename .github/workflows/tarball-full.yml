@@ -1,4 +1,7 @@
 name: Full sources
+# Create a tarball that includes everything necessary for building,
+# particularly 3rd party dependencies in submodules which are not included in
+# GitHub automatic source tarballs.
 
 on:
   release:

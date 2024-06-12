@@ -18,11 +18,12 @@ package Alire.Properties.Actions.Executor is
                               Env     : Properties.Vector;
                               Moment  : Moments);
    --  Run Release actions that apply to a given environment. IMPORTANT: the
-   --  working directory at the moment of this call should be the workspace
-   --  root. Recommended for toolchains or direct execution only (e.g. `alr
-   --  action`), otherwise better use the previous call that takes into account
-   --  the Root context. Will raise Action_Failed if the spawned command exits
-   --  with failure. Will not skip post-fetch even if already run.
+   --  working directory at the moment of this call should be the release (not
+   --  workspace!) root. Recommended for toolchains or direct execution only
+   --  (e.g. `alr action`), otherwise better use the previous call that takes
+   --  into account the Root context. Will raise Action_Failed if the spawned
+   --  command exits with failure. Will not skip post-fetch even if already
+   --  run.
 
    procedure Execute_Actions
      (Release    : Releases.Release;

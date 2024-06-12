@@ -1,6 +1,6 @@
 with AAA.Directories;
 
-with Ada.Exceptions;
+with Ada.Directories.Hierarchical_File_Names;
 with Ada.Numerics.Discrete_Random;
 with Ada.Real_Time;
 with Ada.Unchecked_Conversion;
@@ -11,6 +11,7 @@ with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Platforms.Folders;
 with Alire.VFS;
+with Alire.Utils;
 
 with GNAT.String_Hash;
 
@@ -86,7 +87,7 @@ package body Alire.Directories is
                                 else File & ".prev");
    begin
       if Exists (File) then
-         if not Exists (Base_Dir) then
+         if Base_Dir /= "" and then not Exists (Base_Dir) then
             Create_Directory (Base_Dir);
          end if;
 
@@ -134,6 +135,28 @@ package body Alire.Directories is
       end loop;
       End_Search (Search);
    end Copy;
+
+   ---------------
+   -- Copy_Link --
+   ---------------
+
+   procedure Copy_Link (Src, Dst : Any_Path) is
+      use AAA.Strings;
+      use all type Platforms.Operating_Systems;
+      Keep_Links : constant String
+        := (case Platforms.Current.Operating_System is
+               when Linux           => "-d",
+               when FreeBSD | MacOS => "-R",
+               when others          =>
+                  raise Program_Error with "Unsupported operation");
+   begin
+      --  Given that we are here because Src is indeed a link, we should be in
+      --  a Unix-like platform able to do this.
+      OS_Lib.Subprocess.Checked_Spawn
+        ("cp",
+         To_Vector (Keep_Links)
+         & Src & Dst);
+   end Copy_Link;
 
    -----------------
    -- Create_Tree --
@@ -331,7 +354,8 @@ package body Alire.Directories is
       --  like "/c/alire". This is for peace of mind.
 
       if Path'Length < 8 then
-         Recoverable_Error ("Suspicious deletion request for path: " & Path);
+         Recoverable_User_Error
+           ("Suspicious deletion request for path: " & Path);
       end if;
 
       if Exists (Path) then
@@ -490,7 +514,6 @@ package body Alire.Directories is
    overriding
    procedure Finalize (This : in out Guard) is
       use Ada.Directories;
-      use Ada.Exceptions;
       use Ada.Strings.Unbounded;
       procedure Free is
         new Ada.Unchecked_Deallocation (Absolute_Path, Destination);
@@ -506,10 +529,7 @@ package body Alire.Directories is
       Free (Freeable);
    exception
       when E : others =>
-         Trace.Debug
-           ("FG.Finalize: unexpected exception: " &
-              Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
-              Exception_Information (E));
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    ------------------
@@ -752,16 +772,25 @@ package body Alire.Directories is
       --  Remove temp dir if empty to keep things tidy, and avoid modifying
       --  lots of tests, but only when within <>/alire/tmp
 
-      if Ada.Directories.Simple_Name (Parent (Parent (This.Filename))) =
-        Paths.Working_Folder_Inside_Root
-      then
-         AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
-      end if;
+      begin
+         if not Adirs.Hierarchical_File_Names.Is_Root_Directory_Name
+            (Parent (This.Filename))
+           and then
+             Adirs.Simple_Name (Parent (Parent (This.Filename))) =
+               Paths.Working_Folder_Inside_Root
+         then
+            AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
+         end if;
+      exception
+         when Use_Error =>
+            --  May be raised by Adirs.Containing_Directory
+            Trace.Debug ("Failed to identify location of temp file: "
+                         & This.Filename);
+      end;
 
    exception
       when E : others =>
-         Log_Exception (E);
-         raise;
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    --------------------
@@ -805,9 +834,6 @@ package body Alire.Directories is
            and then Base = Parent (Src)
          then
             Trace.Debug ("   Merge: Not merging top-level file " & Src);
-            if Remove_From_Source then
-               Adirs.Delete_File (Src);
-            end if;
             return;
          end if;
 
@@ -824,20 +850,19 @@ package body Alire.Directories is
             --  recursion we could more efficiently rename now into place.
          end if;
 
-         --  Copy/Move a file into place
+         --  Copy file into place
 
-         Trace.Debug ("   Merge: "
-                     & (if Remove_From_Source then " moving " else " copying ")
+         Trace.Debug ("   Merge: copying "
                      & Adirs.Full_Name (Item)
                      & " into " & Dst);
 
          if Adirs.Exists (Dst) then
             if Fail_On_Existing_File then
-               Recoverable_Error ("Cannot move " & TTY.URL (Src)
+               Recoverable_User_Error ("Cannot copy " & TTY.URL (Src)
                                   & " into place, file already exists: "
                                   & TTY.URL (Dst));
             elsif Adirs.Kind (Dst) /= Ordinary_File then
-               Raise_Checked_Error ("Cannot replace " & TTY.URL (Dst)
+               Raise_Checked_Error ("Cannot overwrite " & TTY.URL (Dst)
                                     & " as it is not a regular file");
             else
                Trace.Debug ("   Merge: Deleting in preparation to replace: "
@@ -846,56 +871,51 @@ package body Alire.Directories is
             end if;
          end if;
 
-         --  We use GNATCOLL.VFS here as some binary packages contain softlinks
+         --  We use GNAT.OS_Lib here as some binary packages contain softlinks
          --  to .so libs that we must copy too, and these are troublesome
          --  with regular Ada.Directories (that has no concept of softlink).
          --  Also, some of these softlinks are broken and although they are
          --  presumably safe to discard, let's just go for an identical copy.
 
-         declare
-            VF : constant VFS.Virtual_File :=
-                   VFS.New_Virtual_File (VFS.From_FS (Src));
-            OK : Boolean := False;
-         begin
-            if VF.Is_Symbolic_Link then
-               if Remove_From_Source then
-                  VF.Rename (VFS.New_Virtual_File (Dst), OK);
-               else
-                  VF.Copy (VFS.Filesystem_String (Dst), OK);
-               end if;
-               if not OK then
-                  Raise_Checked_Error ("Failed to copy/move softlink: "
-                                       & TTY.URL (Src));
-               end if;
-            else
-               begin
-                  if Remove_From_Source then
-                     Adirs.Rename (Old_Name => Src,
-                                   New_Name => Dst);
-                  else
-                     Adirs.Copy_File (Source_Name => Src,
-                                      Target_Name => Dst,
-                                      Form       => "preserve=all_attributes");
-                  end if;
-               exception
-                  when E : others =>
-                     Trace.Error
-                       ("When " &
-                        (if Remove_From_Source
-                           then "renaming "
-                           else "copying ")
-                        & Src & " --> " & Dst & ": ");
-                     Log_Exception (E, Error);
-                     raise;
-               end;
+         if GNAT.OS_Lib.Is_Symbolic_Link (Src) then
+            Trace.Debug ("   Merge (softlink): " & Src);
+
+            Copy_Link (Src, Dst);
+            if not GNAT.OS_Lib.Is_Symbolic_Link (Dst) then
+               Raise_Checked_Error ("Failed to copy softlink: "
+                                    & TTY.URL (Src)
+                                    & " to " & TTY.URL (Dst)
+                                    & " (dst not a link)");
             end if;
-         end;
+         else
+            begin
+               Adirs.Copy_File (Source_Name => Src,
+                                Target_Name => Dst,
+                                Form        => "preserve=all_attributes");
+            exception
+               when E : others =>
+                  Trace.Error
+                    ("When copying " & Src & " --> " & Dst & ": ");
+                  Log_Exception (E, Error);
+                  raise;
+            end;
+         end if;
       end Merge;
 
    begin
       Traverse_Tree (Start   => Src,
                      Doing   => Merge'Access,
                      Recurse => True);
+
+      --  This is space-inefficient since we use 2x the actual size, but this
+      --  is the only way we have unless we want to go into platform-dependent
+      --  details and radical changes due to softlinks .
+
+      --  TODO: remove this limitation on a non-patch release.
+
+      if Remove_From_Source then
+         Force_Delete (Src);
+      end if;
    end Merge_Contents;
 
    -------------------
@@ -981,7 +1001,7 @@ package body Alire.Directories is
 
             if not Prune and then Recurse and then Kind (Item) = Directory then
                declare
-                  Normal_Name : constant String
+                  Normal_Name : constant Absolute_Path
                     :=
                       String (GNATCOLL.VFS.Full_Name
                               (VFS.New_Virtual_File (Full_Name (Item)),

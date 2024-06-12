@@ -68,6 +68,11 @@ package Alire.Origins.Deployers.System is
    function Platform_Deployer (Package_Name : String) return Deployer'Class is
      (Platform_Deployer (Origins.New_System (Package_Name)));
 
+   --  Classwide facilities
+
+   function Already_Installed (This : Origins.Origin) return Boolean
+     with Pre => This.Is_System;
+
    function Executable_Name return String;
    --  Returns the simple name of the executable package manager on the system
 
@@ -80,5 +85,12 @@ private
    type Deployer is abstract new Deployers.Deployer with record
       Ask_Permission : Boolean := True;
    end record;
+
+   -----------------------
+   -- Already_Installed --
+   -----------------------
+
+   function Already_Installed (This : Origins.Origin) return Boolean
+   is (Platform_Deployer (This).Already_Installed);
 
 end Alire.Origins.Deployers.System;

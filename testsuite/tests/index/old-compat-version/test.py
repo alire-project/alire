@@ -9,7 +9,7 @@ import re
 import os
 
 # Enable the warning we are trying to test
-run_alr("config", "--global", "--set", "warning.old_index", "true")
+run_alr("settings", "--global", "--set", "warning.old_index", "true")
 
 # Run a command that loads the index. This produces a warning only, because the
 # index version is old but valid.

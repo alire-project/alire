@@ -201,7 +201,7 @@ package Alire.Solutions is
    function Dependencies_That
      (This  : Solution;
       Check : not null access function (Dep : Dependency_State) return Boolean)
-      return Dependency_Map;
+      return State_Map;
    --  Retrieve all states that pass a boolean check
 
    function Dependency (This  : Solution;
@@ -266,7 +266,7 @@ package Alire.Solutions is
    --  Return releases already in the solution that are equivalent to Release
    --  (may be empty).
 
-   function Hints (This : Solution) return Dependency_Map;
+   function Hints (This : Solution) return State_Map;
    --  Return undetected externals in the solution
 
    function Is_Attempted (This : Solution) return Boolean with
@@ -281,13 +281,13 @@ package Alire.Solutions is
    --  A solution is complete when it fulfills all dependencies via regular
    --  releases, detected externals, or linked directories.
 
-   function Links (This : Solution) return Dependency_Map;
+   function Links (This : Solution) return State_Map;
    --  Return crates that are solved with a softlink
 
    function Link_Pins (This : Solution) return Conditional.Dependencies;
    --  Return dependencies of linked crates in the solution
 
-   function Misses (This : Solution) return Dependency_Map;
+   function Misses (This : Solution) return State_Map;
    --  Return crates for which there is neither hint nor proper versions
 
    function Pins (This : Solution) return Conditional.Dependencies;

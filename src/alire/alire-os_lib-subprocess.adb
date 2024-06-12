@@ -10,8 +10,6 @@ with GNAT.OS_Lib;
 
 package body Alire.OS_Lib.Subprocess is
 
-   use AAA.Strings;
-
    function To_Argument_List
      (Args : AAA.Strings.Vector)
       return GNAT.OS_Lib.Argument_List_Access;

@@ -10,10 +10,9 @@ Generic dependencies on gnat= cause compiler installation as a last resort.
 Those prefer first a native compiler. This case is out of scope of this test.
 """
 
-import subprocess
 import re
 
-from drivers.alr import run_alr, init_local_crate, alr_with
+from drivers.alr import run_alr, init_local_crate, alr_with, unselect_compiler
 from drivers.asserts import assert_eq, assert_match, match_solution
 
 # With no compiler selected, the external compiler in the environment should be
@@ -54,8 +53,11 @@ assert_match(".*gnat_native.*8888.0.0.*Available.*",
 # Move to a new crate
 init_local_crate("yyy")
 
-# Preinstall the v9999 compiler
-run_alr("toolchain", "--install", "gnat=9999")
+# Preinstall the v9999 compiler but keep no default selected. Users can achieve
+# this by selecting "None" in the assistant, we do it manually through config.
+run_alr("toolchain", "--select", "gnat=9999")
+unselect_compiler()
+
 # Note also that we don't say the exact compiler to use, but the only one that
 # provides that version is a cross-compiler
 
@@ -77,23 +79,8 @@ alr_with("gnat", delete=True, manual=False)
 alr_with(f"gnat/={version}")
 match_solution("gnat=8888.0.0 (gnat_native)", escape=True)
 
-# If we uninstall the native compiler, the cross compiler will be preferred now
-run_alr("toolchain", "--uninstall", "gnat_native=8888")
-
-run_alr("update")
-match_solution("gnat=9999.0.0 (gnat_cross_1)", escape=True)
-
-# Let's reinstall the newest native compiler and verify the previous situation
-run_alr("toolchain", "--install", "gnat_native")
-p = run_alr("toolchain")
-assert_match(".*gnat_native.*8888.0.0.*Available.*",
-             p.out)
-run_alr("update")
-match_solution("gnat=8888.0.0 (gnat_native)", escape=True)
-
 # We can force the use of the cross-compiler by selecting it as default:
-run_alr("config", "--global",
-        "--set", "toolchain.use.gnat", "gnat_cross_1=9999")
+run_alr("toolchain", "--select", "gnat_cross_1=9999")
 run_alr("update")
 match_solution("gnat=9999.0.0 (gnat_cross_1)", escape=True)
 

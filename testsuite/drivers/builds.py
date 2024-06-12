@@ -20,7 +20,7 @@ def enable_shared() -> None:
     """
     Enable shared builds
     """
-    run_alr("config", "--global", "--set", "dependencies.shared", "true")
+    run_alr("settings", "--global", "--set", "dependencies.shared", "true")
 
 
 def are_shared() -> bool:
@@ -28,33 +28,27 @@ def are_shared() -> bool:
     Return True if shared builds are enabled
     """
     try:
-        return run_alr("config", "--global", "--get",
+        return run_alr("settings", "--global", "--get",
                        "dependencies.shared").out.strip().lower() == "true"
     except:
         return False
 
 
-def clear_builds_dir() -> None:
-    """
-    Clear the shared build directory
-    """
-    rmtree(path())
-
-
 def find_dir(crate_name: str) -> str:
     """
-    Find the build dir of a crate in the shared build directory
+    Find the build dir of a crate in the shared build directory. It always uses
+    forward slashes in the returned folder path.
     """
-    if len(found := glob(f"{path()}/{crate_name}_*")) != 1:
+    if len(found := glob(f"{path()}/{crate_name}*/*")) != 1:
         raise AssertionError(f"Unexpected number of dirs for crate {crate_name}: {found}")
-    return glob(f"{path()}/{crate_name}_*")[0]
+    return glob(f"{path()}/{crate_name}*/*")[0].replace(os.sep, "/")
 
 
 def find_hash(crate_name: str) -> str:
     """
     Find the hash of a crate in the shared build directory
     """
-    return find_dir(crate_name).split("_")[-1]
+    return find_dir(crate_name).split("/")[-1]
 
 
 def hash_input(crate_name: str, as_lines: bool=False) -> str:

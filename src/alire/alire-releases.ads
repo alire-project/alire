@@ -308,6 +308,10 @@ package Alire.Releases is
    function Property_Contains (R : Release; Str : String) return Boolean;
    --  True if some property contains the given string
 
+   function Property_Contains (R : Release; Str : String)
+                               return AAA.Strings.Set;
+   --  Return a set with the names of properties that contain the given string
+
    function Satisfies (R   : Release;
                        Dep : Alire.Dependencies.Dependency'Class)
                        return Boolean;

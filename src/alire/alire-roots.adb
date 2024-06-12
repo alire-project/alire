@@ -1,7 +1,6 @@
 with Ada.Directories;
 with Ada.Unchecked_Deallocation;
 
-with Alire.Builds;
 with Alire.Conditional;
 with Alire.Dependencies.Containers;
 with Alire.Environment.Loading;
@@ -22,6 +21,7 @@ with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
 
 with GNAT.OS_Lib;
+with GNAT.SHA256;
 
 with Semantic_Versioning.Extended;
 
@@ -33,13 +33,33 @@ package body Alire.Roots is
 
    use type UString;
 
+   ----------------
+   -- Stop_Build --
+   ----------------
+
+   function Stop_Build (Wanted, Actual : Builds.Stop_Points) return Boolean
+   is
+      use type Builds.Stop_Points;
+   begin
+      if Wanted <= Actual then
+         Trace.Debug ("Stopping build as requested at stage: " & Wanted'Image);
+         return True;
+      else
+         return False;
+      end if;
+   end Stop_Build;
+
    -------------------
    -- Build_Prepare --
    -------------------
 
    procedure Build_Prepare (This           : in out Root;
                             Saved_Profiles : Boolean;
-                            Force_Regen    : Boolean) is
+                            Force_Regen    : Boolean;
+                            Stop_After     : Builds.Stop_Points :=
+                              Builds.Stop_Points'Last)
+   is
+      use all type Builds.Stop_Points;
    begin
       --  Check whether we should override configuration with the last one used
       --  and stored on disk. Since the first time the one from disk will be be
@@ -68,6 +88,10 @@ package body Alire.Roots is
          --  Changes in configuration may require new build dirs.
       end if;
 
+      if Stop_Build (Stop_After, Actual => Sync) then
+         return;
+      end if;
+
       --  Ensure configurations are in place and up-to-date
 
       This.Generate_Configuration (Full => Force or else Force_Regen);
@@ -83,10 +107,14 @@ package body Alire.Roots is
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
                    Build_All_Deps   : Boolean := False;
-                   Saved_Profiles   : Boolean := True)
+                   Saved_Profiles   : Boolean := True;
+                   Stop_After       : Builds.Stop_Points :=
+                     Builds.Stop_Points'Last)
                    return Boolean
    is
       Build_Failed : exception;
+
+      use all type Builds.Stop_Points;
 
       --------------------------
       -- Build_Single_Release --
@@ -193,18 +221,29 @@ package body Alire.Roots is
             end if;
 
             --  Run post-fetch, it will be skipped if already ran
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
                Properties.Actions.Post_Fetch);
 
+            if Stop_Build (Stop_After, Actual => Post_Fetch) then
+               return;
+            end if;
+
             --  Pre-build must run always
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
                Properties.Actions.Pre_Build);
 
+            if Stop_Build (Stop_After, Actual => Pre_Build) then
+               return;
+            end if;
+
             --  Actual build
+
             if Release.Origin.Requires_Build then
                Call_Gprbuild (Release);
             else
@@ -213,7 +252,12 @@ package body Alire.Roots is
                   & ": release has no sources.", Detail);
             end if;
 
+            if Stop_Build (Stop_After, Actual => Build) then
+               return;
+            end if;
+
             --  Post-build must run always
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
@@ -224,9 +268,13 @@ package body Alire.Roots is
       end Build_Single_Release;
 
    begin
-
       This.Build_Prepare (Saved_Profiles => Saved_Profiles,
-                          Force_Regen    => False);
+                          Force_Regen    => False,
+                          Stop_After     => Stop_After);
+
+      if Stop_Build (Stop_After, Actual => Generation) then
+         return True;
+      end if;
 
       This.Export_Build_Environment;
 
@@ -270,7 +318,10 @@ package body Alire.Roots is
            ("Requested build hash of release " & Name.As_String
             & " not among solution states:");
          This.Solution.Print_States ("   ", Error);
-         raise Program_Error;
+         Recoverable_Program_Error ("using default hash");
+         --  Using an improperly computed hash may cause some unexpected
+         --  recompilations but should be less of a show-stopper.
+         return "error:" & GNAT.SHA256.Digest (Name.As_String);
       end if;
    end Build_Hash;
 
@@ -396,7 +447,7 @@ package body Alire.Roots is
                            Prefix       => Prefix,
                            Recursive    => False,
                            Quiet        => True,
-                           Force        => (Force or
+                           Force        => (Force or else
                                               Action in Reinstall | Replace));
 
                         --  Say something if after installing a crate it
@@ -618,7 +669,7 @@ package body Alire.Roots is
       Guard : Directories.Guard (Directories.Enter (Path (This)))
         with Unreferenced;
       --  At some point inside the configuration generation process the config
-      --  is loaded and Config.Edit.Filepath requires being inside the root,
+      --  is loaded and Settings.Edit.Filepath requires being inside the root,
       --  which can't be directly used because of circularities.
    begin
       This.Load_Configuration;
@@ -1469,7 +1520,8 @@ package body Alire.Roots is
       elsif This.Solution.State (Crate).Is_Linked then
          return This.Solution.State (Crate).Link.Path;
       else
-         raise Program_Error with "release must be either solved or linked";
+         raise Program_Error with
+           "release must be either solved or linked";
       end if;
    end Release_Base;
 
@@ -1840,7 +1892,7 @@ package body Alire.Roots is
          if Old.Pins.Contains (Crate) then
             --  The solver will never update a pinned crate, so we may allow
             --  this to be attempted but it will have no effect.
-            Recoverable_Error
+            Recoverable_User_Error
               ("Requested crate is pinned and cannot be updated: "
                & Alire.Utils.TTY.Name (Crate));
          end if;
@@ -2020,6 +2072,9 @@ package body Alire.Roots is
         (Crate_Configuration.Global_Config, Global_Config_Access);
    begin
       Free (This.Configuration);
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
 end Alire.Roots;

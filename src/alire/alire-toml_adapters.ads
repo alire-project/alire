@@ -3,6 +3,7 @@ private with Ada.Finalization;
 with AAA.Strings; use AAA.Strings;
 
 private with Alire.Errors;
+with Alire.Loading;
 
 with TOML; use all type TOML.Any_Value_Kind;
 
@@ -20,13 +21,18 @@ package Alire.TOML_Adapters with Preelaborate is
    --  Also encapsulates a context that can be used to pinpoint errors better.
    --  Note: all operations on this type use shallow copies!
 
-   function From (Key     : String;
-                  Value   : TOML.TOML_Value;
-                  Context : String) return Key_Queue;
+   function Metadata (This : Key_Queue) return Loading.Metadata;
+
+   function From (Key      : String;
+                  Value    : TOML.TOML_Value;
+                  Context  : String;
+                  Metadata : Loading.Metadata := Loading.No_Metadata)
+                  return Key_Queue;
    --  Convert a key/value pair into a wrapped table as Key_Queue.
 
-   function From (Value   : TOML.TOML_Value;
-                  Context : String)
+   function From (Value    : TOML.TOML_Value;
+                  Context  : String;
+                  Metadata : Loading.Metadata := Loading.No_Metadata)
                   return Key_Queue;
    --  Create a new queue wrapping a TOML value.
 
@@ -98,8 +104,16 @@ package Alire.TOML_Adapters with Preelaborate is
    --  intended use is to process keys beginning with "case(" in the table.
 
    function Pop_Single_Table (Queue : Key_Queue;
-                              Value : out TOML.TOML_Value;
-                              Kind  : TOML.Any_Value_Kind) return String;
+                              Value : out TOML.TOML_Value)
+                              return String;
+   --  For constructions like [parent.child.grandchild], where only one child
+   --  is allowed. Child is returned as String, and Value is set to granchild.
+   --  Raises Checked_Error if Queue is not a table, or it doesn't contain
+   --  exactly one key.
+
+   function Pop_Single_Table (Queue  : Key_Queue;
+                              Value  : out TOML.TOML_Value;
+                              Kind   : TOML.Any_Value_Kind) return String;
    --  For constructions like [parent.child.grandchild], where we known that
    --  only one child can exist. Will raise Checked_Error if any of these
    --  happens: Queue is not a table; Queue doesn't have exactly one key; Value
@@ -133,7 +147,7 @@ package Alire.TOML_Adapters with Preelaborate is
    function "+" (Vect : AAA.Strings.Vector) return TOML.TOML_Value;
 
    function To_Array (V : TOML.TOML_Value) return TOML.TOML_Value with
-     Pre  => V.Kind in TOML.Atom_Value_Kind or V.Kind = TOML.TOML_Array,
+     Pre  => V.Kind in TOML.Atom_Value_Kind or else V.Kind = TOML.TOML_Array,
      Post => To_Array'Result.Kind = TOML.TOML_Array;
    --  Take an atom value and return an array of a single element
    --  If already an array, do nothing
@@ -170,11 +184,19 @@ private
    use type UString; -- Allows comparisons between strings and unbounded
 
    type Key_Queue is new Ada.Finalization.Limited_Controlled with record
-      Value   : TOML.TOML_Value;
+      Value    : TOML.TOML_Value;
+      Metadata : Loading.Metadata;
    end record;
 
    overriding
    procedure Finalize (This : in out Key_Queue);
+
+   --------------
+   -- Metadata --
+   --------------
+
+   function Metadata (This : Key_Queue) return Loading.Metadata
+   is (This.Metadata);
 
    --------------
    -- Contains --
@@ -201,7 +223,7 @@ private
                      Value   : TOML.TOML_Value;
                      Context : String)
                      return Key_Queue is
-      (From (Key, Value, Context));
+      (From (Key, Value, Context, Parent.Metadata));
 
    -------------
    -- Failure --

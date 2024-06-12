@@ -4,7 +4,83 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
-## Release `2.0-dev`
+## Release `2.1`
+
+## Release `2.0`
+
+### `ALIRE_SETTINGS_DIR` replaces `ALR_CONFIG`
+
+PR [1625](https://github.com/alire-project/alire/pull/1625)
+
+This reflects the new nomenclature of Alire settings versus crate
+configuration. Also, it better reflects that the effect is on the whole library
+and not only the `alr` command-line tool.
+
+### `alr settings` replaces `alr config`
+
+PR [1617](https://github.com/alire-project/alire/pull/1617)
+
+The `alr settings` command replaces the `alr config` command. This change is
+introduced to tackle the confusion between the configuration of the Alire
+commands and operations, and the configuration of crates.
+
+`alr config` is still available and should work as before with the exception of
+a deprecation warning message.
+
+### Deprecation of `toolchain --install/--uninstall/--install-dir`
+
+PR [#1614](https://github.com/alire-project/alire/pull/1614)
+
+Toolchain selection for use by Alire is still done by using
+`alr toolchain --select`.
+
+For the installation of toolchains outside of Alire management (i.e., for
+direct use with other tools, but not with Alire), the recommended
+method now is to use `alr install`, e.g.:
+```
+# Install to the default location, <user home>/.alire/bin
+$ alr install gnat_native gprbuild
+
+# Install elsewhere
+$ alr install --prefix=/path/to/installation gnat_native gprbuild
+```
+
+Removal of managed toolchains can be done by simply removing their folders
+inside the toolchain cache (reported by `alr version`).
+
+### Cache and toolchain storage location overridding
+
+PR [#1593](https://github.com/alire-project/alire/pull/1593)
+
+The cache directory can now be set independently of the configuration
+directory, by setting the `cache.dir` config builtin to an absolute path. For
+example:
+```
+alr config --global --set cache.dir /path/to/my/global/cache
+```
+Since the cache by default also contains installed toolchains, which may not be
+needed to be moved elsewhere, the `toolchain.dir` can be used to dissociate
+toolchain location from cache location in a similar way:
+```
+alr config --global --set toolchain.dir /path/to/my/toolchains
+```
+
+### New switch `alr build --stop-after=<build stage>`
+
+PR [#1573](https://github.com/alire-project/alire/pull/1573)
+
+From `alr help build`:
+
+**Build stages**
+
+   Instead of always doing a full build, the process can be stopped early using `--stop-after=<stage>`, where `<stage>` is one of:
+
+   * sync: sync pristine sources to build location
+   * generation: generate configuration-dependent files
+   * post-fetch: running of post-fetch actions
+   * pre-build: running of pre-build actions
+   * build: actual building of sources
+   * post-build: running of post-build actions
 
 ### Enable shared dependencies by default
 
@@ -98,8 +174,8 @@ be reviewed and merged manually. This can now be done with `alr publish
 
 PR [#1406](https://github.com/alire-project/alire/pull/1406)
 
-A pending submission can be closed with `alr publish --cancel
-<num> --reason <text>`.
+A pending submission can be closed with
+`alr publish --cancel <num> --reason <text>`.
 
 ### Track user's index submissions with `alr publish --status`
 
@@ -642,8 +718,8 @@ crate_1.var2 = true
 crate_2.var1 = "Debug"
 ```
 
-Check more examples and details in the catalog specification section ["Using
-configuration"](https://github.com/mosteo/alire/blob/master/doc/catalog-format-spec.md#using-crate-configuration).
+Check more examples and details in the catalog specification section
+[Using configuration](catalog-format-spec#using-crate-configuration).
 
 ## Release `1.0`
 
@@ -768,7 +844,7 @@ to be submitted to the community index via pull request. An upload link is
 provided for convenience that can be used to create this pull request.
 
 Complete information about this feature is available in the updated
-[Publishing](publishing.md) page.
+[Publishing](publishing) page.
 
 Other features of the assistant are that, in the local mode, a branch or tag
 can be specified to pinpoint a commit, and that the test build of the crate can
@@ -792,8 +868,8 @@ files, executables, maintainers, etc.).
 The manifest internal format has been simplified by eliminating the possibility
 of multiple releases from its contents, which removes some nesting, and
 removing or making optional some fields that only make sense at the time of
-publishing a crate to some index. Check the [catalog-format-spec.md] file for
-details.
+publishing a crate to some index. Check the [catalog-format-spec](catalog-format-spec)
+file for details.
 
 The `alire` directory continues to exist, and it is used to store the source
 code of dependencies, local configuration and backup files. It can be safely

@@ -1,6 +1,6 @@
 with AAA.Table_IO;
 
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 with Alire.Index;
 with Alire.Index_On_Disk.Loading;
 with Alire.Index_On_Disk.Updates;
@@ -32,7 +32,7 @@ package body Alr.Commands.Index is
                  Alire.Index_On_Disk.Loading.Add
                    (Origin => Cmd.Add.all,
                     Name   => Cmd.Name.all,
-                    Under  => Alire.Config.Edit.Indexes_Directory,
+                    Under  => Alire.Settings.Edit.Indexes_Directory,
                     Before => Before);
    begin
       Trace.Debug ("Index before ID = " & Before);
@@ -50,7 +50,7 @@ package body Alr.Commands.Index is
       Result  : Alire.Outcome;
       Indexes : constant Index_Load.Set :=
                   Index_Load.Find_All
-                    (Alire.Config.Edit.Indexes_Directory, Result);
+                    (Alire.Settings.Edit.Indexes_Directory, Result);
       Found   : Boolean := False;
    begin
       if not Result.Success then
@@ -153,7 +153,7 @@ package body Alr.Commands.Index is
       Result  : Alire.Outcome;
       Indexes : constant Index_Load.Set :=
                   Index_Load.Find_All
-                    (Alire.Config.Edit.Indexes_Directory, Result);
+                    (Alire.Settings.Edit.Indexes_Directory, Result);
 
       Table : AAA.Table_IO.Table;
       Count : Natural := 0;
@@ -208,6 +208,13 @@ package body Alr.Commands.Index is
                & " case a pull operation will be performed on them."
                & " An index initially set up with a specific commit will"
                & " not be updated.")
+      .New_Line
+      .Append ("URL can be one of:")
+      .Append ("- Plain absolute path: /path/to/index")
+      .Append ("- Explicit path:       file://path/to/index")
+      .Append ("- git over HTTP/HTTPS: git+https://github.com/org/repo")
+      .Append ("- git over SSH:        git+ssh://user@host.com:/path/to/repo")
+      .Append ("- git user over SSH:   git@github.com:/org/repo")
      );
 
    ---------------------
@@ -294,7 +301,7 @@ package body Alr.Commands.Index is
    procedure Update_All is
       Result : constant Alire.Outcome :=
                  Index_Updates.Update_All
-                   (Alire.Config.Edit.Indexes_Directory);
+                   (Alire.Settings.Edit.Indexes_Directory);
    begin
       if not Result.Success then
          Reportaise_Command_Failed (Alire.Message (Result));

@@ -8,7 +8,7 @@ pragma Unreferenced (Alire_Early_Elaboration);
 
 with Alire.Environment;
 with Alire.OS_Lib;            use Alire.OS_Lib;
-with Alire.Config.Builtins.Windows;
+with Alire.Settings.Builtins.Windows;
 with Alire.Errors;
 
 with GNATCOLL.VFS;
@@ -20,28 +20,16 @@ package body Alire.Platforms.Current is
    --  Windows implementation
 
    Distrib_Detected : Boolean := False;
-   Distrib : Platforms.Distributions := Platforms.Distro_Unknown;
+   Distrib : Platforms.Distributions := Platforms.Distribution_Unknown;
 
    ------------------
    -- Detect_Msys2 --
    ------------------
 
    function Detect_Msys2 return Boolean is
-      use AAA.Strings;
    begin
       --  Try to detect if Msys2's pacman tool is already in path
-      declare
-         Unused : Vector;
-      begin
-         Unused := OS_Lib.Subprocess.Checked_Spawn_And_Capture
-           ("pacman", Empty_Vector & ("-V"),
-            Err_To_Out => True);
-         return True;
-      exception when others =>
-            null;
-      end;
-
-      return False;
+      return OS_Lib.Locate_Exec_On_Path ("pacman") /= "";
    end Detect_Msys2;
 
    -----------------------
@@ -72,7 +60,7 @@ package body Alire.Platforms.Current is
          return;
       end if;
 
-      Distrib := Platforms.Distro_Unknown;
+      Distrib := Platforms.Distribution_Unknown;
    end Detect_Distrib;
 
    ------------------
@@ -166,7 +154,7 @@ package body Alire.Platforms.Current is
       use CLIC.User_Input;
    begin
 
-      if Config.Builtins.Windows.Msys2_Do_Not_Install.Get then
+      if Settings.Builtins.Windows.Msys2_Do_Not_Install.Get then
 
          --  User already requested that msys2 should not be installed
 
@@ -201,7 +189,8 @@ package body Alire.Platforms.Current is
                    Default  => No) = Yes
          then
             --  Save user choice in the global config
-            Config.Builtins.Windows.Msys2_Do_Not_Install.Set_Globally ("true");
+            Settings
+              .Builtins.Windows.Msys2_Do_Not_Install.Set_Globally ("true");
          end if;
 
          --  We are not allowed to install
@@ -256,16 +245,22 @@ package body Alire.Platforms.Current is
       end Download_File;
 
       Msys2_Installer : constant String :=
-                          Config.Builtins.Windows.Msys2_Installer.Get;
+                          Settings.Builtins.Windows.Msys2_Installer.Get;
 
       Msys2_Installer_URL : constant String :=
-                              Config.Builtins.Windows.Msys2_Installer_URL.Get;
+                            Settings.Builtins.Windows.Msys2_Installer_URL.Get;
 
       Result : Alire.Outcome;
    begin
       if not Query_User_For_Msys2_Install (Install_Dir) then
          --  User does not want to install msys2
          return Alire.Outcome_Success;
+      end if;
+
+      --  Prevent unwilling installation of msys2 during testsuite runs
+      if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset" then
+         raise Program_Error
+           with "Attempting to install msys2 during testsuite run";
       end if;
 
       Result := Download_File (Msys2_Installer_URL,
@@ -291,9 +286,10 @@ package body Alire.Platforms.Current is
             return Alire.Outcome_Failure ("Cannot setup msys2 environment");
       end;
 
-      if Config.Builtins.Windows.Msys2_Install_Dir.Is_Empty then
+      if Settings.Builtins.Windows.Msys2_Install_Dir.Is_Empty then
          --  Save msys2 install dir in the global config
-         Config.Builtins.Windows.Msys2_Install_Dir.Set_Globally (Install_Dir);
+         Settings
+           .Builtins.Windows.Msys2_Install_Dir.Set_Globally (Install_Dir);
       end if;
 
       --  Load msys2 environment to attempt first full update according to
@@ -301,7 +297,7 @@ package body Alire.Platforms.Current is
       --  https://www.msys2.org/wiki/MSYS2-installation/
       declare
          Cfg_Install_Dir : constant String :=
-                             Config.Builtins.Windows.Msys2_Install_Dir.Get;
+                             Settings.Builtins.Windows.Msys2_Install_Dir.Get;
       begin
          Set_Msys2_Env (Cfg_Install_Dir);
       end;
@@ -358,8 +354,8 @@ package body Alire.Platforms.Current is
       exception
          when E : Checked_Error =>
             Log_Exception (E);
-            Recoverable_Error ("While updating msys2 after installation: "
-                               & Errors.Get (E, Clear => False));
+            Recoverable_User_Error ("While updating msys2 after installation: "
+                                    & Errors.Get (E, Clear => False));
       end;
 
       return Alire.Outcome_Success;
@@ -373,7 +369,7 @@ package body Alire.Platforms.Current is
       Result : Alire.Outcome;
 
       Cfg_Install_Dir : constant String :=
-                          Config.Builtins.Windows.Msys2_Install_Dir.Get;
+                          Settings.Builtins.Windows.Msys2_Install_Dir.Get;
 
       Pacman : constant String :=
                  Alire.OS_Lib.Subprocess.Locate_In_Path ("pacman");
@@ -390,7 +386,7 @@ package body Alire.Platforms.Current is
       if not Alire.Check_Absolute_Path (Cfg_Install_Dir) then
          --  This error is recoverable as msys2 is not required for alr to
          --  work.
-         Alire.Recoverable_Error
+         Alire.Recoverable_User_Error
            ("Invalid absolute install path for msys2 in configuration:" &
               " '" & Cfg_Install_Dir & "'");
          return;
@@ -404,7 +400,7 @@ package body Alire.Platforms.Current is
          if not Result.Success then
             --  This error is recoverable as msys2 is not required for alr to
             --  work.
-            Alire.Recoverable_Error (Message (Result));
+            Alire.Recoverable_User_Error (Message (Result));
             return;
          end if;
 
@@ -421,6 +417,13 @@ package body Alire.Platforms.Current is
 
    end Setup_Msys2;
 
-begin
-   Setup_Msys2;
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize is
+   begin
+      Setup_Msys2;
+   end Initialize;
+
 end Alire.Platforms.Current;

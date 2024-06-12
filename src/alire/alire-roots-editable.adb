@@ -135,7 +135,7 @@ package body Alire.Roots.Editable is
         and then not Index.Exists (Dep.Crate)
         and then Index.Releases_For_Crate (Dep.Crate).Is_Empty
       then
-         Alire.Recoverable_Error
+         Alire.Recoverable_User_Error
            ("Cannot add crate '" & Alire.Utils.TTY.Name (Dep.Crate)
             & "' not found in index.");
       end if;
@@ -523,6 +523,9 @@ package body Alire.Roots.Editable is
                Trace.Debug ("Discarding temporary root file: " & File);
             end;
          end if;
+      exception
+         when E : others =>
+            Alire.Utils.Finalize_Exception (E);
       end Finalize;
 
    begin
@@ -530,7 +533,7 @@ package body Alire.Roots.Editable is
       Finalize (+This.Edit.Lockfile);
    exception
       when E : others =>
-         Log_Exception (E, Warning);
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    ---------

@@ -1,4 +1,10 @@
+with AAA.Debug;
+with AAA.Strings;
+
 with Ada.Containers.Indefinite_Ordered_Maps;
+
+with Alire.OS_Lib;
+with Alire.Utils;
 
 package body Alire.Errors is
 
@@ -130,9 +136,9 @@ package body Alire.Errors is
             if Line /= "" then
                Trace.Error
                  ((if I > Lines.First_Index then "   " else "")
-                    --  Indentation
+                  --  Indentation
 
-                  & (if I < Lines.Last_Index and Line (Line'Last) = '.'
+                  & (if I < Lines.Last_Index and then Line (Line'Last) = '.'
                     then Line (Line'First .. Line'Last - 1)
                     else Line)
                   --  The error proper, trimming unwanted final '.'
@@ -209,6 +215,9 @@ package body Alire.Errors is
       pragma Unreferenced (This);
    begin
       Close;
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    -----------
@@ -233,5 +242,79 @@ package body Alire.Errors is
 
       return +Msg & Text;
    end Stack;
+
+   -------------------
+   -- Program_Error --
+   -------------------
+
+   procedure Program_Error (Explanation  : String  := "";
+                            Recoverable  : Boolean := True;
+                            Stack_Trace  : String  := "";
+                            Stack_Offset : Natural := 0)
+   is
+      Stack  : constant AAA.Strings.Vector :=
+                 AAA.Strings.Split
+                   ((if Stack_Trace /= ""
+                    then Stack_Trace
+                    else AAA.Debug.Stack_Trace),
+                    ASCII.LF);
+
+      Caller : constant Positive :=
+                 5 + Stack_Offset - (if Stack_Trace /= "" then 2 else 0);
+      --  The minus 2 is because in stacks obtained from an exception:
+      --  1) Except name 2) exec name 3) stack start
+      --  If instead we use AAA.Debug.Stack_Trace:
+      --  1) Except name 2) exec name 3) AAA.Debug 4) here 5) caller
+
+      URL    : constant String
+      := "https://github.com/alire-project/alire/issues/new?title=[Bug%20box]";
+
+      Level  : constant Trace.Levels :=
+                 (if Recoverable then Warning else Error);
+
+      ---------
+      -- Put --
+      ---------
+
+      procedure Put (Msg : String) is
+      begin
+         Trace.Log (Msg, Level);
+      end Put;
+
+   begin
+      if Stack_Trace = "" then
+         Trace.Debug (AAA.Debug.Stack_Trace);
+      end if;
+      --  Otherwise, the exception has been logged elsewhere
+
+      Put ("******************* BEGIN Alire bug detected *******************");
+      Put ("Location  : "
+           & (if Integer (Stack.Length) >= Caller
+             then Stack (Caller)
+             else "<unknown>"));
+
+      if Explanation /= "" then
+         Put ("Extra info: " & Explanation);
+      end if;
+
+      Put ("Report at : " & URL);
+
+      if Log_Level < Debug or else not Log_Debug then
+         Put ("Re-run with `-vv -d` for a full log and stack trace.");
+      end if;
+
+      if Recoverable then
+         Put
+           (TTY.Bold
+              ("Alire will now continue as the error might be recoverable."));
+      end if;
+
+      Put ("******************** END Alire bug detected ********************");
+
+      if not Recoverable then
+         --  Do not re-raise as we would end repeating the -vv -d info
+         OS_Lib.Bailout (1);
+      end if;
+   end Program_Error;
 
 end Alire.Errors;

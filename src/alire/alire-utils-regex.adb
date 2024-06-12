@@ -8,8 +8,8 @@ package body Alire.Utils.Regex is
 
    function Escape (Literal : String) return String is
       Targets  : constant String := "\()[].*+?^";
-      Result   : Ustring;
-      use Ustrings;
+      Result   : UString;
+      use UStrings;
    begin
       for Char of Literal loop
          if (for some Nono of Targets => Char = Nono) then
@@ -44,8 +44,10 @@ package body Alire.Utils.Regex is
       end Count_Parentheses;
 
       use GNAT.Regpat;
-      Matches : Match_Array (1 .. Count_Parentheses);
-      --  This is a safe estimation, as some '(' may not be part of a capture
+      Matches : Match_Array (1 .. Count_Parentheses) := (others => No_Match);
+      --  This is a safe estimation, as some '(' may not be part of a capture.
+      --  Initialization added just in case given the discussion at
+      --  https://forum.ada-lang.io/t/regpat-bug-or-handling-error/705/5
 
    begin
       Match (Regex, Text, Matches);

@@ -1,3 +1,4 @@
+with Ada.Assertions;
 with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 private with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
@@ -144,7 +145,9 @@ package Alire with Preelaborate is
    --  Filenames with full path
 
    subtype Absolute_Path is Any_Path
-     with Dynamic_Predicate => Check_Absolute_Path (Absolute_Path);
+     with Dynamic_Predicate => Check_Absolute_Path (Absolute_Path)
+       or else raise Ada.Assertions.Assertion_Error
+       with "Path is not absolute: " & Absolute_Path;
 
    function Absolute_Path_Image (Path : Absolute_Path) return String;
    --  Needed for later instantiations
@@ -232,9 +235,17 @@ package Alire with Preelaborate is
    --  message (Msg) and raise Checked_Error. There is no limitation on the
    --  length of Msg.
 
-   procedure Recoverable_Error (Msg : String; Recover : Boolean := Force);
-   --  When Recover, emit a warning and return normally. When not Recover call
-   --  Raise_Checked_Error instead.
+   procedure Recoverable_User_Error (Msg : String; Recover : Boolean := Force);
+   --  A User_Error is an attempt to do something that we don't allow by
+   --  default, but that could make sense if you know what are doing in dubious
+   --  situations. When Recover, emit a warning and return normally. When not
+   --  Recover call Raise_Checked_Error instead.
+
+   procedure Recoverable_Program_Error   (Explanation : String := "");
+   --  This, instead, is for situations that should never happen but that
+   --  are easy to detect and allow continuing, so instead of raising a
+   --  Program_Error deliberately, we give the same kind of feedback but
+   --  without raising.
 
    ---------------
    --  LOGGING  --
@@ -276,7 +287,7 @@ package Alire with Preelaborate is
 
    procedure Put_Warning (Text           : String;
                           Level          : Trace.Levels := Warning;
-                          Disable_Config : String := "");
+                          Disable_Setting : String := "");
    --  Prepend Text with a yellow "⚠", or "Warning: " if no color/tty. If
    --  Disable_setting /= "", append a line informing about how to disable
    --  this warning.

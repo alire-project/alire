@@ -275,6 +275,7 @@ private
    package Conditional_Archives is
      new Conditional_Trees (Values => Archive_Data,
                             Image  => Binary_Image);
+   --  Conditional origins must be binary in the current implementation
 
    type Conditional_Archive is new Conditional_Archives.Tree with null record;
    package Binary_Loader is new Conditional_Archives.TOML_Load;

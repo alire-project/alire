@@ -117,9 +117,9 @@ package body Alire is
    -- Put_Warning --
    -----------------
 
-   procedure Put_Warning (Text           : String;
-                          Level          : Trace.Levels := Warning;
-                          Disable_Config : String := "")
+   procedure Put_Warning (Text            : String;
+                          Level           : Trace.Levels := Warning;
+                          Disable_Setting : String := "")
    is
       Prefix : constant String :=
                  (if Level = Warning
@@ -128,10 +128,10 @@ package body Alire is
                                                "Warning: "));
    begin
       Trace.Log (Prefix & Text, Level);
-      if Disable_Config /= "" then
+      if Disable_Setting /= "" then
          Trace.Log (Prefix
-                    & "You can disable this warning with configuration key '"
-                    & TTY.Emph (Disable_Config) & "'",
+                    & "You can disable this warning with settings key '"
+                    & TTY.Emph (Disable_Setting) & "'",
                     Level);
       end if;
    end Put_Warning;
@@ -276,12 +276,14 @@ package body Alire is
    -- Recoverable_Error --
    -----------------------
 
-   procedure Recoverable_Error (Msg : String; Recover : Boolean := Force) is
+   procedure Recoverable_User_Error (Msg     : String;
+                                     Recover : Boolean := Force)
+   is
       Info : constant String := " (This error can be overridden with "
                                 & TTY.Terminal ("--force") & ".)";
    begin
       if Msg'Length > 0 and then Msg (Msg'Last) /= '.' then
-         Recoverable_Error (Msg & ".", Recover);
+         Recoverable_User_Error (Msg & ".", Recover);
          return;
       end if;
 
@@ -290,7 +292,19 @@ package body Alire is
       else
          Raise_Checked_Error (Msg & Info);
       end if;
-   end Recoverable_Error;
+   end Recoverable_User_Error;
+
+   -------------------------------
+   -- Recoverable_Program_Error --
+   -------------------------------
+
+   procedure Recoverable_Program_Error (Explanation : String := "") is
+   begin
+      Errors.Program_Error (Explanation,
+                            Recoverable  => True,
+                            Stack_Offset => 1);
+      --  Offset is 1 because this procedure adds its own stack frame
+   end Recoverable_Program_Error;
 
    --------------
    -- New_Line --

@@ -27,7 +27,7 @@ def check_child(version, output, pinned):
     # Verify dependency folders
     if builds.are_shared():
         run_alr('update')  # force hash computation
-        assert builds.find_dir('libchild_' + version + '_filesystem')
+        assert builds.find_dir('libchild_' + version)
     else:
         assert os.path.exists('alire/cache/dependencies/libchild_' + version +
                             '_filesystem')
