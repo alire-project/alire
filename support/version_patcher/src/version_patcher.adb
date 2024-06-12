@@ -100,9 +100,15 @@ begin
                "_dirty"
             else
                "");
-      Commit : constant String
-        := To_String (Git_Command ("rev-parse --short HEAD").Output);
+      Commit_Result : constant Result :=
+                        Git_Command ("rev-parse --short HEAD");
+      Commit : constant String := To_String (Commit_Result.Output);
    begin
+      if Commit_Result.Code /= 0 then
+         raise Constraint_Error with
+           "Git error while trying to get commit:"
+           & Commit_Result.Code'Image;
+      end if;
       Ada.Text_IO.Put_Line
         ("Updating version in src/alire/alire-version.ads to commit "
          & Commit & Dirty & "...");

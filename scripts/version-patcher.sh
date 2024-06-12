@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # This script dispatches to the Ada patcher, after building it.
 
 set -o errexit
@@ -20,3 +20,6 @@ else
 fi
 
 $bin "$@"
+
+echo "Resulting version file:"
+cat src/alire/alire-version.ads | grep Current_Str

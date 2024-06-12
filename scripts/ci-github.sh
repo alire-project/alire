@@ -13,6 +13,12 @@ pushd "$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
     . ../dev/functions.sh
 popd
 
+# Mark location safe to assuage git if necessary (happens in some distros)
+if git status 2>&1 | grep -q "dubious ownership"; then
+    echo "Marking $PWD as safe for git"
+    git config --global --add safe.directory "$PWD"
+fi
+
 # Patch version
 scripts/version-patcher.sh
 

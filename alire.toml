@@ -99,11 +99,21 @@ branch = "alire"
 
 # Before building, we add the commit to the version, for unique identification:
 [[actions]]
+[actions.'case(os)'.windows]
+type = "pre-build"
+command = ["pwsh", "scripts/version-patcher.ps1"]
+
+[actions.'case(os)'.'...']
 type = "pre-build"
 command = ["scripts/version-patcher.sh"]
 
 # Afterwards we leave an extra note, so people manually building don't use a
 # misleading commit.
 [[actions]]
+[actions.'case(os)'.windows]
+type = "post-build"
+command = ["pwsh", "scripts/version-patcher.ps1", "_or_later"]
+
+[actions.'case(os)'.'...']
 type = "post-build"
 command = ["scripts/version-patcher.sh", "_or_later"]
