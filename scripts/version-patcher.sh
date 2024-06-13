@@ -3,6 +3,12 @@
 
 set -o errexit
 
+# Exit already if the ALR_VERSION_DONT_PATCH flag is defined
+if [ "${ALR_VERSION_DONT_PATCH:-unset}" != "unset" ]; then
+    echo "Skipping version patching..."
+    exit 0
+fi
+
 bin=support/version_patcher/bin/version_patcher
 
 # If the binary is already in place, do nothing
