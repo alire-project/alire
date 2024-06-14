@@ -77,11 +77,11 @@ package body Alire.Index_On_Disk is
    ------------
 
    function Delete (This : Index'Class) return Outcome is
-      use Ada.Directories;
+      package Adirs renames Ada.Directories;
    begin
-      if Exists (This.Metadata_Directory) then
-         if Kind (This.Metadata_Directory) = Ada.Directories.Directory then
-            Delete_Tree (This.Metadata_Directory);
+      if Adirs.Exists (This.Metadata_Directory) then
+         if Adirs.Kind (This.Metadata_Directory) in Adirs.Directory then
+            Directories.Delete_Tree (This.Metadata_Directory);
             Trace.Debug ("Metadata dir deleted: " & This.Metadata_Directory);
          else
             return Outcome_Failure
