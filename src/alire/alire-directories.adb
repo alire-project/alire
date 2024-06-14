@@ -587,6 +587,8 @@ package body Alire.Directories is
    -- Temp_Name --
    ---------------
 
+   Used_Names : AAA.Strings.Set;
+
    function Temp_Name (Length : Positive := 8) return String is
       subtype Valid_Character is Character range 'a' .. 'z';
       package Char_Random is new
@@ -637,6 +639,15 @@ package body Alire.Directories is
          for I in 5 .. Length loop
             Result (I) := Char_Random.Random (Gen);
          end loop;
+
+         --  Make totally sure that not even by random chance we are reusing a
+         --  temporary name.
+
+         while Used_Names.Contains (Result) loop
+            Result := Temp_Name; -- Try again
+         end loop;
+
+         Used_Names.Insert (Result);
       end return;
    end Temp_Name;
 
@@ -680,6 +691,16 @@ package body Alire.Directories is
          This.Name := +Ada.Directories.Full_Name (Platforms.Folders.Temp
                                                   / Simple_Name);
 
+      end if;
+
+      --  Ensure that for some bizarre reason, the temp name does not exist
+      --  already.
+
+      if Adirs.Exists (+This.Name) then
+         Trace.Debug
+           ("Name clash for tempfile: " & (+This.Name) & ", retrying...");
+         This.Initialize;
+         return;
       end if;
 
       Trace.Debug ("Selected name for tempfile: " & (+This.Name)
