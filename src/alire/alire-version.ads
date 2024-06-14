@@ -16,7 +16,7 @@ private
    --  be replaced by `alr build` with the current commit, and appended with
    --  "_or_later" after build.
 
-   Current_Str : constant String := "2.1-dev";
+   Current_Str : constant String := "2.1-dev+bd25511f_or_later";
    --  2.0.0:     alr settings refactor and minor fixes
    --  2.0.0-rc1: release candidate for 2.0
    --  2.0.0-b1:  first public release on the 2.0 branch

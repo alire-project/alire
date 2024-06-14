@@ -27,11 +27,11 @@ package Alire.Lockfiles is
    --  Return the location /path/to/crate/dir/alire.lock, filename included,
    --  given the root directory where the crate is deployed.
 
-   function Read (Filename : Absolute_Path) return Contents;
-   --  Read contents from the given lockfile
+   function Read (Root, Filename : Absolute_Path) return Contents;
+   --  Read contents from the given lockfile, for a crate rooted at Root
 
-   function Validity (File : Any_Path) return Validities;
-   --  Check if given file is a valid lockfile
+   function Validity (Root, File : Absolute_Path) return Validities;
+   --  Check if given file is a valid lockfile, for a crate at Root
 
    procedure Write (Contents : Lockfiles.Contents;
                     Filename : Absolute_Path);

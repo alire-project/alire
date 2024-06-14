@@ -641,10 +641,16 @@ package body Alire.Directories is
    function Temp_Name (Length : Positive := 8) return String is
       Result : String (1 .. Length + 4);
    begin
-      Result (1 .. 4) := "alr-";
-      Result (Length + 1 .. Result'Last) := ".tmp";
-      Tempfile_Support.Next_Name (Result (5 .. Length));
-      return Result;
+
+      Char_Random.Reset (Gen, To_Integer (Seed));
+
+      return Result : String (1 .. Length + 4) do
+         Result (1 .. 4) := "alr-";
+         Result (Length + 1 .. Result'Last) := ".tmp";
+         for I in 5 .. Length loop
+            Result (I) := Char_Random.Random (Gen);
+         end loop;
+      end return;
    end Temp_Name;
 
    ----------------
