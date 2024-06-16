@@ -20,11 +20,11 @@ p = run_alr("printenv")
 # Verify root crate proper path in GPR_PROJECT_PATH
 assert_match(r".*GPR_PROJECT_PATH[^\n]+"
              + re.escape(os.path.join(parent, "base"))
-             + "(:|\")", p.out)
+             + "(:|;|\")", p.out)
 
 # Verify pinned crate proper path in GPR_PROJECT_PATH
 assert_match(r".*GPR_PROJECT_PATH[^\n]+"
              + re.escape(os.path.join(parent, "base", "pinned"))
-             + "(:|\")", p.out)
+             + "(:|;|\")", p.out)
 
 print("SUCCESS")
