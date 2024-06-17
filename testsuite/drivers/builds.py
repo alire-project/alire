@@ -7,6 +7,7 @@ import os
 from shutil import rmtree
 import subprocess
 from drivers.alr import alr_builds_dir, run_alr
+from drivers.helpers import content_of
 
 
 def clear_builds_dir() -> None:
@@ -40,7 +41,10 @@ def find_dir(crate_name: str) -> str:
     forward slashes in the returned folder path.
     """
     if len(found := glob(f"{path()}/{crate_name}*/*")) != 1:
-        raise AssertionError(f"Unexpected number of dirs for crate {crate_name}: {found}")
+        raise AssertionError(f"Unexpected number of dirs for crate {crate_name}: {found}" + \
+                             str(['\nINPUTS:\n' + content_of(os.path.join(f, "alire", "build_hash_inputs")) \
+                                  for f in found])
+                             )
     return glob(f"{path()}/{crate_name}*/*")[0].replace(os.sep, "/")
 
 

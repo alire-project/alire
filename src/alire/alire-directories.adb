@@ -553,91 +553,98 @@ package body Alire.Directories is
    Epoch : constant Ada.Real_Time.Time :=
              Ada.Real_Time.Time_Of (0, Ada.Real_Time.To_Time_Span (0.0));
 
-   -------------
-   -- Counter --
-   -------------
+   ----------------------
+   -- Tempfile_Support --
+   ----------------------
 
-   protected Counter is
-      procedure Get (Value : out Interfaces.Unsigned_32);
+   protected Tempfile_Support is
+      procedure Next_Name (Name  : out String);
    private
-      Next : Interfaces.Unsigned_32 := 0;
-   end Counter;
+      Next_Seed  : Interfaces.Unsigned_32 := 0;
+      Used_Names : AAA.Strings.Set;
+   end Tempfile_Support;
 
-   protected body Counter is
-      procedure Get (Value : out Interfaces.Unsigned_32) is
+   protected body Tempfile_Support is
+
+      ---------------
+      -- Next_Name --
+      ---------------
+
+      procedure Next_Name (Name  : out String) is
+         subtype Valid_Character is Character range 'a' .. 'z';
+         package Char_Random is new
+           Ada.Numerics.Discrete_Random (Valid_Character);
+         Gen : Char_Random.Generator;
+
+         --  The default random seed has a granularity of 1 second, which is
+         --  not enough when we run our tests with high parallelism. Increasing
+         --  the resolution to nanoseconds is less collision-prone. On top, we
+         --  add the current working directory path to the hash input, which
+         --  should disambiguate even further for our most usual case which is
+         --  during testsuite execution, and a counter to avoid clashes in the
+         --  same process.
+
+         --  It would be safer to use an atomic OS call that returns a unique
+         --  file name, but we would need native versions for all OSes we
+         --  support and that may be too much hassle? since GNAT.OS_Lib
+         --  doesn't do it either.
+
+         use Ada.Real_Time;
          use type Interfaces.Unsigned_32;
+
+         Nano : constant String :=
+                  AAA.Strings.Replace (To_Duration (Clock - Epoch)'Image,
+                                       ".", "");
+         --  This gives us an image without loss of precision and without
+         --  having to be worried about overflows
+
+         type Hash_Type is mod 2 ** 32;
+         pragma Compile_Time_Error (Hash_Type'Size > Integer'Size,
+                                    "Hash_Type is too large");
+
+         function Hash is new GNAT.String_Hash.Hash
+           (Char_Type => Character,
+            Key_Type  => String,
+            Hash_Type => Hash_Type);
+
+         function To_Integer is
+           new Ada.Unchecked_Conversion (Hash_Type, Integer);
+         --  Ensure unsigned -> signed conversion doesn't bite us
+
+         Seed : constant Hash_Type :=
+                  Hash (Nano & " at " & Current & "#" & Next_Seed'Image);
       begin
-         Value := Next;
-         Next  := Next + 1;
-      end Get;
-   end Counter;
+         Next_Seed := Next_Seed + 1;
 
-   ----------
-   -- Next --
-   ----------
+         Char_Random.Reset (Gen, To_Integer (Seed));
 
-   function Next return String is
-      Val : Interfaces.Unsigned_32;
-   begin
-      Counter.Get (Val);
-      return Val'Image;
-   end Next;
+         loop
+            for I in Name'Range loop
+               Name (I) := Char_Random.Random (Gen);
+            end loop;
+
+            --  Make totally sure that not even by random chance we are reusing
+            --  a temporary name.
+
+            exit when not Used_Names.Contains (Name);
+         end loop;
+
+         Used_Names.Insert (Name);
+      end Next_Name;
+
+   end Tempfile_Support;
 
    ---------------
    -- Temp_Name --
    ---------------
 
    function Temp_Name (Length : Positive := 8) return String is
-      subtype Valid_Character is Character range 'a' .. 'z';
-      package Char_Random is new
-        Ada.Numerics.Discrete_Random (Valid_Character);
-      Gen : Char_Random.Generator;
-
-      --  The default random seed has a granularity of 1 second, which is not
-      --  enough when we run our tests with high parallelism. Increasing the
-      --  resolution to nanoseconds is less collision-prone. On top, we add
-      --  the current working directory path to the hash input, which should
-      --  disambiguate even further for our most usual case which is during
-      --  testsuite execution, and a counter to avoid clashes in the same
-      --  process.
-
-      --  It would be safer to use an atomic OS call that returns a unique file
-      --  name, but we would need native versions for all OSes we support and
-      --  that may be too much hassle? since GNAT.OS_Lib doesn't do it either.
-
-      use Ada.Real_Time;
-
-      Nano : constant String :=
-               AAA.Strings.Replace (To_Duration (Clock - Epoch)'Image,
-                                    ".", "");
-      --  This gives us an image without loss of precision and without
-      --  having to be worried about overflows
-
-      type Hash_Type is mod 2 ** 32;
-      pragma Compile_Time_Error (Hash_Type'Size > Integer'Size,
-                                 "Hash_Type is too large");
-
-      function Hash is new GNAT.String_Hash.Hash
-        (Char_Type => Character,
-         Key_Type  => String,
-         Hash_Type => Hash_Type);
-
-      function To_Integer is new Ada.Unchecked_Conversion (Hash_Type, Integer);
-      --  Ensure unsigned -> signed conversion doesn't bite us
-
-      Seed : constant Hash_Type := Hash (Nano & " at " & Current & "#" & Next);
-
+      Result : String (1 .. Length + 4);
    begin
-
-      Char_Random.Reset (Gen, To_Integer (Seed));
-
-      return Result : String (1 .. Length + 4) do
-         Result (1 .. 4) := "alr-";
-         Result (Length + 1 .. Result'Last) := ".tmp";
-         for I in 5 .. Length loop
-            Result (I) := Char_Random.Random (Gen);
-         end loop;
-      end return;
+      Result (1 .. 4) := "alr-";
+      Result (Length + 1 .. Result'Last) := ".tmp";
+      Tempfile_Support.Next_Name (Result (5 .. Length));
+      return Result;
    end Temp_Name;
 
    ----------------
@@ -680,6 +687,16 @@ package body Alire.Directories is
          This.Name := +Ada.Directories.Full_Name (Platforms.Folders.Temp
                                                   / Simple_Name);
 
+      end if;
+
+      --  Ensure that for some bizarre reason, the temp name does not exist
+      --  already.
+
+      if Adirs.Exists (+This.Name) then
+         Trace.Debug
+           ("Name clash for tempfile: " & (+This.Name) & ", retrying...");
+         This.Initialize;
+         return;
       end if;
 
       Trace.Debug ("Selected name for tempfile: " & (+This.Name)
