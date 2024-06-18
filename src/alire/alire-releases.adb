@@ -966,9 +966,17 @@ package body Alire.Releases is
 
    function From_Manifest (File_Name : Any_Path;
                            Source    : Manifest.Sources;
-                           Strict    : Boolean)
+                           Strict    : Boolean;
+                           Root_Path : Any_Path := "")
                            return Release
    is
+      --  Move to file base dir, as relative paths in pins are resolved during
+      --  loading relative to CWD.
+      CWD : Directories.Guard
+        (if Root_Path /= "" then
+            Directories.Enter (Root_Path)
+         else
+            Directories.Stay) with Unreferenced;
    begin
       return From_TOML
         (TOML_Adapters.From

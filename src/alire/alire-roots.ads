@@ -374,7 +374,8 @@ private
    --  triggered when doing This.Configuration here.
 
    function Load_Solution (Lockfile : Absolute_Path) return Solutions.Solution
-   is (Lockfiles.Read (Lockfile).Solution);
+   is (Lockfiles.Read (Directories.Current, Lockfile).Solution);
+   --  Note that this function requires CWD to already be the crate root
 
    procedure Write_Solution (Solution : Solutions.Solution;
                              Lockfile : Absolute_Path);
