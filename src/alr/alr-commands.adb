@@ -363,7 +363,7 @@ package body Alr.Commands is
          --  For workspaces created pre-lockfiles, or with older format,
          --  recreate:
 
-         case Lockfiles.Validity (Checked.Lock_File) is
+         case Lockfiles.Validity (Checked.Path, Checked.Lock_File) is
             when Lockfiles.Valid =>
                Trace.Debug ("Lockfile at " & Checked.Lock_File & " is valid");
 

@@ -51,9 +51,11 @@ package body Alire.Roots.Optional is
                   return This : constant Root :=
                     Outcome_Success
                       (Roots.New_Root
-                         (R    => Releases.From_Manifest (Crate_File,
-                                                          Manifest.Local,
-                                                          Strict => True),
+                         (R    => Releases.From_Manifest
+                            (Crate_File,
+                             Manifest.Local,
+                             Strict    => True,
+                             Root_Path => Directories.Current),
                           Path => Directories.Current,
                           Env  => Alire.Root.Platform_Properties))
                   do
