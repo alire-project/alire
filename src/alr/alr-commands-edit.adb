@@ -13,6 +13,9 @@ package body Alr.Commands.Edit is
 
    Switch_Select : constant String := "--select-editor";
 
+   Prj_Pattern   : constant String := "${GPR_FILE}";
+   Root_Pattern  : constant String := "${CRATE_ROOT}";
+
    --------------------
    -- Set_Config_Cmd --
    --------------------
@@ -79,8 +82,8 @@ package body Alr.Commands.Edit is
 
       function Cmd (E : Editor_With_Command) return String
       is (case E is
-             when VScode     => "code ${GPR_FILE}",
-             when GNATstudio => "gnatstudio -P ${GPR_FILE}");
+             when VScode     => "code " & Root_Pattern,
+             when GNATstudio => "gnatstudio -P " & Prj_Pattern);
       Choices : AAA.Strings.Vector;
 
    begin
@@ -114,7 +117,7 @@ package body Alr.Commands.Edit is
             when Other  =>
                Trace.Always
                  ("In your custom editor command, `alr` will replace "
-                  & TTY.Emph ("${GPR_FILE}")
+                  & TTY.Emph (Prj_Pattern)
                   & " with the corresponding project file.");
                declare
                   Custom : constant String :=
@@ -131,11 +134,10 @@ package body Alr.Commands.Edit is
    -- Start_Editor --
    ------------------
 
-   procedure Start_Editor (Args : in out AAA.Strings.Vector;
+   procedure Start_Editor (Root : in out Alire.Roots.Root;
+                           Args : in out AAA.Strings.Vector;
                            Prj  : Relative_Path)
    is
-      Pattern : constant String := "${GPR_FILE}";
-
       Cmd : constant String := Args.First_Element;
 
       Replaced_Args : AAA.Strings.Vector;
@@ -148,15 +150,26 @@ package body Alr.Commands.Edit is
          --  Replace pattern in Elt, if any
          declare
             Us    : Unbounded_String := +Elt;
-            Index : Natural;
+
+            -------------
+            -- Replace --
+            -------------
+
+            procedure Replace (Pattern, Replacement : String) is
+               Index : Natural;
+            begin
+               Index := Ada.Strings.Unbounded.Index (Us, Pattern);
+               if Index /= 0 then
+                  Replace_Slice (Us,
+                                 Low    => Index,
+                                 High   => Index + Pattern'Length - 1,
+                                 By     => Replacement);
+               end if;
+            end Replace;
+
          begin
-            Index := Ada.Strings.Unbounded.Index (Us, Pattern);
-            if Index /= 0 then
-               Replace_Slice (Us,
-                              Low    => Index,
-                              High   => Index + Pattern'Length - 1,
-                              By     => Prj);
-            end if;
+            Replace (Prj_Pattern,  Prj);
+            Replace (Root_Pattern, Root.Path);
 
             Replaced_Args.Append (+Us);
          end;
@@ -230,7 +243,7 @@ package body Alr.Commands.Edit is
               ("No project file to open for this crate.");
 
          elsif Project_Files.Length = 1 then
-            Start_Editor (Edit_Args, Project_Files.First_Element);
+            Start_Editor (Cmd.Root, Edit_Args, Project_Files.First_Element);
 
          elsif Cmd.Prj = null
            or else
@@ -245,7 +258,7 @@ package body Alr.Commands.Edit is
               ("Please specify a project file with --project=.");
 
          else
-            Start_Editor (Edit_Args, Cmd.Prj.all);
+            Start_Editor (Cmd.Root, Edit_Args, Cmd.Prj.all);
          end if;
       end;
    end Execute;
