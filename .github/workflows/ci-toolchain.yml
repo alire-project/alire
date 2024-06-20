@@ -78,6 +78,6 @@ jobs:
     - name: Install e3
       run: pip install --upgrade -r testsuite/requirements.txt
 
-    - name: Run testsuite
-      run: cd testsuite; ./run.py -E
+    - name: Run testsuite # But ensure a new alr is not build
+      run: scripts/ci-github.sh build=false
       shell: bash

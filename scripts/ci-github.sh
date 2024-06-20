@@ -22,9 +22,13 @@ fi
 # Patch version
 scripts/version-patcher.sh
 
-# Build alr
-export ALIRE_OS=$(get_OS)
-gprbuild -j0 -p -P alr_env
+# Build alr if no argument is "build=false"
+if [[ " $* " == *" build=false "* ]]; then
+    echo "Skipping alr build, explicitly disabled via arguments"
+else
+    export ALIRE_OS=$(get_OS)
+    gprbuild -j0 -p -P alr_env
+fi
 
 # Disable distro detection if supported
 if [ "${ALIRE_DISABLE_DISTRO:-}" == "true" ]; then
