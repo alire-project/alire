@@ -1,9 +1,55 @@
+with AAA.Enum_Tools;
+
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Alire.OS_Lib;
 with Alire.Platforms.Current;
 
 package body Alire.Environment.Formatting is
+
+   --------------
+   -- Contains --
+   --------------
+
+   overriding
+   function Contains (This : Replacements; Pattern : Patterns) return Boolean
+   is (Pattern_String_Maps.Map (This).Contains (Pattern));
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (This : Replacements; Pattern : Patterns) return String
+   is (This (Pattern));
+
+   ------------------------------
+   -- For_Manifest_Environment --
+   ------------------------------
+
+   function For_Manifest_Environment (Crate_Root : Any_Path)
+                                      return Replacements
+   is
+      Result : Replacements;
+   begin
+      Result.Insert (Distrib_Root, Alire.Platforms.Current.Distribution_Root);
+      Result.Insert (Formatting.Crate_Root, Crate_Root);
+
+      return Result;
+   end For_Manifest_Environment;
+
+   ----------------
+   -- For_Editor --
+   ----------------
+
+   function For_Editor (Root     : Alire.Roots.Root;
+                        Prj_File : Relative_Path)
+                        return Replacements
+   is
+      Result : Replacements := For_Manifest_Environment (Root.Path);
+   begin
+      Result.Insert (GPR_File, Prj_File);
+      return Result;
+   end For_Editor;
 
    ----------------
    -- Find_Start --
@@ -52,8 +98,9 @@ package body Alire.Environment.Formatting is
    -- Format --
    ------------
 
-   function Format (Release_Dir : Any_Path;
-                    Value       : String)
+   function Format (Item    : String;
+                    Repl    : Replacements;
+                    Is_Path : Boolean)
                     return String
    is
       -------------
@@ -63,20 +110,16 @@ package body Alire.Environment.Formatting is
       procedure Replace (Str : in out Unbounded_String;
                          From, To : Positive)
       is
+         function Is_Known is new AAA.Enum_Tools.Is_Valid (Patterns);
          Id : constant String := Slice (Str, From + 2, To - 1);
       begin
-
-         if Id = "DISTRIB_ROOT" then
-            Replace_Slice (Str, From, To, Platforms.Current.Distribution_Root);
-
-         elsif Id = "CRATE_ROOT" then
-            Replace_Slice
-              (Str, From, To,
-               Release_Dir);
+         if Is_Known (Id) then
+            Replace_Slice (Str, From, To, Repl (Patterns'Value (Id)));
 
          elsif Id = "_ALIRE_TEST_" then
             --  This is used to test the env var formatting feature
             Replace_Slice (Str, From, To, "TEST");
+
          else
             raise Unknown_Formatting_Key;
          end if;
@@ -99,7 +142,7 @@ package body Alire.Environment.Formatting is
          return AAA.Strings.Replace (S, "/", "" & OS_Lib.Dir_Separator);
       end To_Native;
 
-      Result : Unbounded_String := To_Unbounded_String (Value);
+      Result : Unbounded_String := To_Unbounded_String (Item);
       From   : Natural := 1;
       To     : Natural;
    begin
@@ -126,7 +169,12 @@ package body Alire.Environment.Formatting is
       end loop;
 
       --  For final usage, we use the native separator
-      return To_Native (+Result);
+
+      if Is_Path then
+         return To_Native (+Result);
+      else
+         return +Result;
+      end if;
    end Format;
 
 end Alire.Environment.Formatting;

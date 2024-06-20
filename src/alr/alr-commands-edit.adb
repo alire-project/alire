@@ -1,20 +1,18 @@
 with Ada.Containers;
 
 with Alire; use Alire;
+with Alire.Environment.Formatting;
 with Alire.Settings.Builtins;
 with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
 
 with CLIC.User_Input;
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-
 package body Alr.Commands.Edit is
 
-   Switch_Select : constant String := "--select-editor";
+   package Format renames Alire.Environment.Formatting;
 
-   Prj_Pattern   : constant String := "${GPR_FILE}";
-   Root_Pattern  : constant String := "${CRATE_ROOT}";
+   Switch_Select : constant String := "--select-editor";
 
    --------------------
    -- Set_Config_Cmd --
@@ -82,8 +80,10 @@ package body Alr.Commands.Edit is
 
       function Cmd (E : Editor_With_Command) return String
       is (case E is
-             when VScode     => "code " & Root_Pattern,
-             when GNATstudio => "gnatstudio -P " & Prj_Pattern);
+             when VScode     =>
+                "code " & Format.Dollar_Image (Format.Crate_Root),
+             when GNATstudio =>
+                "gnatstudio -P " & Format.Dollar_Image (Format.GPR_File));
       Choices : AAA.Strings.Vector;
 
    begin
@@ -117,8 +117,10 @@ package body Alr.Commands.Edit is
             when Other  =>
                Trace.Always
                  ("In your custom editor command, `alr` will replace "
-                  & TTY.Emph (Prj_Pattern)
-                  & " with the corresponding project file.");
+                  & TTY.Emph (Format.Dollar_Image (Format.Crate_Root))
+                  & " and " & TTY.Emph (Format.Dollar_Image (Format.GPR_File))
+                  & " patterns with the workspace root or project file path, "
+                  & "respectively.");
                declare
                   Custom : constant String :=
                     Query_String ("Please enter a custom editor command",
@@ -148,31 +150,11 @@ package body Alr.Commands.Edit is
       for Elt of Args loop
 
          --  Replace pattern in Elt, if any
-         declare
-            Us    : Unbounded_String := +Elt;
-
-            -------------
-            -- Replace --
-            -------------
-
-            procedure Replace (Pattern, Replacement : String) is
-               Index : Natural;
-            begin
-               Index := Ada.Strings.Unbounded.Index (Us, Pattern);
-               if Index /= 0 then
-                  Replace_Slice (Us,
-                                 Low    => Index,
-                                 High   => Index + Pattern'Length - 1,
-                                 By     => Replacement);
-               end if;
-            end Replace;
-
-         begin
-            Replace (Prj_Pattern,  Prj);
-            Replace (Root_Pattern, Root.Path);
-
-            Replaced_Args.Append (+Us);
-         end;
+         Replaced_Args.Append
+           (Format.Format
+              (Elt,
+               Format.For_Editor (Root, Prj),
+               Is_Path => True));
       end loop;
 
       Trace.Info ("Editing crate with: ['" & Cmd & "' '" &

@@ -122,7 +122,10 @@ package body Alire.Environment.Loading is
          begin
             declare
                Value : constant String :=
-                         Formatting.Format (Release_Base, Act.Value);
+                         Formatting.Format
+                           (Act.Value,
+                            Formatting.For_Manifest_Environment (Release_Base),
+                            Is_Path => True);
             begin
                case Act.Action is
 
