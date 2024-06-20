@@ -1,0 +1,10 @@
+description = "Sample crate"
+name = "crate2"
+licenses = []
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[[external]]
+kind = "version-output"
+version-command = ["echo", "1.1.abc"] # Should result in 1.1.0+.abc
+version-regexp = "(.*)"

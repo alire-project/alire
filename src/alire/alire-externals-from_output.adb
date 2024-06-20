@@ -7,6 +7,7 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Releases;
 with Alire.TOML_Keys;
+with Alire.Utils.Regex;
 with Alire.Utils.TTY;
 
 with Semantic_Versioning;
@@ -48,20 +49,13 @@ package body Alire.Externals.From_Output is
       end if;
 
       declare
-         use GNAT.Regpat;
-         Matches : Match_Array (1 .. Match_Count'Last);
-         --  Although we should have at most one match, it turns out that the
-         --  match won't necessarily be on the first position in the array, as
-         --  it depends on the number of () expressions.
-
          Lines   : AAA.Strings.Vector;
          Status  : constant Integer :=
                      OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
                        (This.Command.First_Element,
                         This.Command.Tail,
                         Lines);
-         Output  : constant String :=
-                     Lines.Flatten ("" & ASCII.LF);
+         Output  : constant String := Lines.Flatten ("" & ASCII.LF);
          --  ASCII.LF is used by Regpat for new lines
       begin
          if Status /= 0 then
@@ -73,13 +67,13 @@ package body Alire.Externals.From_Output is
 
          Trace.Debug
            ("Looking for external in version string '" & Output & "'");
-         Match (This.Regexp, Output, Matches);
 
-         for I in Matches'Range loop
-            if Matches (I) /= No_Match then
+         declare
+            Version : constant String :=
+                      Utils.Regex.First_Match (+This.Regstr, Output);
+         begin
+            if Version /= "" then
                declare
-                  Version : constant String :=
-                              Output (Matches (I).First .. Matches (I).Last);
                   Path    : constant Any_Path :=
                               OS_Lib.Subprocess.Locate_In_Path
                                 (This.Command.First_Element);
@@ -89,7 +83,8 @@ package body Alire.Externals.From_Output is
 
                   Result.Insert
                     (Index.Crate (Name, Index.Query_Mem_Only).Base
-                     .Retagging (Semantic_Versioning.Parse (Version))
+                     .Retagging (Semantic_Versioning.Parse
+                       (Version, Relaxed => True))
                      .Providing (This.Provides)
                      .Replacing (Origins.New_External ("path " & Path))
                      .Replacing (Notes => "Detected at " -- length is 12
@@ -97,8 +92,12 @@ package body Alire.Externals.From_Output is
                                    (String (Path),
                                     Max_Description_Length - 12)));
                end;
+            else
+               Trace.Debug
+                 ("Failed to match a version using regexp '"
+                  & (+This.Regstr) & "' on output: " & Version);
             end if;
-         end loop;
+         end;
       end;
 
       return Result;

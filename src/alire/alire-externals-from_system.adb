@@ -39,36 +39,49 @@ package body Alire.Externals.From_System is
             else
                for Candidate of Origin.Value.Packages loop
                   Trace.Detail ("Looking for system package: " & Candidate);
-                  declare
-                     Detector : constant System.Deployer'Class :=
-                                  System.Platform_Deployer (Candidate);
-                     Result   : constant System.Version_Outcomes.Outcome :=
-                                  Detector.Detect;
                   begin
-                     if Result.Success then
-                        Trace.Detail ("Success with system package: "
-                                      & Candidate);
+                     declare
+                        Detector : constant System.Deployer'Class :=
+                                     System.Platform_Deployer (Candidate);
+                        Result   : constant System.Version_Outcomes.Outcome :=
+                                     Detector.Detect;
+                     begin
+                        if Result.Success then
+                           Trace.Detail ("Success with system package: "
+                                         & Candidate);
 
-                        --  A system package may be found more than once if
-                        --  transitional and proper package names are given
-                        --  for detection of the same system package.
-                        declare
-                           Release : constant Alire.Releases.Release
-                             := Index.Crate (Name, Index.Query_Mem_Only).Base
-                             .Retagging (Result.Value)
-                             .Providing (This.Provides)
-                             .Replacing (Origins.New_System (Candidate))
-                             .Replacing (Notes => "Provided by system package:"
-                                         & " " & Candidate);
-                        begin
-                           if Releases.Contains (Release) then
-                              Trace.Debug ("Not readding same system package: "
-                                           & Release.Milestone.Image);
-                           else
-                              Releases.Insert (Release);
-                           end if;
-                        end;
-                     end if;
+                           --  A system package may be found more than once if
+                           --  transitional and proper package names are given
+                           --  for detection of the same system package.
+                           declare
+                              Release : constant Alire.Releases.Release
+                                := Index.Crate (Name,
+                                                Index.Query_Mem_Only)
+                                .Base
+                                .Retagging (Result.Value)
+                                .Providing (This.Provides)
+                                .Replacing (Origins.New_System (Candidate))
+                                .Replacing
+                                  (Notes => "Provided by system package:"
+                                   & " " & Candidate);
+                           begin
+                              if Releases.Contains (Release) then
+                                 Trace.Debug
+                                   ("Not readding same system package: "
+                                    & Release.Milestone.Image);
+                              else
+                                 Releases.Insert (Release);
+                              end if;
+                           end;
+                        end if;
+                     end;
+                  exception
+                     when E : others =>
+                        Trace.Debug
+                          ("Error attempting version detection of system "
+                           & "package [" & Candidate & "] for crate: "
+                           & (+Name));
+                        Log_Exception (E);
                   end;
                end loop;
             end if;
