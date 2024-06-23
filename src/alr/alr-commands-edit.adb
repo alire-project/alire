@@ -1,15 +1,16 @@
 with Ada.Containers;
 
 with Alire; use Alire;
+with Alire.Environment.Formatting;
 with Alire.Settings.Builtins;
 with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
 
 with CLIC.User_Input;
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-
 package body Alr.Commands.Edit is
+
+   package Format renames Alire.Environment.Formatting;
 
    Switch_Select : constant String := "--select-editor";
 
@@ -79,8 +80,10 @@ package body Alr.Commands.Edit is
 
       function Cmd (E : Editor_With_Command) return String
       is (case E is
-             when VScode     => "code ${GPR_FILE}",
-             when GNATstudio => "gnatstudio -P ${GPR_FILE}");
+             when VScode     =>
+                "code " & Format.Dollar_Image (Format.Crate_Root),
+             when GNATstudio =>
+                "gnatstudio -P " & Format.Dollar_Image (Format.GPR_File));
       Choices : AAA.Strings.Vector;
 
    begin
@@ -114,8 +117,10 @@ package body Alr.Commands.Edit is
             when Other  =>
                Trace.Always
                  ("In your custom editor command, `alr` will replace "
-                  & TTY.Emph ("${GPR_FILE}")
-                  & " with the corresponding project file.");
+                  & TTY.Emph (Format.Dollar_Image (Format.Crate_Root))
+                  & " and " & TTY.Emph (Format.Dollar_Image (Format.GPR_File))
+                  & " patterns with the workspace root or project file path, "
+                  & "respectively.");
                declare
                   Custom : constant String :=
                     Query_String ("Please enter a custom editor command",
@@ -131,11 +136,10 @@ package body Alr.Commands.Edit is
    -- Start_Editor --
    ------------------
 
-   procedure Start_Editor (Args : in out AAA.Strings.Vector;
+   procedure Start_Editor (Root : in out Alire.Roots.Root;
+                           Args : in out AAA.Strings.Vector;
                            Prj  : Relative_Path)
    is
-      Pattern : constant String := "${GPR_FILE}";
-
       Cmd : constant String := Args.First_Element;
 
       Replaced_Args : AAA.Strings.Vector;
@@ -146,20 +150,11 @@ package body Alr.Commands.Edit is
       for Elt of Args loop
 
          --  Replace pattern in Elt, if any
-         declare
-            Us    : Unbounded_String := +Elt;
-            Index : Natural;
-         begin
-            Index := Ada.Strings.Unbounded.Index (Us, Pattern);
-            if Index /= 0 then
-               Replace_Slice (Us,
-                              Low    => Index,
-                              High   => Index + Pattern'Length - 1,
-                              By     => Prj);
-            end if;
-
-            Replaced_Args.Append (+Us);
-         end;
+         Replaced_Args.Append
+           (Format.Format
+              (Elt,
+               Format.For_Editor (Root, Prj),
+               Is_Path => True));
       end loop;
 
       Trace.Info ("Editing crate with: ['" & Cmd & "' '" &
@@ -230,7 +225,7 @@ package body Alr.Commands.Edit is
               ("No project file to open for this crate.");
 
          elsif Project_Files.Length = 1 then
-            Start_Editor (Edit_Args, Project_Files.First_Element);
+            Start_Editor (Cmd.Root, Edit_Args, Project_Files.First_Element);
 
          elsif Cmd.Prj = null
            or else
@@ -245,7 +240,7 @@ package body Alr.Commands.Edit is
               ("Please specify a project file with --project=.");
 
          else
-            Start_Editor (Edit_Args, Cmd.Prj.all);
+            Start_Editor (Cmd.Root, Edit_Args, Cmd.Prj.all);
          end if;
       end;
    end Execute;
