@@ -28,4 +28,4 @@ fi
 $bin "$@"
 
 echo "Resulting version file:"
-cat src/alire/alire-version.ads | grep Current_Str
+cat src/alire/alire-version.ads | grep "Current_Str : constant String"

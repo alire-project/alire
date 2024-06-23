@@ -62,11 +62,11 @@ commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
 
 [pins.dirty_booleans]
 url    = "https://github.com/mosteo/dirty_booleans"
-branch = "alire"
+commit = "05c40d88ecfe109e575ec8b21dd6ffa2e61df1dc"
 
 [pins.diskflags]
 url    = "https://github.com/mosteo/diskflags"
-branch = "alire"
+commit = "60729edf31816aca0036b13b2794c39a9bd0172e"
 
 [pins.gnatcoll]
 url    = "https://github.com/alire-project/gnatcoll-core.git"
@@ -78,7 +78,7 @@ commit = "9a9c660f9c6f27f5ef75417e7fac7061dff14d78"
 
 [pins.semantic_versioning]
 url    = "https://github.com/alire-project/semantic_versioning"
-commit = "cc2148cf9c8934fb557b5ae49a3f7947194fa7ee"
+commit = "4861e32bd8a2f0df038d3ecc9a72b6381e7a34cc"
 
 [pins.simple_logging]
 url    = "https://github.com/alire-project/simple_logging"
@@ -86,7 +86,7 @@ commit = "3505dc645f3eef6799a486aae223d37e88cfc4d5"
 
 [pins.si_units]
 url    = "https://github.com/mosteo/si_units"
-branch = "alire"
+commit = "9329d2591b82440ccc859a53f1380ac07ea4194d"
 
 [pins.stopwatch]
 url    = "https://github.com/mosteo/stopwatch"
@@ -94,7 +94,7 @@ commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9"
 
 [pins.toml_slicer]
 url    = "https://github.com/mosteo/toml_slicer"
-branch = "alire"
+commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
 
 # To disable version updating, export ALR_VERSION_DONT_PATCH with any value
 
