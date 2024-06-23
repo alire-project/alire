@@ -1,6 +1,10 @@
 name: CI self+toolchain
 # Build Alire with `alr build` and using a toolchain installed from Alire
 # The `alr` being tested is the one which is being submitted in the PR
+# Toolchain is tested from `alr install` (1st build) and `alr build` (2nd
+# build), so those are two different toolchain installations of the same
+# toolchain. This way we not only test that alr builds itself, but that
+# toolchain installations via `alr install` work as intented.
 
 on:
   pull_request:
@@ -40,11 +44,21 @@ jobs:
       with:
         crates: gnat_native^${{matrix.gcc_version}} gprbuild
 
-    - name: Build alr with default toolchain
+    - name: Build alr with toolchain from `alr install`
       shell: bash
       run: dev/build.sh
 
     # We can start using the alr we just built
+
+    - name: Select toolchain GNAT^${{matrix.gcc_version}}
+      run: ./bin/alr -d -n toolchain --select gnat_native^${{matrix.gcc_version}} gprbuild
+
+    - name: Show builder alr configuration
+      run: ./bin/alr -d -n version
+
+    - name: Verify proper toolchain used for 1st build
+      shell: bash
+      run: ./bin/alr -d -n version | grep 'compiled with version' | grep -q '${{ matrix.gcc_version }}'
 
     - name: Update dependencies
       run: ./bin/alr -d -n update
@@ -55,7 +69,8 @@ jobs:
     - name: Show build environment, with debug fallback
       run: ./bin/alr -d -n printenv || ./bin/alr -n -v -d printenv
 
-    - shell: bash
+    - name: Move ./bin to ./bin-old to allow for self-build
+      shell: bash
       run: mv ./bin ./bin-old || { sleep 5s && mv ./bin ./bin-old; }
       # Windows doesn't allow to replace a running exe so the next command
       # fails otherwise. Also, this mv fails sometimes so we try twice JIC.
@@ -66,6 +81,10 @@ jobs:
 
     - name: Show built version
       run: ./bin/alr -d -n version
+
+    - name: Verify proper toolchain used for 2nd build
+      shell: bash
+      run: ./bin/alr -d -n version | grep 'compiled with version' | grep -q '${{ matrix.gcc_version }}'
 
     # Run the testsuite with the just build alr. The testsuite picks the proper
     # alr in the ./bin/alr location.
