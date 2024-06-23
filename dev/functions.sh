@@ -13,6 +13,9 @@ function guess_OS() {
             "freebsd")
                 echo freebsd
                 ;;
+            "openbsd")
+                echo openbsd
+                ;;
             "darwin"*) # varies with versions: darwin18, darwin19, etc.
                 echo macos
                 ;;
@@ -36,6 +39,9 @@ function get_OS() {
         ;;
     "FreeBSD")
         echo freebsd
+        ;;
+    "OpenBSD")
+        echo openbsd
         ;;
     "Darwin")
         echo macos

@@ -36,6 +36,7 @@ aggregate project Alr_Env is
 
    case Alire_Common.Host_Os is
       when "freebsd" => for External ("GNATCOLL_OS") use "unix";
+      when "openbsd" => for External ("GNATCOLL_OS") use "unix";
       when "linux"   => for External ("GNATCOLL_OS") use "unix";
       when "macos"   => for External ("GNATCOLL_OS") use "osx";
       when "windows" => for External ("GNATCOLL_OS") use "windows";

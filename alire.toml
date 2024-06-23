@@ -40,6 +40,7 @@ CLIC_LIBRARY_TYPE="static"
 # Building alr requires the explicit setting of this variable
 [gpr-set-externals."case(os)"]
 freebsd = { ALIRE_OS = "freebsd" }
+openbsd = { ALIRE_OS = "openbsd" }
 linux   = { ALIRE_OS = "linux" }
 macos   = { ALIRE_OS = "macos" }
 windows = { ALIRE_OS = "windows" }

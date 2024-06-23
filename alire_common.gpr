@@ -4,6 +4,7 @@ abstract project Alire_Common is
 
    type Host_OSes is ("linux",
                       "freebsd",
+                      "openbsd",
                       "macos",
                       "windows");
 
