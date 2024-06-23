@@ -1177,7 +1177,9 @@ package body Alire.Roots is
          return
            "Expected ordinary manifest file but found a: "
            & Kind (This.Crate_File)'Img;
-      elsif not Alire.Manifest.Is_Valid (This.Crate_File, Alire.Manifest.Local)
+      elsif not Alire.Manifest.Is_Valid (This.Crate_File,
+                                         Alire.Manifest.Local,
+                                         Path (This))
       then
          return "Manifest is not loadable: " & This.Crate_File;
       end if;
@@ -1201,6 +1203,11 @@ package body Alire.Roots is
    ------------------------------
 
    procedure Export_Build_Environment (This : in out Root) is
+      CWD : Directories.Guard (Directories.Enter (Path (This)))
+        with Unreferenced;
+      --  Required as this function gets called sometimes directly from
+      --  commands that may not have relocated to the crate root.
+
       Context : Alire.Environment.Context;
    begin
       Alire.Environment.Loading.Load (Context, This);
@@ -1342,6 +1349,15 @@ package body Alire.Roots is
 
    function Solution (This : in out Root) return Solutions.Solution
    is
+      --  Enter the lockfile parent dir, which will be the crate root, so any
+      --  relative pin paths can be properly resolved, if the lockfile is not
+      --  yet loaded.
+      use Alire.Directories;
+      CWD : Guard (if This.Cached_Solution.Has_Element
+                   then Stay
+                   else Enter (Parent (Parent (This.Lock_File))))
+        with Unreferenced;
+
       Result : constant Cached_Solutions.Cached_Info
         := This.Cached_Solution.Element (This.Lock_File);
    begin
@@ -1650,9 +1666,10 @@ package body Alire.Roots is
          --  speeds up things greatly and both should be in sync if things
          --  are as they should.
        or else
-         (if Check_Valid
-          then Lockfiles.Validity (This.Lock_File) in Lockfiles.Valid
-          else Ada.Directories.Exists (This.Lock_File)));
+         (if Check_Valid then
+            Lockfiles.Validity (Path (This), This.Lock_File) in Lockfiles.Valid
+          else
+            Ada.Directories.Exists (This.Lock_File)));
 
    --------------------------
    -- Is_Lockfile_Outdated --
@@ -2023,7 +2040,8 @@ package body Alire.Roots is
         (Releases.From_Manifest
            (This.Crate_File,
             Manifest.Local,
-            Strict => True));
+            Strict    => True,
+            Root_Path => Path (This)));
 
       --  And our pins
 

@@ -408,6 +408,12 @@ package body Alire.User_Pins is
                   Result.Path :=
                     +Utils.User_Input.To_Absolute_From_Portable
                     (This.Checked_Pop (Keys.Path, TOML_String).As_String);
+
+                  if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
+                     This.Recoverable_Error
+                       ("Pin path is not a valid directory: "
+                        & (+Result.Path));
+                  end if;
                end return;
             end if;
          end From_Lockfile;

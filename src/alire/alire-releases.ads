@@ -323,8 +323,12 @@ package Alire.Releases is
 
    function From_Manifest (File_Name : Any_Path;
                            Source    : Manifest.Sources;
-                           Strict    : Boolean)
-                           return Release;
+                           Strict    : Boolean;
+                           Root_Path : Any_Path := "")
+                           return Release
+     with Pre => Source in Manifest.Index or else Root_Path in Absolute_Path;
+   --  When loading a manifest for a workspace, it may contain pins that we
+   --  must resolve relative to Root_Path.
 
    function From_TOML (From   : TOML_Adapters.Key_Queue;
                        Source : Manifest.Sources;
