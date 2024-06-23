@@ -878,8 +878,8 @@ available.'case(toolchain)'.user = false
 
 ## Parameters
 
- - `os`: name of the OS. Currently supported values are: `freebsd`, `linux`,
-   `macos`, `windows`, and `os-unknown`.
+ - `os`: name of the OS. Currently supported values are: `freebsd`, `openbsd`,
+   `linux`, `macos`, `windows`, and `os-unknown`.
 
  - `distribution`: name of the Linux distribution or name of the software
    distribution platform if running on a different OS. Currently supported
