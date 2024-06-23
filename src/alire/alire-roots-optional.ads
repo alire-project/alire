@@ -42,6 +42,9 @@ package Alire.Roots.Optional is
    function Value (This : in out Root) return Reference with
      Pre => This.Is_Valid;
 
+   procedure Discard (This : in out Root);
+   --  Sets the root to Outside
+
    function Brokenness (This : Root) return String with
      Pre => This.Is_Broken;
 
