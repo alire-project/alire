@@ -1,0 +1,5 @@
+driver: docker-wrapper
+control:
+    - [SKIP, "skip_docker",  "Docker disabled"]
+    - [SKIP, "skip_network", "Network disabled"]
+# To exactly reproduce the issue we use the community index here

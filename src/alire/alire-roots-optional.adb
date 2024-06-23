@@ -137,6 +137,15 @@ package body Alire.Roots.Optional is
         Reference'(Ptr => This.Data.Value'Unrestricted_Access);
    end Value;
 
+   -------------
+   -- Discard --
+   -------------
+
+   procedure Discard (This : in out Root) is
+   begin
+      This.Data := (Status => Outside);
+   end Discard;
+
    ---------------------
    -- Outcome_Failure --
    ---------------------

@@ -187,14 +187,24 @@ package body Alr.Commands.Get is
                Build_OK := True;
 
             else
+               --  Require the workspace to ensure the same checks as in a
+               --  manual `get` followed by `cd` and `build` are performed.
+
+               Cmd.Optional_Root.Discard;
+               --  It will be reloaded next. This is needed or otherwise the
+               --  following call would do nothing (it would see a proper root
+               --  already available so it would just return).
+
+               Cmd.Requires_Workspace;
+
                --  Build in release mode for a `get --build`
                Cmd.Root.Set_Build_Profile
-                 (Crate   =>  Cmd.Root.Name,
-                  Profile =>  Alire.Utils.Switches.Release);
+                 (Crate   => Cmd.Root.Name,
+                  Profile => Alire.Utils.Switches.Release);
 
                Build_OK := Cmd.Root.Build
-                 (Cmd_Args         =>  AAA.Strings.Empty_Vector,
-                  Saved_Profiles   => False);
+                 (Cmd_Args       => AAA.Strings.Empty_Vector,
+                  Saved_Profiles => False);
             end if;
          else
             Build_OK := True;

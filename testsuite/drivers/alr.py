@@ -617,3 +617,11 @@ def unselect_compiler():
     """
     run_alr("settings", "--global", "--unset", "toolchain.use.gnat")
     run_alr("settings", "--global", "--unset", "toolchain.external.gnat")
+
+
+def set_default_user_settings():
+    """
+    Set the default alr settings that are undone by the testsuite defaults
+    """
+    run_alr("settings", "--global", "--set", "index.auto_community", "true")
+    run_alr("settings", "--global", "--set", "toolchain.assistant", "true")
