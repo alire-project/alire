@@ -10,7 +10,7 @@ ALIRE_OS=$(get_OS); export ALIRE_OS
 
 scripts/version-patcher.sh
 
-echo "Building with ALIRE_OS=$ALIRE_OS..."
+echo "Building with ALIRE_OS=$ALIRE_OS and $(gnat --version | head -1)"
 gprbuild "-j$ALIRE_BUILD_JOBS" -r -p -P "$(dirname $0)/../alr_env.gpr" "$@"
 
 scripts/version-patcher.sh _or_later
