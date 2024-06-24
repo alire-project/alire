@@ -1,4 +1,4 @@
-with Alire.Settings.Edit;
+with Alire.Cache;
 
 package Alire.Paths.Vault is
 
@@ -10,7 +10,7 @@ package Alire.Paths.Vault is
    --  are run there (see Alire.Builds).
 
    function Path return Absolute_Path
-   is (Settings.Edit.Cache_Path
+   is (Cache.Path
        / Release_Folder_Inside_Working_Folder);
 
 end Alire.Paths.Vault;

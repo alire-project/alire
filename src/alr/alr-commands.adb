@@ -23,6 +23,7 @@ with Alire.Toolchains;
 
 with Alr.Commands.Action;
 with Alr.Commands.Build;
+with Alr.Commands.Cache;
 with Alr.Commands.Clean;
 with Alr.Commands.Config;
 with Alr.Commands.Dev;
@@ -677,6 +678,7 @@ begin
 
    -- Commands --
    Sub_Cmd.Register ("General", new Sub_Cmd.Builtin_Help);
+   Sub_Cmd.Register ("General", new Cache.Command);
    Sub_Cmd.Register ("General", new Settings.Command);
    Sub_Cmd.Register ("General", new Config.Command);
    Sub_Cmd.Register ("General", new Install.Command);
