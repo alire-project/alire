@@ -351,7 +351,9 @@ package body Alr.Commands.Get is
             else
                Reportaise_Command_Failed
                  ("Crate [" & Allowed.Crate.As_String
-                  & "] does not exist in the index.");
+                  & "] does not exist in the index. "
+                  & "Use `alr search " & Allowed.Crate.As_String
+                  & "` for similar names.");
             end if;
          end if;
 

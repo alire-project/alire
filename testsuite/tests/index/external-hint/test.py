@@ -2,13 +2,10 @@
 Test the hinting with custom text in external definitions
 """
 
-from glob import glob
-
 from drivers.alr import distro_is_known, run_alr
 from drivers.asserts import assert_eq, assert_match
 
 import re
-import platform
 
 # 1st test: directly attempting to retrieve an external (this is doable for
 # system externals in supported platforms -- never in this test). Depending on
