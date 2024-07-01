@@ -19,7 +19,7 @@ assert_eq("""Crate gnat is abstract and provided by:
 # Check the error for a truly unknown crate:
 
 assert_eq("""\
-ERROR: Crate [unobtanium] does not exist in the index.
+ERROR: Crate [unobtanium] does not exist in the index. Use `alr search unobtanium` for similar names.
 """,
           run_alr("get", "unobtanium", "--dirname", complain_on_error=False).out)
 
