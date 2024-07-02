@@ -3,6 +3,7 @@
 [![MacOS CI](https://github.com/alire-project/alire/workflows/CI%20macOS/badge.svg)](https://github.com/alire-project/alire/actions)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/ada-lang/Alire)
 [![Gitpod ready](https://img.shields.io/badge/Gitpod-ready-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/alire-project/alire)
+[![Funding](https://polar.sh/embed/seeks-funding-shield.svg?org=alire-project)](https://polar.sh/alire-project)
 
 # ALR #
 
