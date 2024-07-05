@@ -146,7 +146,7 @@ package body Alire.Directories is
       Keep_Links : constant String
         := (case Platforms.Current.Operating_System is
                when Linux           => "-d",
-               when FreeBSD | MacOS => "-R",
+               when FreeBSD | OpenBSD | MacOS => "-R",
                when others          =>
                   raise Program_Error with "Unsupported operation");
    begin
