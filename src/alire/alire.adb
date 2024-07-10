@@ -11,6 +11,8 @@ with GNATCOLL.OS.Constants;
 
 package body Alire is
 
+   package OS renames GNAT.OS_Lib;
+
    ---------
    -- "=" --
    ---------
@@ -37,7 +39,17 @@ package body Alire is
    -- Check_Absolute_Path --
    -------------------------
 
-   function Check_Absolute_Path (Path : Any_Path) return Boolean is separate;
+   function Check_Absolute_Path (Path : Any_Path) return Boolean
+      is (OS.Is_Absolute_Path (Path)
+          and then
+          --  On Windows, we must ensure the path is not only absolute but
+          --  also that it has a drive letter. This is not checked by the
+          --  GNAT.OS_Lib function.
+            (if OS.Directory_Separator = '\'
+             then
+               (Path'Length >= 3
+                and then Path (Path'First) in 'a' .. 'z' | 'A' .. 'Z'
+                and then Path (Path'First + 1) = ':')));
 
    -------------
    -- Err_Log --
