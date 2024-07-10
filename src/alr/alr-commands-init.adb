@@ -192,28 +192,46 @@ package body Alr.Commands.Init is
       end case;
    end Query_Crate_Name;
 
-   ------------------------
-   -- License_Validation --
-   ------------------------
+   -------------------------
+   -- Query_Other_License --
+   -------------------------
 
-   function License_Validation (Str : String) return Boolean is
-      SP : constant SPDX.Expression := SPDX.Parse (Str,
-                                                   Allow_Custom => True);
-   begin
-      if SPDX.Valid (SP) then
-         return True;
-      else
-         Put_Line
-           ("Invalid SPDX license expression '" & Str
-            & "': " & SPDX.Error (SP));
-         Put_Line
-           ("SPDX expression expected (https://spdx.org/licenses/).");
-         Put_Line ("(Use 'custom-' prefix for custom"
-                   & " license identifier)");
+   function Query_Other_License return String is begin
+      loop
+         declare
+            use CLIC.User_Input;
+            Str    : constant String := Query_String (
+                        Question   => "Enter SPDX license expression" &
+                                    " (https://spdx.dev/use/specifications/):",
+                        Default    => "",
+                        Validation => null
+                     );
+            LR_Str : constant String := "LicenseRef-" & Str;
+            SP     : constant SPDX.Expression := SPDX.Parse
+                                                 (Str, Allow_Custom => True);
+            LR_SP  : constant SPDX.Expression := SPDX.Parse
+                                                 (LR_Str, Allow_Custom => True);
+         begin
+            if SPDX.Valid (SP) then
+               return Str;
+            end if;
 
-         return False;
-      end if;
-   end License_Validation;
+            Put_Line ("Invalid SPDX license expression '" & Str
+                      & "': " & SPDX.Error (SP));
+
+            if SPDX.Valid (LR_SP) then
+               if Query (
+                     Question => "Did you mean '" & LR_Str & "'?",
+                     Valid    => (Yes | No => True, others => False),
+                     Default  => No
+                  ) = Yes
+               then
+                  return LR_Str;
+               end if;
+            end if;
+         end;
+      end loop;
+   end Query_Other_License;
 
    -------------------
    -- Query_License --
@@ -247,15 +265,9 @@ package body Alr.Commands.Init is
         or else
           License_Vect (Answer) = License_Other
       then
-         Info.Licenses :=
-           To_Unbounded_String
-             (CLIC.User_Input.Query_String
-                (Question   => "Enter SPDX license expression" &
-                     " (https://spdx.org/licenses/):",
-                 Default    => "",
-                 Validation => License_Validation'Access));
+         Info.Licenses := To_Unbounded_String (Query_Other_License);
       else
-         if not License_Validation (Chosen) then
+         if not SPDX.Valid (SPDX.Parse (Chosen)) then
             raise Program_Error with
               "Invalid license among choices: " & Chosen;
          end if;
