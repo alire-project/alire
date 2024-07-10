@@ -21,6 +21,7 @@ jobs:
       fail-fast: false # Attempt to generate as many of them as possible
       matrix:
         os:
+          - macos-14
           - macos-12
           - ubuntu-20.04
           - windows-latest
@@ -39,6 +40,16 @@ jobs:
       uses: ada-actions/toolchain@ce2020
       with:
         distrib: community
+
+    - name: Replace toolchain with aarch64
+      if: ${{ runner.arch == 'ARM64' }}
+      run: |
+          curl -L https://github.com/alire-project/GNAT-FSF-builds/releases/download/gnat-14.1.0-3/gnat-aarch64-darwin-14.1.0-3.tar.gz \
+           | tar xzf - --strip-components=1 -C /Users/runner/work/alire/alire/alire_prefix
+          curl -L https://github.com/alire-project/GNAT-FSF-builds/releases/download/gprbuild-24.0.0-1/gprbuild-aarch64-darwin-24.0.0-1.tar.gz \
+           | tar xzf - --strip-components=1 -C /Users/runner/work/alire/alire/alire_prefix
+          which gcc
+          gcc -v
 
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2
@@ -81,9 +92,13 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu')
       run: zip alr-nightly-bin-x86_64-linux.zip bin/alr* LICENSE.txt alr-*.txt
 
-    - name: Package binaries (macOS)
-      if: startsWith(matrix.os, 'macos')
+    - name: Package binaries (macOS/x64)
+      if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
       run: zip alr-nightly-bin-x86_64-macos.zip bin/alr* LICENSE.txt alr-*.txt
+
+    - name: Package binaries (macOS/arm64)
+      if: startsWith(matrix.os, 'macos') && runner.arch == 'ARM64'
+      run: zip alr-nightly-bin-aarch64-macos.zip bin/alr* LICENSE.txt alr-*.txt
 
     # There's no zip on windows
     - name: Install zip (Windows)
