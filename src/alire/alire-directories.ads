@@ -114,7 +114,7 @@ package Alire.Directories is
 
    procedure Traverse_Tree (Start   : Any_Path;
                             Doing   : access procedure
-                              (Item : Ada.Directories.Directory_Entry_Type;
+                              (Item : Any_Path;
                                Stop : in out Boolean);
                             Recurse : Boolean := False;
                             Spinner : Boolean := False);

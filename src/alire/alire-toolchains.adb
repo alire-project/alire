@@ -527,7 +527,7 @@ package body Alire.Toolchains is
       -- Detect --
       ------------
 
-      procedure Detect (Item : Ada.Directories.Directory_Entry_Type;
+      procedure Detect (Item : Any_Path;
                         Stop : in out Boolean)
       is
          use Ada.Directories;
