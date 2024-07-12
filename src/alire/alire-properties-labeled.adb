@@ -144,8 +144,9 @@ package body Alire.Properties.Labeled is
 
             if L.Value'Length > Max_Tag_Length then
                From.Checked_Error
-                 ("Tag string is too long (must be no more than"
-                  & Max_Tag_Length'Img  & ")");
+                 ("Tag string '" & L.Value
+                 & "' is too long (must be no more than"
+                 & Max_Tag_Length'Img  & " characters)");
             end if;
 
             if not Utils.Is_Valid_Tag (L.Value) then
