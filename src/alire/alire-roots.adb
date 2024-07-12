@@ -19,6 +19,7 @@ with Alire.Toolchains.Solutions;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
+with Alire.VFS;
 
 with Den;
 
@@ -1256,10 +1257,13 @@ package body Alire.Roots is
          begin
             if Opt.Is_Valid then
                Found.Insert
-                 (TTY.URL (Directories.Find_Relative_Path
-                    (Starting_Path, Den.Full_Name (Item))) & "/"
-                  & Opt.Value.Release.Constant_Reference.Milestone.TTY_Image
-                  & ": " & TTY.Emph
+                 (TTY.URL (String (VFS.To_Portable
+                  (Directories.Find_Relative_Path
+                     (Starting_Path, Den.Full_Name (Item))))
+                  & "/"
+                  & Opt.Value.Release.Constant_Reference.Milestone.TTY_Image)
+                  & ": "
+                  & TTY.Emph
                     (if Opt.Value.Release.Constant_Reference.Description /= ""
                      then Opt.Value.Release.Constant_Reference.Description
                      else "(no description)"));

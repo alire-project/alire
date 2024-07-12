@@ -1,6 +1,8 @@
 """
 Test that binary files containing softlinks can be installed properly. The test
-crate contains all kinds of pernicious links (broken, recursive, etc.):
+crate contains all kinds of pernicious links (broken, recursive, etc.).
+
+This test is Unix-only, as Windows' tar cannot recreate the broken links:
 
 crate/
 ├── bin -> subdir/bin

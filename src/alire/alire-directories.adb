@@ -437,7 +437,9 @@ package body Alire.Directories is
                                 return Any_Path
    is
    begin
-      return AAA.Directories.Relative_Path (Parent, Child);
+      return AAA.Directories.Relative_Path
+        (Den.Absnormal (Den.Scrub (Parent)),
+         Den.Absnormal (Den.Scrub (Child)));
    end Find_Relative_Path;
 
    ----------------------
@@ -806,8 +808,8 @@ package body Alire.Directories is
                              Remove_From_Source    : Boolean)
    is
 
-      Base   : constant Absolute_Path := Adirs.Full_Name (Src);
-      Target : constant Absolute_Path := Adirs.Full_Name (Dst);
+      Base   : constant Absolute_Path := Den.Absolute (Src);
+      Target : constant Absolute_Path := Den.Absolute (Dst);
 
       -----------
       -- Merge --
@@ -818,14 +820,14 @@ package body Alire.Directories is
          Stop : in out Boolean)
       is
          use all type Den.Kinds;
+         Src : constant Absolute_Path := Den.Absolute (Item);
          Rel_Path : constant Relative_Path :=
-                      Find_Relative_Path (Base, Den.Absolute (Item));
+                      Find_Relative_Path (Base, Src);
          --  If this proves to be too slow, we should do our own recursion,
          --  building the relative path along the way, as this is recomputing
          --  it for every file needlessly.
 
          Dst : constant Absolute_Path := Target / Rel_Path;
-         Src : constant Absolute_Path := Den.Absolute (Item);
       begin
          Stop := False;
 
