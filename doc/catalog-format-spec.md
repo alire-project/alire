@@ -196,9 +196,8 @@ static, i.e. they cannot depend on the context.
 
  - `licenses`: mandatory (for indexing) string. A valid [SPDX
    expression](https://spdx.dev/use/specifications/). Custom license identifiers
-   are also accepted with the format `custom-[0-9a-zA-Z.\-+]+` for backwards
-   compatibility, but the SPDX format (`LicenseRef-[0-9a-zA-Z.\-]+`) should now
-   be used instead.
+   should be specified with the format `LicenseRef-[0-9a-zA-Z.\-]+`, though
+   for backwards compatibility `custom-[0-9a-zA-Z.\-+]+` is also permitted.
 
    ```toml
    licenses = "MIT"
