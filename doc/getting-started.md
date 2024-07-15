@@ -121,6 +121,7 @@ Alire allows you to initialize an empty binary or library crate with ease:
       [SPDX expression](https://spdx.dev/use/specifications/).
     - `Tags` : List of topics covered by the crate, to help users find
       your crate
+    - `Website URL` : URL to the project's website
 
     All the questions are optional, you can just press enter to use the default
     values.
