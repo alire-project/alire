@@ -196,7 +196,8 @@ package body Alr.Commands.Init is
    -- Query_Other_License --
    -------------------------
 
-   function Query_Other_License return String is begin
+   function Query_Other_License return String is
+   begin
       loop
          declare
             use CLIC.User_Input;
