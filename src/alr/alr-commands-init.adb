@@ -209,8 +209,7 @@ package body Alr.Commands.Init is
             LR_Str : constant String := "LicenseRef-" & Str;
             SP     : constant SPDX.Expression := SPDX.Parse
                                                  (Str, Allow_Custom => True);
-            LR_SP  : constant SPDX.Expression := SPDX.Parse
-                                                 (LR_Str, Allow_Custom => True);
+            LR_SP  : constant SPDX.Expression := SPDX.Parse (LR_Str);
          begin
             if SPDX.Valid (SP) then
                return Str;
