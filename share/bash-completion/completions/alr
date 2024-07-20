@@ -13,8 +13,43 @@ else
 fi
 alr settings --global --set index.auto_update 0
 
-# Commands/Topics: all line-first words not starting with capital letter, after # COMMANDS
-_alr_commands=$(alr | grep COMMANDS -A 99 | awk '{print $1}' | grep -v '[[:upper:]]' | xargs)
+# The help output is roughly structured into sections like so:
+# SECTION_NAME_1
+#   Subsection
+#   word    description
+#
+# Note that the section names are in ALL_CAPS and the subsection names start
+# with a capital letter. The good stuff is the lowercase words in the COMMANDS and ALIASES sections
+
+# First, we collect all commands (words not starting with an uppercase letter) in the COMMANDS section.
+# We start matching on the line "COMMANDS" and collect all first words in lines that don't start with a
+# capital letter. We stop when we find a line comprised of entirely UPPERCASE letters, which delimits
+# the start of another section.
+#
+# Because Awk range matches are inclusive, and the end pattern would also match the start pattern,
+# we have to add a bit of ugliness.
+
+_alr_commands=$(alr | awk '
+    $0 == "COMMANDS", ($0 ~ /^[A-Z]+$/ && $0 != "COMMANDS") {
+        if ($0 == "COMMANDS" || $1 ~ /^[A-Z]/ || !NF)
+          skip
+        else
+          print $1
+    }
+')
+
+_alr_commands+=' '
+
+# Now do the same, but for the ALIASES section.
+
+_alr_commands+=$(alr | awk '
+    $0 == "ALIASES", ($0 ~ /^[A-Z]+$/ && $0 != "ALIASES") {
+        if ($0 == "ALIASES" || $1 ~ /^[A-Z]/ || !NF)
+          skip
+        else
+          print $1
+    }
+')
 
 # Long global switches
 _alr_global_switches=$(alr -h | grep -Eo -- '--[[:alnum:]-]+' | xargs)
