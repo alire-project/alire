@@ -29,27 +29,19 @@ alr settings --global --set index.auto_update 0
 # Because Awk range matches are inclusive, and the end pattern would also match the start pattern,
 # we have to add a bit of ugliness.
 
-_alr_commands=$(alr | awk '
-    $0 == "COMMANDS", ($0 ~ /^[A-Z]+$/ && $0 != "COMMANDS") {
-        if ($0 == "COMMANDS" || $1 ~ /^[A-Z]/ || !NF)
-          skip
-        else
-          print $1
-    }
-')
+get_section_commands() {
+    local section=$1
+    alr | awk -v section="$section" '
+        $0 == section, ($0 ~ /^[A-Z]+$/ && $0 != section) {
+            if ($0 == section || $1 ~ /^[A-Z]/ || !NF) skip
+            else print $1
+        }
+    '
+}
 
+_alr_commands=$(get_section_commands "COMMANDS")
 _alr_commands+=' '
-
-# Now do the same, but for the ALIASES section.
-
-_alr_commands+=$(alr | awk '
-    $0 == "ALIASES", ($0 ~ /^[A-Z]+$/ && $0 != "ALIASES") {
-        if ($0 == "ALIASES" || $1 ~ /^[A-Z]/ || !NF)
-          skip
-        else
-          print $1
-    }
-')
+_alr_commands+=$(get_section_commands "ALIASES")
 
 # Long global switches
 _alr_global_switches=$(alr -h | grep -Eo -- '--[[:alnum:]-]+' | xargs)
