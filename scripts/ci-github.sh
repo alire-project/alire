@@ -52,12 +52,7 @@ gnatls -v
 echo ............................
 
 echo "ALR VERSION (at $(which alr)):"
-ls -alF bin
-chmod +x bin/alr*
-alr -d version || \
-alr -vv -d version || \
-bin/alr -d version || \
-bin/alr.exe -d version || true
+alr -d version
 echo ............................
 
 # Set up index if not default:
@@ -68,15 +63,11 @@ fi
 
 echo "ALR SETTINGS (global):"
 alr settings --global
+echo ............................
 
 echo ALR SEARCH:
 # List releases for the record
-alr -q -d search --list --external || \
-{
-    echo "Failed to list releases, retrying verbosely..."
-    alr -vv -d search --list --external
-    exit 1;
-}
+alr -q -d search --list --external
 echo ............................
 
 echo TESTSUITE:
