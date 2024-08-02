@@ -1,4 +1,4 @@
-with Den;
+with Den.Filesystem;
 
 package body Alr.Files is
 
@@ -21,7 +21,7 @@ package body Alr.Files is
          if Den.Kind (File) in Den.File
            and then Has_Suffix (To_Lower_Case (File), ".gpr")
          then
-            Candidates.Append (Den.Full (File));
+            Candidates.Append (Den.Filesystem.Full (File));
          end if;
       end Check;
    begin

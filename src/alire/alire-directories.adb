@@ -13,6 +13,7 @@ with Alire.Platforms.Folders;
 with Alire.VFS;
 with Alire.Utils;
 
+with Den.Filesystem;
 with Den.Walk;
 
 with GNAT.String_Hash;
@@ -437,9 +438,9 @@ package body Alire.Directories is
                                 return Any_Path
    is
    begin
-      return AAA.Directories.Relative_Path
-        (Den.Absnormal (Den.Scrub (Parent)),
-         Den.Absnormal (Den.Scrub (Child)));
+      return Result : constant Any_Path :=
+        Den.Filesystem.Relative (Den.Scrub (Parent),
+                                 Den.Scrub (Child));
    end Find_Relative_Path;
 
    ----------------------
@@ -808,8 +809,8 @@ package body Alire.Directories is
                              Remove_From_Source    : Boolean)
    is
 
-      Base   : constant Absolute_Path := Den.Absolute (Src);
-      Target : constant Absolute_Path := Den.Absolute (Dst);
+      Base   : constant Absolute_Path := Den.Filesystem.Absolute (Src);
+      Target : constant Absolute_Path := Den.Filesystem.Absolute (Dst);
 
       -----------
       -- Merge --
@@ -820,7 +821,7 @@ package body Alire.Directories is
          Stop : in out Boolean)
       is
          use all type Den.Kinds;
-         Src : constant Absolute_Path := Den.Absolute (Item);
+         Src : constant Absolute_Path := Den.Filesystem.Absolute (Item);
          Rel_Path : constant Relative_Path :=
                       Find_Relative_Path (Base, Src);
          --  If this proves to be too slow, we should do our own recursion,
@@ -857,7 +858,7 @@ package body Alire.Directories is
          --  Copy file into place
 
          Trace.Debug ("   Merge: copying "
-                     & Den.Absolute (Item)
+                     & Den.Filesystem.Absolute (Item)
                      & " into " & Dst);
 
          if Den.Exists (Dst) then
