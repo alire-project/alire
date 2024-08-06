@@ -79,7 +79,7 @@ commit = "9a9c660f9c6f27f5ef75417e7fac7061dff14d78"
 
 [pins.ncdu]
 url    = "https://github.com/mosteo/ncdu-ada.git"
-commit = "89f6deec1815b8b27ea906aeb51b323336122868"
+commit = "be71f9e4813ec441103cabfc6378207e436e2678"
 
 [pins.semantic_versioning]
 url    = "https://github.com/alire-project/semantic_versioning"
