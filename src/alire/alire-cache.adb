@@ -6,14 +6,14 @@ with Alire.Platforms.Folders;
 with Alire.Settings.Builtins;
 with Alire.Settings.Edit;
 
-with Ncdu;
+with Den.Du;
 
 package body Alire.Cache is
 
    use Alire.Directories.Operators;
 
    package Adirs renames Ada.Directories;
-   package Du is new Ncdu;
+   package Du is new Den.Du;
 
    ----------
    -- Path --
