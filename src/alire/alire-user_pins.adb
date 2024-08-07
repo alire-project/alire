@@ -7,6 +7,9 @@ with Alire.Utils.User_Input;
 with Alire.Utils.TTY;
 with Alire.VFS;
 
+with Ada.Strings.Unbounded;
+with AAA.Strings;
+
 with GNAT.OS_Lib;
 
 package body Alire.User_Pins is
@@ -465,6 +468,8 @@ package body Alire.User_Pins is
          -----------------
 
          function Load_Remote return Pin is
+            use Ada.Strings.Unbounded;
+            use AAA.Strings;
             Result : Pin :=
                        (Kind       => To_Git,
                         URL        => +This.Checked_Pop (Keys.URL,
@@ -473,6 +478,21 @@ package body Alire.User_Pins is
                         Commit     => <>,
                         Local_Path => <>);
          begin
+            --  "git+ssh://"" and "ssh+git://" are deprecated, so treat them as
+            --  identical to "ssh://"
+            if Has_Prefix (To_String (Result.URL), "git+ssh://")
+               or else Has_Prefix (To_String (Result.URL), "ssh+git://")
+            then
+               Replace_Slice (Result.URL, 1, 7, "ssh");
+            end if;
+
+            --  Likewise, anything of the form "xyz+https://" should be treated
+            --  as just "https://"
+            if Contains (To_String (Result.URL), "+http") then
+               Result.URL := To_Unbounded_String
+                 (Tail (To_String (Result.URL), '+'));
+            end if;
+
             if This.Contains (Keys.Branch)
               and then This.Contains (Keys.Commit)
             then
