@@ -2,6 +2,8 @@
 Check switches for default profiles
 """
 
+import os
+import time
 from drivers.alr import run_alr, init_local_crate, alr_with, alr_manifest
 from drivers.helpers import content_of
 from drivers.asserts import assert_match
@@ -11,8 +13,10 @@ init_local_crate('lib_2', binary=False, enter=False)
 init_local_crate('bin_1', binary=True, enter=True)
 alr_with('lib_1', path='../lib_1')
 alr_with('lib_2', path='../lib_2')
-run_alr('update')
-
+p = run_alr('-vv', '-d', 'update', quiet=False)
+# dump to disk the last output
+with open('update.log', 'w') as f:
+    f.write(p.out)
 
 def check_config(path, profile, expected_switches=[]):
     conf = content_of(path)
