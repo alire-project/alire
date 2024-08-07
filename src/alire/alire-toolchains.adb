@@ -3,7 +3,7 @@ with AAA.Text_IO;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Directories;
 
-with Alire.Settings.Edit;
+with Alire.Cache;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Manifest;
@@ -12,6 +12,7 @@ with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Properties;
 with Alire.Root;
+with Alire.Settings.Edit;
 with Alire.Toolchains.Solutions;
 with Alire.Warnings;
 
@@ -610,7 +611,7 @@ package body Alire.Toolchains is
    function Path return Absolute_Path
    is (if Settings.Builtins.Toolchain_Dir.Get /= ""
        then Settings.Builtins.Toolchain_Dir.Get
-       else Settings.Edit.Cache_Path / "toolchains");
+       else Cache.Path / "toolchains");
 
    ------------
    -- Deploy --

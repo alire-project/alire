@@ -14,6 +14,8 @@ aggregate project Alr_Env is
                          "deps/ajunitgen",
                          "deps/ansi",
                          "deps/clic",
+                         "deps/cstrings",
+                         "deps/den",
                          "deps/dirty_booleans",
                          "deps/diskflags",
                          "deps/gnatcoll-slim",
