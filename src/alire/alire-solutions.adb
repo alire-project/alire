@@ -6,10 +6,8 @@ with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Errors;
 with Alire.Index;
-with Alire.Milestones;
 with Alire.Root;
 with Alire.Solutions.Diffs;
-with Alire.Toolchains;
 with Alire.Utils.Tables;
 with Alire.Utils.Tools;
 with Alire.Utils.TTY;
@@ -60,6 +58,18 @@ package body Alire.Solutions is
                       Release : Alire.Releases.Release) return Boolean
    is (for some Rel of This.Releases => Rel = Release);
 
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains (This    : Solution;
+                      Release : Milestones.Milestone) return Boolean
+   is
+      use type Milestones.Milestone;
+   begin
+      return (for some Rel of This.Releases => Rel.Milestone = Release);
+   end Contains;
+
    ----------------------
    -- Contains_Release --
    ----------------------
@@ -67,6 +77,16 @@ package body Alire.Solutions is
    function Contains_Release (This  : Solution;
                               Crate : Crate_Name) return Boolean
    is (This.Depends_On (Crate) and then This.State (Crate).Has_Release);
+
+   ---------------------------
+   -- Contains_Incompatible --
+   ---------------------------
+
+   function Contains_Incompatible (This    : Solution;
+                                   Release : Alire.Releases.Release)
+                                   return Boolean
+   is (for some Dep of This.Dependencies =>
+          Dep.Has_Release and then Release.Satisfies (Dep));
 
    ----------------
    -- Dependency --
@@ -418,17 +438,47 @@ package body Alire.Solutions is
                      Env     : Properties.Vector)
                      return Boolean
    is
+      use type Milestones.Milestone;
    begin
       return
-       --  Some of the releases in the solution forbid this one release
-       ((for some Solved of This.Releases =>
-          (for some Dep of Solved.Forbidden (Env) =>
-                Release.Satisfies (Dep.Value)))
-       or else
-       --  The candidate release forbids something in the solution
-          (for some Dep of Release.Forbidden (Env) =>
-               (for some Rel of This.Releases => Rel.Satisfies (Dep.Value))));
+        --  Some of the releases in the solution forbid this one release
+        (for all Solved of This.Releases =>
+           Solved.Milestone /= Release.Milestone)
+        and then
+          ((for some Solved of This.Releases =>
+              (for some Dep of Solved.Forbidden (Env) =>
+                   Release.Satisfies (Dep.Value)))
+           or else
+           --  The candidate release forbids something in the solution
+           (for some Dep of Release.Forbidden (Env) =>
+              (for some Rel of This.Releases => Rel.Satisfies (Dep.Value))));
    end Forbids;
+
+   --------------------
+   -- Image_One_Line --
+   --------------------
+
+   function Image_One_Line (This : Solution) return String is
+      use UStrings;
+      Result : UString;
+      First  : Boolean := True;
+   begin
+      for State of This.Dependencies loop
+         if First then
+            First := False;
+         else
+            Result := Result & "; ";
+         end if;
+
+         if State.Has_Release then
+            Append (Result, State.Release.Milestone.TTY_Image);
+         else
+            Append (Result, State.TTY_Image);
+         end if;
+      end loop;
+
+      return +Result;
+   end Image_One_Line;
 
    ---------------
    -- Including --
@@ -516,27 +566,6 @@ package body Alire.Solutions is
 
          --  TODO: instead of using the first discrepancy, we should count all
          --  differences and see which one is globally "newer".
-
-         --  Prefer one with an installed compiler
-
-         for Rel_L of This.Releases loop
-            if Rel_L.Provides (GNAT_Crate) then
-               for Rel_R of Than.Releases loop
-                  if Rel_R.Provides (GNAT_Crate) then
-                     if Toolchains.Available.Contains (Rel_L)
-                       xor Toolchains.Available.Contains (Rel_R)
-                     then
-                        return (if Toolchains.Available.Contains (Rel_L)
-                                then Better
-                                else Worse);
-                     else
-                        exit; -- No need to keep checking, 1 compiler in sol
-                     end if;
-                  end if;
-               end loop;
-               exit; -- No need to keep checking, only 1 compiler in sol
-            end if;
-         end loop;
 
          --  Check releases in both only
 
