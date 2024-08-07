@@ -436,7 +436,7 @@ package body Alr.Commands.Test is
       -- Not_Empty --
       ---------------
 
-      procedure Not_Empty (Item : Ada.Directories.Directory_Entry_Type;
+      procedure Not_Empty (Item : Alire.Any_Path;
                            Stop : in out Boolean)
       is
          pragma Unreferenced (Item, Stop);

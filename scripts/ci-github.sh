@@ -51,8 +51,8 @@ echo GNAT VERSION:
 gnatls -v
 echo ............................
 
-echo ALR VERSION:
-alr version
+echo "ALR VERSION (at $(which alr)):"
+alr -d version
 echo ............................
 
 # Set up index if not default:
@@ -60,6 +60,10 @@ if [ "${INDEX:-}" != "" ]; then
     echo Setting default index to: "$INDEX"
     alr index --name default --add "$INDEX"
 fi
+
+echo "ALR SETTINGS (global):"
+alr settings --global
+echo ............................
 
 echo ALR SEARCH:
 # List releases for the record

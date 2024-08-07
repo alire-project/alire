@@ -1,6 +1,8 @@
 """
 Test that binary files containing softlinks can be installed properly. The test
-crate contains all kinds of pernicious links (broken, recursive, etc.):
+crate contains all kinds of pernicious links (broken, recursive, etc.).
+
+This test is Unix-only, as Windows' tar cannot recreate the broken links:
 
 crate/
 ├── bin -> subdir/bin
@@ -30,8 +32,9 @@ crate/
 
 import os
 import shutil
+import subprocess
 from drivers.alr import run_alr, crate_dirname
-from drivers.helpers import contents, on_windows
+from drivers.helpers import contents
 
 
 def kind(file):
@@ -41,11 +44,6 @@ def ls(path):
     out = subprocess.run(["ls", "-alFR", path], capture_output=True, text=True)
     return out.stdout
 
-
-# Does not apply to Windows as it does not support softlinks
-if on_windows():
-    print('SKIP: on Windows, unapplicable')
-    sys.exit(0)
 
 # This command should succeed normally
 run_alr("install", "--prefix=install", "crate")
@@ -80,5 +78,6 @@ for item in items:
 # Cleanup
 os.chdir("..")
 shutil.rmtree(cratedir)
+shutil.rmtree("install")
 
 print('SUCCESS')

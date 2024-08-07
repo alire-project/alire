@@ -65,9 +65,7 @@ private
 
    function To_Portable (Path : Any_Path)
                               return Portable_Path_Like
-   is (case GNATCOLL.OS.Constants.OS is
-          when MacOS | Unix => Path,
-          when Windows      => Replace (Path, "\", "/"));
+   is (Replace (Path, "\", "/"));
 
    --------------------
    -- To_Native_Like --
@@ -75,7 +73,7 @@ private
 
    function To_Native (Path : Portable_Path_Like) return Native_Path_Like
    is (case GNATCOLL.OS.Constants.OS is
-          when MacOS | Unix => Path,
+          when MacOS | Unix => Replace (String (Path), "\", "/"),
           when Windows      => Replace (String (Path), "/", "\"));
 
 end Alire.OS_Lib;
