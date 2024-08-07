@@ -11,12 +11,20 @@ on:
     types: [published]
   workflow_dispatch:
 
+env:
+  ARCH: x86_64
+
 jobs:
 
   build:
     name: CI on macOS
 
-    runs-on: macos-12
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-12, macos-14]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Check out repository
@@ -24,10 +32,22 @@ jobs:
       with:
         submodules: true
 
-    - name: Install FSF toolchain
+    - name: Install FSF toolchain (x86_64)
+      if: ${{ matrix.os != 'macos-14' }}
       uses: alire-project/alr-install@v1
       with:
         crates: gnat_native gprbuild
+
+    - name: Install FSF toolchain (AArch64)
+      if: ${{ matrix.os == 'macos-14' }}
+      run: |
+        curl -L -O https://github.com/alire-project/alire/releases/download/nightly/alr-nightly-bin-aarch64-macos.zip
+        unzip alr-nightly-bin-aarch64-macos.zip bin/alr
+        bin/alr index --reset-community
+        bin/alr install gnat_native gprbuild --prefix alire_prefix
+        echo $PWD/bin >> $GITHUB_PATH
+        echo $PWD/alire_prefix/bin >> $GITHUB_PATH
+        echo "ARCH=aarch64" >> $GITHUB_ENV
 
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2
@@ -44,7 +64,7 @@ jobs:
     - name: Upload binaries
       uses: actions/upload-artifact@v2
       with:
-        name: alr-bin-macos.zip
+        name: alr-bin-${{ env.ARCH }}-macos.zip
         path: |
           bin/alr
           LICENSE.txt
@@ -82,5 +102,5 @@ jobs:
       with:
         upload_url: ${{ steps.get_release.outputs.upload_url }}
         asset_path: alr-bin-macos.zip
-        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-x86_64-macos.zip
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-${{ env.ARCH }}-macos.zip
         asset_content_type: application/zip
