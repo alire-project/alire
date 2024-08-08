@@ -269,7 +269,9 @@ package body Alr.Commands.Init is
             Put_Line ("authors = " & Arr (Q (Username)));
             Put_Line ("maintainers = "
                       & Arr (Q (Username & " <" & Email & ">")));
-            Put_Line ("maintainers-logins = " & Arr (Q (Login)));
+            if Login /= "" then
+               Put_Line ("maintainers-logins = " & Arr (Q (Login)));
+            end if;
             Put_Line ("licenses = " & Q (Info.Licenses));
             Put_Line ("website = " & Q (Info.Website));
             Put_Line ("tags = " & Q_Arr (Info.Tags));
@@ -473,6 +475,23 @@ package body Alr.Commands.Init is
       end if;
    end Query_License;
 
+   ------------------------
+   -- Query_GitHub_Login --
+   ------------------------
+
+   procedure Query_GitHub_Login (Info : in out Crate_Init_Info) is
+   begin
+      if Alire.Settings.Builtins.User_Github_Login.Is_Empty then
+         AAA.Text_IO.Put_Paragraph
+           ("If you intend to publish this crate to the community index, you "
+            & "will need a GitHub account with which to submit a pull "
+            & "request, which can optionally be configured now (leave blank "
+            & "to skip).");
+      end if;
+      Info.GitHub_Login := To_Unbounded_String
+         (UI.Query_Config.User_GitHub_Login);
+   end Query_GitHub_Login;
+
    ----------------------
    -- Query_Crate_Kind --
    ----------------------
@@ -582,25 +601,14 @@ package body Alr.Commands.Init is
    is
       use Alire.Settings;
       Info : Crate_Init_Info;
+      User_Not_Already_Configured : constant Boolean :=
+         Builtins.User_Email.Is_Empty
+         or else Builtins.User_Name.Is_Empty
+         or else Builtins.User_Github_Login.Is_Empty;
    begin
 
       if Cmd.Bin and then Cmd.Lib then
          Reportaise_Wrong_Arguments ("Please provide either --bin or --lib");
-      end if;
-
-      if Builtins.User_Email.Is_Empty or else
-        Builtins.User_Name.Is_Empty or else
-        Builtins.User_Github_Login.Is_Empty
-      then
-         AAA.Text_IO.Put_Paragraph
-           ("Alire needs some user information to initialize the crate"
-            & " author and maintainer, for eventual submission to"
-            & " the Alire community index. This information will be"
-            & " interactively requested now.");
-         TIO.New_Line;
-         TIO.Put_Line
-           ("You can edit this information at any time with 'alr config'");
-         TIO.New_Line;
       end if;
 
       Query_Crate_Name (Args, Info);
@@ -616,10 +624,29 @@ package body Alr.Commands.Init is
       Query_Description (Info);
 
       --  Query User info
+      if User_Not_Already_Configured then
+         TIO.New_Line;
+         AAA.Text_IO.Put_Paragraph
+           ("Alire needs some user information to prepare the crate for "
+            & "eventual submission to an index, which will be interactively "
+            & "requested now.");
+         TIO.New_Line;
+         TIO.Put_Line
+           ("You can edit this information at any time with 'alr config'");
+         TIO.New_Line;
+      end if;
       Info.Username := To_Unbounded_String (UI.Query_Config.User_Name);
-      Info.GitHub_Login := To_Unbounded_String
-        (UI.Query_Config.User_GitHub_Login);
+      Query_GitHub_Login (Info);
       Info.Email := To_Unbounded_String (UI.Query_Config.User_Email);
+
+      --  Make it clear that the remainder can't be changed with `alr config`
+      TIO.New_Line;
+      if User_Not_Already_Configured then
+         AAA.Text_IO.Put_Paragraph
+            ("Alire needs some further crate-specific information to help "
+             & "other people who want to use your crate.");
+      end if;
+      TIO.New_Line;
 
       Query_License (Info);
 

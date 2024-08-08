@@ -287,6 +287,8 @@ package Alire.Releases is
 
    function Maintainer (R : Release) return Alire.Properties.Vector;
 
+   function Maint_Logins (R : Release) return Alire.Properties.Vector;
+
    function Milestone (R : Release) return Milestones.Milestone;
 
    function Website (R : Release) return Alire.Properties.Vector with
@@ -520,6 +522,10 @@ private
    function Maintainer (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter
        (Alire.TOML_Keys.Maintainer));
+
+   function Maint_Logins (R : Release) return Alire.Properties.Vector
+   is (Conditional.Enumerate (R.Properties).Filter
+       (Alire.TOML_Keys.Maint_Logins));
 
    function Website (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter

@@ -6,7 +6,7 @@ from drivers.alr import run_alr, init_local_crate
 from drivers.asserts import assert_match
 from drivers.helpers import init_git_repo
 
-init_local_crate("my_crate")
+init_local_crate("my_crate", with_maintainer_login=True)
 p = run_alr("publish", "--tar",
             complain_on_error=False, quiet=False)
 

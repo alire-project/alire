@@ -313,15 +313,32 @@ This will be shown as:
 
 ## Publishing to a local/private index
 
-Having a local index may be useful sometimes, be it for local testing, or for
-private crates not intended for publication.
+Having a local or private index may be useful sometimes, be it for local
+testing, or for private crates not intended for publication.
 
-There is no practical difference between the community index that is cloned
-locally and a private local index stored on disk. Hence, after obtaining the
-manifest file with `alr publish`, it is a matter of placing it at the expected
-location within the index: `/path/to/index/cr/crate_name/crate_name-x.x.x.toml`
+There is no practical difference between the community index and a private index
+stored locally on disk or on your own infrastructure. An index must be an
+accessible path or URL at which an `index.toml` file can be found, either at the
+root or in any immediate subdirectory. This file specifies the version of the
+index, containing one line with the form `version = "0.0.0"`. No files should be placed in the same
+location as `index.toml` except for the manifests of published crates.
 
-If the crate being published locally contains `"provides"` definitions, it is
-necessary to call `alr index --update-all` once to ensure it is properly used
-by the dependency solver. This is only necessary for the first release in a
-crate that uses the `"provides"` feature.
+To start using such an index, run
+
+`alr index --add=<URL> --name=<name>`,
+
+where `<name>` is a human-friendly label that `alr` will use to refer to it.
+
+To publish a crate to a private index, run
+
+`alr publish --for-private-index [<path|URL> <commit|tag|branch>]`
+
+as described in the sections above, then place the manifest file it generates at
+the indicated path (relative to the location of `index.toml`).
+
+Additions to indexes stored locally on the disk will take effect immediately,
+unless the crate being published contains `"provides"` definitions, in which
+case an index update will be required (either with `alr index --update-all`, or
+through a scheduled auto-update) to ensure it is properly used by the dependency
+solver. An index update will always be required when publishing to a remote
+index.

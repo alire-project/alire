@@ -3,6 +3,7 @@ Test that publishing from a branch other than the default one works
 """
 
 from drivers.alr import init_local_crate, run_alr
+from drivers.asserts import assert_match
 from drivers.helpers import init_git_repo
 from shutil import copyfile
 from subprocess import run
@@ -10,7 +11,7 @@ from subprocess import run
 import os
 
 # Prepare our "remote" repo
-init_local_crate("xxx", enter=False)
+init_local_crate("xxx", enter=False, with_maintainer_login=True)
 head_commit = init_git_repo("xxx")
 
 # Clone to a "local" repo and set minimal config
@@ -27,6 +28,12 @@ assert run(["git", "commit", "-m", "commit-msg"]).returncode == 0
 assert run(["git", "push", "-u", "origin", "devel"]).returncode == 0
 
 # Check that the publishing assistant completes without complaining
-run_alr("--force", "publish", "--skip-submit")
+p = run_alr("--force", "publish", "--skip-submit", quiet=False)
+
+# Check the user is warned that the origin URL is a local path
+assert_match(
+    r".*The origin must be a definitive remote location, but is .*",
+    p.out
+)
 
 print('SUCCESS')

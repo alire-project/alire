@@ -20,7 +20,7 @@ def verify_manifest():
 
 
 # Prepare our "remote" repo, changing the manifest name to "xxx.toml"
-init_local_crate("xxx")
+init_local_crate("xxx", with_maintainer_login=True)
 os.rename("alire.toml", "xxx.toml")
 os.chdir("..")
 head_commit = init_git_repo("xxx")

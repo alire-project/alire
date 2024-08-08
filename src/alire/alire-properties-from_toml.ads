@@ -53,14 +53,12 @@ package Alire.Properties.From_TOML is
                   Crates.External_Shared_Section  =>
                     (Description        |
                      Maintainers        |
-                     Maintainers_Logins |
                      Name   => True,
                      others => False),
 
                   Crates.Index_Release           =>
                     (Description        |
                      Maintainers        |
-                     Maintainers_Logins |
                      Name               |
                      Version => True,
                      others  => False),

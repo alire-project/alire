@@ -293,3 +293,71 @@ class FileLock():
         import fcntl
         fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_UN)
         self.lock_file.close()
+
+
+GIT_WRAPPER_TEMPLATE = """\
+#! /usr/bin/env python
+import subprocess, sys
+substitution_dict = {substitution_dict}
+# Argument substitutions
+args = sys.argv[1:]
+for key in substitution_dict:
+    args = [arg.replace(key, substitution_dict[key]) for arg in args]
+# Run git
+p = subprocess.run(['{actual_git_path}'] + args, capture_output=True)
+# Output substitutions
+stdout, stderr = p.stdout.decode(), p.stderr.decode()
+for key in substitution_dict:
+    stdout = stdout.replace(substitution_dict[key], key)
+    stderr = stderr.replace(substitution_dict[key], key)
+print(stdout, end="")
+print(stderr, file=sys.stderr, end="")
+# Exit with appropriate error code
+sys.exit(p.returncode)
+"""
+
+class MockGit:
+    """
+    A context manager which mocks the git command with string substitutions.
+
+    The string substitutions are specified by the dictionary substitution_dict.
+    Every non-overlapping occurrence of each of its keys in a command line
+    argument is replaced with its corresponding value before being passed to
+    git. The reverse substitution is applied to git's output. The substitutions
+    are applied in the order in which they appear in substitution_dict.
+
+    The mocked version of git will be placed in mock_git_dir, which will be
+    temporarily added to PATH.
+    """
+
+    def __init__(self, substitution_dict, mock_git_dir):
+        self._substitution_dict = substitution_dict
+        self._mock_git_dir = mock_git_dir
+
+    def __enter__(self):
+        # Create a wrapper script for git
+        wrapper_script = GIT_WRAPPER_TEMPLATE.format(
+            substitution_dict=self._substitution_dict,
+            actual_git_path=shutil.which("git")
+        )
+        # Write the script to somewhere on PATH
+        try:
+            os.mkdir(self._mock_git_dir)
+        except FileExistsError:
+            pass
+        os.environ["PATH"] = f'{self._mock_git_dir}:{os.environ["PATH"]}'
+        wrapper_descriptor = os.open(
+            os.path.join(self._mock_git_dir, "git"),
+            flags=(os.O_WRONLY | os.O_CREAT | os.O_EXCL),
+            mode=0o764,
+        )
+        with open(wrapper_descriptor, "w") as f:
+            f.write(wrapper_script)
+
+    def __exit__(self, type, value, traceback):
+        # Restore PATH
+        os.environ["PATH"] = os.environ["PATH"].replace(
+            f'{self._mock_git_dir}:', '', 1
+        )
+        # Delete the wrapper script
+        os.remove(os.path.join(self._mock_git_dir, "git"))
