@@ -19,7 +19,7 @@ elif (which gprbuild &>/dev/null); then
     gprbuild -P support/version_patcher/version_patcher.gpr
 elif (which alr &>/dev/null); then
     echo "Building patcher with alr..."
-    alr -C "$(dirname $bin)" build
+    alr -C "$(dirname $(dirname $bin))" build
 else
     echo "WARNING: No Ada tool available to build patcher, skipping."
     exit 0
