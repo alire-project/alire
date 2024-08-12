@@ -50,13 +50,13 @@ check_equivalent("unobtanium")
 
 # Pinned folder
 init_local_crate("yyy", enter=False)
-check_equivalent("yyy~0", path="../yyy")
+yyy_path = os.path.join(os.getcwd(), "yyy")
+check_equivalent("yyy~0", path=yyy_path)
 
 # Prepare repository
 head = init_git_repo("yyy")
 branch = git_branch("yyy")
-os.rename("yyy", "yyy.git")  # to be recognizable as a git url
-url = "../yyy.git"
+url = "git+file://" + yyy_path  # to be recognizable as a git url
 
 # Simple git remote, explicit crate & version
 check_equivalent(dep="yyy~0", url=url)

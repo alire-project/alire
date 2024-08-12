@@ -1,5 +1,5 @@
 """
-Check pinning to branches with "git+ssh://" and "xyz+https://" urls
+Check pinning to branches with "ssh://", "git+ssh://" and "xyz+https://" urls
 """
 
 import os
@@ -45,11 +45,20 @@ os.environ["PATH"] = f'{MOCK_PATH}:{os.environ["PATH"]}'
 # Perform the actual tests
 URLs = [
     "git+ssh://ssh.gitlab.company-name.com/path/to/repo.git",
+    "git+ssh://ssh.gitlab.company-name.com/path/to/repo",
     "xyz+https://github.com/path/to/repo.git",
+    # Should recognise github.com even without ".git" or "git+"
+    "xyz+https://github.com/path/to/repo",
+    "ssh://ssh.gitlab.company-name.com/path/to/repo.git",
+    "ssh://ssh.gitlab.company-name.com/path/to/repo.git/",
 ]
 SANITISED_URLS = [
     "ssh://ssh.gitlab.company-name.com/path/to/repo.git",
+    "ssh://ssh.gitlab.company-name.com/path/to/repo",
     "https://github.com/path/to/repo.git",
+    "https://github.com/path/to/repo",
+    "ssh://ssh.gitlab.company-name.com/path/to/repo.git",
+    "ssh://ssh.gitlab.company-name.com/path/to/repo.git/",
 ]
 CACHE_TEST_FILE_PATH = "alire/cache/pins/remote/test_file"
 for URL, S_URL in zip(URLs, SANITISED_URLS):

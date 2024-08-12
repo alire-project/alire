@@ -40,7 +40,7 @@ package body Alire.Origins.Tweaks is
          URL : constant String := This.URL; -- Doesn't include #commit
       begin
          --  Check for "xxx+file://" or return as-is:
-         if URI.Scheme (URL) not in URI.File_Schemes then
+         if URI.URI_Kind (URL) not in URI.Local_URIs then
             return This;
          end if;
 

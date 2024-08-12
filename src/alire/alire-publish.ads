@@ -24,7 +24,7 @@ package Alire.Publish is
    procedure Local_Repository (Path     : Any_Path := ".";
                                Revision : String   := "HEAD";
                                Options  : All_Options := New_Options) with
-     Pre => URI.Scheme (Path) in URI.File_Schemes;
+     Pre => URI.URI_Kind (Path) in URI.Bare_Path;
    --  Check that given Path is an up-to-date git repo. If so, proceed with
    --  remote repo verification. If no revision given use the HEAD commit,
    --  otherwise use the revision (tag, branch, commit) commit.

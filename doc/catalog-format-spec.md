@@ -443,6 +443,12 @@ static, i.e. they cannot depend on the context.
    the following fields:
 
       - `url`: mandatory string which points to a source file or repository.
+        If it points to a repository, this should be apparent from the URL;
+        the prefixes `git+`, `hg+` or `svn+` can be prepended to the scheme
+        (e.g. `git+https://`) to make this explicit, though a `.git` suffix or
+        the hosts `github.com` or `gitlab.com` will also be recognised.
+        Origins should be publicly accessible (i.e. should not require
+        private ssh keys or other authentication).
 
       - `hashes`: mandatory string array for source archives.  An array
         of "kind:digest" fields that specify a hash kind and its value.  Kinds
@@ -462,7 +468,7 @@ static, i.e. they cannot depend on the context.
         several crates from the same repository (sometimes referred to as a
         *monorepo*).
 
-      - `binary`: optional (defauts to false) boolean used to design the origin
+      - `binary`: optional (defaults to false) boolean used to design the origin
         as binary. Binary origins are not compiled and can optionally use dynamic
         expressions to narrow down the platform to which they apply. An origin
         using a dynamic expression must be tagged as binary; see the

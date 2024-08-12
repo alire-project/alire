@@ -159,8 +159,8 @@ package Alire.Origins is
    function New_VCS (URL    : Alire.URL;
                      Commit : String;
                      Subdir : Relative_Path := "") return Origin;
-   --  Attempt to identify an origin kind from the transport (git+https). If no
-   --  VCS specified, look for ".git" extension.
+   --  Determine whether URL looks like git, Hg or SVN, and construct an origin
+   --  accordingly. Raises Checked_Error if not recognised as any VCS.
 
    Unknown_Source_Archive_Name_Error : exception;
 
@@ -186,12 +186,6 @@ package Alire.Origins is
 
    procedure Add_Hash (This : in out Origin;
                        Hash :        Hashes.Any_Hash);
-
-   function From_String (Image : String) return Origin with
-     Post => From_String'Result.Kind in Filesystem | Source_Archive;
-   --  Parse a string and dispatch to the appropriate constructor. This
-   --  function can be used to retrieve unhashed origins too (precisely
-   --  for hashing).
 
    overriding
    function From_TOML (This : in out Origin;

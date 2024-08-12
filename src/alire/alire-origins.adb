@@ -367,7 +367,7 @@ package body Alire.Origins is
       return (Data => (Source_Archive,
                        Src_Archive =>
                          (URL    =>
-                            +(if URI.Scheme (URL) in URI.File_Schemes
+                            +(if URI.URI_Kind (URL) in URI.Local_Other
                               then "file:" & Ada.Directories.Full_Name
                                                          (URI.Local_Path (URL))
                               else URL),
@@ -377,23 +377,6 @@ package body Alire.Origins is
                           Hashes => <>)));
    end New_Source_Archive;
 
-   -----------------
-   -- From_String --
-   -----------------
-
-   function From_String (Image : String) return Origin is
-      Scheme  : constant URI.Schemes := URI.Scheme (Image);
-   begin
-      case Scheme is
-         when URI.File_Schemes =>
-            return New_Filesystem (URI.Local_Path (Image));
-         when URI.HTTP =>
-            return New_Source_Archive (Image);
-         when others =>
-            Raise_Checked_Error ("Unsupported URL scheme: " & Image);
-      end case;
-   end From_String;
-
    -------------
    -- New_VCS --
    -------------
@@ -401,50 +384,31 @@ package body Alire.Origins is
    function New_VCS (URL    : Alire.URL;
                      Commit : String;
                      Subdir : Relative_Path := "") return Origin is
-      use AAA.Strings;
-      use all type URI.Schemes;
-      Scheme      : constant URI.Schemes := URI.Scheme (URL);
-      VCS_URL : constant String :=
-                  (if Contains (URL, "+file://") then
-                      Tail (URL, '+') -- strip the VCS proto only
-                   elsif Contains (URL, "+file:") then
-                      Tail (URL, ':') -- Remove file: w.o. // that confuses git
-                   elsif Scheme = URI.Pure_Git then
-                      URL
-                   elsif Scheme in URI.VCS_Schemes then
-                      Tail (URL, '+') -- remove prefix vcs+
-                   elsif Scheme in URI.HTTP then -- A plain URL... check VCS
-                     (if Has_Suffix (To_Lower_Case (URL), ".git")
-                      then URL
-                      elsif VCSs.Git.Known_Transformable_Hosts.Contains
-                        (URI.Authority (URL))
-                      then URL & ".git"
-                      else raise Checked_Error with
-                        "ambiguous VCS URL: " & URL)
-                   else
-                      raise Checked_Error with "unknown VCS URL: " & URL);
+      URL_Kind : constant URI.URI_Kinds := URI.URI_Kind (URL);
+      VCS_URL : constant String := VCSs.Repo_And_Commit (URL);
 
    begin
-      case Scheme is
-         when Pure_Git | Git | HTTP =>
+      case URL_Kind is
+         when URI.Git_URIs =>
             if Commit'Length /= Git_Commit'Length then
                Raise_Checked_Error
                  ("invalid git commit id, " &
                     "40 digits hexadecimal expected");
             end if;
             return New_Git (VCS_URL, Commit, Subdir);
-         when Hg =>
+         when URI.Hg_URIs =>
             if Commit'Length /= Hg_Commit'Length then
                Raise_Checked_Error
                  ("invalid mercurial commit id, " &
                     "40 digits hexadecimal expected");
             end if;
             return New_Hg (VCS_URL, Commit, Subdir);
-         when SVN =>
+         when URI.SVN_URIs =>
             return New_SVN (VCS_URL, Commit, Subdir);
+         when URI.Public_Other | URI.SSH_Other =>
+            Raise_Checked_Error ("ambiguous VCS URL: " & URL);
          when others =>
-            Raise_Checked_Error ("Expected a VCS origin but got scheme: "
-                                 & Scheme'Image);
+            Raise_Checked_Error ("unknown VCS URL: " & URL);
       end case;
    end New_VCS;
 
@@ -555,7 +519,7 @@ package body Alire.Origins is
    is
 
       use TOML;
-      use all type URI.Schemes;
+      use all type URI.URI_Kinds;
       Table   : constant TOML_Adapters.Key_Queue :=
                  From.Descend (From.Checked_Pop (Keys.Origin, TOML_Table),
                                Context => Keys.Origin);
@@ -603,22 +567,22 @@ package body Alire.Origins is
       --  Regular static loading of other origin kinds
 
       declare
-         URL     : constant String :=
+         URL      : constant String :=
                      Table.Checked_Pop (Keys.URL, TOML_String).As_String;
-         Scheme  : constant URI.Schemes := URI.Scheme (URL);
-         Hashed  : constant Boolean := Table.Unwrap.Has (Keys.Hashes);
+         URL_Kind : constant URI.URI_Kinds := URI.URI_Kind (URL);
+         Hashed   : constant Boolean := Table.Unwrap.Has (Keys.Hashes);
       begin
-         case Scheme is
-         when External =>
+         case URL_Kind is
+         when External                     =>
             This := New_External (URI.Path (URL));
 
-         when URI.File_Schemes =>
+         when URI.Local_Other              =>
             if URI.Local_Path (URL) = "" then
                From.Checked_Error ("empty path given in local origin");
             end if;
             This := New_Filesystem (URI.Local_Path (URL));
 
-         when URI.VCS_Schemes  =>
+         when URI.VCS_URIs                 =>
             declare
                Commit : constant String := Table.Checked_Pop
                  (Keys.Commit, TOML_String).As_String;
@@ -634,7 +598,7 @@ package body Alire.Origins is
                   Subdir => VFS.To_Native (Portable_Path (Subdir)));
             end;
 
-         when HTTP             =>
+         when Public_Other                 =>
             --  Reinsert the URL so we can reuse the dynamic archive loader:
             Table.Unwrap.Set (Keys.URL, Create_String (URL));
 
@@ -646,10 +610,16 @@ package body Alire.Origins is
                                     Table.Unwrap,
                                     Context => "source archive")),
                               Hashes      => <>));
-         when System =>
+
+         when SSH_Other                    =>
+            From.Checked_Error ("Pure 'ssh://' URLs are not valid crate "
+                                & "origins. You may want git+" & URL
+                                & " instead.");
+
+         when System                       =>
             This := New_System (URI.Path (URL));
 
-         when Unknown          =>
+         when Unknown               =>
             From.Checked_Error ("unsupported scheme in URL: " & URL);
          end case;
 
@@ -768,9 +738,10 @@ package body Alire.Origins is
             Table.Set (Keys.URL, +("file:" & This.Path));
 
          when VCS_Kinds =>
+            --  Restore any prefixes which were stripped by New_VCS
             Table.Set (Keys.URL,
                        +(Prefixes (This.Kind).all
-                         & (if URI.Scheme (This.URL) in URI.None
+                         & (if URI.URI_Kind (This.URL) in URI.Bare_Path
                            --  not needed for remote repos, but for testing
                            --  ones used locally:
                            then "file:"

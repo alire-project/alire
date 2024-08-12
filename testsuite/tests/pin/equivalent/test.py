@@ -38,11 +38,11 @@ def check_equivalent(crate, path="", url="", commit="", branch=""):
 
 # Local pinnable crate
 init_local_crate("yyy", enter=False)
-yyy_path = "../yyy"
+yyy_path = os.path.join(os.getcwd(), "yyy")
 
 # Local pinnable raw project
 os.mkdir("zzz")
-zzz_path = "../zzz"
+zzz_path = os.path.join(os.getcwd(), "zzz")
 
 # Simple pin, no restrictions
 check_equivalent("yyy", path=yyy_path)
@@ -51,8 +51,7 @@ check_equivalent("zzz", path=zzz_path)
 # Prepare repository
 head = init_git_repo("yyy")
 branch = git_branch("yyy")
-os.rename("yyy", "yyy.git")  # to be recognizable as a git url
-url = "../yyy.git"
+url = "git+file://" + yyy_path  # to be recognizable as a git url
 
 # Simple git remote, explicit crate
 check_equivalent(crate="yyy", url=url)

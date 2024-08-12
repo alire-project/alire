@@ -20,13 +20,19 @@ assert_match(".*unknown VCS URL.*", p.out)
 # Missing commit for git remotes
 p = run_alr("publish", "git+http://github.com/repo",
             complain_on_error=False)
-assert_match(".*commit id is mandatory for a VCS origin.*", p.out)
+assert_match(
+    ".*URL seems to point to a repository, but no commit was provided.*",
+    p.out
+)
 
 # Detect github case and give more precise error. This serves also to check
 # that github remotes without leading git+ or trailing .git are accepted.
 p = run_alr("publish", "https://github.com/missingext",
             complain_on_error=False)
-assert_match(".*commit id is mandatory for a VCS origin.*", p.out)
+assert_match(
+    ".*URL seems to point to a repository, but no commit was provided.*",
+    p.out
+)
 
 # Bad commit length
 p = run_alr("publish", "git+http://github.com/repo", "deadbeef",

@@ -181,7 +181,7 @@ package body Alr.Commands.Pin is
          elsif Cmd.URL.all /= "" then
 
             if Cmd.Commit.all /= "" or else Cmd.Branch.all /= ""
-              or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
+              or else Alire.URI.URI_Kind (Cmd.URL.all) in Alire.URI.Git_URIs
             then
 
                --  Pin to remote commit

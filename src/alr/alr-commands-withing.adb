@@ -196,7 +196,7 @@ package body Alr.Commands.Withing is
       --  Now, add the pin to the path/remote
 
       if Cmd.Commit.all /= "" or else Cmd.Branch.all /= ""
-        or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
+        or else Alire.URI.URI_Kind (Cmd.URL.all) in Alire.URI.Git_URIs
       then
 
          --  Pin to remote repo, with optional dependency first

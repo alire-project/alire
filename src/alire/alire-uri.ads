@@ -31,45 +31,95 @@ package Alire.URI with Preelaborate is
 
    end Operators;
 
-   type Schemes is
-     (None,
-      --  For URLs without scheme (to be interpreted as local paths)
-
-      External,
-      --  external: denotes a crate detected by some external definition
-
-      File,
-      --  A file: URI
-
-      Git,
-      --  Anything understood by git, expressed as git+<actual protocol>, e.g.:
-      --  git+http[s], git+file
-
-      Pure_Git,
-      --  An actual git@host:path URI
-
-      Hg,
-      SVN,
-      --  Same considerations as for Git
-
-      HTTP,
-      --  Either http or https, since we don't differentiate treatment
+   type URI_Kinds is
+     (External,
+      --  Scheme is "external:"
+      --  Denotes a crate detected by some external definition
 
       System,
-      --  system:package is used to denote a native package from the platform
+      --  Scheme is "system:"
+      --  The form "system:package" is used to denote a native package from
+      --  the platform
+
+      Local_Git,
+      --  Scheme is "git+file:"
+
+      Public_Git,
+      --  Recognisably git and scheme is "http:"/"https:"
+
+      Private_Git,
+      --  git@host:path, or recognisably git and scheme is "ssh:", or scheme
+      --  is "git+<proto>:" (where proto is not "http"/"https" or "file")
+
+      Local_Hg,
+      Public_Hg,
+      Private_Hg,
+      Local_SVN,
+      Public_SVN,
+      Private_SVN,
+      --  Same considerations as for Git
+
+      Bare_Path,
+      --  A local path, not a URI (note that this is often still a git repo, it
+      --  just isn't apparent from the string alone)
+
+      File,
+      --  Scheme is "file:"
+
+      Public_Other,
+      --  http/https, but not a recognised VCS
+
+      SSH_Other,
+      --  ssh, but not a recognised VCS
 
       Unknown
       --  Anything else
      );
-   --  Protocols recognized by Alire
 
-   subtype VCS_Schemes is Schemes range Git .. SVN;
+   subtype Local_Other is URI_Kinds range Bare_Path .. File;
 
-   subtype File_Schemes is Schemes with
-     Static_Predicate => File_Schemes in None | File;
+   subtype VCS_URIs is URI_Kinds range Local_Git .. Private_SVN;
 
-   function Scheme (This : URL) return Schemes;
-   --  Extract the Scheme part of a URL
+   subtype Local_VCS_URIs is URI_Kinds
+     with Static_Predicate =>
+       Local_VCS_URIs in Local_Git | Local_Hg | Local_SVN;
+
+   subtype Local_URIs is URI_Kinds
+     with Static_Predicate =>
+       Local_URIs in Local_VCS_URIs | Local_Other;
+
+   subtype Public_VCS_URIs is URI_Kinds
+     with Static_Predicate =>
+       Public_VCS_URIs in Public_Git | Public_Hg | Public_SVN;
+
+   subtype Public_URIs is URI_Kinds
+     with Static_Predicate =>
+       Public_URIs in Public_VCS_URIs | Public_Other;
+
+   subtype Private_VCS_URIs is URI_Kinds
+     with Static_Predicate =>
+       Private_VCS_URIs in Private_Git | Private_Hg | Private_SVN;
+
+   subtype Private_URIs is URI_Kinds
+     with Static_Predicate =>
+       Private_URIs in Private_VCS_URIs | SSH_Other;
+
+   subtype Git_URIs is URI_Kinds range Local_Git .. Private_Git;
+   subtype Hg_URIs is URI_Kinds range Local_Hg .. Private_Hg;
+   subtype SVN_URIs is URI_Kinds range Local_SVN .. Private_SVN;
+
+   function URI_Kind (This : String) return URI_Kinds;
+   --  Attempt to identify the nature of a resource from its URI.
+   --
+   --  Formats currently not recognised include:
+   --    user@host:/path/to/repo.git      [returns Unknown]
+   --    host.name:/path/to/repo.git      [returns Unknown]
+   --    git://host/path/to/repo.git      [returns Unknown]
+   --    svn://(something)                [returns Unknown]
+   --    https://user:pass@host/repo.git  [returns Public_Git]
+   --    https://user@host/repo.git       [returns Public_Git]
+   --    https://user:pass@host/path      [returns Public_Other]
+   --    https://user@host/path           [returns Public_Other]
 
    function Authority (This : URL) return String;
    --  The authority includes credentials : user:pass@websi.te
@@ -78,7 +128,7 @@ package Alire.URI with Preelaborate is
    --  Only the part after @ in an authority
 
    function Local_Path (This : URL) return String
-     with Pre => Scheme (This) in None | File
+     with Pre => URI_Kind (This) in Local_URIs
      or else raise Checked_Error with Errors.Set
        ("Given URL does not seem to denote a path: " & This);
    --  Extract complete path from a URL intended for a local path: According to
@@ -96,17 +146,15 @@ package Alire.URI with Preelaborate is
    function Path (This : URL) return String;
    --  The path as properly defined (without the authority, if any)
 
-   function Is_HTTP_Or_Git (This : URL) return Boolean
-   is (Scheme (This) in Git | Pure_Git | HTTP
-       or else AAA.Strings.Has_Suffix (This, ".git"));
-   --  Heuristic to detect a possible git remote. Implementation public so
-   --  there is no doubt to what it does.
-
+   function Strip_VCS_Prefixes (URL : String) return String;
+   --  Return the URL without any "git+" prefix or similar.
 private
+
+   use AAA.Strings;
 
    package U renames Standard.URI;
 
-   function L (Str : String) return String renames AAA.Strings.To_Lower_Case;
+   function L (Str : String) return String renames To_Lower_Case;
 
    ---------------
    -- Authority --
@@ -120,10 +168,9 @@ private
    ----------------
 
    function Local_Path (This : URL) return String
-   is (case Scheme (This) is
-          when None => This,
-          when File => U.Permissive_Path (This),
-          when others => raise Program_Error with "not applicable");
+   is (if URI_Kind (This) in Bare_Path then This
+       elsif URI_Kind (This) in Local_URIs then U.Permissive_Path (This)
+       else raise Program_Error with "not applicable");
 
    ----------
    -- Path --
@@ -131,5 +178,22 @@ private
 
    function Path (This : URL) return String
    is (U.Extract (This, U.Path));
+
+   --------------------
+   -- Has_Git_Suffix --
+   --------------------
+
+   function Has_Git_Suffix (URL : String) return Boolean
+   is (Has_Suffix (L (URL), ".git") or else Has_Suffix (L (URL), ".git/"));
+
+   -----------------------
+   -- Is_Known_Git_Host --
+   -----------------------
+
+   function Is_Known_Git_Host (Host : String) return Boolean
+   is (Host = "github.com"
+       or else Host = "gitlab.com"
+       or else Host = "bitbucket.org");
+   --  Return whether a string is a known host which definitely uses git
 
 end Alire.URI;

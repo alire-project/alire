@@ -10,6 +10,10 @@ from drivers.helpers import init_git_repo, git_branch
 from drivers.asserts import assert_eq
 
 
+# Ensure the "remote" looks like a git repo
+URL = "git+file://" + os.path.join(os.getcwd(), "upstream")
+
+
 def verify(head=""):  # Either head or branch /= ""
     # Check that the linked dir exists at the expected location
     pin_path = (f"alire/cache/pins/upstream" +
@@ -18,7 +22,7 @@ def verify(head=""):  # Either head or branch /= ""
 
     # Verify info reported by alr
     p = run_alr("pin")
-    assert_eq(f"upstream file:{pin_path} ../upstream.git" +
+    assert_eq(f"upstream file:{pin_path} {URL}" +
               ("" if head == "" else f"#{head[0:8]}") + "\n",
               p.out)
 
@@ -43,27 +47,26 @@ def verify(head=""):  # Either head or branch /= ""
 init_local_crate(name="upstream", binary=False)
 head = init_git_repo(".")
 os.chdir("..")
-os.rename("upstream", "upstream.git")  # so it is recognized as git repo
 
 # Initialize a client crate that will use the remote
 init_local_crate()  # This leaves us inside the new crate
 
 # Add using with directly
-run_alr("with", "--use", "../upstream.git", "--commit", head)
+run_alr("with", "--use", URL, "--commit", head)
 verify(head)
 
 # Add using with, without head commit
-run_alr("with", "--use", "../upstream.git")
+run_alr("with", "--use", URL)
 verify()
 
 # Pin afterwards, with commit
 run_alr("with", "upstream", force=True)  # force, as it is unsolvable
-run_alr("pin", "upstream", "--use", "../upstream.git", "--commit", head)
+run_alr("pin", "upstream", "--use", URL, "--commit", head)
 verify(head)
 
 # Pin afterwards, without commit
 run_alr("with", "upstream", force=True)
-run_alr("pin", "upstream", "--use", "../upstream.git")
+run_alr("pin", "upstream", "--use", URL)
 verify()
 
 print('SUCCESS')

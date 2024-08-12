@@ -752,7 +752,7 @@ package body Alire.Publish is
 
          function Get_Default (Remote_URL : String)
                                return Answer_Kind
-         is (if Force or else URI.Scheme (Remote_URL) in URI.HTTP
+         is (if Force or else URI.URI_Kind (Remote_URL) in URI.Public_Other
              then Yes
              else No);
 
@@ -865,16 +865,13 @@ package body Alire.Publish is
 
       --  Ensure the origin is remote
 
-      if URI.Scheme (URL) not in URI.HTTP then
-         --  A git@ URL is private to the user and should not be used for
-         --  packaging:
-         if AAA.Strings.Has_Prefix (URL, "git@") then
-            Raise_Checked_Error
-              ("The origin cannot use a private git remote: " & URL);
-         end if;
-
-         --  Otherwise we assume this is a local path
-
+      if URI.URI_Kind (URL) in URI.Unknown then
+         Raise_Checked_Error ("Unsupported scheme: " & URL);
+      elsif URI.URI_Kind (URL) in URI.Private_URIs then
+         --  A private URL should not be used for packaging
+         Raise_Checked_Error
+            ("The origin cannot use a private remote: " & URL);
+      elsif URI.URI_Kind (URL) not in URI.Public_URIs then
          Recoverable_User_Error
            ("The origin must be a definitive remote location, but is " & URL);
          --  For testing we may want to allow local URLs, or may be for
@@ -889,10 +886,7 @@ package body Alire.Publish is
          --  a local repository.
 
          if (Force and then
-             URI.Scheme (URL) in URI.File_Schemes | URI.Unknown)
-             --  We are forcing, so we accept an unknown scheme (this happens
-             --  for local file on Windows, where drive letters are interpreted
-             --  as the scheme).
+             URI.URI_Kind (URL) in URI.Local_URIs)
            or else
             Is_Trusted (URL)
          then
@@ -1143,6 +1137,9 @@ package body Alire.Publish is
                                     & TTY.Emph (Revision));
             end if;
 
+            --  Call Remote_Origin, ensuring that a URL referring to a
+            --  local path has a "file:" (or "git+file:") scheme and no
+            --  added ".git" suffix.
             declare
                Raw_URL   : constant String :=
                              Git.Fetch_URL
@@ -1151,40 +1148,25 @@ package body Alire.Publish is
                --  The one reported by the repo, in its public form
 
                Fetch_URL : constant String :=
-               --  With an added ".git", if it hadn't one. Not usable in local
-               --  filesystem.
-                             Raw_URL
-                             & (if Has_Suffix (To_Lower_Case (Raw_URL), ".git")
-                                then ""
-                                else ".git");
+               --  With an added ".git", if there isn't one already and the URL
+               --  isn't a local file path.
+                          Raw_URL
+                          & (if Has_Suffix (To_Lower_Case (Raw_URL), ".git")
+                               or else URI.URI_Kind (Raw_URL) in URI.Local_URIs
+                             then ""
+                             else ".git");
             begin
-               --  To allow this call to succeed with local tests, we check
-               --  here. For a regular repository we will already have an HTTP
-               --  transport. A GIT transport is not wanted, because that one
-               --  requires the owner keys.
-               case URI.Scheme (Fetch_URL) is
-               when URI.VCS_Schemes =>
-                  Raise_Checked_Error
-                    ("The remote URL seems to require repository ownership: "
-                     & Fetch_URL);
-               when URI.None | URI.Unknown =>
-                  Publish.Remote_Origin (URL     => "git+file:" & Raw_URL,
+               if URI.URI_Kind (Fetch_URL) in URI.Bare_Path then
+                  Publish.Remote_Origin (URL     => "git+file:" & Fetch_URL,
                                          Commit  => Commit,
                                          Subdir  => +Subdir,
                                          Options => Options);
-               when URI.File =>
-                  Publish.Remote_Origin (URL     => Raw_URL,
-                                         Commit  => Commit,
-                                         Subdir  => +Subdir,
-                                         Options => Options);
-               when URI.HTTP =>
+               else
                   Publish.Remote_Origin (URL     => Fetch_URL,
                                          Commit  => Commit,
                                          Subdir  => +Subdir,
                                          Options => Options);
-               when others =>
-                  Raise_Checked_Error ("Unsupported scheme: " & Fetch_URL);
-               end case;
+               end if;
             end;
          end;
       end;
@@ -1202,9 +1184,7 @@ package body Alire.Publish is
    begin
       --  Preliminary argument checks
 
-      if Has_Suffix (AAA.Strings.To_Lower_Case (URL), ".git") and then
-        Commit = ""
-      then
+      if URI.URI_Kind (URL) in URI.VCS_URIs and then Commit = "" then
          Raise_Checked_Error
            ("URL seems to point to a repository, but no commit was provided.");
       end if;
@@ -1213,6 +1193,17 @@ package body Alire.Publish is
 
       if Subdir /= "" and then Commit = "" then
          Raise_Checked_Error ("Cannot publish a nested crate from an archive");
+      end if;
+
+      --  Check for obviously invalid url
+
+      if URI.URI_Kind (URL) in URI.SSH_Other then
+         Raise_Checked_Error ("'ssh://' URLs are not valid crate origins. You "
+                              & "may want git+" & URL & " instead.");
+      end if;
+      if URI.URI_Kind (URL) in URI.External | URI.System | URI.Unknown
+      then
+         Raise_Checked_Error ("Unsupported scheme: " & URL);
       end if;
 
       --  Create origin, which will do more checks, and proceed
@@ -1226,15 +1217,11 @@ package body Alire.Publish is
                         (if Commit /= "" then
                             Origins.New_VCS (URL, Commit, Subdir)
 
-                         --  without commit
-                         elsif URI.Scheme (URL) in URI.VCS_Schemes or else
-                            VCSs.Git.Known_Transformable_Hosts.Contains
-                              (URI.Authority_Without_Credentials (URL))
-                         then
-                            raise Checked_Error with
-                              "A commit id is mandatory for a VCS origin"
-
                          --  plain archive
+                         --
+                         --  From the preliminary argument checks above, the
+                         --  absence of a commit implies URL doesn't look like
+                         --  a VCS.
                          else
                             Origins.New_Source_Archive (URL)),
 

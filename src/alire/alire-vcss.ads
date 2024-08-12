@@ -25,10 +25,14 @@ package Alire.VCSs is
    function Kind (Origin : URL) return Kinds;
 
    function Repo (Origin : URL) return String;
-   --  Without kind and commit
+   --  Return a repo URL (without #commit) suitable for passing to git
+   --
+   --  Strips any "vcs+" prefix, and also any "file:" scheme
 
    function Repo_And_Commit (Origin : URL) return String;
-   --  Without Kind and with optional Commit (separated by #)
+   --  Return a URL suitable for passing to git (including #commit if present)
+   --
+   --  Strips any "vcs+" prefix, and also any "file:" scheme
 
    function Commit (Origin : URL) return String;
    --  Empty string if no commit part (separated by #)
