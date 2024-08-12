@@ -533,6 +533,27 @@ package body Alire.Origins is
          Data.Binary := True;
       end Mark_Binary;
 
+      -------------------------
+      -- Load_Source_Archive --
+      -------------------------
+
+      procedure Load_Source_Archive (This  : in out Origin;
+                                     Table : TOML_Adapters.Key_Queue;
+                                     URL   : String) is
+      begin
+         --  Reinsert the URL so we can reuse the dynamic archive loader:
+         Table.Unwrap.Set (Keys.URL, Create_String (URL));
+
+         --  And load
+         This := (Data => (Kind        => Source_Archive,
+                           Src_Archive => From_TOML
+                             (Table.Descend
+                                (Keys.Origin,
+                                 Table.Unwrap,
+                                 Context => "source archive")),
+                           Hashes      => <>));
+      end Load_Source_Archive;
+
    begin
       --  Check if we are seeing a conditional binary origin, or a regular
       --  static one. If the former, divert to the dynamic loader; else
@@ -583,33 +604,30 @@ package body Alire.Origins is
             This := New_Filesystem (URI.Local_Path (URL));
 
          when URI.VCS_URIs                 =>
-            declare
-               Commit : constant String := Table.Checked_Pop
-                 (Keys.Commit, TOML_String).As_String;
-               Subdir : constant String :=
-                          (if Table.Contains (Keys.Subdir)
-                           then Table.Checked_Pop
-                             (Keys.Subdir, TOML_String).As_String
-                           else "");
-            begin
-               This := New_VCS
-                 (URL,
-                  Commit => Commit,
-                  Subdir => VFS.To_Native (Portable_Path (Subdir)));
-            end;
+            --  Some hosts (e.g. github.com) are always assumed to be git, but
+            --  might sometimes actually point to an archive file, so check if
+            --  "hashes" is specified. If not, this is a VCS repo.
+            if Table.Contains (Keys.Hashes) then
+               Load_Source_Archive (This, Table, URL);
+            else
+               declare
+                  Commit : constant String := Table.Checked_Pop
+                  (Keys.Commit, TOML_String).As_String;
+                  Subdir : constant String :=
+                           (if Table.Contains (Keys.Subdir)
+                              then Table.Checked_Pop
+                              (Keys.Subdir, TOML_String).As_String
+                              else "");
+               begin
+                  This := New_VCS
+                  (URL,
+                     Commit => Commit,
+                     Subdir => VFS.To_Native (Portable_Path (Subdir)));
+               end;
+            end if;
 
          when Public_Other                 =>
-            --  Reinsert the URL so we can reuse the dynamic archive loader:
-            Table.Unwrap.Set (Keys.URL, Create_String (URL));
-
-            --  And load
-            This := (Data => (Kind        => Source_Archive,
-                              Src_Archive => From_TOML
-                                (Table.Descend
-                                   (Keys.Origin,
-                                    Table.Unwrap,
-                                    Context => "source archive")),
-                              Hashes      => <>));
+            Load_Source_Archive (This, Table, URL);
 
          when SSH_Other                    =>
             From.Checked_Error ("Pure 'ssh://' URLs are not valid crate "
