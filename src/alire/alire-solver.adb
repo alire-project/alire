@@ -900,13 +900,19 @@ package body Alire.Solver is
          function Feasible return Boolean is
          begin
             return not
-              --  Unfeasibility check
+              --  Unfeasibility check: some remaining dependency, which is not
+              --  solved via pin, is already incompatible with a release in the
+              --  solution. TODO: some pin, known since the very beginning, may
+              --  provide crates which evade this check. To be implemented down
+              --  the road (this was missing also in the old solver).
               (for some Dep of Conditional.Dependencies'
                  (This.Target and This.Remaining)
                =>
                  Dep.Is_Value
                and then
-               This.Solution.Contains_Release (Dep.Value.Crate)
+                 not Pins.Depends_On (Dep.Value.Crate)
+               and then
+                 This.Solution.Contains_Release (Dep.Value.Crate)
                and then not This.Solution.State
                  (Dep.Value.Crate).Release.Satisfies (Dep.Value));
          end Feasible;
