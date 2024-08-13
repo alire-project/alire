@@ -236,6 +236,10 @@ package Alire.Solutions is
    --  This function allows identifying the concrete dependency that a solved
    --  release introduced in the solution.
 
+   function Depends_Directly_On (This : Solution;
+                                 Name : Crate_Name) return Boolean;
+   --  Says if Name is one of the dependency state keys in solution
+
    function Depends_On (This : Solution;
                         Name : Crate_Name) return Boolean;
    --  Says if the solution depends on the crate in some way. Will also
@@ -244,9 +248,6 @@ package Alire.Solutions is
    function Depends_On (This    : Solution;
                         Release : Alire.Releases.Release) return Boolean;
    --  Likewise, but take also into account the Release.Provides
-
-   function Depends_On_Specific_GNAT (This : Solution) return Boolean;
-   --  Say if the solution contains a release which is a gnat_something
 
    function Forbidden (This : Solution;
                        Env  : Properties.Vector)
@@ -264,6 +265,12 @@ package Alire.Solutions is
                       return Boolean;
    --  Check whether the solution already contains or provides a release
    --  equivalent to Release.
+
+   function Satisfies (This : Solution;
+                       Dep  : Dependencies.Dependency'Class)
+                       return Boolean;
+   --  Say if some release already in solution will satisfy Dep, either
+   --  directly, via provides, or via link.
 
    function Dependencies_Providing (This  : Solution;
                                     Crate : Crate_Name)
