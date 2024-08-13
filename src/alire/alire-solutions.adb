@@ -121,6 +121,14 @@ package body Alire.Solutions is
       return Result;
    end Excluding;
 
+   -------------------------
+   -- Depends_Directly_On --
+   -------------------------
+
+   function Depends_Directly_On (This : Solution;
+                                 Name : Crate_Name) return Boolean
+   is (This.Dependencies.Contains (Name));
+
    ----------------
    -- Depends_On --
    ----------------
@@ -139,15 +147,6 @@ package body Alire.Solutions is
    function Depends_On (This    : Solution;
                         Release : Alire.Releases.Release) return Boolean
    is (for some Dep of This.Dependencies => Release.Provides (Dep.Crate));
-
-   ------------------------------
-   -- Depends_On_Specific_GNAT --
-   ------------------------------
-
-   function Depends_On_Specific_GNAT (This : Solution) return Boolean
-   is (This.Releases.Contains_Or_Provides (GNAT_Crate) and then
-         (for some Rel of This.Releases.Elements_Providing (GNAT_Crate) =>
-               Rel.Name /= GNAT_Crate));
 
    ----------------------------
    -- Empty_Invalid_Solution --
@@ -269,6 +268,17 @@ package body Alire.Solutions is
                       Release : Alire.Releases.Release)
                       return Boolean
    is (for some Solved of This.Releases => Solved.Provides (Release));
+
+   ---------------
+   -- Satisfies --
+   ---------------
+
+   function Satisfies (This : Solution;
+                       Dep  : Dependencies.Dependency'Class)
+                       return Boolean
+   is (This.Links.Contains (Dep.Crate)
+       or else
+         (for some Solved of This.Releases => Solved.Satisfies (Dep)));
 
    ---------------
    -- Resetting --

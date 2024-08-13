@@ -869,14 +869,20 @@ package body Alire.Solver is
             Seen   : Dependencies.Containers.Set;
          begin
             --  Consolidate all pending dependencies in a single vector, taking
-            --  the opportunity to filter out already-seen dependencies
+            --  the opportunity to filter out already-seen dependencies. This
+            --  is an optimization that should not alter the result (but it
+            --  significantly speeds up the search).
 
             for Dep of
               Conditional.Dependencies'(This.Target and This.Remaining)
             loop
                if (Dep.Is_Value
                    and then not Seen.Contains (Dep.Value)
-                   and then not This.Seen.Contains (Dep.Value))
+                   and then not This.Seen.Contains (Dep.Value)
+                   and then not -- Both seen and solved already
+                     (This.Solution.Depends_Directly_On (Dep.Value.Crate)
+                      and then This.Solution.Satisfies (Dep.Value))
+                  )
                  or else not Dep.Is_Value
                then
                   Remain.Append (Dep);
