@@ -8,12 +8,16 @@ from drivers.asserts import assert_match
 
 
 # We expect attempts to get crates from these origins to fail, but it should be
-# due to the invalid host, not because of the scheme
+# because the git clone command fails, not because Alire rejects the origin URL.
 init_local_crate(update=False)
 for lib_name in ["libfoo", "libbar", "libbaz"]:
     p = run_alr("with", lib_name, complain_on_error=False)
     assert_match(
-        r".*Could not resolve hostname host.invalid.*",
+        (
+            r'.*Command \["git", "clone", "--recursive", "-q", '
+            r'"ssh://host\.invalid/path/to/repo.git", ".*"\] '
+            r'exited with code 128'
+        ),
         p.out
     )
 
