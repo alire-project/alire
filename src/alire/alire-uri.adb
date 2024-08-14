@@ -91,6 +91,10 @@ package body Alire.URI is
       end if;
    end URI_Kind;
 
+   ------------------------
+   -- Strip_VCS_Prefixes --
+   ------------------------
+
    function Strip_VCS_Prefixes (URL : String) return String is
       Scheme : constant String := L (U.Scheme (URL));
    begin
@@ -103,4 +107,11 @@ package body Alire.URI is
          return URL;
       end if;
    end Strip_VCS_Prefixes;
+
+   -------------------
+   -- In_Local_URIs --
+   -------------------
+
+   function In_Local_URIs (K : URI_Kinds) return Boolean
+   is (K in Local_URIs);
 end Alire.URI;

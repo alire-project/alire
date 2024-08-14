@@ -128,7 +128,7 @@ package Alire.URI with Preelaborate is
    --  Only the part after @ in an authority
 
    function Local_Path (This : URL) return String
-     with Pre => URI_Kind (This) in Local_URIs
+     with Pre => In_Local_URIs (URI_Kind (This))
      or else raise Checked_Error with Errors.Set
        ("Given URL does not seem to denote a path: " & This);
    --  Extract complete path from a URL intended for a local path: According to
@@ -148,6 +148,14 @@ package Alire.URI with Preelaborate is
 
    function Strip_VCS_Prefixes (URL : String) return String;
    --  Return the URL without any "git+" prefix or similar.
+
+   function In_Local_URIs (K : URI_Kinds) return Boolean;
+   --  For use by this package only
+   --
+   --  Equivalent to "K in Local_URIs", but used as a workaround for the fact
+   --  that GNAT 10 seems to fall over if a subtype with a static predicate is
+   --  referenced in the same file as its definition
+
 private
 
    use AAA.Strings;
@@ -169,7 +177,7 @@ private
 
    function Local_Path (This : URL) return String
    is (if URI_Kind (This) in Bare_Path then This
-       elsif URI_Kind (This) in Local_URIs then U.Permissive_Path (This)
+       elsif In_Local_URIs (URI_Kind (This)) then U.Permissive_Path (This)
        else raise Program_Error with "not applicable");
 
    ----------
