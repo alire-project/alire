@@ -101,7 +101,7 @@ package Alire.Solver is
 
    type Query_Options is record
       Age          : Age_Policies          := Newest;
-      Stopping     : Stopping_Policies     := Continue;
+      Stopping     : Stopping_Policies     := Ask;
       Detecting    : Detection_Policies    := Detect;
       Hinting      : Hinting_Policies      := Hint;
 

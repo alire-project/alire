@@ -1754,7 +1754,7 @@ package body Alire.Solver is
          begin
             Timer.Hold;
 
-            if Not_Interactive
+            if (Not_Interactive and then not Force)
               or else Options.Stopping = Stop
               or else User_Answer_Continue = No
             then
@@ -1792,7 +1792,9 @@ package body Alire.Solver is
                  (Question =>
                     "Do you want to keep solving for a few more seconds?",
                   Valid    => (others => True),
-                  Default  => (if Not_Interactive then No else Yes));
+                  Default  => (if Not_Interactive and then not Force
+                               then No
+                               else Yes));
             end if;
 
             if User_Answer_Continue /= No then
