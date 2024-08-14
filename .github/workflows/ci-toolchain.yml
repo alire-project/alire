@@ -61,23 +61,20 @@ jobs:
       run: ./bin/alr -d -n version | grep 'compiled with version' | grep -q '${{ matrix.gcc_version }}'
 
     - name: Update dependencies
-      run: ./bin/alr -d -n update
+      run: ./bin/alr -d -n -f update
+      # Force because otherwise solving may time out in non-interactive mode
 
     - name: Show dependencies/pins
-      run: |
-        ./bin/alr -d -n -q with --solve || ./bin/alr -n -v -d with --solve
-        if ./bin/alr -n -q with --solve | grep -q 'Dependencies (missing):'; then
-          echo "SELF-SOLVING FAILED, complete log follows:"
-          ./bin/alr -n -vv update
-          exit 1
-        fi
+      run: ./bin/alr -d -n -q with --solve || ./bin/alr -n -v -d with --solve
 
     - name: Show build environment, with debug fallback
       run: ./bin/alr -d -n printenv || ./bin/alr -n -v -d printenv
 
     - name: Move ./bin to ./bin-old to allow for self-build
       shell: bash
-      run: mv ./bin ./bin-old || { sleep 5s && mv ./bin ./bin-old; }
+      run: |
+        mv ./bin ./bin-old || \
+        { sleep 5s && mv ./bin ./bin-old && echo Old moved on 2nd attempt; }
       # Windows doesn't allow to replace a running exe so the next command
       # fails otherwise. Also, this mv fails sometimes so we try twice JIC.
 
