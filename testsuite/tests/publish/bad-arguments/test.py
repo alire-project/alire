@@ -34,6 +34,16 @@ p = run_alr("publish", "git+http://github.com/repo", "deadbeef",
 assert_match(".*invalid git commit id, 40 digits hexadecimal expected.*",
              p.out)
 
+# Bad commit characters
+p = run_alr("publish", "git+http://github.com/repo", "_"*40,
+            complain_on_error=False)
+assert_match(".*invalid git commit id, 40 digits hexadecimal expected.*",
+             p.out)
+p = run_alr("publish", "hg+http://host.name/repo", "_"*40,
+            complain_on_error=False)
+assert_match(".*invalid mercurial commit id, 40 digits hexadecimal expected.*",
+             p.out)
+
 # VCS without transport or extension
 p = run_alr("publish", "http://somehost.com/badrepo", "deadbeef",
             complain_on_error=False)
