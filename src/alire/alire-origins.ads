@@ -130,6 +130,10 @@ package Alire.Origins is
    is (S'Length = Git_Commit'Length and then
        (for all Char of S => Char in Alire.Utils.Hexadecimal_Character));
 
+   function Is_Valid_Mercurial_Commit (S : String) return Boolean
+   is (S'Length = Hg_Commit'Length and then
+       (for all Char of S => Char in Alire.Utils.Hexadecimal_Character));
+
    function Short_Commit (Commit : String) return String;
    --  First characters in the commit
 

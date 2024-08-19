@@ -390,14 +390,14 @@ package body Alire.Origins is
    begin
       case URL_Kind is
          when URI.Git_URIs =>
-            if Commit'Length /= Git_Commit'Length then
+            if not Is_Valid_Commit (Commit) then
                Raise_Checked_Error
                  ("invalid git commit id, " &
                     "40 digits hexadecimal expected");
             end if;
             return New_Git (VCS_URL, Commit, Subdir);
          when URI.Hg_URIs =>
-            if Commit'Length /= Hg_Commit'Length then
+            if not Is_Valid_Mercurial_Commit (Commit) then
                Raise_Checked_Error
                  ("invalid mercurial commit id, " &
                     "40 digits hexadecimal expected");
