@@ -66,7 +66,9 @@ jobs:
 
     - name: Package binaries
       if: (github.event_name == 'release')
-      run: zip alr-bin-linux.zip bin/alr LICENSE.txt
+      run: |
+        echo 'sudo cp -r bin share /usr/local/' > INSTALL.md
+        zip alr-bin-linux.zip bin/alr share/bash-completion/completions/alr LICENSE.txt INSTALL.md
 
     - name: Retrieve upload URL for the release
       if: (github.event_name == 'release')
