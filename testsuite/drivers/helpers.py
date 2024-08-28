@@ -8,6 +8,7 @@ import platform
 import re
 import shutil
 import stat
+import sys
 from subprocess import run
 from zipfile import ZipFile
 
@@ -318,6 +319,7 @@ sys.exit(p.returncode)
 
 class MockGit:
     """
+    NON-WINDOWS-ONLY
     A context manager which mocks the git command with string substitutions.
 
     The string substitutions are specified by the dictionary substitution_dict.
@@ -335,17 +337,25 @@ class MockGit:
         self._mock_git_dir = mock_git_dir
 
     def __enter__(self):
+        # Mocking on Windows would require git.exe wrapper
+        if on_windows():
+            print('SKIP: git mocking unavailable on Windows')
+            sys.exit(0)
+
         # Create a wrapper script for git
         wrapper_script = GIT_WRAPPER_TEMPLATE.format(
             substitution_dict=self._substitution_dict,
             actual_git_path=shutil.which("git")
         )
-        # Write the script to somewhere on PATH
+        # Add the directory to PATH
         try:
             os.mkdir(self._mock_git_dir)
         except FileExistsError:
             pass
-        os.environ["PATH"] = f'{self._mock_git_dir}:{os.environ["PATH"]}'
+        os.environ["PATH"] = (
+            f'{self._mock_git_dir}{os.pathsep}{os.environ["PATH"]}'
+        )
+        # Write the script to the directory
         wrapper_descriptor = os.open(
             os.path.join(self._mock_git_dir, "git"),
             flags=(os.O_WRONLY | os.O_CREAT | os.O_EXCL),
@@ -357,7 +367,7 @@ class MockGit:
     def __exit__(self, type, value, traceback):
         # Restore PATH
         os.environ["PATH"] = os.environ["PATH"].replace(
-            f'{self._mock_git_dir}:', '', 1
+            f'{self._mock_git_dir}{os.pathsep}', '', 1
         )
         # Delete the wrapper script
         os.remove(os.path.join(self._mock_git_dir, "git"))

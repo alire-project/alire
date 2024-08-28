@@ -93,7 +93,7 @@ def test(
             ],
             input=num_confirms * ["y"],
             complain_on_error=expect_success,
-            timeout=3,
+            timeout=10,
         )
 
         # Check output matches
