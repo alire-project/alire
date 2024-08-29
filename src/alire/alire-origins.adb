@@ -769,7 +769,10 @@ package body Alire.Origins is
 
          when VCS_Kinds =>
             Table.Set (Keys.URL,
-                       +(Prefixes (This.Kind).all
+                       +((if This.Kind in Git
+                            and then AAA.Strings.Has_Prefix (This.URL, "git@")
+                          then ""
+                          else Prefixes (This.Kind).all)
                          & (if URI.Scheme (This.URL) in URI.None
                            --  not needed for remote repos, but for testing
                            --  ones used locally:

@@ -220,7 +220,7 @@ for force_arg in ([], ["--force"]):
         args=force_arg + ["publish"],
         url="git@bitbucket.org:/some_user/repo-name.git",
         maint_logins='["github-username"]',
-        num_confirms=1, # (fails before second confirmation)
+        num_confirms=1,
         output=[
             r".*The remote URL seems to require repository ownership: .*",
         ],
@@ -239,18 +239,20 @@ for force_arg in ([], ["--force"]):
         gen_manifest=None,
         expect_success=False
     )
-    # "alr publish --for-private-index" also currently fails, but due to an
-    # issue with URI recognition (the host part is not properly identified).
+    # "alr publish --for-private-index" will succeed.
     test(
         args=force_arg + ["publish", "--for-private-index"],
         url="git@bitbucket.org:/some_user/repo-name.git",
         maint_logins='["github-username"]',
-        num_confirms=1,
+        num_confirms=2,
         output=[
-            r".* Origin is hosted on unknown site:.*",
+            r".*Success: Your index manifest file has been generated.*",
+            r".*Please upload this to the index in the xx/xxx/ subdirectory.*",
         ],
-        gen_manifest=None,
-        expect_success=False
+        gen_manifest=[
+            r'.*url = "git@bitbucket\.org:/some_user/repo-name\.git".*',
+        ],
+        expect_success=True
     )
 
     # A crate unsuitable for the community index because it has a

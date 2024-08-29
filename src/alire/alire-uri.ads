@@ -77,6 +77,14 @@ package Alire.URI with Preelaborate is
    function Authority_Without_Credentials (This : URL) return String;
    --  Only the part after @ in an authority
 
+   function Host (This : URL) return String;
+   --  The host part of a remote URI
+   --
+   --  Remotes of the form 'git@host.name:/some/path' (which are not valid
+   --  URIs) return the 'host.name' part.
+   --
+   --  Returns an empty string for local URIs.
+
    function Local_Path (This : URL) return String
      with Pre => Scheme (This) in None | File
      or else raise Checked_Error with Errors.Set

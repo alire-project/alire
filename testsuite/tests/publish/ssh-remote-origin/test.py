@@ -28,7 +28,7 @@ for url in urls:
     p = run_alr(
         "publish", "--for-private-index", url, commit,complain_on_error=False
     )
-    assert_match(r".*Origin is hosted on unknown site: .*", p.out)
+    assert_match(r".*Origin is hosted on unknown site: host\.invalid.*", p.out)
 
 
 print("SUCCESS")
