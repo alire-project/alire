@@ -91,7 +91,6 @@ jobs:
     - name: Package binaries (macOS/x64)
       if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
       run: zip alr-nightly-bin-x86_64-macos.zip bin/alr* LICENSE.txt alr-*.txt
-
     - name: Package binaries (macOS/arm64)
       if: startsWith(matrix.os, 'macos') && runner.arch == 'ARM64'
       run: zip alr-nightly-bin-aarch64-macos.zip bin/alr* LICENSE.txt alr-*.txt

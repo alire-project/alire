@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 --  Ensure config is loaded for some defaults below
 with Alire.Cache;
 with Alire.Settings.Edit.Early_Load;
@@ -5,9 +7,15 @@ pragma Unreferenced (Alire.Settings.Edit.Early_Load);
 
 package Alire.Settings.Builtins.Windows is
 
+   Latest_Msys2 : constant String := "2024-05-07";
+   --  Update here to upgrade to the latest release
+
+   Date_1 : String renames Latest_Msys2;
+   Date_2 : String renames AAA.Strings.Replace (Date_1, "-", "");
+
    pragma Style_Checks ("M200");
    Default_Msys2_Installer_URL : constant String
-     := "https://github.com/msys2/msys2-installer/releases/download/2024-01-13/msys2-x86_64-20240113.exe";
+     := "https://github.com/msys2/msys2-installer/releases/download/" & Date_1 & "/msys2-x86_64-" & Date_2 & ".exe";
    pragma Style_Checks ("M80");
 
    Default_Msys2_Installer : constant String
