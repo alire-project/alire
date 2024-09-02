@@ -68,7 +68,11 @@ package body Alire.URI is
          --  This is a normal URI, so return with any trailing port removed
          --  (note that the host may be an IPv6 address in square brackets)
          if Has_Prefix (Auth, "[") then
-            return Head (Auth, "]:") & "]";
+            if Contains (Auth, "]:") then
+               return Head (Auth, "]:") & "]";
+            else
+               return Auth;
+            end if;
          else
             return Head (Auth, ":");
          end if;
