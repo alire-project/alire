@@ -83,14 +83,9 @@ def sync() -> None:
     """
     Sync the shared build directory
     """
-    # We force the sync by running a build, no matter if it succeeds or not
-    try:
-        subprocess.run(["alr", "-q", "-d", "build"]
-                       , stdout=subprocess.DEVNULL
-                       , stderr=subprocess.DEVNULL
-                       )
-    except:
-        pass
+    run_alr("build", "--stop-after=generation")
+    return
+
 
 def sync_builds() -> None:
     sync()
