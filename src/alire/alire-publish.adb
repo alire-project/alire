@@ -891,10 +891,10 @@ package body Alire.Publish is
             Is_Trusted (URL)
          then
             Put_Success ("Origin is hosted on trusted site: "
-                         & URI.Authority_Without_Credentials (URL));
+                         & URI.Host (URL));
          else
             Raise_Checked_Error ("Origin is hosted on unknown site: "
-                                 & URI.Authority_Without_Credentials (URL));
+                                 & URI.Host (URL));
          end if;
       end if;
 
@@ -1028,10 +1028,8 @@ package body Alire.Publish is
    ----------------
 
    function Is_Trusted (URL : Alire.URL) return Boolean
-   is (for some Site of Trusted_Sites =>
-          URI.Authority_Without_Credentials (URL) = Site
-       or else
-          Has_Suffix (URI.Authority (URL), "." & Site));
+   is (for some Site of Trusted_Sites => URI.Host (URL) = Site
+       or else Has_Suffix (URI.Host (URL), "." & Site));
 
    ----------------------
    -- Local_Repository --
@@ -1137,36 +1135,21 @@ package body Alire.Publish is
                                     & TTY.Emph (Revision));
             end if;
 
-            --  Call Remote_Origin, ensuring that a URL referring to a
-            --  local path has a "file:" (or "git+file:") scheme and no
-            --  added ".git" suffix.
             declare
                Raw_URL   : constant String :=
                              Git.Fetch_URL
                                (Root_Path,
                                 Origin => Git.Remote (Root_Path));
                --  The one reported by the repo, in its public form
-
-               Fetch_URL : constant String :=
-               --  With an added ".git", if there isn't one already and the URL
-               --  isn't a local file path.
-                          Raw_URL
-                          & (if Has_Suffix (To_Lower_Case (Raw_URL), ".git")
-                               or else URI.URI_Kind (Raw_URL) in URI.Local_URIs
-                             then ""
-                             else ".git");
             begin
-               if URI.URI_Kind (Fetch_URL) in URI.Bare_Path then
-                  Publish.Remote_Origin (URL     => "git+file:" & Fetch_URL,
-                                         Commit  => Commit,
-                                         Subdir  => +Subdir,
-                                         Options => Options);
-               else
-                  Publish.Remote_Origin (URL     => Fetch_URL,
-                                         Commit  => Commit,
-                                         Subdir  => +Subdir,
-                                         Options => Options);
-               end if;
+               --  Complete the process with Remote_Origin, adding a "git+"
+               --  prefix if necessary to ensure that the URL will be
+               --  recognised as a git remote
+               Publish.Remote_Origin (URL     => URI.Make_VCS_Explicit
+                                                   (Raw_URL, URI.Git),
+                                      Commit  => Commit,
+                                      Subdir  => +Subdir,
+                                      Options => Options);
             end;
          end;
       end;
@@ -1181,12 +1164,25 @@ package body Alire.Publish is
                             Subdir  : Relative_Path := "";
                             Options : All_Options := New_Options)
    is
+      Kind : constant URI.URI_Kinds := URI.URI_Kind (URL);
    begin
       --  Preliminary argument checks
 
-      if URI.URI_Kind (URL) in URI.VCS_URIs and then Commit = "" then
-         Raise_Checked_Error
-           ("URL seems to point to a repository, but no commit was provided.");
+      --  Check that a commit is provided if the URL is definitely a VCS repo
+      --
+      --  If the URL is only probably a repository, we raise a warning but
+      --  otherwise assume this is meant to be a source archive (since
+      --  Origins.New_Source_Archive will raise an error if this turns out not
+      --  to be the case).
+
+      if Commit = "" and then Kind in URI.VCS_URIs then
+         if Kind in URI.Public_Probably_Git then
+            Put_Warning ("Assuming origin is a source archive "
+                         & "because no commit was provided.");
+         else
+            Raise_Checked_Error ("URL seems to point to a repository, "
+                                 & "but no commit was provided.");
+         end if;
       end if;
 
       --  Verify that subdir is not used with an archive (it is only for VCSs)
@@ -1197,11 +1193,11 @@ package body Alire.Publish is
 
       --  Check for obviously invalid url
 
-      if URI.URI_Kind (URL) in URI.SSH_Other then
+      if Kind in URI.SSH_Other then
          Raise_Checked_Error ("'ssh://' URLs are not valid crate origins. You "
                               & "may want git+" & URL & " instead.");
       end if;
-      if URI.URI_Kind (URL) in URI.External | URI.System | URI.Unknown
+      if Kind in URI.External | URI.System | URI.Unknown
       then
          Raise_Checked_Error ("Unsupported scheme: " & URL);
       end if;

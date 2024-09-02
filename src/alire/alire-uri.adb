@@ -14,6 +14,54 @@ package body Alire.URI is
       end if;
    end Authority_Without_Credentials;
 
+   -------------------
+   -- Host_From_URL --
+   -------------------
+
+   --  Return the host part of a URL.
+   --
+   --  Doesn't check whether This is actually a URL.
+   function Host_From_URL (This : URL) return String is
+      Auth : constant String := Authority_Without_Credentials (This);
+   begin
+      --  Return with any trailing port removed (note that the host may be an
+      --  IPv6 address in square brackets)
+      if Has_Prefix (Auth, "[") then
+         if Contains (Auth, "]:") then
+            return Head (Auth, "]:") & "]";
+         else
+            return Auth;
+         end if;
+      else
+         return Head (Auth, ":");
+      end if;
+   end Host_From_URL;
+
+   ----------
+   -- Host --
+   ----------
+
+   function Host (This : URL) return String is
+   begin
+      if URI_Kind (This) in SCP_Style_Git then
+         --  This has the form git@X:Y, so return X
+         return Head (Tail (This, "@"), ":");
+      elsif URI_Kind (This) in Non_URLs then
+         --  Return empty string for other non-URLs
+         return "";
+      else
+         return Host_From_URL (This);
+      end if;
+   end Host;
+
+   --------------
+   -- Fragment --
+   --------------
+
+   function Fragment (This : URL) return String
+   is (if URI_Kind (This) in Non_URLs then ""
+       else U.Extract (This, U.Fragment));
+
    package body Operators is
 
       ---------
@@ -41,13 +89,16 @@ package body Alire.URI is
       elsif Scheme = "file" then
          return File;
       elsif Has_Prefix (Scheme, "git@") then
-         return Private_Git;
+         --  We use the fact that URI schemes must not contain a '/', so this
+         --  condition is only satisfied if there is no '/' before the ':', as
+         --  required by git (https://git-scm.com/docs/git-clone#URLS)
+         return SCP_Style_Git;
       elsif Scheme = "git+https" or else Scheme = "git+http" then
-         return Public_Git;
+         return Public_Definitely_Git;
       elsif Scheme = "git+file" then
          return Local_Git;
       elsif Has_Prefix (Scheme, "git+") then
-         return Private_Git;
+         return Other_Git;
       elsif Scheme = "hg+https" or else Scheme = "hg+http" then
          return Public_Hg;
       elsif Scheme = "hg+file" then
@@ -62,24 +113,21 @@ package body Alire.URI is
          return Private_SVN;
       elsif Scheme = "http" or else Scheme = "https" then
          if Has_Git_Suffix (This) then
-            return Public_Git;
-         elsif Is_Known_Git_Host (Authority (This)) then
+            return Public_Definitely_Git;
+         elsif Is_Known_Git_Host (Host_From_URL (This)) then
             --  These are known git hosts, so recognise them even without a
             --  ".git" suffix
-            return Public_Git;
-         elsif Is_Known_Git_Host (Authority_Without_Credentials (This)) then
-            --  E.g. https://user:token@github.com/user/repo is private
-            return Private_Git;
+            return Public_Probably_Git;
          else
             return Public_Other;
          end if;
       elsif Scheme = "ssh" then
          if Has_Git_Suffix (This) then
-            return Private_Git;
-         elsif Is_Known_Git_Host (Authority_Without_Credentials (This)) then
-            --  These are known git hosts, so recognise them even without a
-            --  ".git" suffix
-            return Private_Git;
+            return Other_Git;
+         elsif Is_Known_Git_Host (Host_From_URL (This)) then
+            --  These are known git hosts (over SSH, so This can't be a raw
+            --  file), so recognise them even without a ".git" suffix
+            return Other_Git;
          else
             return SSH_Other;
          end if;
@@ -95,18 +143,50 @@ package body Alire.URI is
    -- Strip_VCS_Prefixes --
    ------------------------
 
-   function Strip_VCS_Prefixes (URL : String) return String is
-      Scheme : constant String := L (U.Scheme (URL));
+   function Strip_VCS_Prefixes (This : String) return String is
+      Scheme : constant String := L (U.Scheme (This));
    begin
-      if Has_Prefix (Scheme, "git+")
-        or else Has_Prefix (Scheme, "hg+")
-        or else Has_Prefix (Scheme, "svn+")
-      then
-         return Tail (URL, '+');
+      if (for some P of VCS_Prefixes => Has_Prefix (Scheme, P.all)) then
+         return Tail (This, '+');
       else
-         return URL;
+         return This;
       end if;
    end Strip_VCS_Prefixes;
+
+   -----------------------
+   -- Make_VCS_Explicit --
+   -----------------------
+
+   function Make_VCS_Explicit (This : String; Kind : VCS_Kinds) return String
+   is
+      VCS_Prefix   : constant String := VCS_Prefixes (Kind).all;
+      Current_Kind : constant URI_Kinds := URI_Kind (This);
+   begin
+      case Current_Kind is
+         when Bare_Path =>
+            --  Convert "/some/path" to "vcs+file:/some/path"
+            return VCS_Prefix & To_URL (This);
+         when SSH_Other | Public_Other | File =>
+            --  Not recognisable, so prepend prefix
+            return VCS_Prefix & This;
+         when VCS_URIs =>
+            if VCS_Kind (This) /= Kind then
+               raise Program_Error
+                  with "URL already looks like a different VCS";
+            elsif Current_Kind = SCP_Style_Git then
+               --  git@host:/path is already explicit
+               return This;
+            elsif Current_Kind = Public_Probably_Git then
+               --  Prepend prefix to make it Public_Definitely_Git
+               return VCS_Prefix & This;
+            else
+               --  This is already recognised as the correct VCS, so do nothing
+               return This;
+            end if;
+         when others =>
+            raise Program_Error with "Inappropriate VCS URL";
+      end case;
+   end Make_VCS_Explicit;
 
    -------------------
    -- In_Local_URIs --

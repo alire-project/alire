@@ -209,7 +209,12 @@ package body Alr.Commands.Withing is
 
       else
 
-         --  Pin to local folder
+         --  Pin to local folder, with a warning if it doesn't look like a path
+
+         if Alire.URI.URI_Kind (Cmd.URL.all) not in Alire.URI.Local_URIs then
+            Alire.Put_Warning ("Assuming '" & Cmd.URL.all & "' is a directory "
+                               & "because no branch or commit was specified.");
+         end if;
 
          Root.Add_Path_Pin
            (Crate => Crate,

@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
+with Alire.URI;
 with Alire.Utils.Tools;
 with Alire.Utils.User_Input.Query_Config;
 with Alire.VFS;
@@ -127,21 +128,23 @@ package body Alire.VCSs.Git is
    overriding
    function Clone (This : VCS;
                    From : URL;
-                   Into : Directory_Path)
+                   Into : Directory_Path;
+                   Commit : String := "")
                    return Outcome
-   is (This.Clone (From, Into, Branch => "", Depth => 1));
+   is (This.Clone_Branch
+     (From, Into, Branch => "", Commit => Commit, Depth => 1));
 
-   -----------
-   -- Clone --
-   -----------
+   ------------------
+   -- Clone_Branch --
+   ------------------
 
-   not overriding
-   function Clone (This   : VCS;
-                   From   : URL;
-                   Into   : Directory_Path;
-                   Branch : String;
-                   Depth  : Natural := 0)
-                   return Outcome
+   function Clone_Branch (This   : VCS;
+                          From   : URL;
+                          Into   : Directory_Path;
+                          Branch : String;
+                          Commit : String := "";
+                          Depth  : Natural := 0)
+                          return Outcome
    is
       pragma Unreferenced (This);
       Extra : constant Vector :=
@@ -149,7 +152,7 @@ package body Alire.VCSs.Git is
                       then Empty_Vector & "-q"
                       else Empty_Vector);
       Depth_Opts : constant Vector :=
-                     (if Depth /= 0 and then Commit (From) = ""
+                     (if Depth /= 0 and then Commit = ""
                       then Empty_Vector & "--depth" & Trim (Depth'Image)
                                         & "--no-single-branch" -- but all tips
                    else Empty_Vector);
@@ -161,16 +164,16 @@ package body Alire.VCSs.Git is
       Trace.Detail ("Checking out [git]: " & From);
 
       Run_Git (Empty_Vector & "clone" & "--recursive" &
-                 Extra & Branch_Opts & Depth_Opts & Repo (From) & Into);
+                 Extra & Branch_Opts & Depth_Opts & Repo_URL (From) & Into);
 
-      if Commit (From) /= "" then
+      if Commit /= "" then
          declare
             Guard : Directories.Guard (Directories.Enter (Into))
               with Unreferenced;
          begin
             --  Checkout a specific commit.
             --  "-q" needed to avoid the "detached HEAD" warning from git
-            Run_Git (Empty_Vector & "checkout" & "-q" & Commit (From));
+            Run_Git (Empty_Vector & "checkout" & "-q" & Commit);
 
             --  Update the submodules, if any
             Run_Git (Empty_Vector & "submodule" & "update" &
@@ -182,7 +185,7 @@ package body Alire.VCSs.Git is
    exception
       when E : others =>
          return Alire.Errors.Get (E);
-   end Clone;
+   end Clone_Branch;
 
    -------------
    -- Command --
@@ -586,16 +589,14 @@ package body Alire.VCSs.Git is
    -------------------------
 
    function Transform_To_Public (Remote : String) return URL is
-      Domain : constant String := Head (Tail (Remote, '@'), ':');
+      Domain : constant String := URI.Host (Remote);
    begin
-      if Has_Prefix (Remote, "git@") and then
+      if URI.URI_Kind (Remote) in URI.SCP_Style_Git and then
         Known_Transformable_Hosts.Contains (Domain)
       then
-         return  Public : constant URL :=
-           "https://" & Domain & "/" & Tail (Remote, ':')
-           & (if Has_Suffix (Remote, ".git")
-              then ""
-              else ".git")
+         return  Public : constant URL := URI.Make_VCS_Explicit
+           ("https://" & Domain & "/" & Tail (Remote, ':'),
+            URI.Git)
          do
             Trace.Warning ("Private git " & TTY.URL (Remote)
                            & " transformed to public " & TTY.URL (Public));

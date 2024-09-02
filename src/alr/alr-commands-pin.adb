@@ -194,7 +194,14 @@ package body Alr.Commands.Pin is
 
             else
 
-               --  Pin to dir
+               --  Pin to dir, with a warning if it doesn't look like a path
+
+               if Alire.URI.URI_Kind (Cmd.URL.all) not in Alire.URI.Local_URIs
+               then
+                  Alire.Put_Warning
+                    ("Assuming '" & Cmd.URL.all & "' is a directory "
+                     & "because no branch or commit was specified.");
+               end if;
 
                if not Alire.Utils.User_Input.Approve_Dir (Cmd.URL.all) then
                   Trace.Info ("Abandoned by user.");

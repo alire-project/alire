@@ -51,7 +51,7 @@ check_equivalent("zzz", path=zzz_path)
 # Prepare repository
 head = init_git_repo("yyy")
 branch = git_branch("yyy")
-url = "git+file://" + yyy_path  # to be recognizable as a git url
+url = "git+file:" + yyy_path  # to be recognizable as a git url
 
 # Simple git remote, explicit crate
 check_equivalent(crate="yyy", url=url)

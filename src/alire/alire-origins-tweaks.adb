@@ -37,9 +37,9 @@ package body Alire.Origins.Tweaks is
 
       function Fix_VCS return Origin is
          use Ada.Directories;
-         URL : constant String := This.URL; -- Doesn't include #commit
+         URL : constant String := This.URL;
       begin
-         --  Check for "xxx+file://" or return as-is:
+         --  Return as-is unless local path:
          if URI.URI_Kind (URL) not in URI.Local_URIs then
             return This;
          end if;
@@ -55,7 +55,7 @@ package body Alire.Origins.Tweaks is
 
             --  Rebuild the filesystem path as absolute for the VCS in hand:
             Absolute.Data.Repo_URL := + -- Unbounded string
-              (Prefix_File & Full_Name (TOML_Path / Rel_Path));
+              (Full_Name (TOML_Path / Rel_Path));
 
             return Absolute;
          end;

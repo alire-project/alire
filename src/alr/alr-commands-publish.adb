@@ -112,7 +112,7 @@ package body Alr.Commands.Publish is
                URL : constant String := Args (1);
             begin
                if URI.URI_Kind (URL) in URI.Bare_Path then
-                  if Archive_Format (URI.Local_Path (URL)) /= Unknown then
+                  if Archive_Format (URL) /= Unknown then
                      --  This is a local tarball posing as a remote. Will fail
                      --  unless forced.
                      Alire.Publish.Remote_Origin (URL     => URL,

@@ -25,15 +25,6 @@ assert_match(
     p.out
 )
 
-# Detect github case and give more precise error. This serves also to check
-# that github remotes without leading git+ or trailing .git are accepted.
-p = run_alr("publish", "https://github.com/missingext",
-            complain_on_error=False)
-assert_match(
-    ".*URL seems to point to a repository, but no commit was provided.*",
-    p.out
-)
-
 # Bad commit length
 p = run_alr("publish", "git+http://github.com/repo", "deadbeef",
             complain_on_error=False)
@@ -49,6 +40,26 @@ p = run_alr("publish", "hg+http://host.name/repo", "_"*40,
             complain_on_error=False)
 assert_match(".*invalid mercurial commit id, 40 digits hexadecimal expected.*",
              p.out)
+
+# Check that github remotes without leading git+ or trailing .git are treated
+# as source archives (with a warning) if no commit is provided and repositories
+# otherwise.
+p = run_alr("publish", "https://github.com/missingext",
+            quiet=False, complain_on_error=False)
+assert_match(
+    ".*Assuming origin is a source archive because no commit was provided",
+    p.out
+)
+assert_match(
+    ".*Unable to determine archive format from file extension.*",
+    p.out
+)
+p = run_alr("publish", "https://github.com/missingext", "deadbeef",
+            complain_on_error=False)
+assert_match(
+    ".*invalid git commit id, 40 digits hexadecimal expected.*",
+    p.out
+)
 
 # VCS without transport or extension
 p = run_alr("publish", "http://somehost.com/badrepo", "deadbeef",

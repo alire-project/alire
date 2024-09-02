@@ -11,7 +11,7 @@ from drivers.asserts import assert_eq
 
 
 # Ensure the "remote" looks like a git repo
-URL = "git+file://" + os.path.join(os.getcwd(), "upstream")
+URL = "git+file:" + os.path.join(os.getcwd(), "upstream")
 
 
 def verify(head=""):  # Either head or branch /= ""

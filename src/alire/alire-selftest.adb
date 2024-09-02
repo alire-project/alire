@@ -136,7 +136,7 @@ package body Alire.Selftest is
    begin
       --  Proper transform starting without .git
       pragma Assert (Transform_To_Public ("git@github.com:user/project") =
-                       "https://github.com/user/project.git");
+                       "git+https://github.com/user/project");
 
       --  Proper transform starting with .git
       pragma Assert (Transform_To_Public ("git@github.com:user/project.git") =
@@ -144,7 +144,7 @@ package body Alire.Selftest is
 
       --  GitLab
       pragma Assert (Transform_To_Public ("git@gitlab.com:user/project") =
-                       "https://gitlab.com/user/project.git");
+                       "git+https://gitlab.com/user/project");
 
       --  Unknown site, not transformed
       pragma Assert (Transform_To_Public ("git@ggithub.com:user/project") =

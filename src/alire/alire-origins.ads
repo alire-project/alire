@@ -12,7 +12,6 @@ private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Unbounded;
 
 with TOML; use all type TOML.Any_Value_Kind;
-with Alire.Utils;
 
 package Alire.Origins is
 
@@ -29,10 +28,6 @@ package Alire.Origins is
 
    type Kinds_Set is array (Kinds) of Boolean
      with Default_Component_Value => False;
-
-   type String_Access is access constant String;
-   type Prefix_Array is array (Kinds) of String_Access;
-   Prefixes : constant Prefix_Array;
 
    subtype Archive_Kinds is Kinds
      with Static_Predicate => Archive_Kinds in Binary_Archive | Source_Archive;
@@ -75,17 +70,31 @@ package Alire.Origins is
 
    function Commit (This : Origin) return String
      with Pre => This.Kind in VCS_Kinds;
+
    function Subdir (This : Origin) return Relative_Path
      with Pre => This.Kind in VCS_Kinds;
    --  Returns "" or a path in which the crate is located within the deployed
    --  origin.
+
    function URL (This : Origin) return Alire.URL
      with Pre => This.Kind in VCS_Kinds;
-   function URL_With_Commit (This : Origin) return Alire.URL
+   --  The URL which is passed to the VCS.
+   --
+   --  Has no "vcs+" prefix to disambiguate the type of VCS, and a local URL is
+   --  a path (i.e. "/some/path", not "file:/some/path").
+
+   function Explicit_URL (This : Origin) return Alire.URL
      with Pre => This.Kind in VCS_Kinds;
-   --  Append commit as '#commit'
+   --  A version of the URL which makes the appropriate VCS recognisable.
+   --
+   --  For example, if This.URL is "https://host/path", and This.Kind is Git,
+   --  then This.Explicit_URL will be "git+https://host/path". Likewise, if
+   --  This.URL is "/some/path", then This.Explicit_URL will be
+   --  "git+file:/some/path".
+
    function TTY_URL_With_Commit (This : Origin) return String
      with Pre => This.Kind in VCS_Kinds;
+
    function Is_Monorepo (This : Origin) return Boolean;
 
    function Path (This : Origin) return String
@@ -93,10 +102,13 @@ package Alire.Origins is
 
    function Archive_URL (This : Origin) return Alire.URL
      with Pre => This.Kind in Archive_Kinds;
+
    function Archive_Name (This : Origin) return String
      with Pre => This.Kind in Archive_Kinds;
+
    function Archive_Format (This : Origin) return Known_Source_Archive_Format
      with Pre => This.Kind in Archive_Kinds;
+
    function Archive_Format (Name : String) return Source_Archive_Format;
    --  Guess the format of a source archive from its file name.
 
@@ -104,6 +116,7 @@ package Alire.Origins is
      Pre => This.Kind in Filesystem | Source_Archive | VCS_Kinds;
 
    function Is_System (This : Origin) return Boolean is (This.Kind = System);
+
    function Package_Name (This : Origin) return String
      with Pre => This.Kind = System;
 
@@ -125,14 +138,6 @@ package Alire.Origins is
 
    subtype Git_Commit is VCSs.Git.Git_Commit;
    subtype Hg_Commit  is VCSs.Hg.Hg_Commit;
-
-   function Is_Valid_Commit (S : String) return Boolean
-   is (S'Length = Git_Commit'Length and then
-       (for all Char of S => Char in Alire.Utils.Hexadecimal_Character));
-
-   function Is_Valid_Mercurial_Commit (S : String) return Boolean
-   is (S'Length = Hg_Commit'Length and then
-       (for all Char of S => Char in Alire.Utils.Hexadecimal_Character));
 
    function Short_Commit (Commit : String) return String;
    --  First characters in the commit
@@ -294,6 +299,9 @@ private
 
          when VCS_Kinds =>
             Repo_URL : Unbounded_String;
+            --  The URL which is passed to the VCS. Any "vcs+" prefixes are
+            --  removed, and 'file:/some/path' URLs are converted into
+            --  "/some/path" local paths.
             Commit   : Unbounded_String;
             Subdir   : Unbounded_Relative_Path;
 
@@ -316,20 +324,7 @@ private
    function Image_Of_Hashes (This : Origin) return String;
 
    Prefix_External : aliased constant String := "external:";
-   Prefix_Git      : aliased constant String := "git+";
-   Prefix_Hg       : aliased constant String := "hg+";
-   Prefix_SVN      : aliased constant String := "svn+";
-   Prefix_File     : aliased constant String := "file://";
    Prefix_System   : aliased constant String := "system:";
-
-   Prefixes : constant Prefix_Array :=
-                (Git            => Prefix_Git'Access,
-                 Hg             => Prefix_Hg'Access,
-                 SVN            => Prefix_SVN'Access,
-                 External       => Prefix_External'Access,
-                 Filesystem     => Prefix_File'Access,
-                 System         => Prefix_System'Access,
-                 Archive_Kinds  => null);
 
    function Is_Monorepo (This : Origin) return Boolean
    is (This.Kind in VCS_Kinds and then This.Subdir /= "");

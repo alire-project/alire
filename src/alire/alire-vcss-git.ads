@@ -12,8 +12,7 @@ package Alire.VCSs.Git is
        (for all Char of Git_Commit => Char in Utils.Hexadecimal_Character);
 
    function Is_Valid_Commit (S : String) return Boolean
-   is (S'Length = Git_Commit'Length and then
-         (for all Char of S => Char in Utils.Hexadecimal_Character));
+   is (S in Git_Commit);
 
    No_Commit : constant Git_Commit := (others => '0');
    --  This is actually returned by e.g. `git worktree`, even if it could be a
@@ -48,21 +47,22 @@ package Alire.VCSs.Git is
    overriding
    function Clone (This : VCS;
                    From : URL;
-                   Into : Directory_Path)
+                   Into : Directory_Path;
+                   Commit : String := "")
                    return Outcome;
-   --  Make a shallow clone of the given URL (that may include '#commit). For
-   --  more precise control, use the following Clone signature.
+   --  Make a shallow clone of the given URL, optionally specifying a commit.
+   --  For more precise control, use the following Clone signature.
 
-   not overriding
-   function Clone (This   : VCS;
-                   From   : URL;
-                   Into   : Directory_Path;
-                   Branch : String;
-                   Depth  : Natural := 0)
-                   return Outcome;
+   function Clone_Branch (This   : VCS;
+                          From   : URL;
+                          Into   : Directory_Path;
+                          Branch : String;
+                          Commit : String := "";
+                          Depth  : Natural := 0)
+                          return Outcome;
    --  Specify a branch to check out after cloning. Branch may be "" for the
    --  default remote branch. For any Depth /= 0, apply --depth <Depth>. A
-   --  commit may be specified as From#Commit_Id
+   --  commit may optionally be specified.
 
    type Output is new AAA.Strings.Vector with null record;
 

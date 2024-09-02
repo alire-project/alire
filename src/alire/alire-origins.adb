@@ -137,19 +137,26 @@ package body Alire.Origins is
 
    function URL    (This : Origin) return Alire.URL is
      (Alire.URL (+This.Data.Repo_URL));
+
+   ------------------
+   -- Explicit_URL --
+   ------------------
+
+   function Explicit_URL (This : Origin) return Alire.URL
+   is (URI.Make_VCS_Explicit
+         (This.URL,
+          (case This.Kind is
+             when Git => URI.Git,
+             when Hg => URI.Hg,
+             when SVN => URI.SVN,
+             when others => raise Program_Error with "unreachable case")));
+
    ------------
    -- Commit --
    ------------
 
    function Commit (This : Origin) return String is
      (+This.Data.Commit);
-
-   ---------------------
-   -- URL_With_Commit --
-   ---------------------
-
-   function URL_With_Commit (This : Origin) return Alire.URL is
-     (This.URL & "#" & This.Commit);
 
    -------------------------
    -- TTY_URL_With_Commit --
@@ -206,7 +213,7 @@ package body Alire.Origins is
    is (case This.Kind is
           when Filesystem     => This.Path,
           when Source_Archive => This.Archive_URL,
-          when VCS_Kinds      => This.URL,
+          when VCS_Kinds      => This.Explicit_URL,
           when others         => raise Checked_Error with "Origin has no URL");
 
    --------------
@@ -364,17 +371,18 @@ package body Alire.Origins is
 
       --  We add the "file:" to have a proper URI and simplify things for
       --  Windows absolute paths with drive letter.
-      return (Data => (Source_Archive,
-                       Src_Archive =>
-                         (URL    =>
-                            +(if URI.URI_Kind (URL) in URI.Local_Other
-                              then "file:" & Ada.Directories.Full_Name
-                                                         (URI.Local_Path (URL))
-                              else URL),
-                          Name   => +Archive_Name,
-                          Format => Format,
-                          Binary => False,
-                          Hashes => <>)));
+      return (Data =>
+                (Source_Archive,
+                 Src_Archive =>
+                   (URL    =>
+                      +(if URI.URI_Kind (URL) in URI.Local_Other
+                        then URI.To_URL
+                          (Ada.Directories.Full_Name (URI.Local_Path (URL)))
+                        else URL),
+                    Name   => +Archive_Name,
+                    Format => Format,
+                    Binary => False,
+                    Hashes => <>)));
    end New_Source_Archive;
 
    -------------
@@ -385,19 +393,19 @@ package body Alire.Origins is
                      Commit : String;
                      Subdir : Relative_Path := "") return Origin is
       URL_Kind : constant URI.URI_Kinds := URI.URI_Kind (URL);
-      VCS_URL : constant String := VCSs.Repo_And_Commit (URL);
+      VCS_URL : constant String := VCSs.Repo_URL (URL);
 
    begin
       case URL_Kind is
          when URI.Git_URIs =>
-            if not Is_Valid_Commit (Commit) then
+            if not VCSs.Git.Is_Valid_Commit (Commit) then
                Raise_Checked_Error
                  ("invalid git commit id, " &
                     "40 digits hexadecimal expected");
             end if;
             return New_Git (VCS_URL, Commit, Subdir);
          when URI.Hg_URIs =>
-            if not Is_Valid_Mercurial_Commit (Commit) then
+            if not VCSs.Hg.Is_Valid_Commit (Commit) then
                Raise_Checked_Error
                  ("invalid mercurial commit id, " &
                     "40 digits hexadecimal expected");
@@ -604,12 +612,12 @@ package body Alire.Origins is
             This := New_Filesystem (URI.Local_Path (URL));
 
          when URI.VCS_URIs                 =>
-            --  Some hosts (e.g. github.com) are always assumed to be git, but
-            --  might sometimes actually point to an archive file, so check if
-            --  "hashes" is specified. If not, this is a VCS repo.
-            if Table.Contains (Keys.Hashes) then
+            if URL_Kind = Public_Probably_Git and then Hashed then
+               --  To resolve the ambiguity of Public_Probably_Git, assume a
+               --  source archive if the "hashes" field is present.
                Load_Source_Archive (This, Table, URL);
             else
+               --  In all other cases, treat this as a git repo.
                declare
                   Commit : constant String := Table.Checked_Pop
                   (Keys.Commit, TOML_String).As_String;
@@ -753,18 +761,10 @@ package body Alire.Origins is
    begin
       case This.Kind is
          when Filesystem =>
-            Table.Set (Keys.URL, +("file:" & This.Path));
+            Table.Set (Keys.URL, +(URI.To_URL (This.Path)));
 
          when VCS_Kinds =>
-            --  Restore any prefixes which were stripped by New_VCS
-            Table.Set (Keys.URL,
-                       +(Prefixes (This.Kind).all
-                         & (if URI.URI_Kind (This.URL) in URI.Bare_Path
-                           --  not needed for remote repos, but for testing
-                           --  ones used locally:
-                           then "file:"
-                           else "")
-                         & This.URL));
+            Table.Set (Keys.URL, +This.Explicit_URL);
             Table.Set (Keys.Commit, +This.Commit);
             if This.Subdir /= "" then
                Table.Set (Keys.Subdir,
@@ -773,8 +773,7 @@ package body Alire.Origins is
 
          when External =>
             Table.Set (Keys.URL,
-                       +(Prefixes (This.Kind).all &
-                         (+This.Data.Description)));
+                       +(Prefix_External & (+This.Data.Description)));
 
          when Binary_Archive =>
             Table := TOML_Adapters.Merge_Tables
@@ -788,7 +787,7 @@ package body Alire.Origins is
 
          when System =>
             Table.Set (Keys.URL,
-                       +(Prefixes (This.Kind).all & This.Package_Name));
+                       +(Prefix_System & This.Package_Name));
       end case;
 
       if not This.Get_Hashes.Is_Empty then
