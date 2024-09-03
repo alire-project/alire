@@ -7,7 +7,7 @@ with Alire.Paths.Vault;
 with Alire.Roots;
 with Alire.Settings.Builtins;
 
-with GNATCOLL.VFS;
+with Den.Filesystem;
 
 package body Alire.Builds is
 
@@ -56,16 +56,14 @@ package body Alire.Builds is
                   Simple_Logging.Activity
                     ("Syncing " & Release.Milestone.TTY_Image)
                     with Unreferenced;
-         Success : Boolean := False;
-         use GNATCOLL.VFS;
       begin
-         GNATCOLL.VFS.Copy
-           (Create (+Src),
-            +Dst,
-            Success);
-
-         Assert (Success,
-                 "Could not sync build dir from " & Src & " to " & Dst);
+         Den.Filesystem.Create_Directory (Dst);
+         Den.Filesystem.Copy (Src, Dst);
+      exception
+         when E : others =>
+            Log_Exception (E);
+            Raise_Checked_Error
+              ("Could not sync build dir from " & Src & " to " & Dst);
       end;
 
       --  At this point we can generate the final crate configuration
