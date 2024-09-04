@@ -2,13 +2,17 @@ with AAA.Table_IO;
 
 package Alire.Utils.Tables with Preelaborate is
 
-   type Table is new AAA.Table_IO.Table with null record;
+   subtype Parent is AAA.Table_IO.Table;
 
+   type Table is new Parent with null record;
+
+   overriding
    procedure Header (T : in out Table; Cell : String);
 
+   overriding
    function Header (T    : aliased in out Table;
                     Cell : String)
-                    return access Table;
+                    return AAA.Table_IO.Reference;
 
    procedure Print (T         : Table;
                     Level     : Trace.Levels            := Info;

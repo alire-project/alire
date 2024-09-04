@@ -6,17 +6,24 @@ package body Alire.Utils.Tables is
    -- Header --
    ------------
 
+   overriding
    procedure Header (T : in out Table; Cell : String) is
    begin
-      T.Append (TTY.Emph (AAA.Strings.To_Upper_Case (Cell)));
+      Parent (T).Header (TTY.Emph (AAA.Strings.To_Upper_Case (Cell)));
    end Header;
 
+   ------------
+   -- Header --
+   ------------
+
+   overriding
    function Header (T    : aliased in out Table;
                     Cell : String)
-                    return access Table is
+                    return AAA.Table_IO.Reference
+   is
    begin
       T.Header (Cell);
-      return T'Access;
+      return AAA.Table_IO.Reference'(Table => T'Access);
    end Header;
 
    -----------

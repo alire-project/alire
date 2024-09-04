@@ -25,6 +25,7 @@ den = "~0.1"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
 gnatcoll = "^21"
+lml = "~0.1"
 minirest = "~0.3"
 optional = "~0.1"
 semantic_versioning = "^3.0"
@@ -79,6 +80,10 @@ commit = "60729edf31816aca0036b13b2794c39a9bd0172e"
 [pins.gnatcoll]
 url    = "https://github.com/alire-project/gnatcoll-core.git"
 commit = "4e663b87a028252e7e074f054f8f453661397166"
+
+[pins.lml]
+url    = "https://github.com/mosteo/lml_ada.git"
+commit = "ae156ef82a2fedb7e28bb4dcaeb3d5c0a2e046ec"
 
 [pins.minirest]
 url    = "https://github.com/mosteo/minirest.git"
