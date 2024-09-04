@@ -2,6 +2,8 @@ with Ada.Directories;
 
 with Alire.OS_Lib;
 
+with GNAT.OS_Lib;
+
 package body Alire.Platforms.Folders is
 
    use OS_Lib.Operators;
@@ -11,7 +13,18 @@ package body Alire.Platforms.Folders is
    ----------
 
    function Home return Absolute_Path
-   is (OS_Lib.Getenv ("USERPROFILE"));
+   is
+   begin
+      if OS_Lib.Getenv ("USERPROFILE", "unset") = "unset" and then
+        GNAT.OS_Lib.Directory_Separator = '/'
+      then
+         Raise_Checked_Error
+           ("$USERPROFILE not set "
+            & "(might you be running an `alr` built for Windows?)");
+      else
+         return OS_Lib.Getenv ("USERPROFILE");
+      end if;
+   end Home;
 
    -----------
    -- Cache --
