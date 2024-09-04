@@ -1,6 +1,14 @@
 with AAA.Table_IO;
 
+with LML;
+
 package Alire.Utils.Tables with Preelaborate is
+
+   subtype Formats is LML.Formats;
+
+   Structured_Output        : Boolean := False;
+
+   Structured_Output_Format : Formats;
 
    subtype Parent is AAA.Table_IO.Table;
 
