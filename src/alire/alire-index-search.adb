@@ -24,6 +24,8 @@ package body Alire.Index.Search is
       Busy   : Simple_Logging.Ongoing :=
                  Simple_Logging.Activity ("Searching");
    begin
+      Table.Header ("NAME").Header ("DESCRIPTION");
+
       for Crate of Alire.Index.All_Crates.all loop
          if Lookup = "" or else
            Contains (To_Lower_Case (+Crate.Name), Lookup) or else
@@ -37,7 +39,7 @@ package body Alire.Index.Search is
          Busy.Step;
       end loop;
 
-      if Found = 0 then
+      if Found = 0 and then not Utils.Tables.Structured_Output then
          Trace.Always ("No hits");
       else
          Table.Print (Always, Separator => "  ");

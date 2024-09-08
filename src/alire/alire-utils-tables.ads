@@ -2,7 +2,7 @@ with AAA.Table_IO;
 
 with LML;
 
-package Alire.Utils.Tables with Preelaborate is
+package Alire.Utils.Tables is
 
    subtype Formats is LML.Formats;
 
@@ -22,10 +22,12 @@ package Alire.Utils.Tables with Preelaborate is
                     Cell : String)
                     return AAA.Table_IO.Reference;
 
-   procedure Print (T         : Table;
-                    Level     : Trace.Levels            := Info;
-                    Separator : String                  := " ";
-                    Align     : AAA.Table_IO.Alignments := (1 .. 0 => <>));
-   --  Hook so tables use the default output facilities of Alire
+   procedure Print (T          : Table;
+                    Level      : Trace.Levels            := Info;
+                    Separator  : String                  := " ";
+                    Align      : AAA.Table_IO.Alignments := (1 .. 0 => <>);
+                    Structured : Boolean := Structured_Output);
+   --  Hook so tables use the default output facilities of Alire. When
+   --  Structured_Output is enabled, formatting information is ignored.
 
 end Alire.Utils.Tables;
