@@ -48,7 +48,7 @@ jobs:
         INDEX: ""
 
     - name: Upload binaries
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
         name: alr-bin-linux.zip
         path: |
@@ -57,7 +57,7 @@ jobs:
 
     - name: Upload logs (if failed)
       if: failure()
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
         name: e3-log-linux.zip
         path: testsuite/out

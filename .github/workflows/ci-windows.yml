@@ -89,26 +89,26 @@ jobs:
         ALR_INSTALL_OS: ${{ runner.os }}
 
     - name: Upload installer
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
         name: installer-release-package
         path: scripts/installer/alire-*.exe
 
     - name: Upload zip archive
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
         name: zip-release-package
         path: scripts/installer/alire-*.zip
 
     - name: Upload tar archive
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
         name: tar-release-package
         path: scripts/installer/alire-*.tar.xz
 
     - name: Upload logs (if failed)
       if: failure()
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
         name: testsuite-log-windows.zip
         path: testsuite/out

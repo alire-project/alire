@@ -51,7 +51,7 @@ jobs:
 
     - name: Upload logs (if failed)
       if: failure()
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
         name: e3-log-docker-${{ matrix.tag }}.zip
         path: testsuite/out
