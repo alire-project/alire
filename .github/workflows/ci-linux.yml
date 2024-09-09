@@ -48,7 +48,7 @@ jobs:
         INDEX: ""
 
     - name: Upload binaries
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@main
       with:
         name: alr-bin-linux.zip
         path: |
