@@ -48,7 +48,7 @@ jobs:
 
     - name: Upload logs (if failed)
       if: failure()
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v4
       with:
         name: e3-log-linux.zip
         path: testsuite/out
@@ -114,7 +114,7 @@ jobs:
     # regular PRs for easy testing.
     - name: Upload as artifact (when not a release)
       if: (github.event_name != 'release')
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: alr-${{ steps.get_ref.outputs.short_sha }}-x86_64.AppImage.zip
         path: alr.AppImage
