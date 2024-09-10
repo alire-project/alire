@@ -43,7 +43,7 @@ jobs:
 
     - name: Upload logs (if failed)
       if: failure()
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v4
       with:
         name: e3-log-unsupported.zip
         path: testsuite/out
