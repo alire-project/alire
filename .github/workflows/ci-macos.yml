@@ -62,7 +62,7 @@ jobs:
         INDEX: ""
 
     - name: Upload binaries
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: alr-bin-${{ env.ARCH }}-macos.zip
         path: |
@@ -71,7 +71,7 @@ jobs:
 
     - name: Upload logs (if failed)
       if: failure()
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v4
       with:
         name: testsuite-log-macos.zip
         path: testsuite/out
