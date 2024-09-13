@@ -1,4 +1,5 @@
 with Ada.Directories;
+with Ada.Containers;
 
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
@@ -119,6 +120,71 @@ package body Alire.VCSs.Git is
    begin
       return Output;
    end Branches;
+
+   function Branch_Remote (This   : VCS;
+                           Path   : Directory_Path;
+                           Branch : String;
+                           Status : out Branch_States)
+                           return String
+   is
+      use Ada.Containers;
+      Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
+      Ref    : constant String := "refs/heads/" & Branch;
+      Output : constant AAA.Strings.Vector :=
+        Run_Git_And_Capture
+          (Empty_Vector
+           & "for-each-ref"
+           --  We need the name of the remote and the name of the remote branch
+           --  thereon which the local branch tracks (normally the same as the
+           --  local branch, but not always).
+           --  We use ":" as a separator, as it is not permitted in refs or
+           --  remote names.
+           & "--format=%(upstream:remotename):%(upstream)"
+           & Ref);
+   begin
+      if Output.Length = 0 then
+         Status := No_Branch;
+         return "";
+      elsif Output.Length > 1 then
+         --  Git should prevent branch "a/b" coexisting with "a", so this
+         --  case (where there are multiple matches of the form
+         --  'refs/heads/<Branch>/<something>') should not be possible if
+         --  Branch exists.
+         Status := No_Branch;
+         return "";
+      elsif Output.First_Element = ":" then
+         --  The branch exists, but doesn't track a remote (both
+         --  "%(upstream:remotename)" and "%(upstream)" are the empty
+         --  string, so only the separator is returned)
+         Status := No_Remote;
+         return "";
+      elsif not Contains (Output.First_Element, ":") then
+         --  The separator is missing for some reason
+         raise Program_Error
+           with "Git gave output inconsistent with specified format";
+      else
+         declare
+            Remote_Branch_Ref : constant String :=
+              Tail (Output.First_Element, ":");
+            Commits_Ahead     : constant AAA.Strings.Vector :=
+              Run_Git_And_Capture
+                (Empty_Vector
+                 & "rev-list"
+                 & String'(Remote_Branch_Ref & ".." & Branch));
+            Commits_Behind    : constant AAA.Strings.Vector :=
+              Run_Git_And_Capture
+                (Empty_Vector
+                 & "rev-list"
+                 & String'(Branch & ".." & Remote_Branch_Ref));
+         begin
+            Status :=
+              (if Commits_Ahead.Length /= 0 then Ahead
+               elsif Commits_Behind.Length /= 0 then Behind
+               else Synced);
+            return Head (Output.First_Element, ":");
+         end;
+      end if;
+   end Branch_Remote;
 
    -----------
    -- Clone --
@@ -257,8 +323,7 @@ package body Alire.VCSs.Git is
       else
          --  Create a temporary remote with our credentials and use it to push
          declare
-            Old : constant URL :=
-                    Handler.Remote_URL (Repo, Handler.Remote (Repo));
+            Old : constant URL := Handler.Remote_URL (Repo, Remote);
             Writurl  : constant URL :=
                          Replace (Old, "//", "//"
                                   & User_Info.User_GitHub_Login
@@ -393,29 +458,57 @@ package body Alire.VCSs.Git is
            Err_To_Out          => True) = 0;
    end Is_Repository;
 
-   ------------
-   -- Remote --
-   ------------
+   --------------------
+   -- Commit_Remotes --
+   --------------------
 
-   function Remote (This    : VCS;
-                    Path    : Directory_Path;
-                    Checked : Boolean := True)
-                    return String is
+   function Commit_Remotes (This    : VCS;
+                            Path    : Directory_Path;
+                            Commit  : Git_Commit)
+                            return AAA.Strings.Set is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
+      Output : constant AAA.Strings.Vector := Run_Git_And_Capture
+                 (Empty_Vector
+                  & "for-each-ref"
+                  & "--format=%(refname:rstrip=-3)"
+                  & String'("--contains=" & Commit)
+                  & "refs/remotes/");
+      Result : AAA.Strings.Set := Empty_Set;
+   begin
+      for Line of Output loop
+         --  We want to return just the remote name, without "refs/remotes/".
+         Assert (Has_Prefix (Line, "refs/remotes/"), "Unexpected Git output");
+         Result.Include (Tail (Line, "refs/remotes/"));
+      end loop;
+      return Result;
+   end Commit_Remotes;
+
+   -----------------
+   -- Repo_Remote --
+   -----------------
+
+   function Repo_Remote (This    : VCS;
+                         Path    : Directory_Path;
+                         Checked : Boolean := True)
+                         return String is
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
       Output : constant AAA.Strings.Vector :=
                  Run_Git_And_Capture (Empty_Vector & "remote");
    begin
-      if Output.Is_Empty then
-         if Checked then
+      if Output.Length in 1 then
+         return Output.First_Element;
+      else
+         if Checked and then Output.Is_Empty then
             Raise_Checked_Error ("No remote is configured");
+         elsif Checked then
+            Raise_Checked_Error ("Multiple remotes are configured");
          else
             return "";
          end if;
-      else
-         return Output.First_Element;
       end if;
-   end Remote;
+   end Repo_Remote;
 
    ----------------
    -- Remote_URL --
@@ -525,19 +618,14 @@ package body Alire.VCSs.Git is
    is
       Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
 
-      --  Out_1 should be portable. Out_2 is used as last resort; I believe
-      --  git is not localized so it should always work but since it relies on
-      --  human output it might break at any time I guess. Worst case, we would
-      --  report an 'Ahead' as 'Dirty'.
-
-      Out_1 : constant AAA.Strings.Vector :=
+      Output : constant AAA.Strings.Vector :=
         Run_Git_And_Capture (Empty_Vector & "status" & "--porcelain");
 
       Untracked_File : Natural := 0;
       Tracked_File   : Natural := 0;
    begin
 
-      for Line of Out_1 loop
+      for Line of Output loop
          if Contains (Line, "GNAT-TEMP-") then
             --  Turns out the temporary file we use to capture the output of
             --  "git status" makes git to return a dirty tree. We filter these
@@ -554,30 +642,7 @@ package body Alire.VCSs.Git is
          --  There are added/modified tracked files
          return Dirty;
       else
-         --  Retrieve revisions from remote branch tip up to our local HEAD. If
-         --  not empty, we are locally ahead.
-         declare
-            Branch : constant String := This.Branch (Repo);
-            Remote : constant String := This.Remote (Repo, Checked => False);
-         begin
-            if Remote = "" then
-               return No_Remote;
-            elsif (for all B of Branches (Repo, Local => False) =>
-                     B /= Remote & "/" & Branch)
-            then -- The branch doesn't even exist remotely
-               return Ahead;
-            elsif Run_Git_And_Capture
-              (Empty_Vector
-               & "rev-list"
-               & String'(Remote & "/" & Branch
-                 &  "..HEAD")).Is_Empty
-            then
-               return Clean;
-            else
-               --  At least one local commit not pushed to the remote
-               return Ahead;
-            end if;
-         end;
+         return Clean;
       end if;
    end Status;
 
@@ -646,7 +711,7 @@ package body Alire.VCSs.Git is
 
          Run_Git (Empty_Vector
                   & "checkout"
-                  & String'(This.Remote (Repo) & "/" & Branch)
+                  & String'(This.Repo_Remote (Repo) & "/" & Branch)
                   & "-B"
                   & Branch
                   & Extra

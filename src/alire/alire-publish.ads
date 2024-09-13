@@ -26,9 +26,11 @@ package Alire.Publish is
                                Revision : String   := "HEAD";
                                Options  : All_Options := New_Options) with
      Pre => URI.Scheme (Path) in URI.File_Schemes;
-   --  Check that given Path is an up-to-date git repo. If so, proceed with
-   --  remote repo verification. If no revision given use the HEAD commit,
-   --  otherwise use the revision (tag, branch, commit) commit.
+   --  Check that given Path is a git repo with a remote configured. If so,
+   --  check that Revision (tag, branch, commit) is suitable for publishing,
+   --  then proceed using Remote_Origin.
+   --
+   --  If Revision is "" or "HEAD", use the repo's current HEAD.
 
    procedure Remote_Origin (URL     : Alire.URL;
                             Commit  : String := "";
