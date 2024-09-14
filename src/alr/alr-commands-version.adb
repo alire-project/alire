@@ -89,7 +89,7 @@ package body Alr.Commands.Version is
       end if;
 
       Add ("APPLICATION", "");
-      Add ("alr version:", Alire.Version.Current.Image);
+      Add ("alr version:",      Alire.Version.Current.Image);
       Add ("libalire version:", Alire.Version.Current.Image);
       Add ("compilation date:",
            GNAT.Source_Info.Compilation_ISO_Date & " "
@@ -99,11 +99,11 @@ package body Alr.Commands.Version is
       Add ("");
       Add ("CONFIGURATION");
       Add ("settings folder:", Alire.Settings.Edit.Path);
-      Add ("cache folder:", Alire.Cache.Path);
-      Add ("vault folder:", Paths.Vault.Path);
-      Add ("build folder:", Build_Path);
-      Add ("temp folder:", Alire.Platforms.Folders.Temp);
-      Add ("force flag:", Alire.Force'Image);
+      Add ("cache folder:",    Alire.Cache.Path);
+      Add ("vault folder:",    Paths.Vault.Path);
+      Add ("build folder:",    Build_Path);
+      Add ("temp folder:",     Alire.Platforms.Folders.Temp);
+      Add ("force flag:",      Alire.Force'Image);
       Add ("non-interactive flag:",
            CLIC.User_Input.Not_Interactive'Image);
       Add ("community index branch:", Alire.Index.Community_Branch);
