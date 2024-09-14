@@ -929,7 +929,10 @@ package body Alire.Solutions is
             Trace.Always ("There are no pins");
          end if;
       else
-         Table.Header ("Crate").Header ("Target").Header ("Origin").New_Row;
+         --  To preserve old behavior with human output
+         if Utils.Tables.Structured_Output then
+            Table.Header ("Crate").Header ("Target").Header ("Origin").New_Row;
+         end if;
 
          for Dep of This.Dependencies loop
             if Dep.Is_Linked then

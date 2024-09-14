@@ -24,7 +24,10 @@ package body Alire.Index.Search is
       Busy   : Simple_Logging.Ongoing :=
                  Simple_Logging.Activity ("Searching");
    begin
-      Table.Header ("NAME").Header ("DESCRIPTION");
+      --  Preserve old behavior for human output
+      if Utils.Tables.Structured_Output then
+         Table.Header ("NAME").Header ("DESCRIPTION");
+      end if;
 
       for Crate of Alire.Index.All_Crates.all loop
          if Lookup = "" or else
