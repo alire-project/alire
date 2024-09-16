@@ -1,0 +1,12 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello"
+version = "1.0.1"
+maintainers = ["alejandro@mosteo.com", "bob@example.com"]
+maintainers-logins = ["mylogin"]
+
+[[depends-on]]
+libhello = "^1.0"
+
+[origin]
+url = "git+file:../../../crates/hello"
+commit = "cd89b04bec4c8580f565b34a3aef11716e3ce963"
