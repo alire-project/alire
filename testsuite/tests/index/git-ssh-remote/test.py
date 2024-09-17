@@ -7,7 +7,7 @@ SSH_IMPLICIT_INDEX = f"git@{ORG}/{INDEX_REPO}"
 SSH_EXPLICIT_INDEX = f"git+ssh://{SSH_IMPLICIT_INDEX}"
 
 # Test that we can add an index using implicit ssh
-run_alr("index", "--name", "implicit", "--add", SSH_EXPLICIT_INDEX)
+run_alr("index", "--name", "implicit", "--add", SSH_IMPLICIT_INDEX)
 run_alr("index", "--check")
 run_alr("index", "--update-all")  # Check pulling
 
