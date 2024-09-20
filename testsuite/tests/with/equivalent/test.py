@@ -2,12 +2,13 @@
 Verify that using manual edition and `alr with` result in equivalent manifests
 """
 
-from drivers.alr import run_alr, alr_with, init_local_crate
-from drivers.asserts import assert_eq, assert_match
-from drivers.helpers import init_git_repo, git_branch
-
 import os
-import shutil
+
+from e3.fs import rm
+
+from drivers.alr import run_alr, alr_with, init_local_crate
+from drivers.asserts import assert_eq
+from drivers.helpers import init_git_repo, git_branch
 
 
 def check_equivalent(dep="", path="", url="", commit="", branch=""):
@@ -33,7 +34,7 @@ def check_equivalent(dep="", path="", url="", commit="", branch=""):
 
         # Cleanup
         os.chdir("..")
-        shutil.rmtree("xxx")
+        rm("xxx", recursive=True)
 
 
 # Simple with without subset cannot be tested as `alr with` will narrow down

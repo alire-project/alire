@@ -2,12 +2,13 @@
 Verify that using manual edition and `alr pin` result in equivalent outputs
 """
 
+import os
+
+from e3.fs import rm
+
 from drivers.alr import run_alr, alr_pin, init_local_crate
 from drivers.asserts import assert_eq
 from drivers.helpers import init_git_repo, git_branch
-
-import os
-import shutil
 
 
 def check_equivalent(crate, path="", url="", commit="", branch=""):
@@ -33,7 +34,7 @@ def check_equivalent(crate, path="", url="", commit="", branch=""):
 
         # Cleanup
         os.chdir("..")
-        shutil.rmtree("xxx")
+        rm("xxx", recursive=True)
 
 
 # Local pinnable crate

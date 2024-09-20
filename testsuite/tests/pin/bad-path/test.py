@@ -23,12 +23,21 @@ assert_match(
     r".*Given path does not exist: \.\./bad/path",
     p.out
 )
+# Note that `alr` returns zero because the confirmation prompt abandons the
+# operation by default.
 assert_match(
     r".*Do you want to continue anyway\?",
     p.out
 )
 assert_match(
     r".*Using default: No",
+    p.out
+)
+
+# Verify the same result with a `file:` URL.
+p = run_alr("pin", "badcrate", "--use", "file:../bad/path")
+assert_match(
+    r".*Given path does not exist: \.\./bad/path",
     p.out
 )
 

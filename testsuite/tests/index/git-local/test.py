@@ -3,6 +3,7 @@ Check that local directories and local git repos can be used as indexes.
 """
 
 import os
+import re
 import shutil
 import subprocess
 
@@ -22,7 +23,7 @@ def run(*args, **kwargs):
 
 def check_index_is_configured(name, url, path):
     assert_match(
-        rf".*\d+.*{name}.*{url}.*{path}",
+        rf".*\d+.*{re.escape(name)}.*{re.escape(url)}.*{re.escape(path)}",
         run_alr("index", "--list").out
     )
 
@@ -39,8 +40,9 @@ def check_index_works():
     shutil.rmtree(deploy_dir)
 
 
-# Convert all paths in the index to absolute (relative paths don't work with
-# indexes that are git repos)
+# Add all necessary paths to the index. We do this now because they need to be
+# absolute paths; relative paths don't work for git repo indexes. Note that TOML
+# files require backslashes (in windows paths) to be escaped.
 my_crates_path = os.path.join(TEST_ROOT_DIR, "my_crates")
 hello_manifest_path = os.path.join(
     "my_index", "index", "he", "hello", "hello-1.0.1.toml"
@@ -48,10 +50,12 @@ hello_manifest_path = os.path.join(
 libhello_manifest_path = os.path.join(
     "my_index", "index", "li", "libhello", "libhello-1.0.0.toml"
 )
+hello_path = os.path.join(my_crates_path, "hello").replace("\\", "\\\\")
+libhello_path = os.path.join(my_crates_path, "libhello").replace("\\", "\\\\")
 with open(hello_manifest_path, "a") as f:
-    f.write(f'url = "file:{os.path.join(my_crates_path, "hello")}"')
+    f.write(f'url = "file:{hello_path}"\n')
 with open(libhello_manifest_path, "a") as f:
-    f.write(f'url = "file:{os.path.join(my_crates_path, "libhello")}"')
+    f.write(f'url = "file:{libhello_path}"\n')
 
 
 # Test adding my_index as a simple directory index.
@@ -85,7 +89,9 @@ p = run_alr(
     "index", "--name", "my_index", "--add", "git+file:my_index",
     complain_on_error=False
 )
-assert_match(".*repository '.*my_index' does not exist", p.out)
+unix_pattern = "repository '.*my_index' does not exist"
+windows_pattern = "'.*my_index' does not appear to be a git repository"
+assert_match(f".*({unix_pattern}|{windows_pattern})", p.out)
 
 
 # Initialise a normal git repo in the my_index directory.
@@ -107,12 +113,12 @@ run_alr("index", "--del", "my_index")
 run_alr("index", "--name", "my_index", "--add", "git+file:my_index")
 check_index_is_configured(
     "my_index",
-    rf"git\+file:{MY_INDEX_PATH}",
+    f"git+file:{MY_INDEX_PATH}",
     os.path.join(TEST_ROOT_DIR, "alr-config", "indexes", "my_index", "repo")
 )
 os.chdir(os.path.join("alr-config", "indexes", "my_index", "repo"))
 sp = run(["git", "remote", "show", "origin"], capture_output=True)
-assert_match(".*Fetch URL: (?!(git\+)?file:).*my_index", sp.stdout.decode())
+assert_match(r".*Fetch URL: (?!(git\+)?file:).*my_index", sp.stdout.decode())
 os.chdir(TEST_ROOT_DIR)
 check_index_works()
 run_alr("index", "--del", "my_index")
@@ -145,13 +151,13 @@ run_alr(
 )
 check_index_is_configured(
     "bare_repo_index",
-    rf"git\+file:{os.path.join(TEST_ROOT_DIR, 'bare_repo_index')}",
+    f"git+file:{os.path.join(TEST_ROOT_DIR, 'bare_repo_index')}",
     os.path.join(TEST_ROOT_DIR, "alr-config", "indexes", "bare_repo_index", "repo")
 )
 os.chdir(os.path.join("alr-config", "indexes", "bare_repo_index", "repo"))
 sp = run(["git", "remote", "show", "origin"], capture_output=True)
 assert_match(
-    ".*Fetch URL: (?!(git\+)?file:).*bare_repo_index",
+    r".*Fetch URL: (?!(git\+)?file:).*bare_repo_index",
     sp.stdout.decode()
 )
 os.chdir(TEST_ROOT_DIR)
@@ -174,7 +180,7 @@ os.chdir(TEST_ROOT_DIR)
 run_alr("index", "--name", "my_index", "--add", "git+file:my_index")
 check_index_is_configured(
     "my_index",
-    rf"git\+file:{MY_INDEX_PATH}",
+    f"git+file:{MY_INDEX_PATH}",
     os.path.join(TEST_ROOT_DIR, "alr-config", "indexes", "my_index", "repo")
 )
 p = run_alr("get", "hello", quiet=False, complain_on_error=False)
@@ -194,7 +200,7 @@ run_alr("index", "--del", "my_index")
 run_alr("index", "--name", "my_index", "--add", "git+file:my_index")
 check_index_is_configured(
     "my_index",
-    rf"git\+file:{MY_INDEX_PATH}",
+    f"git+file:{MY_INDEX_PATH}",
     os.path.join(TEST_ROOT_DIR, "alr-config", "indexes", "my_index", "repo")
 )
 check_index_works()

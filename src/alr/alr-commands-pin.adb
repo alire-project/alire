@@ -195,21 +195,29 @@ package body Alr.Commands.Pin is
             else
 
                --  Pin to dir, with a warning if it doesn't look like a path
+               --  and a subsequent confirmation prompt if it doesn't exist.
 
-               if Alire.URI.URI_Kind (Cmd.URL.all) not in Alire.URI.Local_URIs
-               then
-                  Alire.Put_Warning
-                    ("Assuming '" & Cmd.URL.all & "' is a directory "
-                     & "because no branch or commit was specified.");
-               end if;
+               declare
+                  use Alire.URI;
+                  Local : constant Boolean :=
+                    URI_Kind (Cmd.URL.all) in Local_URIs;
+                  Path  : constant String :=
+                    (if Local then Local_Path (Cmd.URL.all) else Cmd.URL.all);
+               begin
+                  if not Local then
+                     Alire.Put_Warning
+                       ("Assuming '" & Cmd.URL.all & "' is a directory "
+                        & "because no branch or commit was specified.");
+                  end if;
 
-               if not Alire.Utils.User_Input.Approve_Dir (Cmd.URL.all) then
-                  Trace.Info ("Abandoned by user.");
-                  return;
-               end if;
+                  if not Alire.Utils.User_Input.Approve_Dir (Path) then
+                     Trace.Info ("Abandoned by user.");
+                     return;
+                  end if;
 
-               New_Root.Add_Path_Pin (Crate => Optional_Crate,
-                                      Path  => Cmd.URL.all);
+                  New_Root.Add_Path_Pin (Crate => Optional_Crate,
+                                         Path  => Path);
+               end;
 
             end if;
 

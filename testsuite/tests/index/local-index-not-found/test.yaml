@@ -1,5 +1,1 @@
 driver: python-script
-indexes:
-    bad_index:
-        dir: file://no-such-directory
-        in_fixtures: false

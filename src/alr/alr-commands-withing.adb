@@ -10,6 +10,7 @@ with Alire.Releases;
 with Alire.Roots.Editable;
 with Alire.Solutions;
 with Alire.URI;
+with Alire.Utils.User_Input;
 
 with Alr.OS_Lib;
 
@@ -210,15 +211,27 @@ package body Alr.Commands.Withing is
       else
 
          --  Pin to local folder, with a warning if it doesn't look like a path
+         --  and a subsequent confirmation prompt if it doesn't exist.
 
-         if Alire.URI.URI_Kind (Cmd.URL.all) not in Alire.URI.Local_URIs then
-            Alire.Put_Warning ("Assuming '" & Cmd.URL.all & "' is a directory "
-                               & "because no branch or commit was specified.");
-         end if;
+         declare
+            use Alire.URI;
+            Local : constant Boolean := URI_Kind (Cmd.URL.all) in Local_URIs;
+            Path  : constant String := (if Local then Local_Path (Cmd.URL.all)
+                                        else Cmd.URL.all);
+         begin
+            if not Local then
+               Alire.Put_Warning
+                 ("Assuming '" & Cmd.URL.all & "' is a directory because no "
+                  & "branch or commit was specified.");
+            end if;
 
-         Root.Add_Path_Pin
-           (Crate => Crate,
-            Path  => Cmd.URL.all);
+            if not Alire.Utils.User_Input.Approve_Dir (Path) then
+               Trace.Info ("Abandoned by user.");
+               return;
+            end if;
+
+            Root.Add_Path_Pin (Crate => Crate, Path  => Path);
+         end;
 
       end if;
    end Add_With_Pin;
