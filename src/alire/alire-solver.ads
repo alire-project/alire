@@ -113,10 +113,7 @@ package Alire.Solver is
    end record;
 
    Default_Options : constant Query_Options := (others => <>);
-   --  Default options is to keep looking without asking. This is potentially
-   --  more time consuming but it should be safe in the sense that no spurious
-   --  incomplete solutions should be returned. When interaction/early stop is
-   --  preferred, it must be tweaked (see child package Predefined_Options).
+   --  Default options is to ask on timeout
 
    --  See child package Predefined_Options for more.
 

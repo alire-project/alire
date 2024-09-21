@@ -678,9 +678,7 @@ package body Alire.Solver is
          --  Prefer states with fewer pending dependencies. This is simply to
          --  steer the search towards complete solutions first.
 
-         case Compare (L.Target.Leaf_Count + L.Remaining.Leaf_Count,
-                       R.Target.Leaf_Count + R.Remaining.Leaf_Count)
-         is
+         case Compare (Pending_Count (L), Pending_Count (R)) is
             when Left  => return True;
             when Right => return False;
             when Equal => null;
@@ -951,7 +949,7 @@ package body Alire.Solver is
             raise Program_Error with "Search state lost!";
          end if;
 
-         if This.Target.Is_Empty and then This.Remaining.Is_Empty then
+         if Pending_Count (This.all) = 0 then
             Store_Solution (State_Ptr'(This.all'Unchecked_Access));
          end if;
       end Enqueue;
@@ -1721,7 +1719,7 @@ package body Alire.Solver is
          declare
             Head : constant State_Ptr := States.First_Element;
          begin
-            if Head.Target.Is_Empty and then Head.Remaining.Is_Empty
+            if Pending_Count (Head.all) = 0
               and then
                 not Contains_All_Satisfiable (States.First_Element.To_Solution)
             then
