@@ -66,3 +66,6 @@
 [submodule "deps/cstrings"]
 	path = deps/cstrings
 	url = https://github.com/mosteo/cstrings
+[submodule "deps/compare_to_case"]
+	path = deps/compare_to_case
+	url = https://github.com/mosteo/compare_to_case

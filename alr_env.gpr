@@ -14,6 +14,7 @@ aggregate project Alr_Env is
                          "deps/ajunitgen",
                          "deps/ansi",
                          "deps/clic",
+                         "deps/compare_to_case",
                          "deps/cstrings",
                          "deps/den",
                          "deps/dirty_booleans",

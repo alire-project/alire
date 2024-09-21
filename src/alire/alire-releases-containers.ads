@@ -14,6 +14,9 @@ package Alire.Releases.Containers is
                                                      Release_Image);
    subtype Optional is Optional_Releases.Optional;
 
+   function Unit (Element : Releases.Release) return Optional
+                  renames Optional_Releases.Unit;
+
    package Release_Sets
    is new Ada.Containers.Indefinite_Ordered_Sets (Releases.Release,
                                                   Releases."<",

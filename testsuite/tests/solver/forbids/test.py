@@ -20,7 +20,7 @@ init_local_crate("conflict_lone")
 alr_with("crate_conflict")
 alr_with("crate_lone")
 match_solution("crate_(conflict|lone)=.* \(origin:.*\)")   # has origin: solved
-match_solution("crate_(conflict|lone)\* \(direct,missed:skipped\)")
+match_solution("crate_(conflict|lone)\* \(direct,missed:(conflict|skipped)\)")
 # Because of load/solving details, we do not know which of the two crates is
 # going to be missed/accepted in the solution, so we check there is one of each
 
@@ -28,6 +28,6 @@ init_local_crate("conflict_virtual")
 alr_with("crate_conflict")
 alr_with("crate_virtual")
 match_solution("crate_(conflict|virtual)=.* \(origin:.*\)")
-match_solution("crate_(conflict|virtual)\* \(direct,missed:skipped\)")
+match_solution("crate_(conflict|virtual)\* \(direct,missed:(conflict|skipped)\)")
 
 print('SUCCESS')

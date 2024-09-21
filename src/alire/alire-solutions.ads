@@ -3,6 +3,7 @@ with Alire.Containers;
 with Alire.Dependencies.Containers;
 with Alire.Dependencies.States.Maps;
 with Alire.Interfaces;
+with Alire.Milestones;
 with Alire.Optional;
 with Alire.Properties;
 with Alire.Releases.Containers;
@@ -186,10 +187,24 @@ package Alire.Solutions is
 
    function Composition (This : Solution) return Compositions;
 
+   function Contains (This    : Solution;
+                      Release : Alire.Releases.Release) return Boolean;
+   --  Say if the solution contains exactly this release
+
+   function Contains (This    : Solution;
+                      Release : Milestones.Milestone) return Boolean;
+
    function Contains_Release (This  : Solution;
                               Crate : Crate_Name) return Boolean;
    --  Say if Crate is among the releases (solved or linked) for this solution.
    --  It will return False if the solution does not even depend on Crate.
+
+   function Contains_Incompatible (This    : Solution;
+                                   Release : Alire.Releases.Release)
+                                   return Boolean;
+   --  Say if this solution already contains a release for a dependency
+   --  provided by the given release; in which case Release cannot be added
+   --  to this solution for a different dependency.
 
    function Crates (This : Solution) return Name_Set;
    --  Dependency name closure, independent of the status in the solution, as
@@ -221,6 +236,10 @@ package Alire.Solutions is
    --  This function allows identifying the concrete dependency that a solved
    --  release introduced in the solution.
 
+   function Depends_Directly_On (This : Solution;
+                                 Name : Crate_Name) return Boolean;
+   --  Says if Name is one of the dependency state keys in solution
+
    function Depends_On (This : Solution;
                         Name : Crate_Name) return Boolean;
    --  Says if the solution depends on the crate in some way. Will also
@@ -229,9 +248,6 @@ package Alire.Solutions is
    function Depends_On (This    : Solution;
                         Release : Alire.Releases.Release) return Boolean;
    --  Likewise, but take also into account the Release.Provides
-
-   function Depends_On_Specific_GNAT (This : Solution) return Boolean;
-   --  Say if the solution contains a release which is a gnat_something
 
    function Forbidden (This : Solution;
                        Env  : Properties.Vector)
@@ -249,6 +265,12 @@ package Alire.Solutions is
                       return Boolean;
    --  Check whether the solution already contains or provides a release
    --  equivalent to Release.
+
+   function Satisfies (This : Solution;
+                       Dep  : Dependencies.Dependency'Class)
+                       return Boolean;
+   --  Say if some release already in solution will satisfy Dep, either
+   --  directly, via provides, or via link.
 
    function Dependencies_Providing (This  : Solution;
                                     Crate : Crate_Name)
@@ -345,6 +367,10 @@ package Alire.Solutions is
    ---------
    -- I/O --
    ---------
+
+   function Image_One_Line (This : Solution) return String;
+   --  Simplified representation containing only solved milestones or unsolved
+   --  dependencies
 
    procedure Print (This     : Solution;
                     Root     : Alire.Releases.Release;
