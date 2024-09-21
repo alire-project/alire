@@ -19,6 +19,7 @@ package body Alire.User_Pins is
    package Keys is
       Branch   : constant String := "branch";
       Commit   : constant String := "commit";
+      Subdir   : constant String := "subdir";
       Internal : constant String := "lockfiled";
       Path     : constant String := "path";
       URL      : constant String := "url";
@@ -45,14 +46,16 @@ package body Alire.User_Pins is
    -- New_Remote --
    ----------------
 
-   function New_Remote (URL : Alire.URL;
+   function New_Remote (URL    : Alire.URL;
                         Commit : String := "";
-                        Branch : String := "")
+                        Branch : String := "";
+                        Subdir : Alire.Relative_Path := "")
                         return Pin
    is (Kind       => To_Git,
        URL        => +URL,
        Commit     => +Commit,
        Branch     => +Branch,
+       Subdir     => +Subdir,
        Local_Path => <>);
 
    -----------
@@ -93,6 +96,9 @@ package body Alire.User_Pins is
                   then ", branch='" & (+This.Branch) & "'"
                   elsif This.Commit /= ""
                   then ", commit='" & (+This.Commit) & "'"
+                  else "")
+               & (if This.Subdir /= ""
+                  then ", subdir='" & (+This.Subdir) & "'"
                   else ""))
        & " }");
 
@@ -273,8 +279,12 @@ package body Alire.User_Pins is
       --  At this point, we have the sources at Destination. Last checks ensue.
 
       declare
-         Root : Roots.Optional.Root :=
-                  Roots.Optional.Detect_Root (Destination);
+         use Directories.Operators; -- "/"
+
+         Subdir : constant String := +This.Subdir;
+         Root   : Roots.Optional.Root := Roots.Optional.Detect_Root
+           ((if Subdir = "" then Destination
+             else Destination / Subdir));
       begin
 
          --  Check crate name mismatch
@@ -401,6 +411,11 @@ package body Alire.User_Pins is
                      Result.Branch :=
                        +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
                   end if;
+
+                  if This.Contains (Keys.Subdir) then
+                     Result.Subdir :=
+                       +This.Checked_Pop (Keys.Subdir, TOML_String).As_String;
+                  end if;
                end return;
 
             else
@@ -476,6 +491,7 @@ package body Alire.User_Pins is
                           TOML_String).As_String,
                         Branch     => <>,
                         Commit     => <>,
+                        Subdir     => <>,
                         Local_Path => <>);
          begin
             --  "git+ssh://"" and "ssh+git://" are deprecated, so treat them as
@@ -512,6 +528,13 @@ package body Alire.User_Pins is
                  +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
                This.Assert (+Result.Branch /= "",
                             "branch cannot be the empty string");
+            end if;
+
+            if This.Contains (Keys.Subdir) then
+               Result.Subdir :=
+                 +This.Checked_Pop (Keys.Subdir, TOML_String).As_String;
+               This.Assert (+Result.Subdir /= "",
+                            "subdir cannot be the empty string");
             end if;
 
             --  TEST: empty branch value
@@ -593,6 +616,12 @@ package body Alire.User_Pins is
          elsif Branch (This).Has_Element then
             Table.Set (Keys.Branch,
                        Create_String (Branch (This).Element.Ptr.all));
+         end if;
+
+         --  TODO: Should this use the "VFS.Attempt_Portable"?
+         if Subdir (This).Has_Element then
+            Table.Set (Keys.Subdir,
+                       Create_String (Subdir (This).Element.Ptr.all));
          end if;
       end if;
 
