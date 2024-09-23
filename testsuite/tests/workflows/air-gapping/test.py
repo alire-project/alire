@@ -6,17 +6,12 @@ Test fetching a crate online, and subsequently building offline.
 import os
 import shutil
 import subprocess
-import sys
 
 from drivers.alr import run_alr
-from drivers.helpers import init_git_repo, on_windows
 from drivers.asserts import assert_eq, assert_match
 
 
 # Mock git, curl, gprbuild etc. with dummy scripts
-if on_windows():
-    print('SKIP: command mocking unavailable on Windows')
-    sys.exit(0)
 os.mkdir("path-dir")
 os.chdir("path-dir")
 for executable in ("git", "hg", "svn", "curl", "gprbuild"):
@@ -31,10 +26,6 @@ for executable in ("git", "hg", "svn", "curl", "gprbuild"):
 os.environ["PATH"] = f'{os.getcwd()}{os.pathsep}{os.environ["PATH"]}'
 os.chdir("..")
 
-
-# 'dependencies.shared=false' is required to ensure dependencies are packaged
-# inside the workspace (at ./alire/cache/dependencies)
-run_alr("settings", "--global", "--set", "dependencies.shared", "false")
 
 # Run `alr get hello`. This will fail because git is unavailable.
 p = run_alr("get", "hello", quiet=False, complain_on_error=False)
