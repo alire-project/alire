@@ -5,5 +5,4 @@ maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 
 [origin]
-url = "git+file:../../../crates/libhello"
-commit = "8265f7ebea39d73db9675fc91495b448ed5960ec"
+url = "file:../../../crates/libhello.tgz"

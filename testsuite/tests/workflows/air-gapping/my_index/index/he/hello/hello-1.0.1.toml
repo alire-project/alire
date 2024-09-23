@@ -8,5 +8,4 @@ maintainers-logins = ["mylogin"]
 libhello = "^1.0"
 
 [origin]
-url = "git+file:../../../crates/hello"
-commit = "cd89b04bec4c8580f565b34a3aef11716e3ce963"
+url = "file:../../../crates/hello.tgz"
