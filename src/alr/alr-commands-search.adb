@@ -194,12 +194,12 @@ package body Alr.Commands.Search is
       --  End of option verification, start of search. First load the index,
       --  required to look at its entries.
 
-      Tab.Append (TTY.Bold ("NAME"));
-      Tab.Append (TTY.Bold ("STATUS"));
-      Tab.Append (TTY.Bold ("VERSION"));
-      Tab.Append (TTY.Bold ("DESCRIPTION"));
-      Tab.Append (TTY.Bold ("NOTES"));
-      Tab.Append (TTY.Bold ("MATCHES"));
+      Tab.Header ("NAME");
+      Tab.Header ("STATUS");
+      Tab.Header ("VERSION");
+      Tab.Header ("DESCRIPTION");
+      Tab.Header ("NOTES");
+      Tab.Header ("MATCHES");
 
       declare
          Busy : Simple_Logging.Ongoing :=
