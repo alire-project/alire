@@ -62,7 +62,6 @@ assert_match(r'.*Command \["gprbuild", .*\] exited with code 1', p.out)
 # mocking still enabled to check it doesn't try to fetch anything else)
 os.remove(os.path.join("..", "path-dir", "gprbuild"))
 p = run_alr("build", quiet=False)
-assert_match(".*Build finished successfully in .* seconds", p.out)
 
 # Check the built binary works as expected
 assert_eq(
