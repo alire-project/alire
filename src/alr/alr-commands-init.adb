@@ -632,14 +632,14 @@ package body Alr.Commands.Init is
             & "requested now.");
          TIO.New_Line;
          TIO.Put_Line
-           ("You can edit this information at any time with 'alr config'");
+           ("You can edit this information at any time with 'alr settings'");
          TIO.New_Line;
       end if;
       Info.Username := To_Unbounded_String (UI.Query_Config.User_Name);
       Query_GitHub_Login (Info);
       Info.Email := To_Unbounded_String (UI.Query_Config.User_Email);
 
-      --  Make it clear that the remainder can't be changed with `alr config`
+      --  Make it clear that the remainder can't be changed with `alr settings`
       TIO.New_Line;
       if User_Not_Already_Configured then
          AAA.Text_IO.Put_Paragraph
