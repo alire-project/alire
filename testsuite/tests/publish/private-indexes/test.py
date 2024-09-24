@@ -175,7 +175,7 @@ for force_arg in ([], ["--force"]):
             r".*Success: Your index manifest file has been generated.*",
             # alr should provide instructions again, but they should be more
             # generic, since we don't know where the private index is located.
-            r".*Please upload this to the index in the xx/xxx/ subdirectory.*",
+            r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
             r'.*url = "git\+https://github\.com/some_user/repo-name\.git".*',
@@ -247,7 +247,7 @@ for force_arg in ([], ["--force"]):
         num_confirms=2,
         output=[
             r".*Success: Your index manifest file has been generated.*",
-            r".*Please upload this to the index in the xx/xxx/ subdirectory.*",
+            r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
             r'.*url = "git@bitbucket\.org:/some_user/repo-name\.git".*',
@@ -295,7 +295,7 @@ for force_arg in ([], ["--force"]):
         num_confirms=2,
         output=[
             r".*Success: Your index manifest file has been generated.*",
-            r".*Please upload this to the index in the xx/xxx/ subdirectory.*",
+            r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
             r'.*url = "git\+https://github\.com/some_user/repo-name\.git".*',
@@ -337,7 +337,7 @@ for force_arg in ([], ["--force"]):
         num_confirms=2,
         output=[
             r".*Success: Your index manifest file has been generated.*",
-            r".*Please upload this to the index in the xx/xxx/ subdirectory.*",
+            r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
             r'.*url = "git\+https://github\.com/some_user/repo-name\.git".*',
@@ -379,7 +379,7 @@ for force_arg in ([], ["--force"]):
         num_confirms=2,
         output=[
             r".*Success: Your index manifest file has been generated.*",
-            r".*Please upload this to the index in the xx/xxx/ subdirectory.*",
+            r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
             r'.*url = "git\+https://github\.com/some_user/repo-name\.git".*',

@@ -623,7 +623,7 @@ package body Alire.Publish is
             --  unknown, so we can only give generic instructions on where to
             --  place the file.
             Put_Info
-              ("Please upload this to the index in the "
+              ("Please upload this file to the index in the "
                & TTY.URL (String (TOML_Index.Manifest_Path (Name)) & "/")
                & " subdirectory.");
          elsif not Settings.Builtins.User_Github_Login.Is_Empty then
