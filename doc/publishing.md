@@ -317,11 +317,16 @@ Having a local or private index may be useful sometimes, be it for local
 testing, or for private crates not intended for publication.
 
 There is no practical difference between the community index and a private index
-stored locally on disk or on your own infrastructure. An index must be an
-accessible path or URL at which an `index.toml` file can be found, either at the
-root or in any immediate subdirectory. This file specifies the version of the
-index, containing one line with the form `version = "0.0.0"`. No files should be placed in the same
-location as `index.toml` except for the manifests of published crates.
+stored locally on disk or on your own infrastructure. An index must be located
+in a first level subdirectory of an accessible git repository or local
+filesystem location (or optionally at the top level in the case of a local
+filesystem index). This subdirectory should contain only an `index.toml`
+file and one or more `cr/crate_name` subdirectories within which the crate
+manifests themselves are located. The `index.toml` file contains one line with
+the form `version = "x.x.x"`, specifying the index format used. The range of
+versions Alire is compatible with can be found by running `alr version`, and
+breaking changes are listed in
+[BREAKING.md](https://github.com/alire-project/alire/blob/master/BREAKING.md).
 
 To start using such an index, run
 
@@ -340,5 +345,5 @@ Additions to indexes stored locally on the disk will take effect immediately,
 unless the crate being published contains `"provides"` definitions, in which
 case an index update will be required (either with `alr index --update-all`, or
 through a scheduled auto-update) to ensure it is properly used by the dependency
-solver. An index update will always be required when publishing to a remote
-index.
+solver. An index update will always be required when publishing to a git
+repository index.
