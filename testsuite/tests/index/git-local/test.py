@@ -22,6 +22,10 @@ def run(*args, **kwargs):
     return sp
 
 def check_index_is_configured(name, url, path):
+    # On MacOS, /var/ is a symlink to /private/var/. Since the full pattern
+    # below prepends a ".*", "/var/" will match both.
+    if path.startswith("/private/var"):
+        path = path.removeprefix("/private")
     assert_match(
         rf".*\d+.*{re.escape(name)}.*{re.escape(url)}.*{re.escape(path)}",
         run_alr("index", "--list").out
