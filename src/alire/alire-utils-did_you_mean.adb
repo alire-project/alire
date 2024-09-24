@@ -81,10 +81,10 @@ package body Alire.Utils.Did_You_Mean with Preelaborate is
       for V in Enum loop
          Possible_Values.Append
            (case Transform is
-               when None => V'Img,
+               when None       => V'Img,
                when Lower_Case => AAA.Strings.To_Lower_Case (V'Img),
-               when Upper_Case => AAA.Strings.To_Lower_Case (V'Img),
-               when Tomify => TOML_Adapters.Tomify (V'Img));
+               when Upper_Case => AAA.Strings.To_Upper_Case (V'Img),
+               when Tomify     => TOML_Adapters.Tomify (V'Img));
       end loop;
 
       return Suggestion (Input, Possible_Values);
