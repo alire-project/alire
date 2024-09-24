@@ -41,15 +41,23 @@ package body Alire.Utils.User_Input.Query_Config is
                                Default    => "Your Name",
                                Validation => null));
 
+   ---------------------------------------
+   -- Is_Empty_Or_Valid_GitHub_Username --
+   ---------------------------------------
+
+   function Is_Empty_Or_Valid_GitHub_Username (Str : String) return Boolean
+   is (Str = "" or else Is_Valid_GitHub_Username (Str));
+
    -----------------------
    -- User_GitHub_Login --
    -----------------------
 
    function User_GitHub_Login return String
-   is (Config_Or_Query_String (Config_Key => "user.github_login",
-                               Question   => "Please enter your GitHub login:",
-                               Default    => "github-username",
-                               Validation => Is_Valid_GitHub_Username'Access));
+   is (Config_Or_Query_String
+         (Config_Key => "user.github_login",
+          Question   => "Please enter your GitHub login:",
+          Default    => "",
+          Validation => Is_Empty_Or_Valid_GitHub_Username'Access));
 
    -----------------
    -- Check_Email --

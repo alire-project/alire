@@ -16,7 +16,7 @@ from drivers.helpers import commit_all, init_git_repo, on_windows
 start_dir = os.getcwd()
 os.mkdir("monoproject.upstream")
 os.chdir("monoproject.upstream")
-init_local_crate("crate1", enter=False)
+init_local_crate("crate1", enter=False, with_maintainer_login=True)
 os.chdir(start_dir)
 commit1 = init_git_repo("monoproject.upstream")
 
@@ -32,7 +32,7 @@ alr_publish("crate1", "0.1.0-dev", index_path=os.path.join(start_dir, "my_index"
 
 # We create a second crate at another commit
 os.chdir(os.path.join(start_dir, "monoproject.upstream"))
-init_local_crate("crate2", enter=False)
+init_local_crate("crate2", enter=False, with_maintainer_login=True)
 os.chdir(start_dir)
 commit2 = commit_all("monoproject.upstream")
 

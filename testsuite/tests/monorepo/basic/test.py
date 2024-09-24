@@ -16,7 +16,7 @@ from subprocess import run
 start_dir = os.getcwd()
 os.mkdir("monoproject.upstream")
 os.chdir("monoproject.upstream")
-init_local_crate("mycrate", enter=False)
+init_local_crate("mycrate", enter=False, with_maintainer_login=True)
 os.chdir(start_dir)
 commit = init_git_repo("monoproject.upstream")
 

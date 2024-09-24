@@ -298,7 +298,7 @@ package body Alire.Publish.Submit is
          Target : constant Absolute_Path
            := Local_Repo_Path
               / VFS.To_Native
-                 (TOML_Index.Manifest_Path (Context.Root.Value.Name))
+                 (TOML_Index.Community_Manifest_Path (Context.Root.Value.Name))
               / Filename;
       begin
          Directories.Create_Tree (Directories.Parent (Target));
