@@ -3,14 +3,12 @@ Check pinning to a branch, and changing branches
 """
 
 from drivers.alr import run_alr, alr_pin, alr_unpin, init_local_crate
-from drivers.asserts import assert_eq, assert_match
-from drivers.helpers import git_branch, git_head, init_git_repo
+from drivers.asserts import assert_match
+from drivers.helpers import git_branch, init_git_repo
 from e3.os.fs import touch
-from re import escape
 
 import re
 import os
-import shutil
 import subprocess
 
 # "remote" is going to be the remote crate
