@@ -173,7 +173,7 @@ package body Alire.Platforms.Current is
 
          Trace.Detail ("Alire is configured not to install msys2.");
          Trace.Detail
-           ("Run 'alr config --global --set msys2.do_not_install false'" &
+           ("Run 'alr settings --global --set msys2.do_not_install false'" &
               " if you want Alire to install msys2.");
          return False;
       end if;
