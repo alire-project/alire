@@ -1,0 +1,10 @@
+driver: python-script
+# We need 'dependencies.shared=false' anyway for dependencies to be packaged
+# inside the workspace, so we only run in sandboxed mode.
+build_mode: sandboxed
+control:
+    # Mocking commands this way doesn't work on Windows
+    - [SKIP, "skip_unix", "Test is Unix-only"]
+indexes:
+    my_index:
+        in_fixtures: false
