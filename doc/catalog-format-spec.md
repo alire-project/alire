@@ -450,9 +450,10 @@ static, i.e. they cannot depend on the context.
         If it points to a repository, this should be apparent from the URL;
         the prefixes `git+`, `hg+` or `svn+` can be prepended to the scheme
         (e.g. `git+https://`) to make this explicit, though a `.git` suffix or
-        the hosts `github.com` or `gitlab.com` will also be recognised.
-        Origins should be publicly accessible (i.e. should not require
-        private ssh keys or other authentication).
+        the hosts `github.com`, `gitlab.com` or `bitbucket.org` will also be
+        recognised. For crates submitted to the community index, origins should
+        be publicly accessible (i.e. should not require private ssh keys or
+        other authentication).
 
       - `hashes`: mandatory string array for source archives.  An array
         of "kind:digest" fields that specify a hash kind and its value.  Kinds
