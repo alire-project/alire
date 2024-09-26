@@ -24,8 +24,8 @@ package body Alire.URI is
    function Host_From_URL (This : URL) return String is
       Auth : constant String := Authority_Without_Credentials (This);
    begin
-      --  Return with any trailing port removed (note that the host may be an
-      --  IPv6 address in square brackets)
+      --  Return Auth with any trailing port removed (note that the host may be
+      --  an IPv6 address in square brackets)
       if Has_Prefix (Auth, "[") then
          if Contains (Auth, "]:") then
             return Head (Auth, "]:") & "]";
@@ -46,8 +46,8 @@ package body Alire.URI is
       if URI_Kind (This) in SCP_Style_Git then
          --  This has the form git@X:Y, so return X
          return Head (Tail (This, "@"), ":");
-      elsif URI_Kind (This) in Non_URLs then
-         --  Return empty string for other non-URLs
+      elsif URI_Kind (This) in Non_URLs | Local_URIs then
+         --  Return empty string for other non-URLs or local URLs
          return "";
       else
          return Host_From_URL (This);
@@ -61,36 +61,6 @@ package body Alire.URI is
    function Fragment (This : URL) return String
    is (if URI_Kind (This) in Non_URLs then ""
        else U.Extract (This, U.Fragment));
-
-   ----------
-   -- Host --
-   ----------
-
-   function Host (This : URL) return String is
-      use AAA.Strings;
-      Auth : constant String := Authority_Without_Credentials (This);
-   begin
-      if Scheme (This) in File_Schemes then
-         return "";
-      elsif Has_Prefix (This, "git@")
-        and then not Contains (Head (This, ":"), "/")
-      then
-         --  This has the form git@X:Y, so return X
-         return Head (Tail (This, "@"), ":");
-      else
-         --  This is a normal URI, so return with any trailing port removed
-         --  (note that the host may be an IPv6 address in square brackets)
-         if Has_Prefix (Auth, "[") then
-            if Contains (Auth, "]:") then
-               return Head (Auth, "]:") & "]";
-            else
-               return Auth;
-            end if;
-         else
-            return Head (Auth, ":");
-         end if;
-      end if;
-   end Host;
 
    package body Operators is
 

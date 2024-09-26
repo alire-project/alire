@@ -164,7 +164,7 @@ package Alire.URI with Preelaborate is
    --  Remotes of the form 'git@host.name:/some/path' (which are not valid
    --  URIs) return the 'host.name' part.
    --
-   --  Returns an empty string for other non-URLs.
+   --  Returns an empty string for other non-URLs or local filesystem URLs.
 
    function Fragment (This : URL) return String;
    --  The fragment part of a URL
