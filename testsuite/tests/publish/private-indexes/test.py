@@ -162,7 +162,7 @@ for force_arg in ([], ["--force"]):
         ],
         gen_manifest=[
             # "git+" should be prepended to avoid ambiguity
-            r'.*url = "git\+https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
         ],
         expect_success=True
     )
@@ -178,7 +178,7 @@ for force_arg in ([], ["--force"]):
             r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
-            r'.*url = "git\+https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
         ],
         expect_success=True
     )
@@ -206,7 +206,7 @@ for force_arg in ([], ["--force"]):
             ),
         ],
         gen_manifest=[
-            r'.*url = "git\+https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
         ],
         expect_success=True
     )
@@ -218,11 +218,11 @@ for force_arg in ([], ["--force"]):
     # community index, but that check comes later).
     test(
         args=force_arg + ["publish"],
-        url="git@bitbucket.org:/some_user/repo-name.git",
+        url="ssh://github.com/some_user/repo-name.git",
         maint_logins='["github-username"]',
-        num_confirms=1,
+        num_confirms=1, # (fails before second confirmation)
         output=[
-            r".*The remote URL seems to require repository ownership: .*",
+            r".*The origin cannot use a private remote:.*",
         ],
         gen_manifest=None,
         expect_success=False
@@ -230,16 +230,57 @@ for force_arg in ([], ["--force"]):
     # "alr publish --skip-submit" will fail for the same reason.
     test(
         args=force_arg + ["publish", "--skip-submit"],
-        url="git@bitbucket.org:/some_user/repo-name.git",
+        url="ssh://github.com/some_user/repo-name.git",
         maint_logins='["github-username"]',
         num_confirms=1,
         output=[
-            r".*The remote URL seems to require repository ownership: .*",
+            r".*The origin cannot use a private remote:.*",
         ],
         gen_manifest=None,
         expect_success=False
     )
     # "alr publish --for-private-index" will succeed.
+    test(
+        args=force_arg + ["publish", "--for-private-index"],
+        url="ssh://github.com/some_user/repo-name.git",
+        maint_logins='["github-username"]',
+        num_confirms=2,
+        output=[
+            r".*Success: Your index manifest file has been generated.*",
+            r".*Please upload this file to the index in the xx/xxx/ subdirectory",
+        ],
+        gen_manifest=[
+            r'.*url = "ssh://github\.com/some_user/repo-name\.git".*',
+        ],
+        expect_success=True
+    )
+
+    # A crate unsuitable for the community index because its origin is a
+    # non-transformable 'git@host:/path' remote:
+    #
+    # This should behave the same as an 'ssh:' URL
+    test(
+        args=force_arg + ["publish"],
+        url="git@bitbucket.org:/some_user/repo-name.git",
+        maint_logins='["github-username"]',
+        num_confirms=1,
+        output=[
+            r".*The origin cannot use a private remote:.*",
+        ],
+        gen_manifest=None,
+        expect_success=False
+    )
+    test(
+        args=force_arg + ["publish", "--skip-submit"],
+        url="git@bitbucket.org:/some_user/repo-name.git",
+        maint_logins='["github-username"]',
+        num_confirms=1,
+        output=[
+            r".*The origin cannot use a private remote:.*",
+        ],
+        gen_manifest=None,
+        expect_success=False
+    )
     test(
         args=force_arg + ["publish", "--for-private-index"],
         url="git@bitbucket.org:/some_user/repo-name.git",
@@ -298,7 +339,7 @@ for force_arg in ([], ["--force"]):
             r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
-            r'.*url = "git\+https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
         ],
         expect_success=True
     )
@@ -340,7 +381,7 @@ for force_arg in ([], ["--force"]):
             r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
-            r'.*url = "git\+https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
         ],
         expect_success=True
     )
@@ -382,7 +423,7 @@ for force_arg in ([], ["--force"]):
             r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
-            r'.*url = "git\+https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
         ],
         expect_success=True
     )
