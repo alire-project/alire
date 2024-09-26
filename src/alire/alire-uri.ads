@@ -169,7 +169,8 @@ package Alire.URI with Preelaborate is
    function Fragment (This : URL) return String;
    --  The fragment part of a URL
    --
-   --  Returns empty string for non-URLs or if there is no fragment.
+   --  Returns empty string for non-URLs or local filesystem URLs, or if there
+   --  is no fragment.
 
    function Local_Path (This : URL) return String
      with Pre => In_Local_URIs (URI_Kind (This))

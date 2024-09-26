@@ -59,7 +59,7 @@ package body Alire.URI is
    --------------
 
    function Fragment (This : URL) return String
-   is (if URI_Kind (This) in Non_URLs then ""
+   is (if URI_Kind (This) in Non_URLs | Local_URIs then ""
        else U.Extract (This, U.Fragment));
 
    package body Operators is
