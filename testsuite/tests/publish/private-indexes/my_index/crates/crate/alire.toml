@@ -1,0 +1,9 @@
+name = "crate"
+description = "Dummy crate"
+version = "0.0.0"
+
+authors = ["Your Name"]
+maintainers = ["Your Name <example@example.com>"]
+maintainers-logins = ["github-username"]
+website = ""
+tags = []

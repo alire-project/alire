@@ -18,13 +18,14 @@ executables = ["alr"]
 aaa = "~0.3.0"
 ada_toml = "~0.3"
 ajunitgen = "^1.0.1"
-ansiada = "^1.0"
+ansiada = "^1.1"
 c_strings = "^1.0"
 clic = "~0.3"
 den = "~0.1"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
 gnatcoll = "^21"
+lml = "~0.1"
 minirest = "~0.3"
 optional = "~0.1"
 semantic_versioning = "^3.0"
@@ -53,11 +54,15 @@ windows = { ALIRE_OS = "windows" }
 
 [pins.aaa]
 url    = "https://github.com/mosteo/aaa"
-commit = "0c3b440ac183c450345d4a67d407785678779aae"
+commit = "ddfeffe2d6c8f9d19161df7b31d16d37bef4ba71"
 
 [pins.ada_toml]
 url    = "https://github.com/mosteo/ada-toml"
 commit = "da4e59c382ceb0de6733d571ecbab7ea4919b33d"
+
+[pins.ansiada]
+url    = "https://github.com/mosteo/ansi-ada"
+commit = "0772e48d3e1f640829d142745a36b37edcd5470b"
 
 [pins.c_strings]
 url    = "https://github.com/mosteo/cstrings"
@@ -69,7 +74,7 @@ commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"
-commit = "35d1f38395b93766dd64bca5901ce3b6a416ba1a"
+commit = "b12e8461bf41e2cfe199c8196b45fa4fc213a6aa"
 
 [pins.dirty_booleans]
 url    = "https://github.com/mosteo/dirty_booleans"
@@ -82,6 +87,10 @@ commit = "60729edf31816aca0036b13b2794c39a9bd0172e"
 [pins.gnatcoll]
 url    = "https://github.com/alire-project/gnatcoll-core.git"
 commit = "4e663b87a028252e7e074f054f8f453661397166"
+
+[pins.lml]
+url    = "https://github.com/mosteo/lml_ada.git"
+commit = "ae156ef82a2fedb7e28bb4dcaeb3d5c0a2e046ec"
 
 [pins.minirest]
 url    = "https://github.com/mosteo/minirest.git"

@@ -8,9 +8,10 @@ package Alire.Publish is
 
    type All_Options is private;
 
-   function New_Options (Skip_Build  : Boolean := False;
-                         Skip_Submit : Boolean := False;
-                         Manifest    : String  := Roots.Crate_File_Name)
+   function New_Options (Skip_Build        : Boolean := False;
+                         Skip_Submit       : Boolean := False;
+                         For_Private_Index : Boolean := False;
+                         Manifest          : String  := Roots.Crate_File_Name)
                          return All_Options;
 
    procedure Directory_Tar (Path     : Any_Path := ".";
@@ -55,9 +56,10 @@ package Alire.Publish is
 private
 
    type All_Options is tagged record
-      Manifest_File : UString;
-      Skip_Build    : Boolean := False;
-      Skip_Submit   : Boolean := False;
+      Manifest_File     : UString;
+      Skip_Build        : Boolean := False;
+      Skip_Submit       : Boolean := False;
+      For_Private_Index : Boolean := False;
    end record;
 
    function Manifest (Options : All_Options) return Any_Path

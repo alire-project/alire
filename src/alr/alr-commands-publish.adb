@@ -29,12 +29,15 @@ package body Alr.Commands.Publish is
 
       Options : constant Alire.Publish.All_Options :=
                   Alire.Publish.New_Options
-                    (Manifest    =>
+                    (Manifest          =>
                        (if Cmd.Manifest.all /= ""
                         then Cmd.Manifest.all
                         else Alire.Roots.Crate_File_Name),
-                     Skip_Build  => Cmd.Skip_Build,
-                     Skip_Submit => Cmd.Skip_Submit);
+                     Skip_Build        => Cmd.Skip_Build,
+                     Skip_Submit       =>
+                       --  "--for-private-index" implies "--skip-submit"
+                       Cmd.Skip_Submit or else Cmd.For_Private_Index,
+                     For_Private_Index => Cmd.For_Private_Index);
 
    begin
       if Alire.Utils.Count_True
@@ -165,6 +168,13 @@ package body Alr.Commands.Publish is
          Cmd.Skip_Submit'Access,
          "", "--skip-submit",
          "Do not create the online pull request onto the community index");
+
+      Define_Switch
+        (Config,
+         Cmd.For_Private_Index'Access,
+         "", "--for-private-index",
+         "The same as --skip-submit, but additionally disable checks which "
+         & "are specific to the community index and may not apply to others");
 
       Define_Switch
         (Config,

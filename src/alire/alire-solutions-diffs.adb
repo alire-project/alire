@@ -551,7 +551,7 @@ package body Alire.Solutions.Diffs is
       end loop;
 
       if Changed then
-         Table.Print (Level);
+         Table.Print (Level, Structured => False);
 
          Warn_Toolchain_Download;
          Warn_Unsatisfiable_GNAT_External;

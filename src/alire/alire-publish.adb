@@ -173,13 +173,15 @@ package body Alire.Publish is
    -- New_Options --
    -----------------
 
-   function New_Options (Skip_Build  : Boolean := False;
-                         Skip_Submit : Boolean := False;
-                         Manifest    : String  := Roots.Crate_File_Name)
+   function New_Options (Skip_Build        : Boolean := False;
+                         Skip_Submit       : Boolean := False;
+                         For_Private_Index : Boolean := False;
+                         Manifest          : String  := Roots.Crate_File_Name)
                          return All_Options
-   is (Manifest_File => +Manifest,
-       Skip_Build    => Skip_Build,
-       Skip_Submit   => Skip_Submit);
+   is (Manifest_File     => +Manifest,
+       Skip_Build        => Skip_Build,
+       Skip_Submit       => Skip_Submit,
+       For_Private_Index => For_Private_Index);
 
    ---------------
    -- Git_Error --
@@ -228,8 +230,9 @@ package body Alire.Publish is
    -------------------
    -- Check_Release --
    -------------------
-   --  Checks the presence of recommended/mandatory fileds in the release
-   procedure Check_Release (Release : Releases.Release) is
+   --  Checks the presence of recommended/mandatory fields in the release
+   procedure Check_Release (Release : Releases.Release; Context : in out Data)
+   is
       use CLIC.User_Input;
 
       Recommend : AAA.Strings.Vector; -- Optional
@@ -294,6 +297,20 @@ package body Alire.Publish is
          end if;
       end loop;
 
+      --  The maintainers-logins field is mandatory only if publishing to the
+      --  community index
+
+      if not Context.Options.For_Private_Index then
+         declare
+            Key_String : constant String := Tomify
+              (Properties.From_TOML.Maintainers_Logins'Image);
+         begin
+            if not Release.Has_Property (Key_String) then
+               Missing.Append (Key_String);
+            end if;
+         end;
+      end if;
+
       Caret_Pre_1 := Release.Check_Caret_Warning;
 
       if not Missing.Is_Empty then
@@ -310,6 +327,26 @@ package body Alire.Publish is
                         & ASCII.LF
                         & "Releases submitted to an index should usually"
                         & " not be pre-release versions.");
+      end if;
+
+      --  If we are submitting to the community index, the maintainers-logins
+      --  values must be valid GitHub usernames
+      if not Context.Options.For_Private_Index then
+         for Property of Release.Maint_Logins loop
+            declare
+               Maint_Login : constant String := Property.To_TOML.As_String;
+            begin
+               if not Utils.Is_Valid_GitHub_Username (Maint_Login) then
+                  Raise_Checked_Error ("The maintainer login '"
+                                       & Maint_Login
+                                       & "' is not a valid GitHub username");
+               end if;
+
+               --  We could also check GitHub.User_Exists at this point, but it
+               --  isn't worth the GitHub API call (running the testsuite a
+               --  couple of times would trigger GitHub's rate limits)
+            end;
+         end loop;
       end if;
 
       --  Final confirmation. We default to Yes if no recommended missing or
@@ -392,7 +429,8 @@ package body Alire.Publish is
                           (Starting_Manifest (Context),
                            Alire.Manifest.Local,
                            Strict    => True,
-                           Root_Path => Adirs.Full_Name (+Context.Path)));
+                           Root_Path => Adirs.Full_Name (+Context.Path)),
+                        Context);
          --  Will have raised if the release is not loadable or incomplete
       else
          declare
@@ -408,7 +446,7 @@ package body Alire.Publish is
                     ("Invalid metadata found at " & Root.Value.Path,
                      Root.Brokenness));
             when Valid =>
-               Check_Release (Root.Value.Release);
+               Check_Release (Root.Value.Release, Context);
             end case;
          end;
       end if;
@@ -557,8 +595,8 @@ package body Alire.Publish is
            ("Your index manifest file has been generated at "
             & TTY.URL (Index_Manifest));
 
-         --  Ask to submit, or show the upload URL if submission skipped, or a
-         --  more generic message otherwise (when lacking a github login).
+         --  Ask to submit, or provide submission instructions if submission
+         --  skipped.
 
          if not Context.Options.Skip_Submit then
             --  Safeguard to avoid tests creating a live pull request, unless
@@ -580,23 +618,40 @@ package body Alire.Publish is
             then
                raise Early_Stop;
             end if;
-         elsif not Settings.Builtins.User_Github_Login.Is_Empty then
+         elsif Context.Options.For_Private_Index then
+            --  We are publishing to a private index, the location of which is
+            --  unknown, so we can only give generic instructions on where to
+            --  place the file.
             Put_Info
-              ("Please upload this file to "
+              ("Please upload this file to the index in the "
+               & TTY.URL (String (TOML_Index.Manifest_Path (Name)) & "/")
+               & " subdirectory.");
+         elsif not Settings.Builtins.User_Github_Login.Is_Empty then
+            --  The user has provided a GitHub login, so provide an upload URL
+            --  to create a pull request.
+            Put_Info
+              ("If you haven't already, please fork "
+               & TTY.URL (Tail (Index.Community_Repo, '+'))
+               & " to your GitHub.");
+            Put_Info
+              ("This file can then be uploaded to "
                & TTY.URL
                  (Index.Community_Host & "/"
                   & Settings.Builtins.User_Github_Login.Get & "/"
                   & Index.Community_Repo_Name
                   & "/upload/"
                   & Index.Community_Branch & "/"
-                  & String (TOML_Index.Manifest_Path (Name)))
+                  & String (TOML_Index.Community_Manifest_Path (Name)))
                & " to create a pull request against the community index.");
          else
+            --  We don't have the user's GitHub username, so show a more
+            --  generic message.
             Put_Info
               ("Please create a pull request against the community index at "
                & TTY.URL (Tail (Index.Community_Repo, '+'))
                & " including this file at "
-               & TTY.URL (String (TOML_Index.Manifest_Path (Name))));
+               & TTY.URL
+                 (String (TOML_Index.Community_Manifest_Path (Name)) & "/"));
          end if;
 
       exception
@@ -797,7 +852,7 @@ package body Alire.Publish is
                        Root_Path => Adirs.Full_Name (+Context.Path))
                     .Replacing (Origin => Context.Origin);
    begin
-      Check_Release (Release);
+      Check_Release (Release, Context);
    end Show_And_Confirm;
 
    -------------------
@@ -868,9 +923,12 @@ package body Alire.Publish is
       if URI.URI_Kind (URL) in URI.Unknown then
          Raise_Checked_Error ("Unsupported scheme: " & URL);
       elsif URI.URI_Kind (URL) in URI.Private_URIs then
-         --  A private URL should not be used for packaging
-         Raise_Checked_Error
-            ("The origin cannot use a private remote: " & URL);
+         --  A private URL should not be used for packaging via the the
+         --  community index
+         if not Context.Options.For_Private_Index then
+            Raise_Checked_Error
+               ("The origin cannot use a private remote: " & URL);
+         end if;
       elsif URI.URI_Kind (URL) not in URI.Public_URIs then
          Recoverable_User_Error
            ("The origin must be a definitive remote location, but is " & URL);
@@ -1011,9 +1069,13 @@ package body Alire.Publish is
       Run_Steps (Context,
                  (Step_Check_User_Manifest,
                   Step_Prepare_Archive,
-                  Step_Verify_Origin,
-                  Step_Verify_Github,
-                  Step_Deploy_Sources,
+                  Step_Verify_Origin)
+                 &
+                 (if Options.Skip_Submit
+                    then No_Steps
+                    else (1 => Step_Verify_Github))
+                 &
+                 (Step_Deploy_Sources,
                   Step_Check_Build,
                   Step_Show_And_Confirm,
                   Step_Generate_Index_Manifest)
@@ -1232,9 +1294,13 @@ package body Alire.Publish is
                       Token          => <>);
       begin
          Run_Steps (Context,
-                    (Step_Verify_Origin,
-                     Step_Verify_Github,
-                     Step_Deploy_Sources,
+                    (Step_Verify_Origin)
+                    &
+                    (if Options.Skip_Submit
+                       then No_Steps
+                       else (1 => Step_Verify_Github))
+                    &
+                    (Step_Deploy_Sources,
                      Step_Check_Build,
                      Step_Show_And_Confirm,
                      Step_Generate_Index_Manifest)

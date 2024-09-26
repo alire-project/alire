@@ -1,10 +1,8 @@
-with AAA.Table_IO;
-
 with Alire.Settings.Edit;
 with Alire.Index;
 with Alire.Index_On_Disk.Loading;
 with Alire.Index_On_Disk.Updates;
-with Alire.Utils;
+with Alire.Utils.Tables;
 
 package body Alr.Commands.Index is
 
@@ -155,7 +153,7 @@ package body Alr.Commands.Index is
                   Index_Load.Find_All
                     (Alire.Settings.Edit.Indexes_Directory, Result);
 
-      Table : AAA.Table_IO.Table;
+      Table : Alire.Utils.Tables.Table;
       Count : Natural := 0;
    begin
       if not Result.Success then
@@ -163,10 +161,10 @@ package body Alr.Commands.Index is
       end if;
 
       Table
-        .Append (TTY.Emph ("#"))
-        .Append (TTY.Emph ("NAME"))
-        .Append (TTY.Emph ("URL"))
-        .Append (TTY.Emph ("PATH"));
+        .Header ("#")
+        .Header ("NAME")
+        .Header ("URL")
+        .Header ("PATH");
 
       if Alire.Log_Level = Alire.Trace.Debug then
          Table.Append (TTY.Emph ("PRIORITY"));
@@ -187,7 +185,7 @@ package body Alr.Commands.Index is
       end loop;
 
       if Count > 0 then
-         Table.Print;
+         Table.Print (Always);
       else
          Trace.Info ("No index configured.");
       end if;

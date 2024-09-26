@@ -11,7 +11,7 @@ import drivers.helpers
 import os
 
 # Prepare our "remote" repo
-init_local_crate("xxx", enter=True)
+init_local_crate("xxx", enter=True, with_maintainer_login=True)
 # with custom manifest location
 os.rename("alire.toml", "xxx.toml")
 

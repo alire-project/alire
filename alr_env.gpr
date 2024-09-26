@@ -19,6 +19,7 @@ aggregate project Alr_Env is
                          "deps/dirty_booleans",
                          "deps/diskflags",
                          "deps/gnatcoll-slim",
+                         "deps/lml",
                          "deps/minirest",
                          "deps/optional",
                          "deps/semantic_versioning",

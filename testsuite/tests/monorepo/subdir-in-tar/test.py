@@ -11,7 +11,7 @@ import drivers.helpers
 import os
 
 # Prepare our "remote" repo
-init_local_crate("xxx", enter=True)
+init_local_crate("xxx", enter=True, with_maintainer_login=True)
 
 # Publish it. We need to give input to alr, so we directly call it. We use the
 # generated location as the "online" location, and this works because we are

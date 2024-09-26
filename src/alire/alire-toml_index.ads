@@ -18,6 +18,11 @@ package Alire.TOML_Index is
    --  Get the expected location of a crate manifest in an index. The result is
    --  portable; that is, always uses forward slashes.
 
+   function Community_Manifest_Path (Crate : Crate_Name) return Portable_Path;
+   --  Get the expected location of a crate manifest according to the community
+   --  index's convention (i.e. with everything under the "index/" directory).
+   --  The result is portable; that is, always uses forward slashes.
+
    procedure Load
      (Index    : Index_On_Disk.Index'Class;
       Strict   : Boolean;

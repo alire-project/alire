@@ -20,6 +20,8 @@ with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions;
 with Alire.Toolchains;
+with Alire.Utils.Did_You_Mean;
+with Alire.Utils.Tables;
 
 with Alr.Commands.Action;
 with Alr.Commands.Build;
@@ -82,6 +84,9 @@ package body Alr.Commands is
 
    No_TTY : aliased Boolean := False;
    --  Used to disable control characters in output
+
+   Structured_Format : aliased GNAT.OS_Lib.String_Access
+     := new String'("unset");
 
    Version_Only : aliased Boolean := False;
    --  Just display the current version and exit
@@ -172,6 +177,13 @@ package body Alr.Commands is
                      CLIC.User_Input.Not_Interactive'Access,
                      "-n", "--non-interactive",
                      "Assume default answers for all user prompts");
+
+      Define_Switch (Config,
+                     Structured_Format'Access,
+                     Long_Switch => "--format?",
+                     Argument    => "FORMAT",
+                     Help        =>
+                       "Use structured output for tables (JSON, TOML)");
 
       Define_Switch (Config,
                      No_Color'Access,
@@ -468,6 +480,46 @@ package body Alr.Commands is
          Trace.Debug ("End command line.");
       end Log_Command_Line;
 
+      ---------------------------
+      -- Set_Structured_Output --
+      ---------------------------
+
+      procedure Set_Structured_Output is
+         use Alire.Utils;
+         use all type Tables.Formats;
+
+         Format_Str : constant String
+           := AAA.Strings.Replace (Structured_Format.all, "=", "");
+
+         function Is_Valid is
+           new AAA.Enum_Tools.Is_Valid (Tables.Formats);
+
+         function Suggest is
+           new Alire.Utils.Did_You_Mean.Enum_Suggestion
+             (Tables.Formats,
+              Alire.Utils.Did_You_Mean.Upper_Case);
+
+      begin
+         if Structured_Format.all /= "unset" then
+            Alire.Utils.Tables.Structured_Output := True;
+         else
+            return;
+         end if;
+
+         if Format_Str /= "" and then not Is_Valid (Format_Str) then
+            Reportaise_Wrong_Arguments
+              ("Unknown argument in --format" & Structured_Format.all
+               & "." & Suggest (Format_Str));
+         end if;
+
+         if Format_Str /= "" then
+            Alire.Utils.Tables.Structured_Output_Format
+              := Alire.Utils.Tables.Formats'Value (Format_Str);
+         else
+            Alire.Utils.Tables.Structured_Output_Format := JSON;
+         end if;
+      end Set_Structured_Output;
+
       use all type Alire.Platforms.Operating_Systems;
    begin
 
@@ -529,6 +581,10 @@ package body Alr.Commands is
          Ada.Directories.Set_Directory (Command_Line_Chdir_Target_Path.all);
       end if;
 
+      Set_Structured_Output;
+
+      --  End of global switches
+
       Create_Alire_Folders;
 
       begin
@@ -586,6 +642,14 @@ package body Alr.Commands is
                OS_Lib.Bailout (1);
             end if;
       end;
+   exception
+      when Wrong_Command_Arguments =>
+         Trace.Detail ("alr global switches are invalid");
+         if Alire.Log_Level = Debug then
+            raise;
+         else
+            OS_Lib.Bailout (1);
+         end if;
    end Execute;
 
    ------------------------
