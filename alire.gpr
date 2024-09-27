@@ -3,10 +3,13 @@ with "ada_toml";
 with "alire_common";
 with "ajunitgen";
 with "ansiada";
+with "c_strings";
 with "clic";
+with "den";
 with "dirty_booleans";
 with "diskflags";
 with "gnatcoll";
+with "lml";
 with "minirest";
 with "optional";
 with "semantic_versioning";
@@ -28,6 +31,7 @@ library project Alire is
 
    case Alire_Common.Host_Os is
       when "freebsd" => Src_Dirs := Src_Dirs & ("src/alire/os_freebsd");
+      when "openbsd" => Src_Dirs := Src_Dirs & ("src/alire/os_openbsd");
       when "linux"   => Src_Dirs := Src_Dirs & ("src/alire/os_linux");
       when "macos"   => Src_Dirs := Src_Dirs & ("src/alire/os_macos");
       when "windows" => Src_Dirs := Src_Dirs & ("src/alire/os_windows");
@@ -38,6 +42,9 @@ library project Alire is
          when "freebsd" =>
             for body ("Alire.Platforms.Current") use "alire-platforms-current__freebsd.adb";
             for body ("Alire.Platforms.Folders") use "alire-platforms-folders__freebsd.adb";
+         when "openbsd" =>
+            for body ("Alire.Platforms.Current") use "alire-platforms-current__openbsd.adb";
+            for body ("Alire.Platforms.Folders") use "alire-platforms-folders__openbsd.adb";
          when "linux" =>
             for body ("Alire.Platforms.Current") use "alire-platforms-current__linux.adb";
             for body ("Alire.Platforms.Folders") use "alire-platforms-folders__linux.adb";

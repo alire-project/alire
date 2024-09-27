@@ -182,13 +182,17 @@ static, i.e. they cannot depend on the context.
                   "Bob For Instance <bob@athome.com>"]
    ```
 
- - `maintainers-logins`: mandatory (for indexing) array of strings. Flat
-   list of github login usernames used by the maintainers of the crate. This
-   information is used to authorize crate modifications. For instance:
+ - `maintainers-logins`: optional array of non-empty strings.
+   For crates submitted to the community index, this is a mandatory flat list of
+   the GitHub login usernames authorized to modify the crate.
+   For instance:
 
    ```toml
    maintainers-logins = ["alicehacks", "bobcoder"]
    ```
+
+   Private indexes may use whichever logins are appropriate for their
+   hosting arrangement, or none at all.
 
  - `licenses`: mandatory (for indexing) string. A valid [SPDX
    expression](https://spdx.org/licenses/). Custom license identifiers are
@@ -878,8 +882,8 @@ available.'case(toolchain)'.user = false
 
 ## Parameters
 
- - `os`: name of the OS. Currently supported values are: `freebsd`, `linux`,
-   `macos`, `windows`, and `os-unknown`.
+ - `os`: name of the OS. Currently supported values are: `freebsd`, `openbsd`,
+   `linux`, `macos`, `windows`, and `os-unknown`.
 
  - `distribution`: name of the Linux distribution or name of the software
    distribution platform if running on a different OS. Currently supported

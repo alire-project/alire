@@ -1,6 +1,4 @@
 
-with AAA.Table_IO;
-
 with Alire.Settings.Edit;
 with Alire.Containers;
 with Alire.Dependencies;
@@ -10,13 +8,15 @@ with Alire.Origins.Deployers;
 with Alire.Releases.Containers;
 with Alire.Solver;
 with Alire.Toolchains;
-with Alire.Utils; use Alire.Utils;
+with Alire.Utils.Tables;
 with Alire.Utils.TTY;
 with Alire.Warnings;
 
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Toolchain is
+
+   use Alire.Utils;
 
    package Name_Sets renames Alire.Containers.Crate_Name_Sets;
 
@@ -268,7 +268,7 @@ package body Alr.Commands.Toolchain is
       pragma Unreferenced (Cmd);
       use Alire;
       use type Dependencies.Dependency;
-      Table : AAA.Table_IO.Table;
+      Table : Tables.Table;
    begin
       Alire.Toolchains.Detect_Externals;
       --  Even if we have selected a non-external toolchain, in this case we
@@ -281,10 +281,10 @@ package body Alr.Commands.Toolchain is
       end if;
 
       Table
-        .Append (TTY.Emph ("CRATE"))
-        .Append (TTY.Emph ("VERSION"))
-        .Append (TTY.Emph ("STATUS"))
-        .Append (TTY.Emph ("NOTES"))
+        .Header ("CRATE")
+        .Header ("VERSION")
+        .Header ("STATUS")
+        .Header ("NOTES")
         .New_Row;
 
       for Dep of Alire.Toolchains.Available loop
@@ -311,7 +311,7 @@ package body Alr.Commands.Toolchain is
          end if;
       end loop;
 
-      Table.Print;
+      Table.Print (Always);
    end List;
 
    -------------

@@ -55,7 +55,7 @@ package Alr.Commands.Publish is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--skip-build] [--skip-submit] [--tar] "
+   is ("[--skip-build] [--skip-submit|--for-private-index] [--tar] "
        & "[--manifest <file>] [<URL> [commit]]] [--request-review NUM]");
 
 private
@@ -70,7 +70,12 @@ private
       --  Skip the build check
 
       Skip_Submit : aliased Boolean := False;
-      --  Stop after generation instead of asking the user to continue
+      --  Skip checking user's GitHub account, and stop after manifest
+      --  generation instead of asking the user to continue
+
+      For_Private_Index : aliased Boolean := False;
+      --  Skip_Submit, and also disable checks which only apply to the
+      --  community index
 
       Cancel     : aliased GNAT.Strings.String_Access := new String'(Unset);
       --  Number of a PR to prematurely close

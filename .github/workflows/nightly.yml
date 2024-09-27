@@ -33,7 +33,9 @@ jobs:
         submodules: true
 
     - name: Install FSF toolchain
-      uses: alire-project/setup-alire@v3
+      uses: alire-project/alr-install@v1
+      with:
+        crates: gnat_native gprbuild
 
     - name: Replace toolchain with aarch64
       if: ${{ runner.arch == 'ARM64' }}
@@ -56,13 +58,13 @@ jobs:
 
     - name: Upload logs (if failed)
       if: failure()
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v4
       with:
         name: e3-log-linux.zip
         path: testsuite/out
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: alr-bin-${{ matrix.os }}.zip
         path: |
@@ -89,7 +91,6 @@ jobs:
     - name: Package binaries (macOS/x64)
       if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
       run: zip alr-nightly-bin-x86_64-macos.zip bin/alr* LICENSE.txt alr-*.txt
-
     - name: Package binaries (macOS/arm64)
       if: startsWith(matrix.os, 'macos') && runner.arch == 'ARM64'
       run: zip alr-nightly-bin-aarch64-macos.zip bin/alr* LICENSE.txt alr-*.txt

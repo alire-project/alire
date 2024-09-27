@@ -32,8 +32,18 @@ jobs:
       with:
         submodules: true
 
+    - name: OS information for ${{ matrix.tag }}
+      uses: mosteo-actions/docker-run@v2
+      with:
+        image: ghcr.io/alire-project/docker/gnat:${{matrix.tag}}
+        command: |
+          lsb_release -a || \
+          cat /etc/os-release || \
+          cat /etc/system-release || \
+          echo "No lsb_release information"
+
     - name: Run test script (${{ matrix.tag }})
-      uses: mosteo-actions/docker-run@v1
+      uses: mosteo-actions/docker-run@v2
       with:
         image: ghcr.io/alire-project/docker/gnat:${{matrix.tag}}
         command: scripts/ci-github.sh
@@ -41,7 +51,7 @@ jobs:
 
     - name: Upload logs (if failed)
       if: failure()
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v4
       with:
         name: e3-log-docker-${{ matrix.tag }}.zip
         path: testsuite/out

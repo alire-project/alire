@@ -17,7 +17,7 @@ from drivers.helpers import init_git_repo
 start_dir = os.getcwd()
 os.mkdir("monoproject.upstream")
 os.chdir("monoproject.upstream")
-init_local_crate("crate1", enter=False)
+init_local_crate("crate1", enter=False, with_maintainer_login=True)
 os.chdir(start_dir)
 commit1 = init_git_repo("monoproject.upstream")
 

@@ -1,4 +1,5 @@
 with Alire.Builds;
+with Alire.Cache;
 with Alire.Settings.Edit;
 with Alire.Directories;
 with Alire.Index;
@@ -37,8 +38,9 @@ package body Alr.Commands.Version is
                       Args :        AAA.Strings.Vector)
    is
       use Alire;
+      use Alire.Utils;
       use all type Alire.Roots.Optional.States;
-      Table : Alire.Utils.Tables.Table;
+      Table : Tables.Table;
       Index_Outcome : Alire.Outcome;
       Indexes : constant Alire.Index_On_Disk.Loading.Set :=
                   Alire.Index_On_Disk.Loading.Find_All
@@ -56,66 +58,82 @@ package body Alr.Commands.Version is
                          / Paths.Cache_Folder_Inside_Working_Folder
                          / Paths.Deps_Folder_Inside_Cache_Folder)
                       else Builds.Path);
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add (Key : String; Val : String := "") is
+         use AAA.Strings;
+      begin
+         if (Key = "" or else Val = "") and then Tables.Structured_Output then
+            return; -- Skip cosmetic rows in structured output
+         end if;
+
+         if Tables.Structured_Output and then Contains (Key, ":") then
+            Add (Replace (Key, ":", ""), Val);
+            return;
+         end if;
+
+         Table.Append (Key).Append (Val).New_Row;
+      end Add;
+
    begin
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
       end if;
 
-      Table.Append ("APPLICATION").Append ("").New_Row;
-      Table.Append ("alr version:")
-        .Append (Alire.Version.Current.Image).New_Row;
-      Table.Append ("libalire version:")
-        .Append (Alire.Version.Current.Image).New_Row;
-      Table.Append ("compilation date:")
-        .Append (GNAT.Source_Info.Compilation_ISO_Date & " "
-                 & GNAT.Source_Info.Compilation_Time).New_Row;
-      Table.Append ("compiled with version:")
-        .Append (GNAT_Version.Version).New_Row;
+      --  Enrich output when using a structured format only
+      if Alire.Utils.Tables.Structured_Output then
+         Table.Header ("key").Header ("Value").New_Row;
+      end if;
 
-      Table.Append ("").New_Row;
-      Table.Append ("CONFIGURATION").New_Row;
-      Table.Append ("settings folder:")
-        .Append (Alire.Settings.Edit.Path).New_Row;
-      Table.Append ("cache folder:")
-        .Append (Alire.Settings.Edit.Cache_Path).New_Row;
-      Table.Append ("vault folder:").Append (Paths.Vault.Path).New_Row;
-      Table.Append ("build folder:").Append (Build_Path).New_Row;
-      Table.Append ("temp folder:")
-        .Append (Alire.Platforms.Folders.Temp).New_Row;
-      Table.Append ("force flag:").Append (Alire.Force'Image).New_Row;
-      Table.Append ("non-interactive flag:")
-        .Append (CLIC.User_Input.Not_Interactive'Image).New_Row;
-      Table.Append ("community index branch:")
-        .Append (Alire.Index.Community_Branch).New_Row;
-      Table.Append ("compatible index versions:")
-        .Append (Alire.Index.Valid_Versions.Image).New_Row;
-      Table.Append ("indexes folder:")
-        .Append (Alire.Settings.Edit.Indexes_Directory).New_Row;
-      Table.Append ("indexes metadata:")
-        .Append (if Index_Outcome.Success
-                 then "OK"
-                 else "ERROR: " & Index_Outcome.Message).New_Row;
+      Add ("APPLICATION", "");
+      Add ("alr version:",      Alire.Version.Current.Image);
+      Add ("libalire version:", Alire.Version.Current.Image);
+      Add ("compilation date:",
+           GNAT.Source_Info.Compilation_ISO_Date & " "
+           & GNAT.Source_Info.Compilation_Time);
+      Add ("compiled with version:", GNAT_Version.Version);
+
+      Add ("");
+      Add ("CONFIGURATION");
+      Add ("settings folder:", Alire.Settings.Edit.Path);
+      Add ("cache folder:",    Alire.Cache.Path);
+      Add ("vault folder:",    Paths.Vault.Path);
+      Add ("build folder:",    Build_Path);
+      Add ("temp folder:",     Alire.Platforms.Folders.Temp);
+      Add ("force flag:",      Alire.Force'Image);
+      Add ("non-interactive flag:",
+           CLIC.User_Input.Not_Interactive'Image);
+      Add ("community index branch:", Alire.Index.Community_Branch);
+      Add ("compatible index versions:",
+           Alire.Index.Valid_Versions.Image);
+      Add ("indexes folder:",
+           Alire.Settings.Edit.Indexes_Directory);
+      Add ("indexes metadata:",
+           (if Index_Outcome.Success
+            then "OK"
+            else "ERROR: " & Index_Outcome.Message));
       for Index of Indexes loop
-         Table.Append ("index #"
-                       & AAA.Strings.Trim (Index.Priority'Image) & ":")
-           .Append ("(" & Index.Name & ") " & Index.Origin).New_Row;
+         Add ("index #"
+              & AAA.Strings.Trim (Index.Priority'Image) & ":",
+              "(" & Index.Name & ") " & Index.Origin);
       end loop;
-      Table.Append ("toolchain folder:")
-        .Append (Alire.Toolchains.Path).New_Row;
-      Table.Append ("toolchain assistant:")
-        .Append (if Alire.Toolchains.Assistant_Enabled
-                 then "enabled"
-                 else "disabled").New_Row;
+      Add ("toolchain folder:", Alire.Toolchains.Path);
+      Add ("toolchain assistant:",
+           (if Alire.Toolchains.Assistant_Enabled
+            then "enabled"
+            else "disabled"));
       declare
          I : Positive := 1;
       begin
          for Tool of Alire.Toolchains.Tools loop
-            Table
-              .Append ("tool #" & AAA.Strings.Trim (I'Image)
-                       & " " & Tool.As_String & ":")
-              .Append (if Alire.Toolchains.Tool_Is_Configured (Tool)
-                       then Alire.Toolchains.Tool_Milestone (Tool).Image
-                       else "not configured").New_Row;
+            Add ("tool #" & AAA.Strings.Trim (I'Image)
+                 & " " & Tool.As_String & ":",
+                 (if Alire.Toolchains.Tool_Is_Configured (Tool)
+                  then Alire.Toolchains.Tool_Milestone (Tool).Image
+                  else "not configured"));
             I := I + 1;
          end loop;
       end;
@@ -124,47 +142,40 @@ package body Alr.Commands.Version is
          System_Manager : constant String :=
                             Origins.Deployers.System.Executable_Path;
       begin
-         Table
-           .Append ("system package manager:")
-           .Append (if System_Manager /= ""
-                    then System_Manager
-                    else "not found: "
-                    & (if Origins.Deployers.System.Executable_Name /= ""
-                      then "`" & Origins.Deployers.System.Executable_Name & "`"
-                      else "unknown package manager"))
-           .New_Row;
-         Table
-           .Append ("distro detection disabled:")
-           .Append (Platforms.Current.Disable_Distribution_Detection'Image)
-           .New_Row;
+         Add ("system package manager:",
+              (if System_Manager /= ""
+               then System_Manager
+               else "not found: "
+               & (if Origins.Deployers.System.Executable_Name /= ""
+                  then "`" & Origins.Deployers.System.Executable_Name & "`"
+                  else "unknown package manager")));
+         Add ("distro detection disabled:",
+              Platforms.Current.Disable_Distribution_Detection'Image);
       end;
 
-      Table.Append ("").New_Row;
-      Table.Append ("WORKSPACE").New_Row;
+      Add ("");
+      Add ("WORKSPACE");
+      Add ("root status:", Root.Status'Image);
+      Add ("root release:",
+           (case Root.Status is
+               when Valid  => Root.Value.Release.Milestone.Image,
+               when others => "N/A"));
+      Add ("root load error:",
+           (case Root.Status is
+               when Broken  => Cmd.Optional_Root.Message,
+               when Valid   => "none",
+               when Outside => "N/A"));
+      Add ("root folder:",
+           (case Root.Status is
+               when Outside => "N/A",
+               when Broken  => "N/A",
+               when Valid   => Root.Value.Path));
+      Add ("current folder:", Alire.Directories.Current);
 
-      Table.Append ("root status:")
-        .Append (Root.Status'Image).New_Row;
-      Table.Append ("root release:")
-        .Append (case Root.Status is
-                    when Valid  => Root.Value.Release.Milestone.Image,
-                    when others => "N/A").New_Row;
-      Table.Append ("root load error:")
-        .Append (case Root.Status is
-                    when Broken  => Cmd.Optional_Root.Message,
-                    when Valid   => "none",
-                    when Outside => "N/A").New_Row;
-      Table.Append ("root folder:")
-        .Append (case Root.Status is
-                    when Outside => "N/A",
-                    when Broken  => "N/A",
-                    when Valid   => Root.Value.Path).New_Row;
-      Table.Append ("current folder:").Append (Alire.Directories.Current)
-        .New_Row;
-
-      Table.Append ("").New_Row;
-      Table.Append ("SYSTEM").New_Row;
+      Add ("");
+      Add ("SYSTEM");
       for Prop of Platform.Properties loop
-         Table.Append (Prop.Key & ":").Append (Prop.Image).New_Row;
+         Add (Prop.Key & ":", Prop.Image);
       end loop;
 
       Table.Print (Level => Always);

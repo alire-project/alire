@@ -19,6 +19,9 @@ with Alire.Toolchains.Solutions;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
+with Alire.VFS;
+
+with Den.Filesystem;
 
 with GNAT.OS_Lib;
 with GNAT.SHA256;
@@ -1229,17 +1232,17 @@ package body Alire.Roots is
       Found : AAA.Strings.Set; -- Milestone --> Description
 
       procedure Check_Dir
-        (Item : Ada.Directories.Directory_Entry_Type;
-         Stop  : in out Boolean)
+        (Item : Any_Path;
+         Stop : in out Boolean)
       is
          pragma Unreferenced (Stop);
-         use Ada.Directories;
+         use all type Den.Kinds;
       begin
-         if Kind (Item) /= Directory then
+         if Den.Kind (Item) /= Directory then
             return;
          end if;
 
-         if Simple_Name (Item) = Paths.Working_Folder_Inside_Root
+         if Den.Name (Item) = Paths.Working_Folder_Inside_Root
          then
             --  This is an alire metadata folder, don't go in. It could also be
             --  a crate named "alire" but that seems like a bad idea anyway.
@@ -1250,14 +1253,23 @@ package body Alire.Roots is
 
          declare
             Opt : Optional.Root :=
-                    Optional.Detect_Root (Full_Name (Item));
+                    Optional.Detect_Root (Den.Filesystem.Full_Name (Item));
          begin
             if Opt.Is_Valid then
                Found.Insert
-                 (TTY.URL (Directories.Find_Relative_Path
-                    (Starting_Path, Full_Name (Item))) & "/"
-                  & Opt.Value.Release.Constant_Reference.Milestone.TTY_Image
-                  & ": " & TTY.Emph
+                 (TTY.URL
+                    (String
+                         (VFS.To_Portable
+                              (Directories.Find_Relative_Path
+                                 (Den.Filesystem.Full_Name (Starting_Path),
+                                  Den.Filesystem.Full_Name (Item))))
+                         --  We use both full names because on Windows we see
+                         --  mixed short/long names for the same path if we
+                         --  apply Full_Name to only one of them.
+                  & "/"
+                  & Opt.Value.Release.Constant_Reference.Milestone.TTY_Image)
+                  & ": "
+                  & TTY.Emph
                     (if Opt.Value.Release.Constant_Reference.Description /= ""
                      then Opt.Value.Release.Constant_Reference.Description
                      else "(no description)"));

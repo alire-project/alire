@@ -60,3 +60,12 @@
 [submodule "deps/dirty_booleans"]
 	path = deps/dirty_booleans
 	url = https://github.com/mosteo/dirty_booleans
+[submodule "deps/den"]
+	path = deps/den
+	url = https://github.com/mosteo/den
+[submodule "deps/cstrings"]
+	path = deps/cstrings
+	url = https://github.com/mosteo/cstrings
+[submodule "deps/lml"]
+	path = deps/lml
+	url = https://github.com/mosteo/lml_ada.git

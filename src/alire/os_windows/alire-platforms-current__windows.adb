@@ -88,7 +88,20 @@ package body Alire.Platforms.Current is
             return Detect_Msys2_Root;
 
          when others =>
-            return OS_Lib.Getenv ("HOMEDRIVE");
+            declare
+               Root : constant String := OS_Lib.Getenv ("HOMEDRIVE", "C:\");
+            begin
+               if Root'Length not in 2 | 3 then
+                  Raise_Checked_Error
+                    ("$HOMEDRIVE is not a proper drive: " & Root);
+               end if;
+
+               if Root (Root'Last) not in '/' | '\' then
+                  return Root & '\';
+               else
+                  return Root;
+               end if;
+            end;
 
       end case;
    end Distribution_Root;
@@ -160,7 +173,7 @@ package body Alire.Platforms.Current is
 
          Trace.Detail ("Alire is configured not to install msys2.");
          Trace.Detail
-           ("Run 'alr config --global --set msys2.do_not_install false'" &
+           ("Run 'alr settings --global --set msys2.do_not_install false'" &
               " if you want Alire to install msys2.");
          return False;
       end if;

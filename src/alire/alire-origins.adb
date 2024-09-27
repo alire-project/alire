@@ -427,14 +427,14 @@ package body Alire.Origins is
    begin
       case Scheme is
          when Pure_Git | Git | HTTP =>
-            if Commit'Length /= Git_Commit'Length then
+            if not Is_Valid_Commit (Commit) then
                Raise_Checked_Error
                  ("invalid git commit id, " &
                     "40 digits hexadecimal expected");
             end if;
             return New_Git (VCS_URL, Commit, Subdir);
          when Hg =>
-            if Commit'Length /= Hg_Commit'Length then
+            if not Is_Valid_Mercurial_Commit (Commit) then
                Raise_Checked_Error
                  ("invalid mercurial commit id, " &
                     "40 digits hexadecimal expected");
@@ -769,7 +769,10 @@ package body Alire.Origins is
 
          when VCS_Kinds =>
             Table.Set (Keys.URL,
-                       +(Prefixes (This.Kind).all
+                       +((if This.Kind in Git
+                            and then AAA.Strings.Has_Prefix (This.URL, "git@")
+                          then ""
+                          else Prefixes (This.Kind).all)
                          & (if URI.Scheme (This.URL) in URI.None
                            --  not needed for remote repos, but for testing
                            --  ones used locally:

@@ -20,7 +20,7 @@ def verify_manifest():
 
 
 # Prepare our "remote" repo
-init_local_crate("xxx", enter=False)
+init_local_crate("xxx", enter=False, with_maintainer_login=True)
 head_commit = init_git_repo("xxx")
 
 # Clone to a "local" repo and set minimal config

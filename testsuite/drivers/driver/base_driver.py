@@ -47,6 +47,7 @@ class BaseDriver(ClassicTestDriver):
         # Hardcode OSes
         for osname in ["windows", "linux", "macos"]:
             self.skip[f"skip_{osname}"] = not getattr(drivers.helpers, f"on_{osname}")()
+        self.skip[f"skip_unix"] = drivers.helpers.on_windows()
 
     @property
     def test_control_creator(self):

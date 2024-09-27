@@ -1,6 +1,7 @@
 with AAA.Strings;
 
 --  Ensure config is loaded for some defaults below
+with Alire.Cache;
 with Alire.Settings.Edit.Early_Load;
 pragma Unreferenced (Alire.Settings.Edit.Early_Load);
 
@@ -32,7 +33,7 @@ package Alire.Settings.Builtins.Windows is
    Msys2_Install_Dir : constant Builtin := New_Builtin
      (Key  => "msys2.install_dir",
       Kind => Stn_Absolute_Path,
-      Def  => Settings.Edit.Cache_Path / "msys64",
+      Def  => Cache.Path / "msys64",
       Help =>
         "Directory where Alire will detect and/or install" &
         " msys2 system package manager. (Windows only)");

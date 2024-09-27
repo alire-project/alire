@@ -123,17 +123,7 @@ def run_alr(*args, **kwargs):
         argv.insert(1, '-q')
     argv.extend(args)
     p = Run(argv)
-    if (p.status != 0 and complain_on_error) or (p.status == 0 and not complain_on_error):
-        print('The following command:')
-        print('  {}'.format(' '.join(quote_arg(arg) for arg in argv)))
-        print('Exited with status code {}'.format(p.status))
-        print('Output:')
-        print(p.out)
-        if complain_on_error:
-            raise CalledProcessError('alr returned non-zero status code')
-        else:
-            raise CalledProcessError('alr returned zero status code but '
-                                     'an error was expected')
+    _report_unexpected_exit_status(p.status, complain_on_error, argv, p.out)
 
     # Convert CRLF line endings (Windows-style) to LF (Unix-style). This
     # canonicalization is necessary to make output comparison work on all
@@ -141,7 +131,8 @@ def run_alr(*args, **kwargs):
     return ProcessResult(p.status, p.out.replace('\r\n', '\n'))
 
 
-def run_alr_interactive(args: [str], output: [str], input: [str], timeout=5) -> str:
+def run_alr_interactive(args: list[str], output: list[str], input: list[str],
+                        timeout=5, complain_on_error=True) -> str:
     """
     NON-WINDOWS-ONLY
     Run "alr" with the given arguments, feeding it the given input. No other
@@ -151,7 +142,13 @@ def run_alr_interactive(args: [str], output: [str], input: [str], timeout=5) -> 
     :param output: List of strings expected to be output by the subprocess.
     :param input: List of strings to feed to the subprocess's standard input.
     :param timeout: Timeout in seconds for the subprocess to complete.
+    :param complain_on_error: If True and the subprocess exits with a non-zero
+        status code, print information on the standard output (for debugging)
+        and raise a CalledProcessError (to abort the test).
+        Conversely if False and the process ends without error, it's presumed
+        an error was expected and CalledProcessError is raised too.
     """
+
     # Check whether on Windows to fail early (revisit if pexpect is updated?)
     if platform.system() == "Windows":
         print('SKIP: pexpect unavailable on Windows')
@@ -177,12 +174,37 @@ def run_alr_interactive(args: [str], output: [str], input: [str], timeout=5) -> 
                            f"{child.before.decode('utf-8')}")
 
     # Assert proper output code
-    assert child.exitstatus == 0, \
-        f"Unexpected exit status: {child.exitstatus}\n" + \
-        f"Output: {child.before.decode('utf-8')}"
+    output = child.before.decode('utf-8')
+    _report_unexpected_exit_status(
+        child.exitstatus, complain_on_error, ["alr"] + args, output
+    )
 
     # Return command output with CRLF replaced by LF (as does run_alr)
-    return child.before.decode('utf-8').replace('\r\n', '\n')
+    return output.replace('\r\n', '\n')
+
+
+def _report_unexpected_exit_status(exit_status, complain_on_error, args, output):
+    """
+    Report if a command yielded an unexpected exit status.
+
+    If complain_on_error is True and exit_status is non-zero, or if it is False
+    and exit_status is zero, print the command and its output, then raise a
+    CalledProcessError. Otherwise, do nothing.
+    """
+    error_occured = (exit_status != 0)
+    if (error_occured == complain_on_error):
+        command = " ".join(quote_arg(arg) for arg in args)
+        print('The following command:')
+        print(f'  {command}')
+        print(f'Exited with status code {exit_status}')
+        print('Output:')
+        print(output)
+        if complain_on_error:
+            raise CalledProcessError('alr returned non-zero status code')
+        else:
+            raise CalledProcessError(
+                'alr returned zero status code but an error was expected'
+            )
 
 
 def fixtures_path(*args):
@@ -282,7 +304,8 @@ def index_version():
     return index_branch().split('-')[1]
 
 
-def init_local_crate(name="xxx", binary=True, enter=True, update=True):
+def init_local_crate(name="xxx", binary=True, enter=True, update=True,
+                     with_maintainer_login=False):
     """
     Initialize a local crate and enter its folder for further testing.
 
@@ -291,16 +314,23 @@ def init_local_crate(name="xxx", binary=True, enter=True, update=True):
     :param bool binary: Initialize as --bin or --lib
 
     :param bool enter: Enter the created crate directory
+
+    :param bool with_maintainer_login: Set the value of the `maintainers-logins`
+        field of the manifest to `["github-username"]` so that the crate is
+        valid for submission to the community index.
     """
     run_alr("init", name, "--bin" if binary else "--lib")
+    os.chdir(name)
 
     if update:
-        os.chdir(name)
         run_alr("update")
-        os.chdir("..")
 
-    if enter:
-        os.chdir(name)
+    if with_maintainer_login:
+        with open("alire.toml", "a") as f:
+            f.write('maintainers-logins = ["github-username"]\n')
+
+    if not enter:
+        os.chdir("..")
 
 
 def alr_workspace_cache():

@@ -143,3 +143,11 @@ def assert_substring(target: str, text: str):
     """
     assert target in text, \
         f"Missing expected string '{target}' in text:\n{text}"
+
+
+def assert_not_substring(target: str, text: str):
+    """
+    Check that a string is not contained in another string
+    """
+    assert target not in text, \
+        f"Unexpected string '{target}' in text:\n{text}"

@@ -923,8 +923,17 @@ package body Alire.Solutions is
       Table : Utils.Tables.Table;
    begin
       if This.Links.Is_Empty and then Dependency_Map'(This.Pins).Is_Empty then
-         Trace.Always ("There are no pins");
+         if Utils.Tables.Structured_Output then
+            Table.Print (Always);
+         else
+            Trace.Always ("There are no pins");
+         end if;
       else
+         --  To preserve old behavior with human output
+         if Utils.Tables.Structured_Output then
+            Table.Header ("Crate").Header ("Target").Header ("Origin").New_Row;
+         end if;
+
          for Dep of This.Dependencies loop
             if Dep.Is_Linked then
                Table
