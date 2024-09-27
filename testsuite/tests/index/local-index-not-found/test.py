@@ -17,7 +17,7 @@ INDEX_DIR = "no-such-directory"
 REL_CONF_PATH = os.path.join('alr-config', 'indexes', 'bad_index', 'index.toml')
 ERR_MSG = (
     f'.*ERROR: Cannot load metadata from .*{re.escape(REL_CONF_PATH)}: '
-    f'Not a readable directory: .{re.escape(os.path.sep)}{INDEX_DIR}\n'
+    f'Not a readable directory: {re.escape(os.path.join(".", INDEX_DIR))}\n'
 )
 
 

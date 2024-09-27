@@ -147,7 +147,7 @@ for force_arg in ([], ["--force"]):
     # GitHub account with a fork of the community index.
     test(
         args=force_arg + ["publish", "--skip-submit"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins='["github-username"]',
         num_confirms=2,
         output=[
@@ -162,13 +162,13 @@ for force_arg in ([], ["--force"]):
         ],
         gen_manifest=[
             # "git+" should be prepended to avoid ambiguity
-            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "git\+https://github\.com/some_user/repo-name".*',
         ],
         expect_success=True
     )
     test(
         args=force_arg + ["publish", "--for-private-index"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins='["github-username"]',
         num_confirms=2,
         output=[
@@ -178,7 +178,7 @@ for force_arg in ([], ["--force"]):
             r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
-            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "git\+https://github\.com/some_user/repo-name".*',
         ],
         expect_success=True
     )
@@ -186,7 +186,7 @@ for force_arg in ([], ["--force"]):
     # A crate suitable for the community index, with a GitHub user configured:
     test(
         args=force_arg + ["publish", "--skip-submit"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins='["github-username"]',
         github_user="github-username",
         num_confirms=2,
@@ -206,7 +206,7 @@ for force_arg in ([], ["--force"]):
             ),
         ],
         gen_manifest=[
-            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "git\+https://github\.com/some_user/repo-name".*',
         ],
         expect_success=True
     )
@@ -302,7 +302,7 @@ for force_arg in ([], ["--force"]):
     # "alr publish" and "alr publish --skip-submit" should fail.
     test(
         args=force_arg + ["publish"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins='["valid-for-GitHub", "invalid_for_GitHub"]',
         num_confirms=0, # (fails before first confirmation)
         output=[
@@ -316,7 +316,7 @@ for force_arg in ([], ["--force"]):
     )
     test(
         args=force_arg + ["publish", "--skip-submit"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins='["valid-for-GitHub", "invalid_for_GitHub"]',
         num_confirms=0,
         output=[
@@ -331,7 +331,7 @@ for force_arg in ([], ["--force"]):
     # "alr publish --for-private-index" will succeed.
     test(
         args=force_arg + ["publish", "--for-private-index"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins='["valid-for-GitHub", "invalid_for_GitHub"]',
         num_confirms=2,
         output=[
@@ -339,7 +339,7 @@ for force_arg in ([], ["--force"]):
             r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
-            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "git\+https://github\.com/some_user/repo-name".*',
         ],
         expect_success=True
     )
@@ -350,7 +350,7 @@ for force_arg in ([], ["--force"]):
     # "alr publish" and "alr publish --skip-submit" should fail.
     test(
         args=force_arg + ["publish"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins=None,
         num_confirms=0, # (fails before first confirmation)
         output=[
@@ -361,7 +361,7 @@ for force_arg in ([], ["--force"]):
     )
     test(
         args=force_arg + ["publish", "--skip-submit"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins=None,
         num_confirms=0,
         output=[
@@ -373,7 +373,7 @@ for force_arg in ([], ["--force"]):
     # "alr publish --for-private-index" will succeed.
     test(
         args=force_arg + ["publish", "--for-private-index"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins=None,
         num_confirms=2,
         output=[
@@ -381,7 +381,7 @@ for force_arg in ([], ["--force"]):
             r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
-            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "git\+https://github\.com/some_user/repo-name".*',
         ],
         expect_success=True
     )
@@ -393,7 +393,7 @@ for force_arg in ([], ["--force"]):
     # all.
     test(
         args=force_arg + ["publish"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins="[]",
         num_confirms=0,
         output=[
@@ -404,7 +404,7 @@ for force_arg in ([], ["--force"]):
     )
     test(
         args=force_arg + ["publish", "--skip-submit"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins="[]",
         num_confirms=0,
         output=[
@@ -415,7 +415,7 @@ for force_arg in ([], ["--force"]):
     )
     test(
         args=force_arg + ["publish", "--for-private-index"],
-        url="https://github.com/some_user/repo-name.git",
+        url="https://github.com/some_user/repo-name",
         maint_logins="[]",
         num_confirms=2,
         output=[
@@ -423,7 +423,7 @@ for force_arg in ([], ["--force"]):
             r".*Please upload this file to the index in the xx/xxx/ subdirectory",
         ],
         gen_manifest=[
-            r'.*url = "https://github\.com/some_user/repo-name\.git".*',
+            r'.*url = "git\+https://github\.com/some_user/repo-name".*',
         ],
         expect_success=True
     )
