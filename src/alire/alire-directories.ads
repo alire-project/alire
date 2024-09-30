@@ -32,10 +32,6 @@ package Alire.Directories is
    --  equivalent to "cp -r src/* dst/". Excluding may be a single name that
    --  will not be copied (if file) or recursed into (if folder).
 
-   procedure Copy_Link (Src, Dst : Any_Path)
-     with Pre => GNAT.OS_Lib.Is_Symbolic_Link (Src);
-   --  Copy a softlink into a new place preserving its relative path to target
-
    function Current return String renames Ada.Directories.Current_Directory;
 
    function Parent (Path : Any_Path) return String
@@ -78,12 +74,6 @@ package Alire.Directories is
 
    function Find_Relative_Path_To (Path : Any_Path) return Any_Path;
    --  Same as Find_Relative_Path (Parent => Current, Child => Path)
-
-   function Find_Single_File (Path      : String;
-                              Extension : String)
-                              return String;
-   --  Finds a single file in a folder with the given extension and return its
-   --  absolute path.  If more than one, or none, returns "".
 
    function Is_Directory (Path : Any_Path) return Boolean;
    --  Returns false for non-existing paths too
