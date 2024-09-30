@@ -104,7 +104,7 @@ package body Alire.Roots is
    end Build_Prepare;
 
    -----------
-   -- Build --
+   -- noteBuild --
    -----------
 
    function Build (This             : in out Root;
@@ -1060,7 +1060,9 @@ package body Alire.Roots is
                if Target.Is_Valid then
                   Trace.Debug
                     ("Crate found at pin location " & Pin.Relative_Path);
-                  if Target.Value.Name /= Crate then
+                  if Target.Value.Name /= Crate and then
+                    not Target.Value.Release.Element.Provides (Crate)
+                  then
                      Raise_Checked_Error
                        ("Mismatched crates for pin linking to "
                         & TTY.URL (Pin.Path) & ": expected " &
