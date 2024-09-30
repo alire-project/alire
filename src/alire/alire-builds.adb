@@ -58,10 +58,7 @@ package body Alire.Builds is
                     with Unreferenced;
       begin
          Den.Filesystem.Create_Directory (Dst);
-         Den.Filesystem.Copy (Src, Dst,
-                              Options =>
-                                (Preserve_Permissions => True,
-                                 others               => <>));
+         Den.Filesystem.Copy (Src, Dst);
       exception
          when E : others =>
             Log_Exception (E);

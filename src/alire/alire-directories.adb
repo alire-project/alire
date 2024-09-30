@@ -122,7 +122,7 @@ package body Alire.Directories is
                                    Dst_Parent_Folder / Simple_Item;
                   begin
                      if not Den.Exists (Subfolder) then
-                        Ada.Directories.Create_Directory (Subfolder);
+                        Den.Filesystem.Create_Directory (Subfolder);
                      end if;
                      Copy (Full_Item, Subfolder, Excluding);
                   end;
