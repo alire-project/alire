@@ -78,7 +78,7 @@ package body Alire.Platforms.Common is
 
    function Unix_Home_Folder return String
    is
-      Home_Var : constant String := OS_Lib.Getenv ("HOME", "unset");
+      Home_Var      : constant String  := OS_Lib.Getenv ("HOME", "unset");
       Maybe_Windows : constant Boolean := Home_Var = "unset"
          and then GNAT.OS_Lib.Directory_Separator = '\';
    begin
