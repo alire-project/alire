@@ -98,6 +98,7 @@ package body Alr.Commands.Version is
 
       Add ("");
       Add ("CONFIGURATION");
+      Add ("home folder:",     Alire.Platforms.Folders.Home);
       Add ("settings folder:", Alire.Settings.Edit.Path);
       Add ("cache folder:",    Alire.Cache.Path);
       Add ("vault folder:",    Paths.Vault.Path);
