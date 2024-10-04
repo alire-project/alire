@@ -19,15 +19,7 @@ private package Alire.Platforms.Common is
    -- Unix_Home_Folder --
    ---------------------
 
-   function Unix_Home_Folder return String
-   is (if OS_Lib.Getenv ("HOME", "unset") = "unset" and then
-       GNAT.OS_Lib.Directory_Separator = '\'
-       then
-          raise Checked_Error with
-            "$HOME is not set, you might be running an"
-       & " `alr` built for a non-Windows OS"
-       else
-          OS_Lib.Getenv ("HOME", Default => "/tmp"));
+   function Unix_Home_Folder return String;
 
    ----------------------
    -- Unix_Temp_Folder --

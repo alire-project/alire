@@ -14,6 +14,7 @@ with Alire.VFS;
 with Alire.Utils;
 
 with Den.Filesystem;
+with Den.Iterators;
 with Den.Walk;
 
 with GNAT.String_Hash;
@@ -105,61 +106,43 @@ package body Alire.Directories is
    ----------
 
    procedure Copy (Src_Folder, Dst_Parent_Folder : String;
-                   Excluding                     : String := "") is
-      use Ada.Directories;
-      Search : Search_Type;
-      Item   : Directory_Entry_Type;
+                   Excluding                     : String := "")
+   is
+      use all type Den.Kinds;
    begin
-      Start_Search (Search, Src_Folder, "*");
-      while More_Entries (Search) loop
-         Get_Next_Entry (Search, Item);
-         if Simple_Name (Item) /= Excluding then
-            --  Recurse for subdirectories
-            if Kind (Item) = Directory and then
-              Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".."
-            then
-               declare
-                  Subfolder : constant String :=
-                                Compose (Dst_Parent_Folder,
-                                         Simple_Name (Item));
-               begin
-                  if not Exists (Subfolder) then
-                     Ada.Directories.Create_Directory (Subfolder);
-                  end if;
-                  Copy (Full_Name (Item), Subfolder, Excluding);
-               end;
+      for Simple_Item of Den.Iterators.Iterate (Src_Folder) loop
+         declare
+            Full_Item : constant Den.Path := Src_Folder / Simple_Item;
+         begin
+            if Simple_Item /= Excluding then
+               --  Recurse for subdirectories
+               if Den.Kind (Full_Item) = Den.Directory then
+                  declare
+                     Subfolder : constant String :=
+                                   Dst_Parent_Folder / Simple_Item;
+                  begin
+                     if not Den.Exists (Subfolder) then
+                        Den.Filesystem.Create_Directory (Subfolder);
+                     end if;
+                     Copy (Full_Item, Subfolder, Excluding);
+                  end;
 
-            --  Copy for files
-            elsif Kind (Item) = Ordinary_File then
-               Copy_File (Full_Name (Item),
-                          Compose (Dst_Parent_Folder, Simple_Name (Item)));
+                  --  Copy for files/links
+               elsif Den.Kind (Full_Item) in File | Softlink then
+                  Den.Filesystem.Copy
+                    (Full_Item,
+                     Dst_Parent_Folder / Simple_Item);
+
+               else
+                  Raise_Checked_Error
+                    ("Cannot copy item of kind " & Den.Kind (Full_Item)'Image
+                     & ": " & Full_Item);
+
+               end if;
             end if;
-         end if;
+         end;
       end loop;
-      End_Search (Search);
    end Copy;
-
-   ---------------
-   -- Copy_Link --
-   ---------------
-
-   procedure Copy_Link (Src, Dst : Any_Path) is
-      use AAA.Strings;
-      use all type Platforms.Operating_Systems;
-      Keep_Links : constant String
-        := (case Platforms.Current.Operating_System is
-               when Linux           => "-d",
-               when FreeBSD | OpenBSD | MacOS => "-R",
-               when others          =>
-                  raise Program_Error with "Unsupported operation");
-   begin
-      --  Given that we are here because Src is indeed a link, we should be in
-      --  a Unix-like platform able to do this.
-      OS_Lib.Subprocess.Checked_Spawn
-        ("cp",
-         To_Vector (Keep_Links)
-         & Src & Dst);
-   end Copy_Link;
 
    -----------------
    -- Create_Tree --
@@ -442,41 +425,6 @@ package body Alire.Directories is
         Den.Filesystem.Relative (Den.Scrub (Parent),
                                  Den.Scrub (Child));
    end Find_Relative_Path;
-
-   ----------------------
-   -- Find_Single_File --
-   ----------------------
-
-   function Find_Single_File (Path      : String;
-                              Extension : String)
-                              return String
-   is
-      use Ada.Directories;
-      Search : Search_Type;
-      File   : Directory_Entry_Type;
-   begin
-      Start_Search (Search    => Search,
-                    Directory => Path,
-                    Pattern   => "*" & Extension,
-                    Filter    => (Ordinary_File => True, others => False));
-      if More_Entries (Search) then
-         Get_Next_Entry (Search, File);
-         return Name : constant String :=
-           (if More_Entries (Search)
-            then ""
-            else Full_Name (File))
-         do
-            End_Search (Search);
-         end return;
-      else
-         End_Search (Search);
-         return "";
-      end if;
-   exception
-      when Name_Error =>
-         Trace.Debug ("Search path does not exist: " & Path);
-         return "";
-   end Find_Single_File;
 
    ----------------
    -- Initialize --
@@ -876,39 +824,9 @@ package body Alire.Directories is
             end if;
          end if;
 
-         --  We use GNAT.OS_Lib here as some binary packages contain softlinks
-         --  to .so libs that we must copy too, and these are troublesome
-         --  with regular Ada.Directories (that has no concept of softlink).
-         --  Also, some of these softlinks are broken and although they are
-         --  presumably safe to discard, let's just go for an identical copy.
+         Den.Filesystem.Copy (Src, Dst);
+         --  This copy should preserve both softlinks and attributes
 
-         if GNAT.OS_Lib.Is_Symbolic_Link (Src) then
-            Trace.Debug ("   Merge (softlink): " & Src);
-
-            Copy_Link (Src, Dst);
-            if not GNAT.OS_Lib.Is_Symbolic_Link (Dst) then
-               Raise_Checked_Error ("Failed to copy softlink: "
-                                    & TTY.URL (Src)
-                                    & " to " & TTY.URL (Dst)
-                                    & " (dst not a link)");
-            end if;
-         else
-            begin
-               Adirs.Copy_File (Source_Name => Src,
-                                Target_Name => Dst,
-                                Form        => "preserve=all_attributes");
-            exception
-               when E : others =>
-                  Trace.Error
-                    ("When copying " & Src & " (" & Den.Kind (Src)'Image
-                     & ") --> " & Dst & ": ");
-                  Trace.Error
-                    ("Src item was: "
-                     & Item & " (" & Den.Kind (Item)'Image & ")");
-                  Log_Exception (E, Error);
-                  raise;
-            end;
-         end if;
       end Merge;
 
    begin

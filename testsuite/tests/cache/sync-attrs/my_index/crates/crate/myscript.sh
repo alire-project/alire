@@ -1,0 +1,1 @@
+echo "SCRIPT RUN"

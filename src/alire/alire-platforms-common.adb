@@ -1,4 +1,5 @@
 with AAA.Enum_Tools;
+with GNAT.OS_Lib;
 
 with Alire.OS_Lib.Subprocess;
 
@@ -70,5 +71,28 @@ package body Alire.Platforms.Common is
          return Arch_Value;
       end Detect;
    end Machine_Hardware_Name;
+
+   ----------------------
+   -- Unix_Home_Folder --
+   ----------------------
+
+   function Unix_Home_Folder return String
+   is
+      Home_Var      : constant String  := OS_Lib.Getenv ("HOME", "unset");
+      Maybe_Windows : constant Boolean := Home_Var = "unset"
+         and then GNAT.OS_Lib.Directory_Separator = '\';
+   begin
+      if Maybe_Windows then
+         raise Checked_Error with
+            "$HOME is not set, you might be running an"
+            & " `alr` built for a non-Windows OS";
+      elsif Home_Var = "unset" or else
+       not GNAT.OS_Lib.Is_Write_Accessible_File (Home_Var)
+      then
+         return "/tmp";
+      else
+         return Home_Var;
+      end if;
+   end Unix_Home_Folder;
 
 end Alire.Platforms.Common;
