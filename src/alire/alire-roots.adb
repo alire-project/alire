@@ -104,7 +104,7 @@ package body Alire.Roots is
    end Build_Prepare;
 
    -----------
-   -- noteBuild --
+   -- Build --
    -----------
 
    function Build (This             : in out Root;
