@@ -52,7 +52,18 @@ package body Alire.Dependencies.States is
    begin
       if Opt_Root.Is_Valid then
          if Opt_Root.Value.Release.Name = Crate then
+
+            --  Simple case in which the release corresponds with the crate
             return To_Holder (Opt_Root.Value.Release);
+
+         elsif Opt_Root.Value.Release.Provides (Crate) then
+
+            --  But also, the release may be providing the crate instead
+            Trace.Debug ("Created optional release "
+                         & Opt_Root.Value.Release.Milestone.Image
+                         & " providing crate " & Crate.As_String);
+            return To_Holder (Opt_Root.Value.Release);
+
          else
             Raise_Checked_Error ("crate mismatch: expected "
                                  & Crate.TTY_Image
