@@ -2,11 +2,14 @@
 
 Toolchains are comprised by a GNAT compiler and a `gprbuild` project file
 processor. Alire strives to simplify the availability of GNAT releases, which
-are packaged to be retrieved and used with ease. 
+are packaged to be retrieved and used with ease.
 
 The user can now select a preferred compiler via `alr toolchain --select`.
 Releases may still override this selection (for example to use a
-cross-compiler).  
+cross-compiler). Several compilers can be installed simultaneously, but only
+the last one `--select`ed will be used by default. The rest will be used in
+preference to uninstalled compilers, if the default one does not match some
+crate's dependencies.
 
 There are two kinds of dependencies on GNAT compilers: generic dependencies on
 the `gnat` crate, which apply to every compiler, and dependencies on a precise
@@ -27,34 +30,27 @@ They will also be shown by the selection assistant,
 Running `alr toolchain` without arguments will show the installed compilers and
 the preferred compiler, if any.
 
-## Manual compiler installation
-
-Besides selecting a default compiler with `alr toolchain --select`, the user
-may install other compilers via `alr toolchain --install`. Installed but
-unselected compilers will not be used, though, unless a crate explicitly
-requests them via dependencies.
-
-Compilers can be removed with `alr toolchain --uninstall`.
-
 ## Automatic compiler installation
 
 If a crate requires a target-specific compiler via its dependencies, `alr` will
 attempt to use first a matching installed compiler. Otherwise, a matching
 compiler will be automatically downloaded.
 
-Generic dependencies on `gnat` will never cause a compiler download.
-
 ## Automatic compiler selection by Alire
 
 When a build is launched, or `alr printenv` is run to obtain a build environment,
 `alr` will use the available compilers as follows:
 
-1. Any target-specific compiler needed due to dependencies will be
+1. A target-specific compiler needed due to dependencies will be
 selected.
 1. Otherwise, if the user has defined a preferred compiler, it will be
 selected.
 1. If no preferred compiler has been defined, Alire will rely on the existing
 user environment.
+
+Within these conditions, a compiler already downloaded will be preferred.
+Downloading a new compiler will be attempted only if no matching compiler is
+already available.
 
 ## Specifying dependencies on GNAT compilers for crate publishing
 
