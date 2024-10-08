@@ -10,7 +10,12 @@ You also must have [GNAT](https://www.gnu.org/software/gnat) and
 [GPRBuild](https://github.com/AdaCore/gprbuild) in your `PATH`. You can install
 these with, for example:
 ```sh
-alr toolchain --install --install-dir=<dir> gnat_native=<version_x> gprbuild=<version_y>
+alr install gnat_native=<version_x> gprbuild=<version_y> --prefix=<dir>
+```
+and add `<dir>/bin` to your `PATH`, or
+```sh
+cd <dir>
+alr get gnat_native=<version_x> gprbuild=<version_y>
 ```
 and add `<dir>/gnat_native_<version_x>_(...)/bin` and
 `<dir>/gprbuild_<version_y>_(...)/bin` to your `PATH`.
