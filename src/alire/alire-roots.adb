@@ -101,6 +101,10 @@ package body Alire.Roots is
       --  Will regenerate on demand only those changed. For shared
       --  dependencies, will also generate any missing configs not generated
       --  during sync, such as for linked releases and the root release.
+
+      --  Set the environment to be used during build
+
+      This.Export_Build_Environment;
    end Build_Prepare;
 
    -----------
@@ -278,8 +282,6 @@ package body Alire.Roots is
       if Stop_Build (Stop_After, Actual => Generation) then
          return True;
       end if;
-
-      This.Export_Build_Environment;
 
       This.Traverse (Build_Single_Release'Access);
 
