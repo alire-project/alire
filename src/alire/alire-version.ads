@@ -16,7 +16,7 @@ private
    --  be replaced by `alr build` with the current commit, and appended with
    --  "_or_later" after build.
 
-   Current_Str : constant String := "2.0.2";
+   Current_Str : constant String := "2.0.3-dev";
    --  2.0.2:     quarterly bugfix maintenance release
    --  2.0.1:     fix `alr install` and minor fixes
    --  2.0.0:     alr settings refactor and minor fixes
