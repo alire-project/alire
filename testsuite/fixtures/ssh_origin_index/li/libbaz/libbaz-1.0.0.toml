@@ -1,0 +1,9 @@
+description = "Custom repo to check retrieval of ssh:// git crates"
+name = "libbaz"
+version = "1.0.0"
+maintainers = ["some@one.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "ssh://host.invalid/path/to/repo.git/"
+commit = "0000000000000000000000000000000000000000"

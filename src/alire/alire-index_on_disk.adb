@@ -8,7 +8,7 @@ with Alire.Index_On_Disk.Git;
 with Alire.Index_On_Disk.Loading;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
-with Alire.VCSs;
+with Alire.URI;
 
 with GNAT.OS_Lib;
 
@@ -158,23 +158,36 @@ package body Alire.Index_On_Disk is
                          Priority :     Priorities := Default_Priority)
                          return Index'Class
    is
-      function Process_Local_Index (Path : String) return Index'Class;
-      --  Check that Path designates a readable directory and create the
-      --  corresponding index handler for it. If something goes wrong, set
-      --  Result to contain the corresponding error message and return
-      --  New_Invalid_Index.
+      Origin_Kind : constant URI.URI_Kinds := URI.URI_Kind (Origin);
 
-      -------------------------
-      -- Process_Local_Index --
-      -------------------------
+      function Abs_Path (This : String) return String;
+      --  Return the absolute path to which a local origin path/URL points
 
-      function Process_Local_Index (Path : String) return Index'Class is
+      function Is_Valid_Local_Origin (Path : String) return Boolean;
+      --  Return whether Path designates a readable directory suitable for an
+      --  index origin (i.e. not inside Alire's config path). If something goes
+      --  wrong, set Result to contain the corresponding error message.
+
+      --------------
+      -- Abs_Path --
+      --------------
+
+      function Abs_Path (This : String) return String
+      is (Ada.Directories.Full_Name (URI.Local_Path (Origin)));
+
+      ---------------------------
+      -- Is_Valid_Local_Origin --
+      ---------------------------
+
+      function Is_Valid_Local_Origin (Path : String) return Boolean is
          use GNATCOLL.VFS;
          Dir : constant Virtual_File := Create (+Path);
       begin
+         --  Ensure the path exists and is a directory
+
          if not Dir.Is_Directory then
             Result := Outcome_Failure ("Not a readable directory: " & Path);
-            return New_Invalid_Index;
+            return False;
          end if;
 
          --  Ensure the given path is not one of our own configured indexes
@@ -182,17 +195,11 @@ package body Alire.Index_On_Disk is
          if AAA.Strings.Has_Prefix (Path, Parent) then
             Result := Outcome_Failure
               ("Given index path is inside Alire configuration path");
-            return New_Invalid_Index;
+            return False;
          end if;
 
-         --  Ensure the created Index wrapper has absolute path
-
-         Result := Outcome_Success;
-         return Directory.New_Handler
-           (File_Prefix & Ada.Directories.Full_Name (Path),
-            Name,
-            Parent).With_Priority (Priority);
-      end Process_Local_Index;
+         return True;
+      end Is_Valid_Local_Origin;
 
    begin
       if not Is_Valid_Name (Name) then
@@ -200,52 +207,50 @@ package body Alire.Index_On_Disk is
          return New_Invalid_Index;
       end if;
 
-      --  Warn about http[s]:// URLs being not supported and suggest git+http
-      --  instead.
-
-      if AAA.Strings.Has_Prefix (Origin, HTTP_Prefix) then
-         Result := Outcome_Failure
-           ("HTTP/HTTPS URLs are not valid index origins. "
-            & "You may want git+" & Origin & " instead.");
-         return New_Invalid_Index;
-      end if;
-
-      --  Process "file://" URLs and anything that looks like a file name as a
-      --  local index.
-
-      if AAA.Strings.Has_Prefix (Origin, File_Prefix) then
-         return Process_Local_Index
-           (Origin (Origin'First + File_Prefix'Length ..  Origin'Last));
-      elsif Origin (Origin'First) = '/'
-        or else not (AAA.Strings.Contains (Origin, "@")
-                     or else AAA.Strings.Contains (Origin, "+"))
+      if Origin_Kind in URI.Local_URIs
+        and then not Is_Valid_Local_Origin (URI.Local_Path (Origin))
       then
-         return Process_Local_Index (Origin);
-      end if;
-
-      --  Process "git+ssh://" as git over ssh and suggest for "ssh://"
-
-      if AAA.Strings.Has_Prefix (Origin, SSH_Prefix) then
-         Result := Outcome_Failure
-           ("ssh:// URLs are not valid index origins. "
-            & "You may want git+" & Origin & " instead.");
+         --  Result is already set to Outcome_Failure by Is_Valid_Local_Origin
          return New_Invalid_Index;
-      elsif AAA.Strings.Has_Prefix (Origin, "git+" & SSH_Prefix) then
-         Result := Outcome_Success;
-         return Index_On_Disk.Git
-           .New_Handler (Origin, Name, Parent)
-           .With_Priority (Priority);
       end if;
 
-      --  Process other paths as VCSs
-
-      case VCSs.Kind (Origin) is
-         when VCSs.VCS_Git =>
+      case Origin_Kind is
+         when URI.Local_Other =>
+            --  Process path or "file:" URL as a local index.
             Result := Outcome_Success;
-            return Index_On_Disk.Git.New_Handler (Origin, Name, Parent)
-                                    .With_Priority (Priority);
-         when VCSs.VCS_Unknown =>
+            return Index_On_Disk.Directory.New_Handler
+                     (URI.To_URL (Abs_Path (Origin)), Name, Parent)
+                     .With_Priority (Priority);
+
+         when URI.Git_URIs =>
+            --  A recognised Git repo; create a clone in the config directory.
+            declare
+               --  Ensure `git+file:` origin is an absolute path
+               From : constant String :=
+                 (if Origin_Kind in URI.Local_Git
+                  then URI.Make_VCS_Explicit (Abs_Path (Origin), URI.Git)
+                  else Origin);
+            begin
+               Result := Outcome_Success;
+               return Index_On_Disk.Git.New_Handler (From, Name, Parent)
+                                       .With_Priority (Priority);
+            end;
+
+         when URI.Hg_URIs | URI.SVN_URIs =>
+            --  Other VCSs are not currently supported.
             Result := Outcome_Failure ("Unknown index kind: " & Origin);
+            return New_Invalid_Index;
+
+         when URI.Public_Other | URI.SSH_Other =>
+            --  Warn that URL is not recognised and suggest 'git+http' or
+            --  'git+ssh' instead.
+            Result := Outcome_Failure
+              ("Unrecognised index URL. Did you mean 'git+"
+               & Origin & "' instead?");
+            return New_Invalid_Index;
+
+         when others =>
+            Result := Outcome_Failure ("Unrecognised index URL: " & Origin);
             return New_Invalid_Index;
       end case;
    end New_Handler;

@@ -7,7 +7,8 @@ package Alire.VCSs.SVN is
    overriding
    function Clone (This : VCS;
                    From : URL;
-                   Into : Directory_Path)
+                   Into : Directory_Path;
+                   Commit : String := "")
                    return Outcome;
 
    overriding

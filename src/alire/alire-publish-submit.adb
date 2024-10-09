@@ -261,12 +261,13 @@ package body Alire.Publish.Submit is
       Directories.Force_Delete (Local_Repo_Path);
       --  Delete a possibly outdated repo
 
-      VCSs.Git.Handler.Clone
+      VCSs.Git.Handler.Clone_Branch
         (From   => Index.Community_Host
          / User_Info.User_GitHub_Login
          / Index.Community_Repo_Name,
          Into   => Local_Repo_Path,
          Branch => "",
+         Commit => "",
          Depth  => 1).Assert;
 
       --  We can reuse the pull logic now to set up the local branch

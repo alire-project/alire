@@ -13,7 +13,7 @@ package body Alire.Origins.Deployers.Git is
    overriding
    function Deploy (This : Deployer; Folder : String) return Outcome is
    begin
-      VCSs.Git.Handler.Clone (This.Base.URL_With_Commit, Folder).Assert;
+      VCSs.Git.Handler.Clone (This.Base.URL, Folder, This.Base.Commit).Assert;
 
       if Settings.Builtins.Dependencies_Git_Keep_Repository.Get then
 
