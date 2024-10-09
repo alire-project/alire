@@ -6,7 +6,7 @@ pragma Unreferenced (Alire.Settings.Edit.Early_Load);
 
 package Alire.Settings.Builtins.Windows is
 
-   Latest_Msys2 : constant String := "2024-05-07";
+   Latest_Msys2 : constant String := "2024-07-27";
    --  Update here to upgrade to the latest release
 
    Date_1 : String renames Latest_Msys2;
