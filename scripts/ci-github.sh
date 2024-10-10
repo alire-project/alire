@@ -34,7 +34,7 @@ if [[ " $* " == *" build=false "* ]]; then
     echo "Skipping alr build, explicitly disabled via arguments"
 else
     export ALIRE_OS=$(get_OS)
-    gprbuild -j0 -p -P alr_env
+    gprbuild -j0 -p -P alr_env -largs -static-libgcc
 fi
 
 # Disable distro detection if supported
@@ -69,6 +69,12 @@ echo ALR SEARCH:
 # List releases for the record
 alr -q -d search --list --external
 echo ............................
+
+# Exit without testing if some argument is "test=false"
+if [[ " $* " == *" test=false "* ]]; then
+    echo "SKIPPING testsuite, explicitly disabled via arguments"
+    exit 0
+fi
 
 echo TESTSUITE:
 # Run e3.testsuite
