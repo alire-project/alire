@@ -29,12 +29,24 @@ fi
 # Patch version
 scripts/version-patcher.sh
 
+# use -static-libgcc only in recent-enough GCC versions (>=12). The version is
+# the last space-separated field of the first line in gcc --version output.
+# Also, this is only needed on macOS for now.
+ALR_LINKER_ARGS=
+if [ "$(get_OS)" == "macos" ]; then
+    gcc_version=$(gcc --version | head -n 1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -n1 | cut -f1 -d.)
+    if [ "$(echo "$gcc_version >= 12" | bc)" -eq 1 ]; then
+        ALR_LINKER_ARGS="-static-libgcc"
+    fi
+fi
+
 # Build alr if no argument is "build=false"
 if [[ " $* " == *" build=false "* ]]; then
     echo "Skipping alr build, explicitly disabled via arguments"
 else
     export ALIRE_OS=$(get_OS)
-    gprbuild -j0 -p -P alr_env
+    echo "Using ALR_LINKER_ARGS=$ALR_LINKER_ARGS"
+    gprbuild -j0 -p -P alr_env -largs $ALR_LINKER_ARGS
 fi
 
 # Disable distro detection if supported
@@ -69,6 +81,12 @@ echo ALR SEARCH:
 # List releases for the record
 alr -q -d search --list --external
 echo ............................
+
+# Exit without testing if some argument is "test=false"
+if [[ " $* " == *" test=false "* ]]; then
+    echo "SKIPPING testsuite, explicitly disabled via arguments"
+    exit 0
+fi
 
 echo TESTSUITE:
 # Run e3.testsuite
