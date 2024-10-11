@@ -35,6 +35,10 @@ jobs:
       uses: alire-project/alr-install@v1
       with:
         crates: gnat_native gprbuild
+        prefix: alire_prefix
+
+    - name: Check toolchain architecture
+      uses: mosteo-actions/gnat-toolchain-arch-checker@v1
 
     - name: Build alr
       run: gprbuild -j0 -p -P alr_env
@@ -65,6 +69,13 @@ jobs:
 
     - name: Install alr
       run: gprinstall -p -P alr_env --prefix=${{ runner.temp }}/alr_install
+
+    # Ascertain whether alr can run without the toolchain that built it
+    - name: Check standalone alr
+      uses: mosteo-actions/alr-standalone-checker@v1
+      with:
+        alr_path: bin
+        toolchain_path: alire_prefix
 
     - name: Install qt-installer-framework in msys2
       run: ${{env.PACMAN}} -S mingw64/mingw-w64-x86_64-qt-installer-framework
