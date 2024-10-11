@@ -29,6 +29,9 @@ jobs:
     - name: Install FSF toolchain
       run: sudo apt-get install -y gnat-10 gprbuild
 
+    - name: Check toolchain architecture
+      uses: mosteo-actions/gnat-toolchain-arch-checker@v1
+
     - name: Set up gcc on the PATH to be gcc-10
       run: |
         mkdir -p $HOME/.local/bin
@@ -97,6 +100,12 @@ jobs:
 
     - name: Rename AppImage
       run: mv alr*AppImage alr.AppImage
+
+    - name: Test AppImage without the toolchain installed
+      run: |
+        chmod +x ./alr.AppImage
+        sudo apt-get remove -y gnat-10 gprbuild
+        which gnat || { echo "Toolchain purged"; ./alr.AppImage version; }
 
     - name: Upload AppImage asset
       if: (github.event_name == 'release')

@@ -37,6 +37,7 @@ jobs:
       uses: alire-project/alr-install@v1
       with:
         crates: gnat_native gprbuild
+        prefix: alire_prefix
 
     - name: Install FSF toolchain (AArch64)
       if: ${{ matrix.os == 'macos-14' }}
@@ -49,6 +50,9 @@ jobs:
         echo $PWD/alire_prefix/bin >> $GITHUB_PATH
         echo "ARCH=aarch64" >> $GITHUB_ENV
 
+    - name: Check toolchain architecture
+      uses: mosteo-actions/gnat-toolchain-arch-checker@v1
+
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2
       with:
@@ -60,6 +64,13 @@ jobs:
       env:
         BRANCH: ${{ github.base_ref }}
         INDEX: ""
+
+    # Ascertain whether alr can run without the toolchain that built it
+    - name: Check standalone alr
+      uses: mosteo-actions/alr-standalone-checker@v1
+      with:
+        alr_path: bin
+        toolchain_path: alire_prefix
 
     - name: Upload binaries
       uses: actions/upload-artifact@v4
