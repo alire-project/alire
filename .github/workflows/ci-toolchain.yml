@@ -43,6 +43,7 @@ jobs:
       uses: alire-project/alr-install@v1
       with:
         crates: gnat_native^${{matrix.gcc_version}} gprbuild
+        cache: false
 
     - name: Build alr with toolchain from `alr install`
       shell: bash
