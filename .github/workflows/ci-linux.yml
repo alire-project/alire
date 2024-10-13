@@ -23,15 +23,16 @@ jobs:
     name: CI on Linux
 
     runs-on: ubuntu-20.04
+    # Oldest supported so releases can run on older distros
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: Install FSF toolchain
-      uses: alire-project/alr-install@v1
+      uses: alire-project/alr-install@v2
       with:
         crates: gnat_native gprbuild
         prefix: alire_prefix
@@ -40,7 +41,7 @@ jobs:
       uses: mosteo-actions/gnat-toolchain-arch-checker@v1
 
     - name: Install Python 3.x (required for the testsuite)
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 

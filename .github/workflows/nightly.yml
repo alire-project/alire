@@ -21,9 +21,9 @@ jobs:
       fail-fast: false # Attempt to generate as many of them as possible
       matrix:
         os:
-          - macos-12
-          - macos-14
-          - ubuntu-20.04
+          - macos-13     # x64
+          - macos-14     # arm64
+          - ubuntu-20.04 # oldest supported to be able to run on those
           - windows-latest
 
     steps:
