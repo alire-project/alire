@@ -58,7 +58,7 @@ package Alire.URI with Preelaborate is
       --  An SCP-like git remote, with the form git@host:path
 
       Other_Git,
-      --  Recognisably git and scheme is "ssh:", or scheme
+      --  Recognizably git and scheme is "ssh:", or scheme
       --  is "git+<proto>:" (where proto is not "http"/"https" or "file")
 
       Local_Hg,
@@ -77,10 +77,10 @@ package Alire.URI with Preelaborate is
       --  Scheme is "file:"
 
       Public_Other,
-      --  http/https, but not a recognised VCS
+      --  http/https, but not a recognized VCS
 
       SSH_Other,
-      --  ssh, but not a recognised VCS
+      --  ssh, but not a recognized VCS
 
       Unknown
       --  Anything else
@@ -136,7 +136,7 @@ package Alire.URI with Preelaborate is
    function URI_Kind (This : String) return URI_Kinds;
    --  Attempt to identify the nature of a resource from its URI.
    --
-   --  Formats currently not recognised include:
+   --  Formats currently not recognized include:
    --    user@host:/path/to/repo.git      [returns Unknown]
    --    host.name:/path/to/repo.git      [returns Unknown]
    --    git://host/path/to/repo.git      [returns Unknown]
@@ -205,7 +205,7 @@ package Alire.URI with Preelaborate is
 
    function Make_VCS_Explicit (This : String; Kind : VCS_Kinds) return String
      with Post => URI_Kind (Make_VCS_Explicit'Result) in VCS_URIs;
-   --  Return the URL minimally modified to make the VCS recognisable.
+   --  Return the URL minimally modified to make the VCS recognizable.
    --
    --  For example, This => "https://host/path" with Kind => Git returns
    --  "git+https://host/path", and This => "/some/path" with Kind => Hg

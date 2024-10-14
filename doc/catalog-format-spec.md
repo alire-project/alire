@@ -451,7 +451,7 @@ static, i.e. they cannot depend on the context.
         the prefixes `git+`, `hg+` or `svn+` can be prepended to the scheme
         (e.g. `git+https://`) to make this explicit, though a `.git` suffix or
         the hosts `github.com`, `gitlab.com` or `bitbucket.org` will also be
-        recognised. For crates submitted to the community index, origins should
+        recognized. For crates submitted to the community index, origins should
         be publicly accessible (i.e. should not require private ssh keys or
         other authentication).
 

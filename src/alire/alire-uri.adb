@@ -115,7 +115,7 @@ package body Alire.URI is
          if Has_Git_Suffix (This) then
             return Public_Definitely_Git;
          elsif Is_Known_Git_Host (Host_From_URL (This)) then
-            --  These are known git hosts, so recognise them even without a
+            --  These are known git hosts, so recognize them even without a
             --  ".git" suffix
             return Public_Probably_Git;
          else
@@ -126,7 +126,7 @@ package body Alire.URI is
             return Other_Git;
          elsif Is_Known_Git_Host (Host_From_URL (This)) then
             --  These are known git hosts (over SSH, so This can't be a raw
-            --  file), so recognise them even without a ".git" suffix
+            --  file), so recognize them even without a ".git" suffix
             return Other_Git;
          else
             return SSH_Other;
@@ -167,7 +167,7 @@ package body Alire.URI is
             --  Convert "/some/path" to "vcs+file:/some/path"
             return VCS_Prefix & To_URL (This);
          when SSH_Other | Public_Other | File =>
-            --  Not recognisable, so prepend prefix
+            --  Not recognizable, so prepend prefix
             return VCS_Prefix & This;
          when VCS_URIs =>
             if VCS_Kind (This) /= Kind then
@@ -180,7 +180,7 @@ package body Alire.URI is
                --  Prepend prefix to make it Public_Definitely_Git
                return VCS_Prefix & This;
             else
-               --  This is already recognised as the correct VCS, so do nothing
+               --  This is already recognized as the correct VCS, so do nothing
                return This;
             end if;
          when others =>

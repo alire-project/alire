@@ -223,7 +223,7 @@ package body Alire.Index_On_Disk is
                      .With_Priority (Priority);
 
          when URI.Git_URIs =>
-            --  A recognised Git repo; create a clone in the config directory.
+            --  A recognized Git repo; create a clone in the config directory.
             declare
                --  Ensure `git+file:` origin is an absolute path
                From : constant String :=
@@ -242,15 +242,15 @@ package body Alire.Index_On_Disk is
             return New_Invalid_Index;
 
          when URI.Public_Other | URI.SSH_Other =>
-            --  Warn that URL is not recognised and suggest 'git+http' or
+            --  Warn that URL is not recognized and suggest 'git+http' or
             --  'git+ssh' instead.
             Result := Outcome_Failure
-              ("Unrecognised index URL. Did you mean 'git+"
+              ("Unrecognized index URL. Did you mean 'git+"
                & Origin & "' instead?");
             return New_Invalid_Index;
 
          when others =>
-            Result := Outcome_Failure ("Unrecognised index URL: " & Origin);
+            Result := Outcome_Failure ("Unrecognized index URL: " & Origin);
             return New_Invalid_Index;
       end case;
    end New_Handler;

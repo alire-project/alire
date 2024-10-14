@@ -1206,7 +1206,7 @@ package body Alire.Publish is
             begin
                --  Complete the process with Remote_Origin, adding a "git+"
                --  prefix if necessary to ensure that the URL will be
-               --  recognised as a git remote
+               --  recognized as a git remote
                Publish.Remote_Origin (URL     => URI.Make_VCS_Explicit
                                                    (Raw_URL, URI.Git),
                                       Commit  => Commit,

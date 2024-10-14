@@ -85,7 +85,7 @@ package Alire.Origins is
 
    function Explicit_URL (This : Origin) return Alire.URL
      with Pre => This.Kind in VCS_Kinds;
-   --  A version of the URL which makes the appropriate VCS recognisable.
+   --  A version of the URL which makes the appropriate VCS recognizable.
    --
    --  For example, if This.URL is "https://host/path", and This.Kind is Git,
    --  then This.Explicit_URL will be "git+https://host/path". Likewise, if
@@ -169,7 +169,7 @@ package Alire.Origins is
                      Commit : String;
                      Subdir : Relative_Path := "") return Origin;
    --  Determine whether URL looks like git, Hg or SVN, and construct an origin
-   --  accordingly. Raises Checked_Error if not recognised as any VCS.
+   --  accordingly. Raises Checked_Error if not recognized as any VCS.
 
    Unknown_Source_Archive_Name_Error : exception;
 

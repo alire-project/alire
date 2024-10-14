@@ -98,7 +98,7 @@ windows_pattern = "'.*my_index' does not appear to be a git repository"
 assert_match(f".*({unix_pattern}|{windows_pattern})", p.out)
 
 
-# Initialise a normal git repo in the my_index directory.
+# Initialize a normal git repo in the my_index directory.
 init_git_repo("my_index")
 default_branch = git_branch("my_index")
 

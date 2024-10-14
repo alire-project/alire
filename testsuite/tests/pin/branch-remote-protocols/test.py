@@ -37,11 +37,11 @@ urls = [
     "git+ssh://ssh.gitlab.company-name.com/path/to/repo.git",
     "git+ssh://ssh.gitlab.company-name.com/path/to/repo",
     "git+https://github.com/path/to/repo.git",
-    # Should recognise URLs with ".git" suffix (without "git+" prefix)
+    # Should recognize URLs with ".git" suffix (without "git+" prefix)
     "ssh://ssh.gitlab.company-name.com/path/to/repo.git",
     "ssh://ssh.gitlab.company-name.com/path/to/repo.git/",
     "https://some.host/path/to/repo.git",
-    # Should recognise github.com even without ".git" or "git+"
+    # Should recognize github.com even without ".git" or "git+"
     "https://github.com/path/to/repo",
 ]
 sanitised_urls = [
