@@ -18,3 +18,5 @@ by hand.
 
 The main interface into the `Alire` ecosystem is a command line tool called
 `alr`.
+
+This is not a typo.
