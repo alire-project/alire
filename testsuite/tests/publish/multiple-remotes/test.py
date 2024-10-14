@@ -6,6 +6,7 @@ Check publishing from a local repo with multiple remotes configured.
 import os
 import re
 import subprocess
+from typing import Optional
 
 from drivers.alr import run_alr, init_local_crate
 from drivers.asserts import assert_match
@@ -66,7 +67,7 @@ def test_publishing(
     extra_args: list[str],
     remote: int,
     commit_id: str,
-    output_pattern: str | None = None,
+    output_pattern: Optional[str] = None,
 ):
     """
     Run `alr --force publish --skip-submit` with the specified additional args,
@@ -92,7 +93,10 @@ def test_publishing(
     assert_match(rf'.*url = "git\+file:.*remote{remote}"', manifest)
     assert_match(rf'.*commit = "{commit_id}"', manifest)
 
-def check_publishing_fails(extra_args: list[str], error_pattern: str | None):
+def check_publishing_fails(
+    extra_args: list[str],
+    error_pattern: Optional[str] = None,
+):
     """
     Run `alr --force publish --skip-submit` with the specified additional args,
     and assert that it fails (optionally asserting the output matches a regex
