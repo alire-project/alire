@@ -26,21 +26,62 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-12
+          - macos-13
+          - macos-latest
+          - ubuntu-22.04
           - ubuntu-latest
           - windows-latest
         gcc_version: [10, 11, 12, 13, 14]
 
+        exclude:
+          # Some combos are not supported due to missing pieces in the toolchain
+
+          # Linking troubles on macos-13 for those gcc versions
+          - os: macos-13
+            gcc_version: 10
+          - os: macos-13
+            gcc_version: 11
+          - os: macos-13
+            gcc_version: 12
+          - os: macos-13
+            gcc_version: 13
+
+          # No builds of gcc-10, -11, -12 that work on arm64
+          - os: macos-latest
+            gcc_version: 10
+          - os: macos-latest
+            gcc_version: 11
+          - os: macos-latest
+            gcc_version: 12
+
+          # gcc-10 and -11 do not work on LTS 24.04 anymore
+          - os: ubuntu-latest
+            gcc_version: 10
+          - os: ubuntu-latest
+            gcc_version: 11
+
+          # exclude all ubuntu-22.04 because we are only interested in two
+          # older tests that are explicitly included next
+          - os: ubuntu-22.04
+
+        include:
+          # Only test gcc-10 and -11 on ubuntu-22.04 (to maintain testing
+          # back-compatibility, as those were being tested before)
+          - os: ubuntu-22.04
+            gcc_version: 10
+          - os: ubuntu-22.04
+            gcc_version: 11
+
     steps:
     - name: Check out
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
 
     # Use a stock alr to make the latest toolchain available
 
     - name: Install FSF toolchain
-      uses: alire-project/alr-install@v1
+      uses: alire-project/alr-install@v2
       with:
         crates: gnat_native^${{matrix.gcc_version}} gprbuild
 
@@ -90,7 +131,7 @@ jobs:
     # alr in the ./bin/alr location.
 
     - name: Install Python 3.x # required by testsuite
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 

@@ -11,9 +11,6 @@ on:
     types: [published]
   workflow_dispatch:
 
-env:
-  ARCH: x86_64
-
 jobs:
 
   build:
@@ -22,39 +19,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-14]
+        os:
+          - macos-13     # x64
+          - macos-latest # arm64
 
     runs-on: ${{ matrix.os }}
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: true
 
-    - name: Install FSF toolchain (x86_64)
-      if: ${{ matrix.os != 'macos-14' }}
-      uses: alire-project/alr-install@v1
+    - name: Install FSF toolchain
+      uses: alire-project/alr-install@v2
       with:
         crates: gnat_native gprbuild
         prefix: alire_prefix
-
-    - name: Install FSF toolchain (AArch64)
-      if: ${{ matrix.os == 'macos-14' }}
-      run: |
-        curl -L -O https://github.com/alire-project/alire/releases/download/nightly/alr-nightly-bin-aarch64-macos.zip
-        unzip alr-nightly-bin-aarch64-macos.zip bin/alr
-        bin/alr index --reset-community
-        bin/alr install gnat_native gprbuild --prefix alire_prefix
-        echo $PWD/bin >> $GITHUB_PATH
-        echo $PWD/alire_prefix/bin >> $GITHUB_PATH
-        echo "ARCH=aarch64" >> $GITHUB_ENV
 
     - name: Check toolchain architecture
       uses: mosteo-actions/gnat-toolchain-arch-checker@v1
 
     - name: Install Python 3.x (required for the testsuite)
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
@@ -75,7 +62,7 @@ jobs:
     - name: Upload binaries
       uses: actions/upload-artifact@v4
       with:
-        name: alr-bin-${{ env.ARCH }}-macos.zip
+        name: alr-bin-${{ runner.arch }}-macos.zip
         path: |
           bin/alr
           LICENSE.txt
@@ -84,7 +71,7 @@ jobs:
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: testsuite-log-macos.zip
+        name: testsuite-log-macos-${{ runner.arch }}.zip
         path: testsuite/out
 
     # Release steps start here. These only run during a release creation.
@@ -105,6 +92,17 @@ jobs:
       if: github.event_name == 'release'
       run: zip alr-bin-macos.zip bin/alr LICENSE.txt
 
+    - name: Select arch name
+      id: get_arch
+      if: github.event_name == 'release'
+      shell: bash
+      run: |
+        case ${{ runner.arch }} in
+          X64)   echo "arch=x86_64"  >> $GITHUB_OUTPUT ;;
+          ARM64) echo "arch=aarch64" >> $GITHUB_OUTPUT ;;
+          *)     echo "Unknown architecture, failing..." && exit 1 ;;
+        esac
+
     - name: Upload release assets
       if: github.event_name == 'release'
       uses: actions/upload-release-asset@v1
@@ -113,5 +111,5 @@ jobs:
       with:
         upload_url: ${{ steps.get_release.outputs.upload_url }}
         asset_path: alr-bin-macos.zip
-        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-${{ env.ARCH }}-macos.zip
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-${{ steps.get_arch.outputs.arch }}-macos.zip
         asset_content_type: application/zip
