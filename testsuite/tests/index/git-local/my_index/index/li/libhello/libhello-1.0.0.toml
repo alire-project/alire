@@ -5,4 +5,4 @@ maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 
 [origin]
-# URL ommitted because it will be added at the start of the test script
+# URL omitted because it will be added at the start of the test script

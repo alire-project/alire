@@ -65,7 +65,7 @@ with open(libhello_manifest_path, "a") as f:
 # Test adding my_index as a simple directory index.
 run_alr("index", "--name", "my_index", "--add", "my_index")
 check_index_is_configured("my_index", f"file:{MY_INDEX_PATH}", MY_INDEX_PATH)
-# Verify this hasn't created an unecessary copy in the alr-config directory
+# Verify this hasn't created an unnecessary copy in the alr-config directory
 # (only an index.toml file which redirects to the existing copy).
 index_copy_path = os.path.join("alr-config", "indexes", "my_index")
 assert_eq(["index.toml"], os.listdir(index_copy_path))
