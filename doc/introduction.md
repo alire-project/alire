@@ -1,7 +1,7 @@
 # Introduction
 
 `Alire` is a source-based package manager for the Ada and SPARK programming
-languages.
+langauges.
 
 It is a way for developers to easily build upon projects (libraries or
 programs) shared by the community, but also to easily share their projects for

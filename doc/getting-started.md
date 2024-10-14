@@ -83,7 +83,7 @@ Run `alr help <command>` for more details about a command.
 
 ### Downloading, compiling and running an executable crate
 
-Obtaining an executable project already cataloged in Alire is straightforward.
+Obtaining an executable project already catalogued in Alire is straightforward.
 We'll demonstrate it with the `hello` project which is a plain "Hello, world!"
 application (or you can use the `hangman` or `eagle_lander` projects as funnier
 alternatives).
