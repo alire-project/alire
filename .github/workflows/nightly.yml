@@ -33,7 +33,7 @@ jobs:
         submodules: true
 
     - name: Install FSF toolchain
-      uses: alire-project/alr-install@v1
+      uses: alire-project/alr-install@v2
       with:
         crates: gnat_native gprbuild
         prefix: alire_prefix
