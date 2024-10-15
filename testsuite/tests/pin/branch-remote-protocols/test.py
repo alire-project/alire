@@ -1,5 +1,5 @@
 """
-Check pinning to branches with "git+ssh://" and "xyz+https://" urls
+Check pinning to branches with "ssh://", "git+ssh://" and "git+https://" urls
 """
 
 import os
@@ -35,11 +35,23 @@ os.chdir("..")
 # Perform the actual tests
 urls = [
     "git+ssh://ssh.gitlab.company-name.com/path/to/repo.git",
-    "xyz+https://github.com/path/to/repo.git",
+    "git+ssh://ssh.gitlab.company-name.com/path/to/repo",
+    "git+https://github.com/path/to/repo.git",
+    # Should recognize URLs with ".git" suffix (without "git+" prefix)
+    "ssh://ssh.gitlab.company-name.com/path/to/repo.git",
+    "ssh://ssh.gitlab.company-name.com/path/to/repo.git/",
+    "https://some.host/path/to/repo.git",
+    # Should recognize github.com even without ".git" or "git+"
+    "https://github.com/path/to/repo",
 ]
 sanitised_urls = [
     "ssh://ssh.gitlab.company-name.com/path/to/repo.git",
+    "ssh://ssh.gitlab.company-name.com/path/to/repo",
     "https://github.com/path/to/repo.git",
+    "ssh://ssh.gitlab.company-name.com/path/to/repo.git",
+    "ssh://ssh.gitlab.company-name.com/path/to/repo.git/",
+    "https://some.host/path/to/repo.git",
+    "https://github.com/path/to/repo",
 ]
 cache_test_file_path = "alire/cache/pins/remote/test_file"
 mocked_git_dir = os.path.join(os.getcwd(), "mock_path")

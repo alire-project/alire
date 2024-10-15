@@ -181,7 +181,7 @@ package body Alr.Commands.Pin is
          elsif Cmd.URL.all /= "" then
 
             if Cmd.Commit.all /= "" or else Cmd.Branch.all /= ""
-              or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
+              or else Alire.URI.URI_Kind (Cmd.URL.all) in Alire.URI.Git_URIs
             then
 
                --  Pin to remote commit
@@ -194,15 +194,30 @@ package body Alr.Commands.Pin is
 
             else
 
-               --  Pin to dir
+               --  Pin to dir, with a warning if it doesn't look like a path
+               --  and a subsequent confirmation prompt if it doesn't exist.
 
-               if not Alire.Utils.User_Input.Approve_Dir (Cmd.URL.all) then
-                  Trace.Info ("Abandoned by user.");
-                  return;
-               end if;
+               declare
+                  use Alire.URI;
+                  Local : constant Boolean :=
+                    URI_Kind (Cmd.URL.all) in Local_URIs;
+                  Path  : constant String :=
+                    (if Local then Local_Path (Cmd.URL.all) else Cmd.URL.all);
+               begin
+                  if not Local then
+                     Alire.Put_Warning
+                       ("Assuming '" & Cmd.URL.all & "' is a directory "
+                        & "because no branch or commit was specified.");
+                  end if;
 
-               New_Root.Add_Path_Pin (Crate => Optional_Crate,
-                                      Path  => Cmd.URL.all);
+                  if not Alire.Utils.User_Input.Approve_Dir (Path) then
+                     Trace.Info ("Abandoned by user.");
+                     return;
+                  end if;
+
+                  New_Root.Add_Path_Pin (Crate => Optional_Crate,
+                                         Path  => Path);
+               end;
 
             end if;
 

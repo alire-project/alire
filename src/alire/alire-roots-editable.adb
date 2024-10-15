@@ -5,7 +5,6 @@ with Alire.Dependencies.Diffs;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Manifest;
-with Alire.Origins;
 with Alire.Roots.Optional;
 with Alire.User_Pins;
 with Alire.Utils.User_Input;
@@ -405,7 +404,7 @@ package body Alire.Roots.Editable is
       --  We accept any reference that can be converted to a commit, as commit.
       --  This is a bit of a misnomer really in the command-line interface.
 
-      if Ref /= "" and then not Origins.Is_Valid_Commit (Ref) then
+      if Ref /= "" and then not VCSs.Git.Is_Valid_Commit (Ref) then
          Convert_Ref_To_Commit;
          return;
       end if;
@@ -413,12 +412,11 @@ package body Alire.Roots.Editable is
       --  Clone the remote so we can identify the crate and perform other
       --  validity checks.
 
-      if not VCSs.Git.Handler.Clone
-               (From   => Origin & (if Ref /= ""
-                                       then "#" & Ref
-                                       else ""),
+      if not VCSs.Git.Handler.Clone_Branch
+               (From   => Origin,
                 Into   => Temp_Pin.Filename,
                 Branch => Branch, -- May be empty for default branch
+                Commit => Ref, -- May be empty for most recent commit
                 Depth  => 1).Success
       then
          Raise_Checked_Error
