@@ -4,6 +4,7 @@ with Alire.Settings.Edit;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Index_On_Disk.Loading;
+with Alire.Meta;
 with Alire.Milestones;
 with Alire.Origins.Deployers.System;
 with Alire.Paths.Vault;
@@ -91,6 +92,8 @@ package body Alr.Commands.Version is
       Add ("APPLICATION", "");
       Add ("alr version:",      Alire.Version.Current.Image);
       Add ("libalire version:", Alire.Version.Current.Image);
+      Add ("source commit:",    Alire.Meta.Working_Tree.Commit);
+      Add ("source changes:",   Alire.Meta.Working_Tree.Changes);
       Add ("compilation date:",
            GNAT.Source_Info.Compilation_ISO_Date & " "
            & GNAT.Source_Info.Compilation_Time);

@@ -27,5 +27,6 @@ fi
 
 $bin "$@"
 
-echo "Resulting version file:"
-cat src/alire/alire-version.ads | grep "Current_Str : constant String"
+echo "Resulting build metadata info:"
+cat src/alire/alire-meta.ads | grep "Commit"
+cat src/alire/alire-meta.ads | grep "Changes"

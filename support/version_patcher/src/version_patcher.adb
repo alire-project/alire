@@ -1,4 +1,3 @@
-with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Directories;
 with Ada.Environment_Variables; use Ada.Environment_Variables;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -13,16 +12,23 @@ with GNAT.OS_Lib;
 
 procedure Version_Patcher is
 
-   ---------------------
-   -- Replace_Version --
-   ---------------------
+   ------------------
+   -- Replace_Info --
+   ------------------
 
-   procedure Replace_Version (Filename : String; Build_Info : String) is
+   procedure Replace_Info
+     (Filename    : String;
+      --  File in which to look for patterns
+      Trigger     : String;
+      --  Substring that will trigger replacement in a line. The only text in
+      --  quotes will be replaced.
+      Replacement : String)
+      --  Replacement
+   is
       F : Ada.Text_IO.File_Type;
       O : Ada.Text_IO.File_Type;
       use Ada.Text_IO;
-
-      Target : constant String := "Current_Str : constant String :=";
+      Hit : Boolean := False;
    begin
       Open (F, In_File, Filename);
       Create (O, Out_File, Filename & ".new");
@@ -30,26 +36,39 @@ procedure Version_Patcher is
          declare
             Line : constant String := Get_Line (F);
          begin
-            if (for some I in Line'Range =>
-                  I + Target'Length - 1 <= Line'Last and then
-                  Line (I .. I + Target'Length - 1) = Target)
+            if not Hit and then
+              (for some I in Line'Range =>
+                 I + Trigger'Length - 1 <= Line'Last and then
+               Line (I .. I + Trigger'Length - 1) = Trigger)
             then
                declare
-                  Quotes_Seen : Boolean := False;
+                  Ini : Integer := Line'First - 1;
+                  Fin : Integer := Line'First - 1;
                begin
-                  for Char of Line loop
-                     if Char = '"' and then not Quotes_Seen then
-                        Quotes_Seen := True;
-                        Put (O, Char);
-                     elsif (Char = '"' and then Quotes_Seen)
-                       or else Char = '+'
-                     then
-                        Put_Line (O, "+" & Build_Info & '"' & ";");
-                        exit;
-                     else
-                        Put (O, Char);
+                  for I in Line'Range loop
+                     if Line (I) = '"' then
+                        if Ini < Line'First then
+                           Ini := I;
+                        elsif Fin < Line'First then
+                           Fin := I;
+                        else
+                           raise Constraint_Error
+                             with "Too many quotes in line: " & Line;
+                        end if;
                      end if;
                   end loop;
+
+                  if Ini < Line'First or else Fin < Line'First then
+                     raise Constraint_Error
+                       with "No quoted string in line: " & Line;
+                  end if;
+
+                  Put_Line
+                    (O,
+                     Line (Line'First .. Ini)
+                     & Replacement
+                     & Line (Fin .. Line'Last));
+                  Hit := True;
                end;
             else
                Put_Line (O, Line);
@@ -60,10 +79,15 @@ procedure Version_Patcher is
       Close (F);
       Close (O);
 
+      if not Hit then
+         raise Constraint_Error
+           with "Trigger not found in file: " & Trigger;
+      end if;
+
       Ada.Directories.Delete_File (Filename);
       Ada.Directories.Rename (Filename & ".new", Filename);
 
-   end Replace_Version;
+   end Replace_Info;
 
    -----------------
    -- Git_Command --
@@ -94,14 +118,12 @@ begin
 
    declare
       Dirty : constant String
-        := (if Argument_Count > 0 then
-               Argument (1)
-            elsif Git_Command ("diff-index --quiet HEAD --").Code /= 0 then
-               "_dirty"
+        := (if Git_Command ("diff-index --quiet HEAD --").Code /= 0 then
+               "dirty"
             else
-               "");
+               "clean");
       Commit_Result : constant Result :=
-                        Git_Command ("rev-parse --short HEAD");
+                        Git_Command ("rev-parse HEAD");
       Commit : constant String := To_String (Commit_Result.Output);
    begin
       if Commit_Result.Code /= 0 then
@@ -110,8 +132,13 @@ begin
            & Commit_Result.Code'Image;
       end if;
       Ada.Text_IO.Put_Line
-        ("Updating version in src/alire/alire-version.ads to commit "
-         & Commit & Dirty & "...");
-      Replace_Version ("src/alire/alire-version.ads", Commit & Dirty);
+        ("Updating src/alire/alire-meta.ads to commit [" & Commit
+         & "] with status [" & Dirty & "]");
+      Replace_Info ("src/alire/alire-meta.ads",
+                    "Commit",
+                    Commit);
+      Replace_Info ("src/alire/alire-meta.ads",
+                    "Changes",
+                    Dirty);
    end;
 end Version_Patcher;
