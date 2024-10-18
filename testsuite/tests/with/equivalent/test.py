@@ -32,7 +32,7 @@ def check_equivalent(dep="", path="", url="", commit="", branch=""):
         if i == 1:
             assert_eq(p[0], p[1])
 
-        # Cleanup
+        # Cleanup (use e3.fs, because shutil.rmtree() fails on links on Windows)
         os.chdir("..")
         rm("xxx", recursive=True)
 
