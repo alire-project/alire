@@ -9,7 +9,7 @@ package body Alire.Origins.Deployers.Hg is
    overriding
    function Deploy (This : Deployer; Folder : String) return Outcome is
    begin
-      return VCSs.Hg.Handler.Clone (This.Base.URL_With_Commit, Folder);
+      return VCSs.Hg.Handler.Clone (This.Base.URL, Folder, This.Base.Commit);
    end Deploy;
 
    -----------

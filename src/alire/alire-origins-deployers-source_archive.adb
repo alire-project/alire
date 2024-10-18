@@ -138,7 +138,7 @@ package body Alire.Origins.Deployers.Source_Archive is
       --  linux also for local files, something funny is going on Windows which
       --  is difficult to pinpoint.
 
-      if URI.Scheme (This.Base.Archive_URL) in URI.File_Schemes then
+      if URI.URI_Kind (This.Base.Archive_URL) in URI.Local_Other then
          if not Dirs.Exists (Folder) then
             Alire.Directories.Create_Tree (Folder);
          end if;
