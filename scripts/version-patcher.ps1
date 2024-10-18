@@ -22,4 +22,5 @@ if (Test-Path $bin) {
 & $bin @args
 
 Write-Output "Resulting version file:"
-Get-Content src/alire/alire-version.ads | Select-String "Current_Str"
+Get-Content src/alire/alire-meta.ads | Select-String "Commit"
+Get-Content src/alire/alire-meta.ads | Select-String "Changes"
