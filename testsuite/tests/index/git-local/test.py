@@ -7,7 +7,7 @@ import re
 import shutil
 import subprocess
 
-from drivers.alr import init_local_crate, run_alr
+from drivers.alr import run_alr, crate_dirname
 from drivers.helpers import init_git_repo, git_branch
 from drivers.asserts import assert_eq, assert_match
 
@@ -37,7 +37,7 @@ def check_index_works():
     asserting success.
     """
     run_alr("get", "hello")
-    deploy_dir = run_alr("get", "hello", "--dirname").out.strip()
+    deploy_dir = crate_dirname("hello")
     os.chdir(deploy_dir)
     assert_eq("Hello, world!\n", run_alr("run").out)
     os.chdir("..")
