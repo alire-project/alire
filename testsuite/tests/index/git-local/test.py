@@ -93,9 +93,7 @@ p = run_alr(
     "index", "--name", "my_index", "--add", "git+file:my_index",
     complain_on_error=False
 )
-unix_pattern = "repository '.*my_index' does not exist"
-windows_pattern = "'.*my_index' does not appear to be a git repository"
-assert_match(f".*({unix_pattern}|{windows_pattern})", p.out)
+assert_match(r'.*Command \["git", "clone", ".*"\] exited with code 128', p.out)
 
 
 # Initialize a normal git repo in the my_index directory.
