@@ -923,8 +923,8 @@ package body Alire.Publish is
       if URI.URI_Kind (URL) in URI.Unknown then
          Raise_Checked_Error ("Unsupported scheme: " & URL);
       elsif URI.URI_Kind (URL) in URI.Private_URIs then
-         --  A private URL should not be used for packaging via the the
-         --  community index
+         --  A private URL should not be used for packaging via the community
+         --  index
          if not Context.Options.For_Private_Index then
             Raise_Checked_Error
                ("The origin cannot use a private remote: " & URL);
