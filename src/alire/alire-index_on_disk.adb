@@ -241,7 +241,7 @@ package body Alire.Index_On_Disk is
             Result := Outcome_Failure ("Unknown index kind: " & Origin);
             return New_Invalid_Index;
 
-         when URI.Public_Other | URI.SSH_Other =>
+         when URI.HTTP_Other | URI.SSH_Other =>
             --  Warn that URL is not recognized and suggest 'git+http' or
             --  'git+ssh' instead.
             Result := Outcome_Failure

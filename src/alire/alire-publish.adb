@@ -807,7 +807,7 @@ package body Alire.Publish is
 
          function Get_Default (Remote_URL : String)
                                return Answer_Kind
-         is (if Force or else URI.URI_Kind (Remote_URL) in URI.Public_Other
+         is (if Force or else URI.URI_Kind (Remote_URL) in URI.HTTP_Other
              then Yes
              else No);
 
@@ -1238,7 +1238,7 @@ package body Alire.Publish is
       --  to be the case).
 
       if Commit = "" and then Kind in URI.VCS_URIs then
-         if Kind in URI.Public_Probably_Git then
+         if Kind in URI.Probably_Git then
             Put_Warning ("Assuming origin is a source archive "
                          & "because no commit was provided.");
          else

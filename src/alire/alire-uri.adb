@@ -7,12 +7,26 @@ package body Alire.URI is
    function Authority_Without_Credentials (This : URL) return String is
       Auth : constant String := Authority (This);
    begin
-      if (for some Char of Auth => Char = '@') then
-         return AAA.Strings.Tail (Auth, '@');
+      if Contains (Auth, "@") then
+         return Tail (Auth, '@');
       else
          return Auth;
       end if;
    end Authority_Without_Credentials;
+
+   --------------
+   -- Userinfo --
+   --------------
+
+   function Userinfo (This : URL) return String is
+      Auth : constant String := Authority (This);
+   begin
+      if Contains (Auth, "@") then
+         return Head (Auth, '@');
+      else
+         return "";
+      end if;
+   end Userinfo;
 
    -------------------
    -- Host_From_URL --
@@ -78,7 +92,8 @@ package body Alire.URI is
    --------------
 
    function URI_Kind (This : String) return URI_Kinds is
-      Scheme : constant String := L (U.Scheme (This));
+      Scheme       : constant String := L (U.Scheme (This));
+      Has_Userinfo : constant Boolean := (Userinfo (This) /= "");
    begin
       if Scheme = "external" then
          return External;
@@ -94,11 +109,13 @@ package body Alire.URI is
          --  required by git (https://git-scm.com/docs/git-clone#URLS)
          return SCP_Style_Git;
       elsif Scheme = "git+https" or else Scheme = "git+http" then
-         return Public_Definitely_Git;
+         return (if Has_Userinfo
+                 then Private_Definitely_Git
+                 else Public_Definitely_Git);
       elsif Scheme = "git+file" then
          return Local_Git;
       elsif Has_Prefix (Scheme, "git+") then
-         return Other_Git;
+         return Private_Definitely_Git;
       elsif Scheme = "hg+https" or else Scheme = "hg+http" then
          return Public_Hg;
       elsif Scheme = "hg+file" then
@@ -113,21 +130,27 @@ package body Alire.URI is
          return Private_SVN;
       elsif Scheme = "http" or else Scheme = "https" then
          if Has_Git_Suffix (This) then
-            return Public_Definitely_Git;
+            return (if Has_Userinfo
+                    then Private_Definitely_Git
+                    else Public_Definitely_Git);
          elsif Is_Known_Git_Host (Host_From_URL (This)) then
             --  These are known git hosts, so recognize them even without a
             --  ".git" suffix
-            return Public_Probably_Git;
+            return (if Has_Userinfo
+                    then Private_Probably_Git
+                    else Public_Probably_Git);
          else
-            return Public_Other;
+            return (if Has_Userinfo
+                    then Private_HTTP_Other
+                    else Public_HTTP_Other);
          end if;
       elsif Scheme = "ssh" then
          if Has_Git_Suffix (This) then
-            return Other_Git;
+            return Private_Definitely_Git;
          elsif Is_Known_Git_Host (Host_From_URL (This)) then
             --  These are known git hosts (over SSH, so This can't be a raw
             --  file), so recognize them even without a ".git" suffix
-            return Other_Git;
+            return Private_Definitely_Git;
          else
             return SSH_Other;
          end if;
@@ -166,7 +189,7 @@ package body Alire.URI is
          when Bare_Path =>
             --  Convert "/some/path" to "vcs+file:/some/path"
             return VCS_Prefix & To_URL (This);
-         when SSH_Other | Public_Other | File =>
+         when HTTP_Other | SSH_Other | File =>
             --  Not recognizable, so prepend prefix
             return VCS_Prefix & This;
          when VCS_URIs =>
@@ -176,8 +199,8 @@ package body Alire.URI is
             elsif Current_Kind = SCP_Style_Git then
                --  git@host:/path is already explicit
                return This;
-            elsif Current_Kind = Public_Probably_Git then
-               --  Prepend prefix to make it Public_Definitely_Git
+            elsif Current_Kind in Probably_Git then
+               --  Prepend prefix to make it *_Definitely_Git
                return VCS_Prefix & This;
             else
                --  This is already recognized as the correct VCS, so do nothing

@@ -413,7 +413,7 @@ package body Alire.Origins is
             return New_Hg (VCS_URL, Commit, Subdir);
          when URI.SVN_URIs =>
             return New_SVN (VCS_URL, Commit, Subdir);
-         when URI.Public_Other | URI.SSH_Other =>
+         when URI.HTTP_Other | URI.SSH_Other =>
             Raise_Checked_Error ("ambiguous VCS URL: " & URL);
          when others =>
             Raise_Checked_Error ("unknown VCS URL: " & URL);
@@ -612,9 +612,9 @@ package body Alire.Origins is
             This := New_Filesystem (URI.Local_Path (URL));
 
          when URI.VCS_URIs                 =>
-            if URL_Kind = Public_Probably_Git and then Hashed then
-               --  To resolve the ambiguity of Public_Probably_Git, assume a
-               --  source archive if the "hashes" field is present.
+            if URL_Kind in URI.Probably_Git and then Hashed then
+               --  To resolve the ambiguity of Probably_Git, assume a source
+               --  archive if the "hashes" field is present.
                Load_Source_Archive (This, Table, URL);
             else
                --  In all other cases, treat this as a git repo.
@@ -634,7 +634,7 @@ package body Alire.Origins is
                end;
             end if;
 
-         when Public_Other                 =>
+         when URI.HTTP_Other               =>
             Load_Source_Archive (This, Table, URL);
 
          when SSH_Other                    =>
@@ -645,7 +645,7 @@ package body Alire.Origins is
          when System                       =>
             This := New_System (URI.Path (URL));
 
-         when Unknown               =>
+         when Unknown                      =>
             From.Checked_Error ("unsupported scheme in URL: " & URL);
          end case;
 
