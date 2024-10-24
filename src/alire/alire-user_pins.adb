@@ -7,7 +7,6 @@ with Alire.Utils.User_Input;
 with Alire.Utils.TTY;
 with Alire.VFS;
 
-with Ada.Strings.Unbounded;
 with AAA.Strings;
 
 with GNAT.OS_Lib;
@@ -170,12 +169,11 @@ package body Alire.User_Pins is
                    & "...");
 
          if not
-           VCSs.Git.Handler.Clone
-             (From   => URL (This) & (if Commit /= ""
-                                      then "#" & Commit
-                                      else ""),
+           VCSs.Git.Handler.Clone_Branch
+             (From   => URL (This),
               Into   => Temp.Filename,
               Branch => Branch, -- May be empty for default branch
+              Commit => Commit, -- May be empty for most recent commit
               Depth  => 1).Success
          then
             Raise_Checked_Error
@@ -202,10 +200,14 @@ package body Alire.User_Pins is
                        & TTY.URL (Destination));
 
          --  If the fetch URL has been changed, fall back to checkout
+         --
+         --  Note that VCSs.Git.Clone converts the URL to a git-friendly form
+         --  with VCSs.Repo, so this is what the output of 'git config' should
+         --  be compared against.
 
          if VCSs.Git.Handler.Fetch_URL
            (Repo   => Destination,
-            Public => False) /= This.URL
+            Public => False) /= VCSs.Repo_URL (URL (This))
          then
             Put_Info ("Switching pin " & Utils.TTY.Name (Crate) &
                         " to origin at " & TTY.URL (+This.URL));
@@ -469,7 +471,6 @@ package body Alire.User_Pins is
 
          function Load_Remote return Pin is
             use Ada.Strings.Unbounded;
-            use AAA.Strings;
             Result : Pin :=
                        (Kind       => To_Git,
                         URL        => +This.Checked_Pop (Keys.URL,
@@ -478,21 +479,6 @@ package body Alire.User_Pins is
                         Commit     => <>,
                         Local_Path => <>);
          begin
-            --  "git+ssh://"" and "ssh+git://" are deprecated, so treat them as
-            --  identical to "ssh://"
-            if Has_Prefix (To_String (Result.URL), "git+ssh://")
-               or else Has_Prefix (To_String (Result.URL), "ssh+git://")
-            then
-               Replace_Slice (Result.URL, 1, 7, "ssh");
-            end if;
-
-            --  Likewise, anything of the form "xyz+https://" should be treated
-            --  as just "https://"
-            if Contains (To_String (Result.URL), "+http") then
-               Result.URL := To_Unbounded_String
-                 (Tail (To_String (Result.URL), '+'));
-            end if;
-
             if This.Contains (Keys.Branch)
               and then This.Contains (Keys.Commit)
             then

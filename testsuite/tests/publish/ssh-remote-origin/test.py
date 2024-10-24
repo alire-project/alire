@@ -8,6 +8,8 @@ from drivers.asserts import assert_match
 
 
 urls = [
+    "git+ssh://host.invalid/path/to/repo.git",
+    "ssh://host.invalid/path/to/repo.git",
     "git@host.invalid:/path/to/repo.git",
 ]
 commit = "0" * 40

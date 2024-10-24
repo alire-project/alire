@@ -1,3 +1,5 @@
+with Alire.URI;
+
 package Alire.Index_On_Disk.Git is
 
    --  Local management of remote indexes stored in git repositories
@@ -8,8 +10,7 @@ package Alire.Index_On_Disk.Git is
    function New_Handler (Origin : URL;
                          Name   : Restricted_Name;
                          Parent : Any_Path) return Index with
-     Pre => AAA.Strings.Has_Prefix (Origin, "git+") or else
-            AAA.Strings.Has_Prefix (Origin, "git@");
+     Pre => URI.URI_Kind (Origin) in URI.Git_URIs;
 
    overriding
    function Add (This : Index) return Outcome;

@@ -25,7 +25,7 @@ package Alire.Publish is
    procedure Local_Repository (Path     : Any_Path := ".";
                                Revision : String   := "HEAD";
                                Options  : All_Options := New_Options) with
-     Pre => URI.Scheme (Path) in URI.File_Schemes;
+     Pre => URI.URI_Kind (Path) in URI.Bare_Path;
    --  Check that given Path is a git repo with a remote configured. If so,
    --  check that Revision (tag, branch, commit) is suitable for publishing,
    --  then proceed using Remote_Origin.
