@@ -16,7 +16,8 @@ package body Alire.VCSs.Hg is
    overriding
    function Clone (This : VCS;
                    From : URL;
-                   Into : Directory_Path)
+                   Into : Directory_Path;
+                   Commit : String := "")
                    return Outcome
    is
       pragma Unreferenced (This);
@@ -27,8 +28,8 @@ package body Alire.VCSs.Hg is
                         else "-v");
 
       Commit_Arg : constant Vector :=
-        (if Commit (From) /= ""
-         then Empty_Vector & "-u" & Commit (From)
+        (if Commit /= ""
+         then Empty_Vector & "-u" & Commit
          else Empty_Vector);
 
    begin
@@ -45,7 +46,7 @@ package body Alire.VCSs.Hg is
            "-y" &
            Commit_Arg &
            Extra &
-           Repo (From) &
+           Repo_URL (From) &
            Into);
 
       return Outcome_Success;

@@ -7,9 +7,11 @@ package body Alire.Index_On_Disk.Git is
    ---------
 
    overriding
-   function Add (This : Index) return Outcome is
-     (VCSs.Git.Handler.Clone
-        (VCSs.Repo_And_Commit (This.Origin), This.Index_Directory));
+   function Add (This : Index) return Outcome
+   is (VCSs.Git.Handler.Clone
+         (VCSs.Repo_URL (This.Origin),
+          This.Index_Directory,
+          VCSs.Commit (This.Origin)));
 
    -----------------
    -- New_Handler --

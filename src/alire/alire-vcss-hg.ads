@@ -1,6 +1,13 @@
+with Alire.Utils;
+
 package Alire.VCSs.Hg is
 
-   subtype Hg_Commit is String (1 .. 40);
+   subtype Hg_Commit is String (1 .. 40) with
+     Dynamic_Predicate =>
+       (for all Char of Hg_Commit => Char in Utils.Hexadecimal_Character);
+
+   function Is_Valid_Commit (S : String) return Boolean
+   is (S in Hg_Commit);
 
    type VCS (<>) is new VCSs.VCS with private;
 
@@ -9,7 +16,8 @@ package Alire.VCSs.Hg is
    overriding
    function Clone (This : VCS;
                    From : URL;
-                   Into : Directory_Path)
+                   Into : Directory_Path;
+                   Commit : String := "")
                    return Outcome;
 
    overriding

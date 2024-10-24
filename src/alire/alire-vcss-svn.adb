@@ -13,7 +13,8 @@ package body Alire.VCSs.SVN is
    overriding
    function Clone (This : VCS;
                    From : URL;
-                   Into : Directory_Path)
+                   Into : Directory_Path;
+                   Commit : String := "")
                    return Outcome
    is
       pragma Unreferenced (This);
@@ -23,8 +24,8 @@ package body Alire.VCSs.SVN is
          else Empty_Vector);
 
       Commit_Arg : constant Vector :=
-        (if Commit (From) /= ""
-         then Empty_Vector & String'("-r" & Commit (From))
+        (if Commit /= ""
+         then Empty_Vector & String'("-r" & Commit)
          else Empty_Vector);
    begin
       Trace.Detail ("Checking out [svn]: " & From);
@@ -37,7 +38,7 @@ package body Alire.VCSs.SVN is
             Empty_Vector &
               "checkout" &
               Extra &
-              Repo (From) &
+              Repo_URL (From) &
               Commit_Arg &
               Into);
       return Outcome_Success;

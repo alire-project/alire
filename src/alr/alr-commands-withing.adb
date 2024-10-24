@@ -10,6 +10,7 @@ with Alire.Releases;
 with Alire.Roots.Editable;
 with Alire.Solutions;
 with Alire.URI;
+with Alire.Utils.User_Input;
 
 with Alr.OS_Lib;
 
@@ -196,7 +197,7 @@ package body Alr.Commands.Withing is
       --  Now, add the pin to the path/remote
 
       if Cmd.Commit.all /= "" or else Cmd.Branch.all /= ""
-        or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
+        or else Alire.URI.URI_Kind (Cmd.URL.all) in Alire.URI.Git_URIs
       then
 
          --  Pin to remote repo, with optional dependency first
@@ -209,11 +210,28 @@ package body Alr.Commands.Withing is
 
       else
 
-         --  Pin to local folder
+         --  Pin to local folder, with a warning if it doesn't look like a path
+         --  and a subsequent confirmation prompt if it doesn't exist.
 
-         Root.Add_Path_Pin
-           (Crate => Crate,
-            Path  => Cmd.URL.all);
+         declare
+            use Alire.URI;
+            Local : constant Boolean := URI_Kind (Cmd.URL.all) in Local_URIs;
+            Path  : constant String := (if Local then Local_Path (Cmd.URL.all)
+                                        else Cmd.URL.all);
+         begin
+            if not Local then
+               Alire.Put_Warning
+                 ("Assuming '" & Cmd.URL.all & "' is a directory because no "
+                  & "branch or commit was specified.");
+            end if;
+
+            if not Alire.Utils.User_Input.Approve_Dir (Path) then
+               Trace.Info ("Abandoned by user.");
+               return;
+            end if;
+
+            Root.Add_Path_Pin (Crate => Crate, Path  => Path);
+         end;
 
       end if;
    end Add_With_Pin;
