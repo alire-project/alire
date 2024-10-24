@@ -223,6 +223,23 @@ def commit_all(path):
     return head_commit.decode()
 
 
+def git_commit_file(
+    commit_name: str, path: str, content: str, mode: str = "x"
+) -> str:
+    """
+    Write to a file with the specified content and `git commit` it.
+
+    Also returns the commit's hash and attaches the tag `f"tag_{commit_name}"`
+    thereto.
+    """
+    with open(path, mode) as f:
+        f.write(content)
+    run(["git", "add", path]).check_returncode()
+    run(["git", "commit", "-m", f"Commit {commit_name}"]).check_returncode()
+    run(["git", "tag", f"tag_{commit_name}"]).check_returncode()
+    return git_head()
+
+
 def zip_dir(path, filename):
     """
     Zip contents of path into filename. Relative paths are preserved.

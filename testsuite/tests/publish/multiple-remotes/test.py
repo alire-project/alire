@@ -10,7 +10,7 @@ from typing import Optional
 
 from drivers.alr import run_alr, init_local_crate
 from drivers.asserts import assert_match
-from drivers.helpers import git_branch, git_head, init_git_repo
+from drivers.helpers import git_branch, git_commit_file, git_head, init_git_repo
 
 
 TEST_ROOT_DIR = os.getcwd()
@@ -48,20 +48,6 @@ BEHIND_REMOTE_CONFIRM_PROMPT = (
 
 def run(*args, **kwargs):
     subprocess.run(*args, **kwargs).check_returncode()
-
-def commit_file(commit_name: str, path: str, content: str):
-    """
-    Create a new file with the specified content and `git commit` it.
-
-    Also returns the commit's hash and attaches the tag `f"tag_{commit_name}"`
-    thereto.
-    """
-    with open(path, "x") as f:
-        f.write(content)
-    run(["git", "add", path])
-    run(["git", "commit", "-m", f"Commit {commit_name}"])
-    run(["git", "tag", f"tag_{commit_name}"])
-    return git_head()
 
 def test_publishing(
     extra_args: list[str],
@@ -131,13 +117,13 @@ run(["git", "checkout", "-b", "other_branch"])
 #         E - F  <--- other_branch
 commit_A = initial_commit
 run(["git", "tag", "tag_A"])
-commit_E = commit_file(
+commit_E = git_commit_file(
     commit_name="E",
     path="test_file_0",
     content="This file will be merged so that it is on both branches.\n"
 )
 run(["git", "checkout", default_branch])
-commit_B = commit_file(
+commit_B = git_commit_file(
     commit_name="B",
     path="test_file_1",
     content="This file is only on the default branch.\n"
@@ -145,13 +131,13 @@ commit_B = commit_file(
 run(["git", "merge", "other_branch"])
 commit_C = git_head()
 run(["git", "tag", "tag_C"])
-commit_D = commit_file(
+commit_D = git_commit_file(
     commit_name="D",
     path="test_file_2",
     content="This file is also only on the default branch.\n"
 )
 run(["git", "checkout", "other_branch"])
-commit_F = commit_file(
+commit_F = git_commit_file(
     commit_name="F",
     path="test_file_3",
     content="This file is only on other_branch.\n"
