@@ -167,36 +167,103 @@ package body Alr.Commands.Test is
 
             procedure Default_Test is
 
-               --  Used to test indexed crates
-               Alr_Args : constant AAA.Strings.Vector :=
-                            Empty_Vector &
-                            Regular_Alr_Switches &
-                            "get" &
-                            (if R.Origin.Kind in Alire.Origins.Binary_Archive
-                             then Empty_Vector
-                             else To_Vector ("--build")) &
-                            R.Milestone.Image;
+               ----------------
+               -- Local_Test --
+               ----------------
 
-               --  Used to test the local crate
-               Alr_Local : constant AAA.Strings.Vector :=
-                             Empty_Vector &
-                             Regular_Alr_Switches &
-                             "build" &
-                             "--release";
+               procedure Local_Test (Output : in out AAA.Strings.Vector;
+                                     Code   :    out Integer)
+               is
+                  Command : constant AAA.Strings.Vector :=
+                              "alr"
+                              & Regular_Alr_Switches
+                              & "build"
+                              & "--release";
+               begin
+                  --  Default test for a local crate is just an `alr build` in
+                  --  release mode.
 
-               Alr_Default : constant AAA.Strings.Vector
-                 := (if Local
-                     then "alr" & Alr_Local
-                     else "alr" & Alr_Args);
+                  Output.Append_Line
+                    ("[alr test] Spawning default local test: "
+                     & Command.Flatten);
 
-               Exit_Code : Integer;
+                  Code := Unchecked_Spawn_And_Capture
+                    (Command.First_Element,
+                     Command.Tail,
+                     Output,
+                     Err_To_Out => True);
+               end Local_Test;
+
+               -----------------
+               -- Remote_Test --
+               -----------------
+
+               procedure Remote_Test (Output : in out AAA.Strings.Vector;
+                                      Code   :    out Integer)
+               is
+                  Command : constant AAA.Strings.Vector :=
+                              "alr"
+                              & Regular_Alr_Switches
+                              & "get"
+                              & R.Milestone.Image;
+               begin
+                  --  Start with a standard crate retrieval
+
+                  Output.Append_Line
+                    ("[alr test] Spawning retrieval for remote crate: "
+                     & Command.Flatten);
+
+                  Code := Unchecked_Spawn_And_Capture
+                    (Command.First_Element,
+                     Command.Tail,
+                     Output,
+                     Err_To_Out => True);
+
+                  --  Enter the build folder if necessary, otherwise the test
+                  --  has ended.
+
+                  if not R.Origin.Requires_Build then
+                     return;
+                  end if;
+
+                  --  Default build for a remote crate is a release build,
+                  --  respecting configuration of dependencies' profiles. We
+                  --  conservatively disable warnings as errors. We must enter
+                  --  the just retrieved crate to spawn.
+
+                  declare
+                     CD : Folder_Guard (Enter_Folder (R.Base_Folder))
+                       with Unreferenced;
+
+                     Command : constant AAA.Strings.Vector :=
+                                 "alr"
+                                 & Regular_Alr_Switches
+                                 & "build"
+                                 & "--release"
+                                 & "--"
+                                 & "-cargs:Ada"
+                                 & "-gnatwn";
+                  begin
+                     Output.Append_Line
+                       ("[alr test] Spawning default test for remote crate: "
+                        & Command.Flatten);
+
+                     Code := Unchecked_Spawn_And_Capture
+                       (Command.First_Element,
+                        Command.Tail,
+                        Output,
+                        Err_To_Out => True);
+                  end;
+               end Remote_Test;
+
+               Exit_Code : Integer := Integer'First;
+
             begin
-               Output.Append_Line ("Spawning: " & Alr_Default.Flatten);
-               Exit_Code := Unchecked_Spawn_And_Capture
-                  (Alr_Default.First_Element,
-                  Alr_Default.Tail,
-                  Output,
-                  Err_To_Out => True);
+               if Local then
+                  Local_Test (Output, Exit_Code);
+               else
+                  Remote_Test (Output, Exit_Code);
+               end if;
 
                if Exit_Code /= 0 then
                   raise Child_Failed;
@@ -238,7 +305,9 @@ package body Alr.Commands.Test is
                   end if;
                end if;
 
-               --  And run its actions in its working directory
+               --  And run its actions in its working directory. Note that
+               --  no environment is set up, the test action should do it
+               --  if needed (e.g. through `alr exec --`).
 
                declare
                   Guard : Alire.Directories.Guard
@@ -309,8 +378,13 @@ package body Alr.Commands.Test is
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
          else
             begin
+               Output.Append ("[alr test] Testing " & R.Milestone.Image);
+
                --  Perform default or custom actions
                Test_Action;
+
+               --  At this point the test ended successfully
+               Output.Append ("[alr test] Test completed SUCCESSFULLY");
 
                Reporters.End_Test (R, Testing.Pass, Clock - Start, Output);
                Trace.Detail (Output.Flatten (Newline));
@@ -577,6 +651,8 @@ package body Alr.Commands.Test is
             else
                Trace.Detail ("Testing all releases");
             end if;
+         elsif Args.Count > 0 then
+            Trace.Detail ("Testing crates given as arguments");
          else
             if Cmd.Has_Root then
                Alire.Put_Info ("Testing local crate: "
