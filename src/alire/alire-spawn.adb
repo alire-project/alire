@@ -44,6 +44,7 @@ package body Alire.Spawn is
                  "-j0" & -- Build in parallel
                  "-p"  & -- Create missing obj, lib and exec dirs
                  "-P"  & Project_File &
+                 "-cargs" & "-gnatW8" &
                  Extra_Args,
                Understands_Verbose => True);
    end Gprbuild;

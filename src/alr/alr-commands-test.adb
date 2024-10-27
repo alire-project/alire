@@ -105,6 +105,7 @@ package body Alr.Commands.Test is
      (Cmd          : in out Command;
       Releases     : Alire.Releases.Containers.Release_Sets.Set;
       Local        : Boolean)
+   --  Local means to test the local crate
    is
       use Ada.Calendar;
       use GNATCOLL.VFS;
@@ -340,24 +341,46 @@ package body Alr.Commands.Test is
             end;
          end if;
 
-         if not Local then
-            Make_Dir
-              (Create (+R.Base_Folder)
-               / Create (+Paths.Working_Folder_Inside_Root));
-            --  Might not exist for system/failed/skipped
-         end if;
+         --  For crates that have an unavailable origin (e.g. binaries without
+         --  releases on the current platform), we cannot obtain a unique id,
+         --  so we have to work around.
 
-         --  For local testing we can already use the local 'alire' folder. For
-         --  batch testing instead we create one folder per release.
          declare
-            Common_Path : constant Alire.Relative_Path :=
-                            Paths.Working_Folder_Inside_Root
-                            / Test_Name & ".log";
+            Base_Folder : constant String
+              := (if Local
+                  then "."
+                  elsif Is_Available
+                  then R.Base_Folder
+                  else
+                    (if R.Origin.Is_Available (Platform.Properties)
+                     then R.Base_Folder
+                     else "unavail"));
          begin
-            Output.Write (if Local
-                          then Common_Path
-                          else R.Base_Folder / Common_Path);
+            if not Local then
+               Make_Dir
+                 (Create (+Base_Folder)
+                  / Create (+Paths.Working_Folder_Inside_Root));
+               --  Might not exist for system/failed/skipped
+            end if;
+
+            --  For local testing we can already use the local 'alire' folder.
+            --  For batch testing instead we create one folder per release.
+            declare
+               Common_Path : constant Alire.Relative_Path :=
+                               Paths.Working_Folder_Inside_Root
+                                 / Test_Name & ".log";
+            begin
+               Output.Write (if Local
+                             then Common_Path
+                             else Base_Folder / Common_Path);
+            end;
          end;
+      exception
+         when E : others =>
+            Alire.Log_Exception (E);
+            Trace.Error ("Exception in the periphery of testing crate: "
+                         & R.Milestone.TTY_Image);
+            raise;
       end Test_Release;
 
    begin
@@ -371,7 +394,7 @@ package body Alr.Commands.Test is
       Reporters.Add (Testing.JUnit.New_Reporter);
 
       Reporters.Start_Run
-        ((if Local
+        ((if Local and then Cmd.Has_Root
           then Cmd.Root.Working_Folder / Test_Name
           else Test_Name),
          Natural (Releases.Length));
@@ -430,7 +453,7 @@ package body Alr.Commands.Test is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      No_Args : constant Boolean := Args.Count = 0;
+      Local_Crate : constant Boolean := Args.Count = 0 and then not Cmd.Full;
 
       ---------------
       -- Not_Empty --
@@ -463,6 +486,8 @@ package body Alr.Commands.Test is
          function Is_Match (Name : Alire.Crate_Name) return Boolean is
            (for some I in Args.First_Index .. Args.Last_Index =>
                AAA.Strings.Contains (+Name, Args (I)));
+
+         No_Args : constant Boolean := Args.Count = 0;
 
       begin
 
@@ -531,7 +556,7 @@ package body Alr.Commands.Test is
       end if;
 
       --  When doing testing over index contents, we request an empty dir
-      if not No_Args then
+      if not Local_Crate then
          if Cmd.Cont then
             Trace.Detail ("Resuming tests");
          elsif Cmd.Redo then
@@ -545,7 +570,7 @@ package body Alr.Commands.Test is
       CLIC.User_Input.Not_Interactive := True;
 
       --  Start testing
-      if No_Args then
+      if not Local_Crate then
          if Cmd.Full then
             if Cmd.Last then
                Trace.Detail ("Testing newest release of every crate");
@@ -566,7 +591,7 @@ package body Alr.Commands.Test is
 
       --  Pre-find candidates to not have duplicate tests if overlapping
       --  requested.
-      if No_Args then
+      if Local_Crate then
          Candidates.Include (Cmd.Root.Release);
       else
          Find_Candidates;
@@ -578,7 +603,7 @@ package body Alr.Commands.Test is
          end if;
       end if;
 
-      Do_Test (Cmd, Candidates, No_Args);
+      Do_Test (Cmd, Candidates, Local_Crate);
    end Execute;
 
    ----------------------
