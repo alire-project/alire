@@ -20,9 +20,6 @@
 	path = deps/gnatcoll-slim
 	url = https://github.com/alire-project/gnatcoll-core.git
 	branch = slim
-[submodule "testsuite/fixtures/crates/libhello_git"]
-	path = testsuite/fixtures/crates/libhello_git
-	url = https://github.com/alire-project/libhello.git
 [submodule "deps/ansi"]
 	path = deps/ansi
 	url = https://github.com/mosteo/ansi-ada
