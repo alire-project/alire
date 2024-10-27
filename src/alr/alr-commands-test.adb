@@ -690,7 +690,11 @@ package body Alr.Commands.Test is
    function Long_Description (Cmd : Command)
                               return AAA.Strings.Vector
    is (AAA.Strings.Empty_Vector
-       .Append ("Tests the retrievability and buildability of all or"
+       .Append ("Without arguments, run the test actions of the local release."
+         & " If no such test actions are defined, run `alr build --release`.")
+       .New_Line
+       .Append ("When crate milestones or --full are supplied as arguments, "
+                & "test the retrievability and buildability of all or"
                 & " specific releases. Unless --continue or --redo is given,"
                 & " the command expects to be run in an empty folder.")
        .New_Line
