@@ -196,29 +196,38 @@ package body Alire.Publish is
       end if;
    end Git_Error;
 
+   --------------------------
+   -- Require_Confirmation --
+   --------------------------
+   --  Prompt the user to confirm they wish to proceed.
+   --
+   --  Raises a Checked_Error with message "Abandoned by user" if they don't.
+   procedure Require_Confirmation (Prompt         : String;
+                                   Default_To_Yes : Boolean := True)
+   is
+      use CLIC.User_Input;
+   begin
+      Ada.Text_IO.New_Line;
+      if Query (Prompt,
+                Valid   => (Yes | No => True, others => False),
+                Default => (if Default_To_Yes then Yes else No))
+         /= Yes
+      then
+         Raise_Checked_Error ("Abandoned by user");
+      end if;
+   end Require_Confirmation;
+
    ---------------------
    -- Check_Git_Clean --
    ---------------------
-   --  Check that the repo is clean. If we need it only for generating an
-   --  archive, that is enough; otherwise, check that we are in sync with
-   --  the remote to which the origin will point to.
-   procedure Check_Git_Clean (Path : Any_Path; For_Archiving : Boolean) is
+   --  Check that the repo is clean (no uncommited changes to tracked files).
+   procedure Check_Git_Clean (Path : Any_Path) is
       use all type VCSs.Git.States;
       Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
    begin
       case Git.Status (Path) is
-         when No_Remote =>
-            if For_Archiving then
-               Put_Success ("Local repository is clean (without remote).");
-            else
-               Git_Error ("No remote configured", Path);
-            end if;
          when Clean =>
             Put_Success ("Local repository is clean.");
-         when Ahead =>
-            Git_Error ("Your branch is ahead of remote" & ASCII.LF &
-                         "Please push local commits to the remote branch.",
-                       Path);
          when Dirty =>
             Git_Error (TTY.Emph ("git status") &
                          " You have unstaged changes. " &
@@ -233,8 +242,6 @@ package body Alire.Publish is
    --  Checks the presence of recommended/mandatory fields in the release
    procedure Check_Release (Release : Releases.Release; Context : in out Data)
    is
-      use CLIC.User_Input;
-
       Recommend : AAA.Strings.Vector; -- Optional
       Missing   : AAA.Strings.Vector; -- Mandatory
 
@@ -352,19 +359,11 @@ package body Alire.Publish is
       --  Final confirmation. We default to Yes if no recommended missing or
       --  Force.
 
-      Ada.Text_IO.New_Line;
-      if Query
+      Require_Confirmation
         ("Do you want to proceed with this information?",
-         Valid   => (Yes | No => True, others => False),
-         Default => (if Force or else
-                         (Recommend.Is_Empty
-                          and then not Caret_Pre_1
-                          and then not Dev_Version)
-                     then Yes
-                     else No)) /= Yes
-      then
-         Raise_Checked_Error ("Abandoned by user");
-      end if;
+         Default_To_Yes => Force or else (Recommend.Is_Empty
+                                          and then not Caret_Pre_1
+                                          and then not Dev_Version));
    end Check_Release;
 
    -----------------
@@ -755,7 +754,7 @@ package body Alire.Publish is
 
    begin
       if Is_Repo then
-         Check_Git_Clean (Base_Path (Context), For_Archiving => True);
+         Check_Git_Clean (Base_Path (Context));
       else
          Trace.Warning ("Not in a git repository, assuming plain sources.");
       end if;
@@ -1104,6 +1103,8 @@ package body Alire.Publish is
       Root : Roots.Optional.Root   := Roots.Optional.Search_Root (Path);
       Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
 
+      Use_Head : constant Boolean := Revision = "" or else Revision = "HEAD";
+
       Subdir : Unbounded_Relative_Path;
       --  In case we are publishing a nested crate (monorepo), its relative
       --  path in regard to the git worktree will be stored here by
@@ -1144,6 +1145,128 @@ package body Alire.Publish is
          end if;
       end Check_Nested_Crate;
 
+      ------------------
+      -- Infer_Remote --
+      ------------------
+
+      function Infer_Remote (Root_Path : Absolute_Path;
+                             Commit    : String)
+                             return String;
+      --  Return the name of the remote to use as the published origin.
+      --
+      --  Raises Checked_Error if the commit is not on any remote, or is on
+      --  multiple remotes and the correct choice is not discernable (i.e. if
+      --  Revision was not specified in the form of a branch which is
+      --  configured to track a remote).
+      --
+      --  User confirmation is required if not one of 2 simple cases:
+      --    - Revision refers to a branch which tracks (and is synchronised
+      --      with) a remote branch.
+      --    - The repo has exactly one remote configured, and Revision refers
+      --      to a commit (via a tag, hash or detached HEAD) which is present
+      --      thereon.
+
+      function Infer_Remote (Root_Path : Absolute_Path;
+                             Commit    : String)
+                             return String
+      is
+         use all type VCSs.Git.Branch_States;
+
+         Branch        : constant String :=
+           (if Use_Head then Git.Branch (Root_Path) else Revision);
+         Branch_Status : VCSs.Git.Branch_States;
+         Branch_Remote : constant String :=
+           Git.Branch_Remote (Root_Path, Branch, Branch_Status);
+         --  We are also using this to detect if Revision refers to something
+         --  other than a branch (i.e. a commit or tag), in which case
+         --  Branch_Status will be No_Branch.
+
+         Repo_Remote    : constant String :=
+           Git.Repo_Remote (Root_Path, Checked => False);
+         Commit_Remotes : constant AAA.Strings.Set :=
+           Git.Commit_Remotes (Root_Path, Commit);
+      begin
+         --  A branch which doesn't track a remote branch is treated as
+         --  equivalent to its current head commit, subject to user
+         --  confirmation.
+         if Branch_Status in No_Remote then
+            Require_Confirmation
+              ("The specified branch is not configured to track a remote."
+               & New_Line
+               & "Do you want to attempt to publish its head commit anyway?");
+         end if;
+
+         case Branch_Status is
+            when No_Branch | No_Remote =>
+               --  Revision refers to a commit, not a branch.
+               if Commit_Remotes.Length in 0 then
+                  --  Commit is not present on any remote, so can't be
+                  --  published.
+                  Ada.Text_IO.New_Line;
+                  Git_Error
+                    ("The specified commit is not present on any configured "
+                     & "remote.",
+                     Root_Path);
+                  raise Program_Error with "unreachable code";
+               elsif Repo_Remote /= "" then
+                  --  Commit is present on the repo's only remote.
+                  return Repo_Remote;
+               elsif Commit_Remotes.Length in 1 then
+                  --  Commit is only present on one remote, but others are
+                  --  configured, so check that this is the one the user
+                  --  intended to publish.
+                  Require_Confirmation
+                    ("The repository has multiple remotes configured, but the "
+                     & "specified commit is only present on the remote '"
+                     & Commit_Remotes.First_Element
+                     & "'."
+                     & New_Line
+                     & "The published manifest will therefore use the origin '"
+                     & Git.Remote_URL (Root_Path, Commit_Remotes.First_Element)
+                     & "'."
+                     & New_Line
+                     & "Is this correct?");
+                  return Commit_Remotes.First_Element;
+               else
+                  --  Commit is present on multiple remotes, so the user will
+                  --  need to specify explicitly.
+                  Ada.Text_IO.New_Line;
+                  Git_Error
+                    ("The specified commit is present on multiple remotes"
+                     & New_Line
+                     & "Please use 'alr publish <remote-URL> <commit>' to "
+                     & "resolve this ambiguity.",
+                     Root_Path);
+                  raise Program_Error with "unreachable code";
+               end if;
+
+            when Ahead =>
+               --  'git push' is required to publish the current head
+               Ada.Text_IO.New_Line;
+               Git_Error
+                 ("Your branch is ahead of remote"
+                  & New_Line
+                  & "Please push local commits to the remote branch.",
+                  Root_Path);
+               raise Program_Error with "unreachable code";
+
+            when Behind =>
+               --  The local branch is behind the remote, so check the user
+               --  isn't mistakenly publishing an outdated version
+               Require_Confirmation
+                 ("There are commits on the remote branch which could be "
+                  & "retrieved with 'git pull'."
+                  & New_Line
+                  & "Are you sure you want to publish without them?");
+               return Branch_Remote;
+
+            when Synced =>
+               --  The local branch is synchronised with a remote branch, so
+               --  no user confirmation is required.
+               return Branch_Remote;
+         end case;
+      end Infer_Remote;
+
    begin
 
       --  Early report and exit if there's any trouble with the supplied path
@@ -1159,20 +1282,27 @@ package body Alire.Publish is
             Git_Error ("no git repository found", Root_Path);
          end if;
 
+         --  Do not continue if no remote is configured
+
+         if VCSs.Git.Remotes (Root_Path).Length in 0 then
+            Git_Error ("No remote configured.", Root_Path);
+         end if;
+
          --  Do not continue if the local repo is dirty
 
-         Check_Git_Clean (Root_Path, For_Archiving => False);
+         Check_Git_Clean (Root_Path);
 
          --  If the Git root does not match the path to the manifest, we are
          --  seeing a crate in a subdir, so we go to monorepo mode.
 
          Check_Nested_Crate (Root_Path);
 
-         --  If not given a revision, check the local manifest contents
-         --  already. No matter what, it will be checked again on the
-         --  deployed sources step.
+         --  If the relevant commit is already checked out, check the local
+         --  manifest contents now to catch any issues as early as possible.
+         --  No matter what, it will be checked again on the deployed sources
+         --  step.
 
-         if Revision = "" or else Revision = "HEAD" then
+         if Use_Head then
             declare
                Tmp_Context : Data := (Options => Options, others => <>);
             begin
@@ -1185,9 +1315,9 @@ package body Alire.Publish is
          declare
             Commit : constant String :=
                        Git.Revision_Commit (Root_Path,
-                                            (if Revision /= ""
-                                             then Revision
-                                             else "HEAD"));
+                                            (if Use_Head
+                                             then "HEAD"
+                                             else Revision));
          begin
             if Commit /= "" then
                Put_Success ("Revision exists in local repository ("
@@ -1198,10 +1328,10 @@ package body Alire.Publish is
             end if;
 
             declare
+               Remote    : constant String := Infer_Remote (Root_Path, Commit);
+
                Raw_URL   : constant String :=
-                             Git.Fetch_URL
-                               (Root_Path,
-                                Origin => Git.Remote (Root_Path));
+                             Git.Fetch_URL (Root_Path, Remote);
                --  The one reported by the repo, in its public form
             begin
                --  Complete the process with Remote_Origin, adding a "git+"
