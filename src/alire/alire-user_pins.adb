@@ -199,7 +199,7 @@ package body Alire.User_Pins is
          Trace.Detail ("Checking out pin " & Utils.TTY.Name (Crate) & " at "
                        & TTY.URL (Destination));
 
-         --  If the fetch URL has been changed, fall back to checkout
+         --  If the fetch URL has been changed, do a fresh 'git clone'.
          --
          --  Note that VCSs.Git.Clone converts the URL to a git-friendly form
          --  with VCSs.Repo, so this is what the output of 'git config' should
@@ -215,6 +215,12 @@ package body Alire.User_Pins is
             Checkout; -- Pending branch tracking implementation
             return;
          end if;
+
+         --  Discard any uncommitted changes (e.g. files in 'config/' which
+         --  Alire has automatically generated).
+         --  These can cause Update's 'git pull' command to fail.
+
+         VCSs.Git.Discard_Uncommitted (Repo => Destination).Assert;
 
          --  Finally update. In case the branch has just been changed by the
          --  user in the manifest, the following call will also take care of

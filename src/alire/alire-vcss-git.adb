@@ -292,6 +292,21 @@ package body Alire.VCSs.Git is
          return Alire.Errors.Get (E);
    end Commit_All;
 
+   -------------------------
+   -- Discard_Uncommitted --
+   -------------------------
+
+   function Discard_Uncommitted (Repo : Directory_Path) return Outcome
+   is
+      Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+   begin
+      Run_Git (Empty_Vector & "reset" & "-q" & "--hard" & "HEAD");
+      return Outcome_Success;
+   exception
+      when E : others =>
+         return Alire.Errors.Get (E);
+   end Discard_Uncommitted;
+
    ----------
    -- Push --
    ----------
