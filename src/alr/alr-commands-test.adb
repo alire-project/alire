@@ -387,6 +387,7 @@ package body Alr.Commands.Test is
                when E : Alire.Checked_Error =>
                   Reporters.End_Test (R, Testing.Fail, Clock - Start, Output);
                   Trace.Detail (Output.Flatten (Newline));
+                  Alire.Errors.Pretty_Print (Alire.Errors.Get (E));
                   Some_Failed := True;
 
                   Output.Append ("****** Checked Error raised during test:");
