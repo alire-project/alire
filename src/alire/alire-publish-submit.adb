@@ -328,7 +328,7 @@ package body Alire.Publish.Submit is
             VCSs.Git.Commit_All
               (Local_Repo_Path,
                Msg => Context.PR_Name
-                      & " (via `alr publish --submit`)").Assert;
+                      & " (via `alr publish`)").Assert;
          else
             Put_Warning
               ("Nothing to commit: "
