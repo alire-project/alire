@@ -3,7 +3,7 @@ Test custom actions for `alr test`
 """
 
 from drivers.alr import run_alr
-from drivers.helpers import check_line_in
+from drivers.helpers import content_of
 
 from glob import glob
 
@@ -16,7 +16,12 @@ chdir(glob('hello*')[0])
 chdir('alire')
 
 # Check the magic string in the test output log
-check_line_in(glob('*.log')[0], 'ABRACADABRA')
+log_contents = content_of(glob('*.log')[0])
+magic_string_count = log_contents.count("ABRACADABRA")
+if magic_string_count == 0:
+   assert False, 'action not run'
+elif magic_string_count > 1:
+   assert False, 'action ran more than once'
 
 
 print('SUCCESS')
