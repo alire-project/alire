@@ -317,24 +317,18 @@ package body Alr.Commands.Test is
                         else R.Base_Folder))
                     with Unreferenced;
                begin
-                  for Action of R.On_Platform_Actions
-                    (Platform.Properties,
-                     (Alire.Properties.Actions.Test   => True,
-                      others                          => False))
-                  loop
-                     Alire.Properties.Actions.Executor.Execute_Actions
-                       (Release    => R,
-                        Env        => Platform.Properties,
-                        Moment     => Alire.Properties.Actions.Test,
-                        Capture    => True,
-                        Err_To_Out => True,
-                        Code       => Exit_Code,
-                        Output     => Output);
+                  Alire.Properties.Actions.Executor.Execute_Actions
+                     (Release    => R,
+                     Env        => Platform.Properties,
+                     Moment     => Alire.Properties.Actions.Test,
+                     Capture    => True,
+                     Err_To_Out => True,
+                     Code       => Exit_Code,
+                     Output     => Output);
 
-                     if Exit_Code /= 0 then
-                        raise Child_Failed;
-                     end if;
-                  end loop;
+                  if Exit_Code /= 0 then
+                     raise Child_Failed;
+                  end if;
                end;
             end Custom_Test;
 
@@ -393,6 +387,7 @@ package body Alr.Commands.Test is
                when E : Alire.Checked_Error =>
                   Reporters.End_Test (R, Testing.Fail, Clock - Start, Output);
                   Trace.Detail (Output.Flatten (Newline));
+                  Alire.Errors.Pretty_Print (Alire.Errors.Get (E));
                   Some_Failed := True;
 
                   Output.Append ("****** Checked Error raised during test:");
