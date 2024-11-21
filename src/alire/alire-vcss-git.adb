@@ -296,11 +296,16 @@ package body Alire.VCSs.Git is
    -- Discard_Uncommitted --
    -------------------------
 
-   function Discard_Uncommitted (Repo : Directory_Path) return Outcome
+   function Discard_Uncommitted (Repo : Directory_Path;
+                                 Discard_Untracked : Boolean := False)
+                                 return Outcome
    is
       Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
    begin
       Run_Git (Empty_Vector & "reset" & "-q" & "--hard" & "HEAD");
+      if Discard_Untracked then
+         Run_Git (Empty_Vector & "clean" & "-fd");
+      end if;
       return Outcome_Success;
    exception
       when E : others =>
@@ -626,6 +631,59 @@ package body Alire.VCSs.Git is
       end;
    end Remote_Commit;
 
+   -----------------
+   -- Dirty_Files --
+   -----------------
+
+   function Dirty_Files (This              : VCS;
+                         Repo              : Directory_Path;
+                         Include_Untracked : Boolean := False)
+                         return AAA.Strings.Set
+   is
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+
+      Output : constant AAA.Strings.Vector :=
+        Run_Git_And_Capture (Empty_Vector & "status" & "-z" & "--no-renames");
+
+      Lines  : constant AAA.Strings.Vector :=
+        (if Output.Length in 0 then Empty_Vector
+         else Split (Output.First_Element, Character'Val (0)));
+      --  'git status -z' splits "lines" on the null character, not newline.
+
+      Paths  : AAA.Strings.Set := Empty_Set;
+   begin
+      if Output.Length not in 0 | 1 then
+         --  'git status -z' splits on null character, so should only yield one
+         --  line of output.
+         Raise_Checked_Error
+           ("Unexpected output from 'git status -z': "
+            & Output.Flatten (New_Line & "  "));
+      end if;
+
+      for Line of Lines loop
+         if Contains (Line, "GNAT-TEMP-") then
+            --  Turns out the temporary file we use to capture the output of
+            --  "git status" makes git to return a dirty tree. We filter these
+            --  out then.
+            null;
+         elsif Line = "" then
+            --  The output of 'git status -z' includes a trailing null byte,
+            --  so the last element of Lines is an irrelevant empty string.
+            null;
+         elsif not Include_Untracked and then Has_Prefix (Line, "??") then
+            --  Ignore untracked files if Include_Untracked is False.
+            null;
+         else
+            --  'git status -z' yields lines of the form "XY <path>", where
+            --  "X" and "Y" are single-character status codes.
+            --  We therefore strip the first three characters of each line to
+            --  get the path.
+            Paths.Include (Line (Line'First + 3 .. Line'Last));
+         end if;
+      end loop;
+      return Paths;
+   end Dirty_Files;
+
    ------------
    -- Status --
    ------------
@@ -634,33 +692,11 @@ package body Alire.VCSs.Git is
                     Repo : Directory_Path)
                     return States
    is
-      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
-
-      Output : constant AAA.Strings.Vector :=
-        Run_Git_And_Capture (Empty_Vector & "status" & "--porcelain");
-
-      Untracked_File : Natural := 0;
-      Tracked_File   : Natural := 0;
    begin
-
-      for Line of Output loop
-         if Contains (Line, "GNAT-TEMP-") then
-            --  Turns out the temporary file we use to capture the output of
-            --  "git status" makes git to return a dirty tree. We filter these
-            --  out then.
-            null;
-         elsif Has_Prefix (Line, "??") then
-            Untracked_File := Untracked_File + 1;
-         else
-            Tracked_File := Tracked_File + 1;
-         end if;
-      end loop;
-
-      if Tracked_File /= 0 then
-         --  There are added/modified tracked files
-         return Dirty;
-      else
+      if Dirty_Files (This, Repo, Include_Untracked => False).Length in 0 then
          return Clean;
+      else
+         return Dirty;
       end if;
    end Status;
 

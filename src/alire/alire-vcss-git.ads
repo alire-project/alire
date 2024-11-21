@@ -104,8 +104,23 @@ package Alire.VCSs.Git is
    --  Add and commit all changes in a given repo; commiter will be set to the
    --  user email stored in our config.
 
-   function Discard_Uncommitted (Repo : Directory_Path) return Outcome;
-   --  Reset all uncommitted changes to tracked files
+   not overriding
+   function Dirty_Files (This              : VCS;
+                         Repo              : Directory_Path;
+                         Include_Untracked : Boolean := False)
+                         return AAA.Strings.Set;
+   --  Return the paths of any files with uncommitted changes.
+   --
+   --  Ignored files are not included. Untracked files are not included unless
+   --  Include_Untracked is True.
+
+   function Discard_Uncommitted (Repo : Directory_Path;
+                                 Discard_Untracked : Boolean := False)
+                                 return Outcome;
+   --  Reset all uncommitted changes to tracked files, and optionally also
+   --  untracked files.
+   --
+   --  Ignored files are not discarded.
 
    function Push (Repo   : Directory_Path;
                   Remote : String;

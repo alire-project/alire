@@ -198,8 +198,9 @@ def init_git_repo(path):
     assert run(["git", "checkout", "-b", "master"]).returncode == 0
     git_init_user()
 
-    # Workaround for Windows, where somehow we get undeletable files in temps:
-    with open(".gitignore", "wt") as file:
+    # Workaround for Windows, where somehow we get undeletable files in temps
+    # (we use mode 'a' because a '.gitignore' may already be present):
+    with open(".gitignore", "at") as file:
         file.write("*.tmp\n")
 
     head = commit_all(".")
