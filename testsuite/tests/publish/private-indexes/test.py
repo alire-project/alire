@@ -66,9 +66,7 @@ def test(
     os.chdir("remote")
     run_alr("init", "--bin", "xxx")
     os.chdir("xxx")
-    # Adjust the values of maintainers-logins and user.github_login if required
-    if github_user is not None:
-        run(["alr", "settings", "--set", "user.github_login", github_user])
+    # Adjust the value of maintainers-logins if required
     if maint_logins is not None:
         with open("alire.toml", "a") as f:
             f.write(f"maintainers-logins = {maint_logins}\n")
@@ -85,6 +83,9 @@ def test(
         os.makedirs(local_path)
         os.chdir(local_path)
         run(["git", "clone", url, local_path])
+        # Adjust the value of user.github_login if required
+        if github_user is not None:
+            run_alr("settings", "--set", "user.github_login", github_user)
 
         # Run alr
         p = run_alr_interactive(
