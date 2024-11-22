@@ -21,7 +21,6 @@ ajunitgen = "^1.0.1"
 ansiada = "^1.1"
 c_strings = "^1.0"
 clic = "~0.3"
-compare_to_case = "~0.1"
 den = "~0.1"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
@@ -71,10 +70,6 @@ commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 [pins.clic]
 url    = "https://github.com/alire-project/clic"
 commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
-
-[pins.compare_to_case]
-url    = "https://github.com/mosteo/compare_to_case"
-commit = "7934e319711995cf5960774f938c4d3ab5e0b7b6"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"

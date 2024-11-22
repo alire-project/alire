@@ -9,11 +9,10 @@ with Alire.Platforms.Current;
 with Alire.Releases.Containers;
 with Alire.Root;
 with Alire.Toolchains;
+with Alire.Utils.Comparisons;
 with Alire.Utils.TTY;
 
 with CLIC.User_Input;
-
-with Compare_To_Case;
 
 with Stopwatch;
 
@@ -430,14 +429,14 @@ package body Alire.Solver is
       --  the number of remaining unsolved dependencies as the heuristic.
       function Is_Better (L, R : in out Search_State) return Boolean
       is
-         use all type Compare_To_Case.Result;
-         use all type Compare_To_Case.Bool_Result;
+         use all type Utils.Comparisons.Result;
+         use all type Utils.Comparisons.Bool_Result;
          use type Alire.Solutions.Compositions;
 
          function Compare is
-           new Compare_To_Case.Compare (Alire.Solutions.Compositions);
+           new Utils.Comparisons.Compare (Alire.Solutions.Compositions);
          function Compare is
-           new Compare_To_Case.Compare (Natural);
+           new Utils.Comparisons.Compare (Natural);
 
          LS : Solution renames L.Solution;
          RS : Solution renames R.Solution;
@@ -446,7 +445,7 @@ package body Alire.Solver is
          -- Preferred_Compiler --
          ------------------------
 
-         function Preferred_Compiler return Compare_To_Case.Result is
+         function Preferred_Compiler return Utils.Comparisons.Result is
 
             function L_GNAT return Release
             is (LS.Releases_Providing (GNAT_Crate).First_Element);
@@ -458,7 +457,7 @@ package body Alire.Solver is
             -----------------------
 
             function Preferred_Version (L, R : Semver.Version)
-                                        return Compare_To_Case.Result
+                                        return Utils.Comparisons.Result
             is
                use type Semver.Version;
             begin
@@ -472,6 +471,8 @@ package body Alire.Solver is
                end if;
             end Preferred_Version;
 
+            use Utils;
+
          begin
             --  Preferred compiler order is, according to our docs and tests:
             --  - No specific compiler at all
@@ -484,7 +485,7 @@ package body Alire.Solver is
 
             --  - No specific compiler at all
 
-            case Compare_To_Case.Which_One
+            case Comparisons.Which_One
               (LS.Releases_Providing (GNAT_Crate).Is_Empty,
                RS.Releases_Providing (GNAT_Crate).Is_Empty)
             is
@@ -499,7 +500,7 @@ package body Alire.Solver is
             --  - The selected compiler, if defined
 
             if Selected_Compiler.Exists then
-               case Compare_To_Case.Which_One
+               case Comparisons.Which_One
                  (LS.Contains (Selected_Compiler.Milestone),
                   RS.Contains (Selected_Compiler.Milestone))
                is
@@ -512,7 +513,7 @@ package body Alire.Solver is
 
             --  Prefer external compilers
 
-            case Compare_To_Case.Which_One
+            case Comparisons.Which_One
               (not LS.Releases_Providing (GNAT_Crate).Is_Empty and then
                not L_GNAT.Origin.Is_Index_Provided,
                not RS.Releases_Providing (GNAT_Crate).Is_Empty and then
@@ -530,7 +531,7 @@ package body Alire.Solver is
 
             --  Prefer newest installed native compiler
 
-            case Compare_To_Case.Which_One
+            case Comparisons.Which_One
               (LS.Contains_Release (GNAT_Native_Crate) and then
                Tools.Contains (L_GNAT)
                ,
@@ -551,7 +552,7 @@ package body Alire.Solver is
 
             --  Prefer newest installed any (cross) compiler
 
-            case Compare_To_Case.Which_One
+            case Comparisons.Which_One
               (not LS.Releases_Providing (GNAT_Crate).Is_Empty and then
               Tools.Contains (L_GNAT)
                ,
@@ -576,7 +577,7 @@ package body Alire.Solver is
 
             --  Prefer native compiler
 
-            case Compare_To_Case.Which_One
+            case Comparisons.Which_One
               (L.Solution.Contains_Release (GNAT_Native_Crate),
                R.Solution.Contains_Release (GNAT_Native_Crate))
             is
@@ -593,7 +594,7 @@ package body Alire.Solver is
 
             --  Prefer newest installed any (cross) compiler
 
-            case Compare_To_Case.Which_One
+            case Comparisons.Which_One
               (not LS.Releases_Providing (GNAT_Crate).Is_Empty,
                not RS.Releases_Providing (GNAT_Crate).Is_Empty)
             is
@@ -611,6 +612,8 @@ package body Alire.Solver is
             return Equal;
          end Preferred_Compiler;
 
+         use Utils;
+
       begin
 
          --  TODO: all the following comparisons will be performed N log
@@ -625,7 +628,7 @@ package body Alire.Solver is
          --  Prefer states that might lead to a complete solution (those
          --  include states that already are completely explored).
 
-         case Compare_To_Case.Which_One
+         case Comparisons.Which_One
            (Is_Potentially_Complete (L),
             Is_Potentially_Complete (R))
          is
@@ -686,7 +689,7 @@ package body Alire.Solver is
 
          --  All else being equal, the best solution is preferred
 
-         case Compare_To_Case.Which_One
+         case Comparisons.Which_One
            (L.Solution.Is_Better (R.Solution),
             R.Solution.Is_Better (L.Solution))
          is
