@@ -11,6 +11,11 @@ from drivers.asserts import match_solution
 # Select the default preferred compiler, which is the native packaged one
 run_alr("toolchain", "--select")
 
+# Verify expected compiler is selected
+p = run_alr("toolchain")
+assert "gnat_native   8888.0.0 Default" in p.out, \
+    f"Unexpected compiler selected: {p.out}"
+
 # Init a crate depending on gnat
 
 init_local_crate("xxx")

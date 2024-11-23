@@ -51,7 +51,6 @@ windows = { ALIRE_OS = "windows" }
 
 # Some dependencies require precise versions during the development cycle:
 [[pins]]
-
 [pins.aaa]
 url    = "https://github.com/mosteo/aaa"
 commit = "ddfeffe2d6c8f9d19161df7b31d16d37bef4ba71"
@@ -127,3 +126,4 @@ command = ["pwsh", "scripts/version-patcher.ps1"]
 [actions.'case(os)'.'...']
 type = "pre-build"
 command = ["scripts/version-patcher.sh"]
+
