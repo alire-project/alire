@@ -6,6 +6,17 @@ stay on top of `alr` new features.
 
 ## Release `2.1`
 
+PR [1799](https://github.com/alire-project/alire/pull/1799)
+
+`alr search` no longer solves dependencies of releases by default, in order to
+speed up the command. The `--solve` switch can be used to achieve the old
+behavior.
+
+In the new default situation, releases that have dependencies are marked with a
+'?' symbol in the STATUS column. The `--solve` switch will solve the
+dependencies and replace the '?' with either nothing for a solvable release or
+the usual 'X' if dependencies are unsatisfiable.
+
 ## Release `2.0`
 
 ### `ALIRE_SETTINGS_DIR` replaces `ALR_CONFIG`
