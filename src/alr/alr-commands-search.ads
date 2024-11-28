@@ -36,6 +36,7 @@ private
       Full     : aliased Boolean := False;
       List     : aliased Boolean := False;
       External : aliased Boolean := False;
+      Solve    : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Search;

@@ -17,9 +17,16 @@ def format_table(*args):
         lines.append(format_line(*arg))
     return ''.join(lines)
 
-
-# List latest releases crates
+# List latest releases crates, without solving dependencies
 p = run_alr('search', '--list')
+assert_eq(format_table(
+    ('hello', '  ?', '1.0.1', '"Hello, world!" demonstration project', '', ''),
+    ('libhello', '', '1.0.0',
+     '"Hello, world!" demonstration project support library', '', ''),
+), p.out)
+
+# List latest releases crates, solving dependencies
+p = run_alr('search', '--list', '--solve')
 assert_eq(format_table(
     ('hello', '', '1.0.1', '"Hello, world!" demonstration project', '', ''),
     ('libhello', '', '1.0.0',
@@ -28,7 +35,7 @@ assert_eq(format_table(
 
 
 # List all releases crates
-p = run_alr('search', '--list', '--full')
+p = run_alr('search', '--list', '--full', '--solve')
 assert_eq(format_table(
     ('hello', '', '1.0.1', '"Hello, world!" demonstration project', '', ''),
     ('hello', '', '1.0.0', '"Hello, world!" demonstration project', '', ''),

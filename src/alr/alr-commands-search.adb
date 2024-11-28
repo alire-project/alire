@@ -51,7 +51,12 @@ package body Alr.Commands.Search is
             (if R.Is_Available (Platform.Properties)
                then " " else Flag_Unav) &
             (if R.Origin.Is_System then " " else
-                   (if Solver.Is_Resolvable
+                   (if not Cmd.Solve
+                    then
+                      (if R.Dependencies (Platform.Properties).Is_Empty
+                       then " "
+                       else TTY.Dim ("?"))
+                    elsif Solver.Is_Resolvable
                       (R.Dependencies (Platform.Properties),
                        Platform.Properties,
                        Alire.Solutions.Empty_Valid_Solution,
@@ -334,6 +339,8 @@ package body Alr.Commands.Search is
       .Append ("E: the release is externally provided.")
       .Append ("S: the release is available through a system package.")
       .Append ("U: the release is not available in the current platform.")
+      .Append ("?: the release has dependencies but solving was skipped "
+               & "(see --solve).")
       .Append ("X: the release has dependencies that cannot be resolved.")
       .New_Line
       .Append ("The reasons for unavailability (U) can be ascertained with"
@@ -383,6 +390,11 @@ package body Alr.Commands.Search is
                      Cmd.External'Access,
                      "", "--external",
                      "Include externally-provided releases in search");
+
+      Define_Switch (Config,
+                     Cmd.Solve'Access,
+                     "", "--solve",
+                     "Solve dependencies of releases");
    end Setup_Switches;
 
 end Alr.Commands.Search;
