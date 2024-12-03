@@ -1,5 +1,3 @@
-with Ada.Containers;
-
 with Alire.Settings.Builtins;
 with Alire.Crates;
 with Alire.Dependencies.Diffs;
@@ -18,7 +16,6 @@ package body Alire.Solutions is
 
    package Semver renames Semantic_Versioning;
 
-   use type Ada.Containers.Count_Type;
    use type Alire.Releases.Release;
    use type Semantic_Versioning.Version;
    use all type States.Missed_Reasons;
@@ -77,6 +74,14 @@ package body Alire.Solutions is
    function Contains_Release (This  : Solution;
                               Crate : Crate_Name) return Boolean
    is (This.Depends_On (Crate) and then This.State (Crate).Has_Release);
+
+   ----------------------
+   -- Contains_Skipped --
+   ----------------------
+
+   function Contains_Skipped (This : Solution) return Boolean
+   is (for some Dep of This.Dependencies =>
+          Dep.Is_Missing and then Dep.Reason = Skipped);
 
    ---------------------------
    -- Contains_Incompatible --
@@ -213,6 +218,13 @@ package body Alire.Solutions is
 
    function Misses (This : Solution) return State_Map
    is (This.Dependencies_That (States.Is_Missing'Access));
+
+   -------------
+   -- Skipped --
+   -------------
+
+   function Skipped (This : Solution) return State_Map
+   is (This.Dependencies_That (States.Is_Skipped'Access));
 
    -------------
    -- Missing --
@@ -558,140 +570,6 @@ package body Alire.Solutions is
 
       end return;
    end Including;
-
-   ---------------
-   -- Is_Better --
-   ---------------
-
-   function Is_Better (This, Than : Solution) return Boolean is
-
-      type Comparison is (Better, Equivalent, Worse);
-
-      ----------------------
-      -- Compare_Versions --
-      ----------------------
-
-      function Compare_Versions (This, Than : Solution) return Comparison is
-      begin
-
-         --  TODO: instead of using the first discrepancy, we should count all
-         --  differences and see which one is globally "newer".
-
-         --  Check releases in both only
-
-         for Rel of This.Releases loop
-            if Than.Contains_Release (Rel.Name) then
-               if Than.Releases_Providing (Rel.Name)
-                      .First_Element.Version < Rel.Version
-               then
-                  return Better;
-               elsif
-                 Rel.Version < Than.Releases_Providing (Rel.Name)
-                                   .First_Element.Version
-               then
-                  return Worse;
-               end if;
-            end if;
-         end loop;
-
-         return Equivalent;
-      end Compare_Versions;
-
-      -----------------------------
-      -- Lexicographical_Compare --
-      -----------------------------
-
-      function Lexicographical_Compare (This, Than : Solution) return Boolean
-      is
-      begin
-         for Crate of This.Crates.Union (Than.Crates) loop
-            if This.Depends_On (Crate) and then not Than.Depends_On (Crate)
-            then
-               return True;
-            elsif not This.Depends_On (Crate) and then Than.Depends_On (Crate)
-            then
-               return False;
-            end if;
-         end loop;
-
-         return False; -- Identical
-      end Lexicographical_Compare;
-
-   begin
-
-      --  Prefer better compositions
-
-      if This.Composition < Than.Composition then
-         return True;
-      elsif This.Composition > Than.Composition then
-         return False;
-      end if;
-
-      --  Within complete solutions, prefer higher versions
-
-      if This.Composition = Releases then
-         case Compare_Versions (This, Than) is
-            when Better     => return True;
-            when Worse      => return False;
-            when Equivalent =>
-               case Compare_Versions (This => Than, Than => This) is
-                  when Better     => return False;
-                  when Worse      => return True;
-                  when Equivalent => null;
-               end case;
-         end case;
-
-         --  Disambiguate preferring a complete solution with less releases
-
-         if This.Releases.Length < Than.Releases.Length then
-            return True;
-         elsif This.Releases.Length > Than.Releases.Length then
-            return False;
-         end if;
-
-         --  At this point they must be identical; just in case keep comparing
-
-      end if;
-
-      --  Prefer more fulfilled releases when the solution is incomplete.
-      --  The rationale is that fewer solved releases will mean more unknown
-      --  missing indirect dependencies.
-
-      if This.Releases.Length > Than.Releases.Length then
-         return True;
-      elsif This.Releases.Length < Than.Releases.Length then
-         return False;
-      end if;
-
-      --  Prefer more undetected hints; at least we know these dependencies
-      --  exist in some platforms and can be made available somehow.
-
-      if This.Hints.Length > Than.Hints.Length then
-         return True;
-      elsif This.Hints.Length < Than.Hints.Length then
-         return False;
-      end if;
-
-      --  Prefer fewer missing crates, although at this point who knows what
-      --  indirect dependencies we are missing through undetected/missing
-      --  dependencies.
-
-      if This.Misses.Length < Than.Misses.Length then
-         return True;
-      elsif This.Misses.Length > Than.Misses.Length then
-         return False;
-      end if;
-
-      --  Final disambiguation by any known versions in [partial] solutions
-
-      case Compare_Versions (This, Than) is
-         when Better     => return True;
-         when Worse      => return False;
-         when Equivalent => return Lexicographical_Compare (This, Than);
-            --  Final way out is lexicographical ordering of crates, and first
-            --  one missing a crate in the other solution is worse.
-      end case;
-   end Is_Better;
 
    -------------
    -- Linking --

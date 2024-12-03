@@ -104,6 +104,9 @@ package Alire.Dependencies.States is
 
    function Is_Missing (This : State) return Boolean;
 
+   function Is_Skipped (This : State) return Boolean;
+   --  If both missing and marked as skipped
+
    function Is_Pinned (This : State) return Boolean;
 
    function Is_Provided (This : State) return Boolean;
@@ -367,6 +370,9 @@ private
 
    function Is_Provided (This : State) return Boolean
    is (This.Has_Release and then This.Release.Name /= This.Crate);
+
+   function Is_Skipped (This : State) return Boolean
+   is (This.Is_Missing and then This.Reason = Skipped);
 
    function Is_Solved (This : State) return Boolean
    is (This.Fulfilled.Fulfillment = Solved);

@@ -187,6 +187,9 @@ package Alire.Solutions is
 
    function Composition (This : Solution) return Compositions;
 
+   function Length (This : Solution) return Natural;
+   --  Amount of dependencies in this solution
+
    function Contains (This    : Solution;
                       Release : Alire.Releases.Release) return Boolean;
    --  Say if the solution contains exactly this release
@@ -205,6 +208,11 @@ package Alire.Solutions is
    --  Say if this solution already contains a release for a dependency
    --  provided by the given release; in which case Release cannot be added
    --  to this solution for a different dependency.
+
+   function Contains_Skipped (This : Solution) return Boolean;
+   --  Some dependencies are missing because they have been deliverately
+   --  skipped. This is used by the solver to ensure completeness of
+   --  exploration, but these solutions are in all likelyhood suboptimal.
 
    function Crates (This : Solution) return Name_Set;
    --  Dependency name closure, independent of the status in the solution, as
@@ -295,10 +303,6 @@ package Alire.Solutions is
      Post => Is_Attempted'Result = (This.Composition /= Unsolved);
    --  Say if a real attempt at solving has been done
 
-   function Is_Better (This, Than : Solution) return Boolean;
-   --  Relative ordering to prioritize found solutions. We prefer decreasing
-   --  order of Composition (avoid undetected externals/missing dependencies).
-
    function Is_Complete (This : Solution) return Boolean;
    --  A solution is complete when it fulfills all dependencies via regular
    --  releases, detected externals, or linked directories.
@@ -311,6 +315,9 @@ package Alire.Solutions is
 
    function Misses (This : Solution) return State_Map;
    --  Return crates for which there is neither hint nor proper versions
+
+   function Skipped (This : Solution) return State_Map;
+   --  Return dependencies that have been deliberately skipped
 
    function Pins (This : Solution) return Conditional.Dependencies;
    --  Return all version-pinned dependencies as a dependency tree containing
@@ -476,6 +483,13 @@ private
       Solved       : Boolean := False;
       --  Has solving been attempted?
    end record;
+
+   ------------
+   -- Length --
+   ------------
+
+   function Length (This : Solution) return Natural
+   is (Natural (This.Dependencies.Length));
 
    --  Implementations moved to body due to bug about missing symbols in
    --  predicates otherwise.
