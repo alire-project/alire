@@ -916,7 +916,8 @@ package body Alire.Solutions is
    procedure Print_Tree (This       : Solution;
                          Root       : Alire.Releases.Release;
                          Prefix     : String := "";
-                         Print_Root : Boolean := True)
+                         Print_Root : Boolean := True;
+                         Concise    : Boolean := not Detailed)
    is
 
       Mid_Node  : constant String :=
@@ -926,6 +927,22 @@ package body Alire.Solutions is
       Branch    : constant String :=
                     (if TTY.Color_Enabled then U ("│   ") else "|   ");
       No_Branch : constant String := "    ";
+
+      Printed   : AAA.Strings.Sets.Set;
+      --  Dependencies already printed, to avoid reprinting in Concise mode
+
+      -----------
+      -- Label --
+      -----------
+      --  The dependency Milestone or State
+      function Label (Dep : Dependencies.Dependency) return String
+      is (if This.State (Dep.Crate).Has_Release
+          then This.State (Dep.Crate).Milestone_Image
+          else This.State (Dep.Crate).TTY_Image);
+
+      -----------
+      -- Print --
+      -----------
 
       procedure Print (Deps   : Dependencies.Containers.Set;
                        Prefix : String := "";
@@ -966,9 +983,7 @@ package body Alire.Solutions is
 
                   --  For a dependency solved by a release, print exact
                   --  version. Otherwise print the state of the dependency.
-                  & (if This.State (Dep.Crate).Has_Release
-                    then This.State (Dep.Crate).Milestone_Image
-                    else This.State (Dep.Crate).TTY_Image)
+                  & Label (Dep)
 
                   --  And dependency that introduces the crate in the solution
                   & " (" & TTY.Emph (Dep.Versions.Image) & ")");
@@ -976,17 +991,44 @@ package body Alire.Solutions is
                --  Recurse for further releases
 
                if This.State (Dep.Crate).Has_Release then
-                  Print (Conditional.Enumerate
+                  if Concise
+                    and then Printed.Contains (Label (Dep))
+                    and then not
+                      Conditional.Enumerate
+                        (This.State (Dep.Crate).Release.Dependencies).Is_Empty
+                  then
+                     Trace.Always
+                       (Prefix
+                        --  The prefix is the possible "|" connectors from
+                        --  upper tree levels.
+                        & (if Omit
+                          then ""
+                          else (if +Dep.Crate = +Last
+                                then No_Branch  -- End of this connector
+                                else Branch))   -- "│" over the subtree
+
+                        --  Print the appropriate final connector for the node
+                        & (if Omit -- top-level, no prefix
+                           then ""
+                           else Last_Node)
+
+                        & "...");
+                  else
+                     Print
+                       (Conditional.Enumerate
                           (This.State (Dep.Crate).Release.Dependencies).To_Set,
-                         Prefix =>
-                           Prefix
-                           --  Indent adding the proper running connector
-                           & (if Omit
-                              then ""
-                              else (if +Dep.Crate = +Last
-                                    then No_Branch  -- End of this connector
-                                    else Branch))); -- "│" over the subtree
+                        Prefix =>
+                          Prefix
+                          --  Indent adding the proper running connector
+                          & (if Omit
+                             then ""
+                             else (if +Dep.Crate = +Last
+                                   then No_Branch  -- End of this connector
+                                   else Branch))); -- "│" over the subtree
+                  end if;
                end if;
+
+               Printed.Include (Label (Dep));
             end if;
          end loop;
       end Print;
