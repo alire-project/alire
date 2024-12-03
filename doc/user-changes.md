@@ -6,6 +6,10 @@ stay on top of `alr` new features.
 
 ## Release `2.1`
 
+### Abbreviated `--tree` output for repeating dependencies
+
+### Faster `alr search` without resolving dependencies
+
 PR [1799](https://github.com/alire-project/alire/pull/1799)
 
 `alr search` no longer solves dependencies of releases by default, in order to
