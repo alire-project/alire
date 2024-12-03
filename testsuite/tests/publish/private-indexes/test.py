@@ -9,7 +9,7 @@ import shutil
 import subprocess
 
 from drivers.alr import run_alr, run_alr_interactive
-from drivers.helpers import init_git_repo, MockGit
+from drivers.helpers import init_git_repo, WrapCommand
 from drivers.asserts import assert_match, assert_file_exists
 
 
@@ -77,7 +77,7 @@ def test(
     # Mock git with a wrapper that naively converts the url into the local path
     # to the "remote" crate.
     mocked_git_dir = os.path.abspath(os.path.join("..", "..", "mocked_git"))
-    with MockGit({url: remote_path}, mocked_git_dir):
+    with WrapCommand("git", {url: remote_path}, mocked_git_dir):
         # Create a "local" clone of the "remote"
         local_path = os.path.abspath(os.path.join("..", "..", "local", "xxx"))
         os.makedirs(local_path)

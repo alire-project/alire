@@ -7,7 +7,7 @@ import shutil
 import subprocess
 
 from drivers.alr import alr_pin, alr_unpin, init_local_crate
-from drivers.helpers import init_git_repo, git_branch, MockGit
+from drivers.helpers import init_git_repo, git_blast, git_branch, WrapCommand
 from drivers.asserts import assert_eq
 
 
@@ -58,15 +58,15 @@ mocked_git_dir = os.path.join(os.getcwd(), "mock_path")
 for url, s_url in zip(urls, sanitised_urls):
     # Mock git with a wrapper that naively converts the url into the local path
     # to the "remote" crate.
-    with MockGit({s_url: remote_path}, mocked_git_dir):
+    with WrapCommand("git", {s_url: remote_path}, mocked_git_dir):
         # Create an empty crate, and pin the default branch of the test repo
         init_local_crate()
         alr_pin("remote", url=url, branch=default_branch)
         with open(cache_test_file_path) as f:
             assert_eq("This is the main branch.\n", f.read())
 
-        # Edit pin to point to the other branch, and verify the cached copy changes
-        # as it should
+        # Edit pin to point to the other branch, and verify the cached copy
+        # changes as it should
         alr_unpin("remote", update=False)
         alr_pin("remote", url=url, branch="other")
         with open(cache_test_file_path) as f:
@@ -74,7 +74,7 @@ for url, s_url in zip(urls, sanitised_urls):
 
     # Clean up for next test
     os.chdir("..")
-    shutil.rmtree("xxx")
+    git_blast("xxx")
 
 
 print("SUCCESS")

@@ -10,6 +10,7 @@ import shutil
 import stat
 import sys
 from subprocess import run
+from typing import Union
 from zipfile import ZipFile
 
 
@@ -314,7 +315,103 @@ class FileLock():
         self.lock_file.close()
 
 
-GIT_WRAPPER_TEMPLATE = """\
+MOCK_COMMAND_TEMPLATE = """\
+with Ada.Command_Line;
+with GNAT.OS_Lib;
+
+procedure Main is
+   Num_Args  : constant Integer := Ada.Command_Line.Argument_Count;
+   Arg_List  : GNAT.OS_Lib.Argument_List (1 .. Num_Args + 1);
+   Exit_Code : Integer;
+begin
+   --  Set arguments to pass to 'python' (the path to the script, followed by
+   --  the arguments to pass thereto).
+   Arg_List (1) := new String'("{script_path}");
+   for I in 1 .. Num_Args loop
+      Arg_List (I + 1) := new String'(Ada.Command_Line.Argument (I));
+   end loop;
+   --  Run the Python script, passing the output directly to stdout and stderr.
+   Exit_Code :=
+     GNAT.OS_Lib.Spawn
+       (Program_Name => GNAT.OS_Lib.Locate_Exec_On_Path ("python").all,
+        Args         => Arg_List);
+   --  Imitate the script's exit status.
+   Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Exit_Status (Exit_Code));
+end Main;
+"""
+
+class MockCommand:
+    """
+    Replace a command with a Python script.
+
+    Can be used as a context manager or via the `enable()` and `disable()`
+    methods.
+
+    The mock command is placed under the path `dir`, which is temporarily
+    prepended to `PATH`. Changes to `PATH` are overridden in the case of tools
+    installed by MSYS2, so a `MockCommand` for such a tool will be ignored
+    unless `msys2.install_dir` is also set to an empty directory.
+
+    `dir` should be empty or non-existent, except that it may also be used by
+    other instances of `MockCommand` with different `name`s.
+    """
+
+    def __init__(self, name: str, script: str, dir: Union[str, os.PathLike]):
+        self._name = name
+        self._script = script
+        self._dir = os.path.realpath(dir)
+
+    def __enter__(self):
+        self.enable()
+
+    def __exit__(self, type, value, traceback):
+        self.disable()
+
+    def enable(self):
+        """
+        Enable mocking for the command.
+        """
+        os.makedirs(self._dir, exist_ok=True)
+        # Write the script to the directory
+        self._script_dir = os.path.join(self._dir, "scripts")
+        self._script_path = os.path.join(self._script_dir, self._name)
+        os.makedirs(self._script_dir, exist_ok=True)
+        with open(self._script_path, "x") as f:
+            f.write(self._script)
+        # Only binary executables are consistently recognised on the `PATH` in
+        # Windows, so we need to compile a binary wrapper for the script.
+        build_dir = os.path.join(self._dir, "build")
+        os.makedirs(build_dir)
+        with open(os.path.join(build_dir, "main.adb"), "x") as f:
+            f.write(MOCK_COMMAND_TEMPLATE.format(script_path=self._script_path))
+        run(
+            ["gnat", "make", "-q", os.path.join(build_dir, "main.adb")],
+            cwd=build_dir
+        ).check_returncode()
+        # Copy the binary to a directory on PATH
+        suffix = ".exe" if on_windows() else ""
+        self._bin_dir = os.path.join(self._dir, "path_dir")
+        self._bin_path = os.path.join(self._bin_dir, self._name + suffix)
+        os.makedirs(self._bin_dir, exist_ok=True)
+        shutil.copy(os.path.join(build_dir, "main" + suffix), self._bin_path)
+        shutil.rmtree(build_dir)
+        os.environ["PATH"] = f'{self._bin_dir}{os.pathsep}{os.environ["PATH"]}'
+
+    def disable(self):
+        """
+        Disable mocking for the command.
+        """
+        # Restore PATH
+        os.environ["PATH"] = os.environ["PATH"].replace(
+            f'{self._bin_dir}{os.pathsep}', '', 1
+        )
+        # Delete the script and binary
+        os.remove(self._bin_path)
+        os.remove(self._script_path)
+
+
+
+SUBSTITUTION_WRAPPER_TEMPLATE = """\
 #! /usr/bin/env python
 import subprocess, sys
 substitution_dict = {substitution_dict}
@@ -322,8 +419,8 @@ substitution_dict = {substitution_dict}
 args = sys.argv[1:]
 for key in substitution_dict:
     args = [arg.replace(key, substitution_dict[key]) for arg in args]
-# Run git
-p = subprocess.run(['{actual_git_path}'] + args, capture_output=True)
+# Run the command
+p = subprocess.run([r'{actual_cmd_path}'] + args, capture_output=True)
 # Output substitutions
 stdout, stderr = p.stdout.decode(), p.stderr.decode()
 for key in substitution_dict:
@@ -335,57 +432,23 @@ print(stderr, file=sys.stderr, end="")
 sys.exit(p.returncode)
 """
 
-class MockGit:
+class WrapCommand(MockCommand):
     """
-    NON-WINDOWS-ONLY
-    A context manager which mocks the git command with string substitutions.
+    Wrap the command `name` with string substitutions applied to its arguments
+    and output.
 
-    The string substitutions are specified by the dictionary substitution_dict.
-    Every non-overlapping occurrence of each of its keys in a command line
-    argument is replaced with its corresponding value before being passed to
-    git. The reverse substitution is applied to git's output. The substitutions
-    are applied in the order in which they appear in substitution_dict.
+    The string substitutions are specified by the dictionary `subs`. Every
+    non-overlapping occurrence of each of its keys in a command line argument is
+    replaced with its corresponding value before being passed to the command.
+    The reverse substitution is applied to the command's output. The
+    substitutions are applied in the order in which they appear in `subs`.
 
-    The mocked version of git will be placed in mock_git_dir, which will be
-    temporarily added to PATH.
+    The other arguments are the same as for `MockCommand`.
     """
 
-    def __init__(self, substitution_dict, mock_git_dir):
-        self._substitution_dict = substitution_dict
-        self._mock_git_dir = mock_git_dir
-
-    def __enter__(self):
-        # Mocking on Windows would require git.exe wrapper
-        if on_windows():
-            print('SKIP: git mocking unavailable on Windows')
-            sys.exit(0)
-
-        # Create a wrapper script for git
-        wrapper_script = GIT_WRAPPER_TEMPLATE.format(
-            substitution_dict=self._substitution_dict,
-            actual_git_path=shutil.which("git")
+    def __init__(self, name: str, subs: dict[str:str], dir: Union[str, os.PathLike]):
+        wrapper_script = SUBSTITUTION_WRAPPER_TEMPLATE.format(
+            substitution_dict=subs,
+            actual_cmd_path=shutil.which(name)
         )
-        # Add the directory to PATH
-        try:
-            os.mkdir(self._mock_git_dir)
-        except FileExistsError:
-            pass
-        os.environ["PATH"] = (
-            f'{self._mock_git_dir}{os.pathsep}{os.environ["PATH"]}'
-        )
-        # Write the script to the directory
-        wrapper_descriptor = os.open(
-            os.path.join(self._mock_git_dir, "git"),
-            flags=(os.O_WRONLY | os.O_CREAT | os.O_EXCL),
-            mode=0o764,
-        )
-        with open(wrapper_descriptor, "w") as f:
-            f.write(wrapper_script)
-
-    def __exit__(self, type, value, traceback):
-        # Restore PATH
-        os.environ["PATH"] = os.environ["PATH"].replace(
-            f'{self._mock_git_dir}{os.pathsep}', '', 1
-        )
-        # Delete the wrapper script
-        os.remove(os.path.join(self._mock_git_dir, "git"))
+        super().__init__(name, wrapper_script, dir)
