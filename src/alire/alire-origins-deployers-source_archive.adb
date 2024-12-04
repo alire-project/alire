@@ -4,8 +4,10 @@ with AAA.Strings; use AAA.Strings;
 
 with Alire.Errors;
 with Alire.Directories;
+with Alire.Formatting;
 with Alire.OS_Lib.Subprocess;
-with Alire.OS_Lib.Download;
+with Alire.Settings.Builtins;
+with Alire.Spawn;
 with Alire.VFS;
 with Alire.URI;
 with Alire.Utils;             use Alire.Utils;
@@ -126,6 +128,54 @@ package body Alire.Origins.Deployers.Source_Archive is
       return Hashes.Digest (Hashes.Hash_File (Kind, Archive_File));
    end Compute_Hash;
 
+   --------------
+   -- Download --
+   --------------
+   --  Download the source archive from a non-local origin.
+
+   function Download (URL      : String;
+                      Filename : Any_Path;
+                      Folder   : Directory_Path)
+                      return Outcome
+   is
+      use GNATCOLL.VFS;
+      use Alire.Directories;
+      Archive_File : constant File_Path :=
+        Folder / Ada.Directories.Simple_Name (Filename);
+
+      Configured_Download_Cmd : constant String :=
+        Alire.Settings.Builtins.Origins_Archive_Download_Cmd.Get;
+
+      --  In the case of the default download command, we adjust curl's
+      --  verbosity if warranted by the logging level.
+      Download_Cmd : constant String :=
+        (if Log_Level >= Trace.Info
+           and then Configured_Download_Cmd = "curl ${URL} -L -s -o ${DEST}"
+         then "curl ${URL} -L --progress-bar -o ${DEST}"
+         else Configured_Download_Cmd);
+
+      procedure Exec_Check (Exec : String) is
+      begin
+         if Exec = "curl" then
+            Utils.Tools.Check_Tool (Utils.Tools.Curl);
+         end if;
+      end Exec_Check;
+   begin
+      Trace.Debug ("Creating folder: " & Folder);
+      Create (+Folder).Make_Dir;
+
+      Trace.Detail ("Downloading file: " & URL);
+      Alire.Spawn.Settings_Command
+        (Download_Cmd,
+         Formatting.For_Archive_Download (URL, Archive_File),
+         Exec_Check'Access);
+
+      return Outcome_Success;
+   exception
+      when E : others =>
+         return Alire.Errors.Get (E);
+   end Download;
+
    -----------
    -- Fetch --
    -----------
@@ -149,9 +199,9 @@ package body Alire.Origins.Deployers.Source_Archive is
 
          return Outcome_Success;
       else
-         return OS_Lib.Download.File (URL      => This.Base.Archive_URL,
-                                      Filename => This.Base.Archive_Name,
-                                      Folder   => Folder);
+         return Download (URL      => This.Base.Archive_URL,
+                          Filename => This.Base.Archive_Name,
+                          Folder   => Folder);
       end if;
    end Fetch;
 

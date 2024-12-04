@@ -112,6 +112,18 @@ package Alire.Settings.Builtins is
       Def  => "alire-index",
       Help => "Name of the index repository.");
 
+   --  ORIGINS
+
+   Origins_Archive_Download_Cmd : constant Builtin := New_Builtin
+     (Key  => "origins.archive.download_cmd",
+      Kind => Stn_String,
+      Def  => "curl ${URL} -L -s -o ${DEST}",
+      Help =>
+        "The command used to download crates which are published as archives."
+      & " The executables and arguments are separated by a single space"
+      & " character. The token ${DEST} is replaced by the destination path,"
+      & " and ${URL} by the URL to download.");
+
    --  SOLVER
 
    Solver_Autonarrow : constant Builtin := New_Builtin
