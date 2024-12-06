@@ -35,6 +35,16 @@ def check_value(key, expected_value, local=True):
         get = run_alr('settings', '--global', '--get', key)
     assert get.out == expected_value + "\n", "Got '%s'" % get.out
 
+def check_undefined(key, local=True):
+    if local:
+        get = run_alr('settings', '--get', key, complain_on_error=False)
+    else:
+        get = run_alr(
+            'settings', '--global', '--get', key, complain_on_error=False
+        )
+    assert f"Setting key '{key}' is not defined" in get.out, \
+           "Missing error message in: '%s" % get.out
+
 def set_get_unset(key, value, image=None):
 
     if image is None:
@@ -75,7 +85,11 @@ invalid_key('--get', '--global', '^')
 # invalid builtins #
 ####################
 invalid_builtin('--set', '--global', 'user.github_login', 'This is not a valid login')
+check_undefined('user.github_login', local=False)
 invalid_builtin('--set', '--global', 'user.email', '@ This is not @ valid email address@')
+check_undefined('user.email', local=False)
+invalid_builtin('--set', '--global', 'distribution.override', 'invalid distribution')
+check_undefined('distribution.override', local=False)
 
 ###############################
 # Global Set, Get, Unset, Get #

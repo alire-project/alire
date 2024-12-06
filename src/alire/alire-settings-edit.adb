@@ -321,6 +321,7 @@ package body Alire.Settings.Edit is
                     ("Invalid value '" & CLIC.Config.Image (Value)  &
                        "' for builtin configuration '" & Key & "'. " &
                        "Specific builtin check failed.");
+                  return False;
                end if;
             end if;
 
