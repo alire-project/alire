@@ -193,7 +193,7 @@ package body Alire.Settings.Edit is
             CLIC.Config.Load.From_TOML (C      => DB_Instance,
                                         Origin => Lvl'Img,
                                         Path   => Filepath (Lvl),
-                                        Check  => Valid_Builtin'Access);
+                                        Check  => Valid_Builtin_Check (Lvl));
          end if;
       end loop;
 
@@ -266,8 +266,9 @@ package body Alire.Settings.Edit is
    -- Valid_Builtin --
    -------------------
 
-   function Valid_Builtin (Key : CLIC.Config.Config_Key;
-                           Value : TOML_Value)
+   function Valid_Builtin (Key    : CLIC.Config.Config_Key;
+                           Value  : TOML_Value;
+                           Global : Boolean)
                            return Boolean
    is
       Result : Boolean := True;
@@ -311,7 +312,13 @@ package body Alire.Settings.Edit is
                  and then Utils.Is_Valid_GitHub_Username (Value.As_String);
             end case;
 
-            exit when not Result;
+            --  Error if Global_Only being set locally
+
+            if Result and then Ent.Global_Only and then not Global then
+               Trace.Error
+                 ("Configuration key '" & Key & "' must be set globally.");
+               return False;
+            end if;
 
             --  Apply the own builtin check if any.
 
@@ -338,6 +345,31 @@ package body Alire.Settings.Edit is
 
       return Result;
    end Valid_Builtin;
+
+   --------------------------
+   -- Valid_Global_Builtin --
+   --------------------------
+
+   function Valid_Global_Builtin
+      (Key : CLIC.Config.Config_Key; Value : TOML_Value) return Boolean
+   is (Valid_Builtin (Key, Value, Global => True));
+
+   -------------------------
+   -- Valid_Local_Builtin --
+   -------------------------
+
+   function Valid_Local_Builtin
+      (Key : CLIC.Config.Config_Key; Value : TOML_Value) return Boolean
+   is (Valid_Builtin (Key, Value, Global => False));
+
+   -------------------------
+   -- Valid_Builtin_Check --
+   -------------------------
+
+   function Valid_Builtin_Check (Lvl : Level) return CLIC.Config.Check_Import
+   is (case Lvl is
+       when Global => Valid_Global_Builtin'Access,
+       when others => Valid_Local_Builtin'Access);
 
    -------------------
    -- Builtins_Info --

@@ -56,10 +56,11 @@ package Alire.Settings.Builtins is
    --  EDITOR
 
    Editor_Cmd : constant Builtin := New_Builtin
-     (Key  => "editor.cmd",
-      Kind => Stn_String,
-      Def  => "",
-      Help =>
+     (Key         => "editor.cmd",
+      Kind        => Stn_String,
+      Def         => "",
+      Global_Only => True,
+      Help        =>
         "Editor command and arguments for editing crate code (alr edit)." &
         " The executables and arguments are separated by a single space" &
         " character. The token ${GPR_FILE} is replaced by" &
@@ -115,10 +116,11 @@ package Alire.Settings.Builtins is
    --  ORIGINS
 
    Origins_Archive_Download_Cmd : constant Builtin := New_Builtin
-     (Key  => "origins.archive.download_cmd",
-      Kind => Stn_String,
-      Def  => "curl ${URL} -L -s -o ${DEST}",
-      Help =>
+     (Key         => "origins.archive.download_cmd",
+      Kind        => Stn_String,
+      Def         => "curl ${URL} -L -s -o ${DEST}",
+      Global_Only => True,
+      Help        =>
         "The command used to download crates which are published as archives."
       & " The executables and arguments are separated by a single space"
       & " character. The token ${DEST} is replaced by the destination path,"

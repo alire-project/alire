@@ -7,6 +7,7 @@ import os
 from glob import glob
 
 from drivers.alr import run_alr
+from drivers.asserts import assert_substring
 
 def invalid_key(*args):
     print("Running: alr settings %s" % " ".join([item for item in args]))
@@ -122,6 +123,11 @@ check_value('test.override', 'is_local')
 # Set a global and check that the local value is still returned
 run_alr('settings', '--set', '--global', 'test.override', '"is_global"')
 check_value('test.override', 'is_local')
+
+# Try setting a Global_Only value and check that it doesn't work
+p = run_alr('settings', '--set', 'editor.cmd', 'value', complain_on_error=False)
+assert_substring("Configuration key 'editor.cmd' must be set globally", p.out)
+check_undefined('editor.cmd')
 
 # Leave the crate context (local keys are not available anymore)
 os.chdir('..')
