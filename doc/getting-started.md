@@ -273,6 +273,13 @@ website:
 
 * [alire.ada.dev](https://alire.ada.dev)
 
+### Using Alire with other indexes
+
+So far in this guide we have been using the community index, a central catalogue
+of publicly available crates, but it is possible to host your own index for
+crates which you do not wish to make generally available. For more information,
+see [using Alire with private crates](private-crates).
+
 ## Build environment
 
 To create a build environment, `alr` sets environment variables such as

@@ -6,7 +6,28 @@ stay on top of `alr` new features.
 
 ## Release `2.1`
 
-PR [1799](https://github.com/alire-project/alire/pull/1799)
+### Custom download command for archive crates
+
+PR [#????](https://github.com/alire-project/alire/pull/????)
+
+The command used to download a crate as a source archive can now be configured
+using the `origins.archive.download_cmd` key of `alr settings`, instead of using
+a hard-coded `curl` command. The tokens `${URL}` and `${DEST}` are replaced by
+the origin URL and destination file path respectively.
+
+For example
+```sh
+alr settings --set --global origins.archive.download_cmd 'curl ${URL} --netrc -L -s -o ${DEST}'
+```
+configures `alr` to use the default command with the addition of the switch
+`--netrc` (which instructs `curl` to use the login information in the `.netrc`
+file found in the user's home directory).
+
+The default behaviour is unchanged.
+
+### `alr search` no longer solves dependencies by default
+
+PR [#1799](https://github.com/alire-project/alire/pull/1799)
 
 `alr search` no longer solves dependencies of releases by default, in order to
 speed up the command. The `--solve` switch can be used to achieve the old
@@ -21,7 +42,7 @@ the usual 'X' if dependencies are unsatisfiable.
 
 ### `ALIRE_SETTINGS_DIR` replaces `ALR_CONFIG`
 
-PR [1625](https://github.com/alire-project/alire/pull/1625)
+PR [#1625](https://github.com/alire-project/alire/pull/1625)
 
 This reflects the new nomenclature of Alire settings versus crate
 configuration. Also, it better reflects that the effect is on the whole library
@@ -29,7 +50,7 @@ and not only the `alr` command-line tool.
 
 ### `alr settings` replaces `alr config`
 
-PR [1617](https://github.com/alire-project/alire/pull/1617)
+PR [#1617](https://github.com/alire-project/alire/pull/1617)
 
 The `alr settings` command replaces the `alr config` command. This change is
 introduced to tackle the confusion between the configuration of the Alire
