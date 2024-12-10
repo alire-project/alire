@@ -15,10 +15,10 @@ package Alire.Spawn is
    --  Adds -v if understands in Debug log level
    --  Summary is shown after process successful end, if Log_Level = Info
 
-   procedure Settings_Command (Cmd          : String;
-                               Replacements : Alire.Formatting.Replacements;
-                               Exec_Check   : access procedure (Exec : String)
-                                 := null);
+   procedure Settings_Command
+     (Cmd          : String;
+      Replacements : Alire.Formatting.Replacements;
+      Exec_Check   : access procedure (Exec : String) := null);
    --  Launches a command from a string, according to the conventions used by
    --  commands configurable with `alr settings`.
    --

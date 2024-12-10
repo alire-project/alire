@@ -1,11 +1,12 @@
 # Using Alire with private crates
 
 By default, Alire uses the open-source crates available through the community
-index, but it can also be configured to fetch non-public crates
-(e.g. during development or when working with proprietary code). There are two
-key components required to make a crate available to Alire; the crate must be
-searchable in an index (though this requirement can be temporarily circumvented
-with `alr pin`), and the crate's source files must be fetchable from an origin.
+index, but it can also be configured to fetch non-public crates (e.g. during
+development or when working with proprietary code). There are two key components
+required to make a crate available to Alire; the crate must be searchable in an
+*index* (though this requirement can be temporarily circumvented with
+[pins](catalog-format-spec#work-in-progress-dependency-overrides)), and the
+crate's source files must be fetchable from an *origin*.
 
 ## Using a private index
 
@@ -21,12 +22,12 @@ It is often useful to have other files in the same repository as the index
 in a first-level subdirectory of the repository (conventionally called `index/`,
 though `alr` searches for any directory containing an `index.toml` file).
 
-This subdirectory should contain only an `index.toml`
-file and one or more `cr/crate_name` subdirectories within which the crate
-manifests themselves are located. The `index.toml` file contains one line with
-the form `version = "x.x.x"`, specifying the index format used. The range of
-versions Alire is compatible with can be found by running `alr version`, and
-breaking changes are listed in
+This subdirectory should contain only an `index.toml` file and one or more
+`cr/crate_name` subdirectories, within which the crate manifests themselves are
+located. The `index.toml` file contains one line with the form
+`version = "x.x.x"`, specifying the index format used. The range of versions
+Alire is compatible with can be found by running `alr version`, and breaking
+changes are listed in
 [BREAKING.md](https://github.com/alire-project/alire/blob/master/BREAKING.md).
 
 See [the catalog format specification](catalog-format-spec) for more detail on
@@ -37,7 +38,7 @@ the format of the index.
 For testing purposes, indexes can be configured on the local filesystem. These
 need not be Git repositories, but can instead be a plain directory specified
 with a `file:/some/path` URL (which, unlike for remote indexes, may optionally
-refer directly to the index directory instead of its parent).
+refer directly to the `index/` directory instead of its parent).
 
 ### Configuring an index
 
@@ -47,10 +48,10 @@ To start using such an index, run
 
 where `<name>` is a human-friendly label that `alr` will use to refer to it.
 
-It is possible to configure multiple indexes (with any conflicts resolved by a
-priority order specified by the `--before` switch). For example, you may wish to
-configure both the community index and a private index of your own unpublished
-crates.
+It is possible to configure multiple indexes (with any conflicts resolved using
+a priority order specified by the `--before` switch). For example, you may wish
+to configure both the community index and a private index of your own
+unpublished crates.
 
 Once configured, there is no practical difference between the community index
 and a private index stored locally on disk or on your own infrastructure.
@@ -60,15 +61,14 @@ and a private index stored locally on disk or on your own infrastructure.
 The majority of the process of adding a crate to a private index is automated
 through the `alr publish` command; submission to the community index can be
 disabled by supplying the `--for-private-index` switch. This will produce a
-manifest file, which must then be uploaded manually, according to the
+manifest file, which must then be uploaded manually according to the
 requirements of your index's hosting arrangement. See [publishing](publishing)
 for more detail on this process.
 
-Newly added crates will become available when `alr` performs an index
-update, either with `alr index --update-all`, or through a scheduled
-auto-update. Local indexes do not require an update and additions will take
-effect immediately, unless the crate being published contains `"provides"`
-definitions.
+Newly added crates will become available when `alr` performs an index update,
+either with `alr index --update-all`, or through a scheduled auto-update. Local
+indexes do not require an update and additions will take effect immediately,
+unless the crate being published contains `"provides"` definitions.
 
 ## Private crate origins
 
@@ -90,9 +90,9 @@ if a `git clone` or `git fetch` on a crate origin succeeds, then so will
 any corresponding dependency updates with `alr`.
 
 The main consideration when using such repositories with Alire is ensuring that
-the the manifest in the index (or the pin) uses the correct form of the URL. It must be
-apparent to `alr` that the URL refers to a Git repository (which can be
-disambiguated with a `git+` prefix), and it must be apparent to `git` which
+the manifest in the index (or the pin) uses the correct form of the URL. It must
+be apparent to `alr` that the URL refers to a Git repository (which can be
+disambiguated with a `git+` prefix), and `git` must be able to infer which
 protocol should be used (documented
 [here](https://git-scm.com/docs/git-clone#URLS)). It is therefore recommended
 that URLs use the schemes `git+https://` or `git+ssh://` as appropriate.
@@ -107,17 +107,18 @@ Crates can also be fetched as an archive file (either tarball or Zip) containing
 the relevant sources. `alr` simply requires some means of downloading this file
 from a URL to a local filesystem location.
 
-The command used to fetch such files is specified by the `alr settings` key
-`origins.archive.download_cmd`. By default `alr` uses the command
-`curl ${URL} -L -s -o ${DEST}`, which does not attempt
-any form of authentication, but this can be changed to any equivalent
-alternative which implements a desired authentication scheme.
+The command used to fetch such files is specified by the [settings](settings)
+key `origins.archive.download_cmd`. By default `alr` uses the command
+`curl ${URL} -L -s -o ${DEST}`, which does not attempt any form of
+authentication, but this can be changed to any equivalent alternative which
+implements a desired authentication scheme.
 
-The simplest way to enable user authentication is to supply `curl` with the
-switch `--netrc` (or equivalently `-n`), which instructs it to scan the `.netrc`
-file in the user's home directory, and performs HTTP Basic authentication with
-any credentials found there (see `man curl` and `man netrc` for more detail).
-This is achieved by invoking
+The simplest way to enable user authentication is to configure the server to
+accept HTTP Basic authentication and supply `curl` with the switch `--netrc`
+(or equivalently `-n`), which instructs it to scan the `.netrc` file in the
+user's home directory and attempt to authenticate with any credentials found
+there (see `man curl` and `man netrc` for more detail). This is achieved by
+invoking
 ```sh
 alr settings --set --global origins.archive.download_cmd 'curl ${URL} -n -L -s -o ${DEST}'
 ```
@@ -125,10 +126,10 @@ Note that most terminals will perform substitutions on double-quoted strings
 containing `${SOMETHING}`, so it is important to enclose the value in
 single-quotes.
 
-If you wish to use a `.wgetrc` configuration file instead, the
-equivalent `wget` command is `'wget ${URL} -q -O ${DEST}'`.
+If you wish to use a `.wgetrc` configuration file instead, the equivalent `wget`
+command is `'wget ${URL} -q -O ${DEST}'`.
 
 This setting only accepts a simple space-separated command, with no scripting
-functionality. If this is not sufficient, you can write more complex logic or
-arguments containing spaces to a separate script, for instance by setting the
-value to `'python /path/to/my_script.py ${URL} ${DEST}'`.
+functionality. If this is not sufficient, you can write more complex logic (or
+commands with arguments containing spaces) to a separate script, for instance
+by setting the value to `'python /path/to/my_script.py ${URL} ${DEST}'`.

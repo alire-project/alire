@@ -328,9 +328,8 @@ arguments function as described above. This will generate a manifest file which
 you can place at the indicated path (relative to the location of `index.toml`)
 in your private index.
 
-One important thing to note is that publishing from a local repository (as
-described [here](#starting-from-a-git-repository-that-contains-an-alire-workspace))
-will detect the URL configured as the Git remote (as displayed by
+One important thing to note is that publishing from a local repository will
+detect the URL configured as the Git remote (as displayed by
 `git remote show origin`). If this is not configured with the recommended form
 (as discussed [here](private-crates#git-repositories)), you may wish to pass the
 desired URL explicitly.

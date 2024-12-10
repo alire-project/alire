@@ -275,7 +275,7 @@ website:
 
 ### Using Alire with other indexes
 
-So far in this guide we have been using the community index, a central catalogue
+So far in this guide we have been using the community index, a central catalog
 of publicly available crates, but it is possible to host your own index for
 crates which you do not wish to make generally available. For more information,
 see [using Alire with private crates](private-crates).

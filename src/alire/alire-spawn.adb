@@ -7,9 +7,10 @@ package body Alire.Spawn is
    -- Command --
    -------------
 
-   procedure Command (Cmd                 : String;
-                      Args                : AAA.Strings.Vector;
-                      Understands_Verbose : Boolean := False)
+   procedure Command
+     (Cmd                 : String;
+      Args                : AAA.Strings.Vector;
+      Understands_Verbose : Boolean := False)
    is
       Unused_Output : AAA.Strings.Vector;
    begin
@@ -27,10 +28,10 @@ package body Alire.Spawn is
    -- Settings_Command --
    ----------------------
 
-   procedure Settings_Command (Cmd          : String;
-                               Replacements : Alire.Formatting.Replacements;
-                               Exec_Check   : access procedure (Exec : String)
-                                 := null)
+   procedure Settings_Command
+     (Cmd          : String;
+      Replacements : Alire.Formatting.Replacements;
+      Exec_Check   : access procedure (Exec : String) := null)
    is
       Args          : AAA.Strings.Vector := AAA.Strings.Split (Cmd, ' ');
       Exec          : constant String := Args.First_Element;
@@ -54,8 +55,7 @@ package body Alire.Spawn is
    -- Gprbuild --
    --------------
 
-   procedure Gprbuild (Project_File : String;
-                       Extra_Args   : AAA.Strings.Vector)
+   procedure Gprbuild (Project_File : String; Extra_Args : AAA.Strings.Vector)
    is
       use AAA.Strings;
    begin
