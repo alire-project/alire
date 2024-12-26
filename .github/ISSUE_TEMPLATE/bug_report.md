@@ -9,6 +9,7 @@ assignees: ''
 
 **Checklist**
 
+- [ ] I've searched for similar issues and found none.
 - [ ] I've included the output of `alr version`.
 - [ ] I've included complete steps to reproduce my issue.
 
