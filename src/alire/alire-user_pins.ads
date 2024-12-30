@@ -62,9 +62,10 @@ package Alire.User_Pins is
 
    --  Remote pins
 
-   function New_Remote (URL : Alire.URL;
+   function New_Remote (URL    : Alire.URL;
                         Commit : String := "";
-                        Branch : String := "")
+                        Branch : String := "";
+                        Subdir : Alire.Relative_Path := "")
                         return Pin
      with
        Pre => Commit = "" or else VCSs.Git.Is_Valid_Commit (Commit),
@@ -77,6 +78,9 @@ package Alire.User_Pins is
      with Pre => This.Is_Remote;
 
    function Commit (This : Pin) return Optional.String
+     with Pre => This.Is_Remote;
+
+   function Subdir (This : Pin) return Optional.String
      with Pre => This.Is_Remote;
 
    function TTY_URL_With_Reference (This     : Pin;
@@ -137,6 +141,7 @@ private
             URL        : UString;
             Branch     : UString; -- Optional
             Commit     : UString; -- Optional
+            Subdir     : UString; -- Optional
             Local_Path : Unbounded_Absolute_Path;
             --  Empty until the pin is locally deployed
          when To_Path =>
@@ -163,6 +168,15 @@ private
    is (if +This.Commit = ""
        then Optional.Strings.Empty
        else Optional.Strings.Unit (+This.Commit));
+
+   ------------
+   -- Subdir --
+   ------------
+
+   function Subdir (This : Pin) return Optional.String
+   is (if +This.Subdir = ""
+       then Optional.Strings.Empty
+       else Optional.Strings.Unit (+This.Subdir));
 
    ---------------
    -- Is_Remote --
