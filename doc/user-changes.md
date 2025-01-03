@@ -38,6 +38,16 @@ In the new default situation, releases that have dependencies are marked with a
 dependencies and replace the '?' with either nothing for a solvable release or
 the usual 'X' if dependencies are unsatisfiable.
 
+### Support for private indexes with `alr publish --for-private-index`
+
+PR [#1745](https://github.com/alire-project/alire/pull/1745)
+
+Automated manifest generation with `alr publish` can now be performed for crates
+which are not intended for submission to the community index by supplying the
+`--for-private-index` switch. This has the same effects as `--skip-submit`, and
+additionally disables a number of checks that enforce submission requirements
+specific to the community index.
+
 ## Release `2.0`
 
 ### `ALIRE_SETTINGS_DIR` replaces `ALR_CONFIG`
