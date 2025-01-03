@@ -8,4 +8,4 @@ maintainers-logins = ["mylogin"]
 libhello = "^1.0"
 
 [origin]
-url = "file:../../../crates/hello.tgz"
+url = "file:../../../crates/hello.tar"
