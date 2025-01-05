@@ -128,28 +128,74 @@ package body Alire.Solver is
       return This;
    end Solved;
 
-   -----------------
-   -- To_Solution --
-   -----------------
+   --  We declare this type here to consolidate its contents in a single record
+   --  that's easier to pass around, although we use them as singletons during
+   --  a solving attempt.
 
-   function To_Solution (This : Search_State) return Solution is
+   type Unavailable_Entities is record
+      Crates : Containers.Crate_Name_Sets.Set;
+      --  Crates that simply aren't in any index
+
+      Deps : Dependencies.Containers.Set;
+      --  Here we keep track of raw unavailable dependecies (those requested
+      --  directly by some release). These never need to be solved again, as
+      --  they're impossible to fulfil.
+
+      Combos : Dependencies.Containers.Set;
+      --  As several releases request a same crate, the combos may result in
+      --  zero candidates because of conflicting requests. We track those here
+      --  to be able to better diagnose conflicts.
+   end record;
+
+   -------------------
+   -- Full_Solution --
+   -------------------
+   --  Mark unattempted dependencies in the state as missing to have a complete
+   --  solution, albeit pessimistic and suboptimal.
+   function Full_Solution (This : Search_State;
+                           Unav : Unavailable_Entities)
+                           return Solution
+   is
       use type Conditional.Dependencies;
       Full : Solutions.Solution := This.Solution;
    begin
       --  Convert all non-visited dependencies into missed, or else just the
       --  state's solution
 
+      if This.Is_Terminal then
+         return This.Solution;
+      end if;
+
       --  Any pending dependencies should be considered missing, since they
       --  can potentially conflict with a release in the solution. Even if
       --  they were compatible, they might require unexplored dependencies that
       --  would be missing. So the safe route is to mark them all missing.
 
+      --  As for the missing reason, we can improve a bit by using the already
+      --  known unavailable information.
+
       for Dep of Conditional.Enumerate (This.Target and This.Remaining) loop
-         Full := Full.Missing (Dep, Skipped);
+         if Full.Dependencies_Providing (Dep.Crate).Is_Empty then
+            declare
+               Reason : Dependencies.States.Missed_Reasons;
+            begin
+               if Unav.Crates.Contains (Dep.Crate) then
+                  Reason := Unknown;
+               elsif Unav.Deps.Contains (Dep) then
+                  Reason := Unavailable;
+               elsif Unav.Combos.Contains (Dep) then
+                  Reason := Conflict;
+               else
+                  Reason := Skipped;
+               end if;
+
+               Full := Full.Missing (Dep, Reason);
+            end;
+         end if;
       end loop;
 
       return Full;
-   end To_Solution;
+   end Full_Solution;
 
    -------------------
    -- Pending_Count --
@@ -284,20 +330,10 @@ package body Alire.Solver is
 
       use Alire.Conditional.For_Dependencies;
 
-      Unavailable_Crates      : Containers.Crate_Name_Sets.Set;
-      Unavailable_Direct_Deps : Dependencies.Containers.Set;
-      --  Some dependencies may be unavailable because the crate does not
-      --  exist, the requested releases do not exist, or the intersection of
-      --  versions is empty. In this case, we can prematurely end the search
-      --  instead of keeping looking for a valid combination, as these
-      --  dependencies will never be satisfied. NOTE that these unavailable
-      --  impossibilities must be top-level DIRECT dependencies (i.e.,
-      --  introduced by the user), or otherwise it does make sense to explore
-      --  alternate solutions that may not require the impossible dependencies.
-
-      Unavailable_All_Deps : Dependencies.Containers.Set;
-      --  Still, we can keep track of indirect unsolvable deps to speed-up the
-      --  search by not reattempting branches that contain such a dependency.
+      Unav : Unavailable_Entities;
+      --  Within a search, we can keep track of crates/dependencies that are
+      --  always impossible to fulfil once we see them once. This avoids to
+      --  keep re-exploring sub-branches.
 
       --  On the solver internal operation: the solver tries all possible
       --  dependency combinations, using a state queue roughly ordered by
@@ -343,14 +379,19 @@ package body Alire.Solver is
 
       end Selected_Compiler;
 
+      Explored : Natural := 0;
+      --  Count of evaluated states, for the record
+
+      Complete,
+      Best_Effort,
+      Incomplete,
       Dupes : Natural := 0;
-      --  Some solutions are found twice when some dependencies are subsets of
-      --  other dependencies.
+      --  How many of each we saw while exploring.
+      --
+      --  Best_Effort = Contains_All_Satisfiable (but not complete).
 
       Unfeasible : Natural := 0;
       --  Some generated states are unfeasible due to conflicting dependencies
-
-      Complete : Natural := 0; -- Counter of complete solutions for speed-up
 
       User_Answer_Continue : CLIC.User_Input.Answer_Kind :=
                                CLIC.User_Input.Yes;
@@ -373,10 +414,10 @@ package body Alire.Solver is
             if Solution.State (Crate).Fulfilment in Missed | Hinted
             --  So the dependency is not solved, but why?
               and then
-                not Unavailable_Crates.Contains (Crate)
+                not Unav.Crates.Contains (Crate)
               --  Because it does not exist at all, so "complete"
               and then
-                not Unavailable_Direct_Deps.Contains
+                not Unav.Deps.Contains
                   (Solution.Dependency (Crate))
                   --  Because no release fulfills it, so "complete"
             then
@@ -391,7 +432,7 @@ package body Alire.Solver is
       -- Is_Potentially_Complete --
       -----------------------------
 
-      function Is_Potentially_Complete (This : in out Search_State)
+      function Is_Potentially_Complete (This : Search_State)
                                         return Boolean
       is (Contains_All_Satisfiable (This.Solution));
 
@@ -399,23 +440,38 @@ package body Alire.Solver is
       -- Image_One_Line --
       --------------------
 
-      function Image_One_Line (State : Search_State) return String
+      function Image_One_Line (State : Search_State;
+                               Force : Boolean := False) return String
       is
+         ----------
+         -- Kind --
+         ----------
+
+         function Kind return String
+         is (if State.Solution.Is_Complete then
+                "complete"
+             elsif Is_Potentially_Complete (State) then
+                "best effort"
+             elsif State.Solution.Contains_Skipped then
+                "with skipped"
+             else
+                "incomplete");
       begin
-         if Trace.Level = Debug then
+         if Force or else Trace.Level = Debug then
             return ""
               & "i:" & State.Id'Image & "; p:" & State.Parent'Image & "; "
-              & "COMPLETE: "
-              & Contains_All_Satisfiable (State.Solution)'Image & "/"
-              & Contains_All_Satisfiable (State.To_Solution)'Image & "; "
+              & (if State.Is_Terminal
+                 then "TERMINAL " & Kind & "; "
+                 else "PARTIAL " & Kind & "; ")
               & "DOWN:" & State.Downgrade'Image & "; "
               & "TARGET: "   & State.Target.Image_One_Line & "; "
               & "SEEN: "     & State.Seen.Image_One_Line & "; "
               & "EXPANDED: " & State.Expanded.Image_One_Line & "; "
               & "REMAIN: "   & State.Remaining.Image_One_Line & "; "
+              & "SOL: " & State.Solution.Image_One_Line
          ;
          else
-            return "";
+            return "(not shown unless debug logging)";
          end if;
       end Image_One_Line;
 
@@ -431,15 +487,20 @@ package body Alire.Solver is
       is
          use all type Utils.Comparisons.Result;
          use all type Utils.Comparisons.Bool_Result;
-         use type Alire.Solutions.Compositions;
 
          function Compare is
-           new Utils.Comparisons.Compare (Alire.Solutions.Compositions);
+           new Utils.Comparisons.Compare (Ada.Containers.Count_Type);
          function Compare is
            new Utils.Comparisons.Compare (Natural);
 
          LS : Solution renames L.Solution;
          RS : Solution renames R.Solution;
+         --  Those are the partial solutions
+
+         LFS : constant Solution := L.Full_Solution (Unav);
+         RFS : constant Solution := R.Full_Solution (Unav);
+         --  These replace unattempted dependencies with skipped ones. Those
+         --  are full pessimistic solutions (the "heuristic" equivalent of A*).
 
          ------------------------
          -- Preferred_Compiler --
@@ -448,9 +509,9 @@ package body Alire.Solver is
          function Preferred_Compiler return Utils.Comparisons.Result is
 
             function L_GNAT return Release
-            is (LS.Releases_Providing (GNAT_Crate).First_Element);
+            is (LFS.Releases_Providing (GNAT_Crate).First_Element);
             function R_GNAT return Release
-            is (RS.Releases_Providing (GNAT_Crate).First_Element);
+            is (RFS.Releases_Providing (GNAT_Crate).First_Element);
 
             -----------------------
             -- Preferred_Version --
@@ -485,12 +546,29 @@ package body Alire.Solver is
 
             --  - No specific compiler at all
 
+            --  There is a paradox here in that by preferring a partial
+            --  solution without gnat in it, we force exploration of all
+            --  combos until that dependency is reintroduced. So in the end,
+            --  it is much faster not to trigger compiler ranking until both
+            --  solutions being compared depend on GNAT.
+
+            --  Perhaps we could look into introducing the compiler dependency
+            --  in the solution as soon as it is in the list of targets, but
+            --  that is not trivial right now, and would require some ad-hoc
+            --  magic as we cannot know that a dependency is on a compiler
+            --  until we look at releases providing it (or hard-code a table
+            --  with all GNAT crates, which is kinda ugly).
+
+            --  For now the solution below is much simpler, devoid of magic,
+            --  and in the worst case we end with an explicit dependency on
+            --  the compiler, which was inevitable in all likelihood.
+
             case Comparisons.Which_One
-              (LS.Releases_Providing (GNAT_Crate).Is_Empty,
-               RS.Releases_Providing (GNAT_Crate).Is_Empty)
+              (LFS.Releases_Providing (GNAT_Crate).Is_Empty,
+               RFS.Releases_Providing (GNAT_Crate).Is_Empty)
             is
-               when Left  => return Left;
-               when Right => return Right;
+               when Left  => return Equal; -- was Left, but see above
+               when Right => return Equal; -- was Right, but see above
                when Both  => return Equal;
                when None  =>
                   null;
@@ -501,8 +579,8 @@ package body Alire.Solver is
 
             if Selected_Compiler.Exists then
                case Comparisons.Which_One
-                 (LS.Contains (Selected_Compiler.Milestone),
-                  RS.Contains (Selected_Compiler.Milestone))
+                 (LFS.Contains (Selected_Compiler.Milestone),
+                  RFS.Contains (Selected_Compiler.Milestone))
                is
                   when Left  => return Left;
                   when Right => return Right;
@@ -514,9 +592,9 @@ package body Alire.Solver is
             --  Prefer external compilers
 
             case Comparisons.Which_One
-              (not LS.Releases_Providing (GNAT_Crate).Is_Empty and then
+              (not LFS.Releases_Providing (GNAT_Crate).Is_Empty and then
                not L_GNAT.Origin.Is_Index_Provided,
-               not RS.Releases_Providing (GNAT_Crate).Is_Empty and then
+               not RFS.Releases_Providing (GNAT_Crate).Is_Empty and then
                not R_GNAT.Origin.Is_Index_Provided)
             is
                when Left  => return Left;
@@ -532,10 +610,10 @@ package body Alire.Solver is
             --  Prefer newest installed native compiler
 
             case Comparisons.Which_One
-              (LS.Contains_Release (GNAT_Native_Crate) and then
+              (LFS.Contains_Release (GNAT_Native_Crate) and then
                Tools.Contains (L_GNAT)
                ,
-               RS.Contains_Release (GNAT_Native_Crate) and then
+               RFS.Contains_Release (GNAT_Native_Crate) and then
                Tools.Contains (R_GNAT)
               )
             is
@@ -553,10 +631,10 @@ package body Alire.Solver is
             --  Prefer newest installed any (cross) compiler
 
             case Comparisons.Which_One
-              (not LS.Releases_Providing (GNAT_Crate).Is_Empty and then
+              (not LFS.Releases_Providing (GNAT_Crate).Is_Empty and then
               Tools.Contains (L_GNAT)
                ,
-               not RS.Releases_Providing (GNAT_Crate).Is_Empty and then
+               not RFS.Releases_Providing (GNAT_Crate).Is_Empty and then
               Tools.Contains (R_GNAT)
               )
             is
@@ -595,8 +673,8 @@ package body Alire.Solver is
             --  Prefer newest installed any (cross) compiler
 
             case Comparisons.Which_One
-              (not LS.Releases_Providing (GNAT_Crate).Is_Empty,
-               not RS.Releases_Providing (GNAT_Crate).Is_Empty)
+              (not LFS.Releases_Providing (GNAT_Crate).Is_Empty,
+               not RFS.Releases_Providing (GNAT_Crate).Is_Empty)
             is
                when Left  => return Left;
                when Right => return Right;
@@ -612,7 +690,129 @@ package body Alire.Solver is
             return Equal;
          end Preferred_Compiler;
 
+         ------------------------------------
+         -- Compare_Attempted_Dependencies --
+         ------------------------------------
+
+         function Compare_Attempted_Dependencies
+           return Utils.Comparisons.Result
+         is
+            use Utils;
+            use type Semver.Version;
+
+            LD : constant Solutions.State_Map := LFS.All_Dependencies;
+            RD : constant Solutions.State_Map := RFS.All_Dependencies;
+            All_Crates : constant Containers.Crate_Name_Sets.Set
+              := LFS.Crates.Union (RFS.Crates);
+
+            Better_Versions : Integer := 0;
+            --  Count which crate has more downgraded versions and use to
+            --  discriminate as a last resort.
+            Better_Increment : constant Integer
+              := (if Options.Age = Newest then 1 else -1);
+         begin
+            for Crate of All_Crates loop
+
+               --  If not a dependency of one of them, it's impossible to
+               --  know if this is better or worse, as it could be a necessary
+               --  dependency in all cases, or a dead-end approach, so skip.
+
+               if not LD.Contains (Crate) or else not RD.Contains (Crate) then
+                  goto Continue;
+               end if;
+
+               --  From this point on, the dependency exists in both states and
+               --  we can compare them.
+
+               --  If fulfilment is different, we can cut short: we always
+               --  prefer the one with a better fulfilment.
+
+               case Comparisons.Which_One
+                 (LD (Crate).Fulfilment > RD (Crate).Fulfilment,
+                  LD (Crate).Fulfilment < RD (Crate).Fulfilment)
+               is
+                  when Left  => return Left;
+                  when Right => return Right;
+                  when None  => null; -- Keep on checking
+                  when Both  => raise Program_Error with "impossible";
+               end case;
+
+               --  Prefer the one with an actual release
+
+               case LD (Crate).Fulfilment is
+
+                  when Solved | Linked =>
+
+                     --  To ensure broken links don't confuse us, we check for
+                     --  explicit releases.
+
+                     case Comparisons.Which_One
+                       (LD (Crate).Has_Release,
+                        RD (Crate).Has_Release)
+                     is
+                     when Left  => return Left;
+                     when Right => return Right;
+                     when None  => null;
+                     when Both  =>
+                        --  Compare versions according to policy
+                        if LD (Crate).Release.Version /=
+                          RD (Crate).Release.Version
+                        then
+                           Better_Versions := Better_Versions +
+                             (if LD (Crate).Release.Version >
+                                  RD (Crate).Release.Version
+                              then +Better_Increment
+                              else -Better_Increment);
+                        end if;
+                     end case;
+
+                  when Hinted =>
+                     null;
+                     --  Nothing to discriminate here, both are just hints
+
+                  when Missed =>
+
+                     --  If missing in both, prefer non-skipped reasons, which
+                     --  means that the release has been attempted to be solved
+                     --  for real.
+
+                     if LD (Crate).Reason = RD (Crate).Reason then
+                        null;
+                     elsif LD (Crate).Reason > RD (Crate).Reason then
+                        return Left;
+                     else
+                        return Right;
+                     end if;
+
+               end case;
+
+               <<Continue>>
+            end loop;
+
+            if Better_Versions > 0 then
+               return Left;
+            elsif Better_Versions < 0 then
+               return Right;
+            end if;
+
+            return Equal;
+         end Compare_Attempted_Dependencies;
+
          use Utils;
+
+         function Left (Reason : String) return Boolean is
+         begin
+            Trace.Debug ("SOLVER:" & L.Id'Image & " vs" & R.Id'Image
+                         & " WINS left: " & Reason);
+            return True;
+         end Left;
+
+         function Right (Reason : String) return Boolean is
+         begin
+            Trace.Debug ("SOLVER:" & L.Id'Image & " vs" & R.Id'Image
+                         & " WINS right: " & Reason);
+            return False;
+         end Right;
 
       begin
 
@@ -623,47 +823,75 @@ package body Alire.Solver is
          --  improves search times. KCacheGrind summary inspection points to
          --  Contains_All_Satisfiable as the primary culprit. However, caching
          --  it results in no gain, so most calls to it are unique and the
-         --  speed-up should focus on the function proper.
+         --  speed-up should focus on the function proper. Besides, there
+         --  aren't that many state insertions: the most complex crates in the
+         --  community index right now require less than 100 states to be
+         --  expanded.
 
-         --  Prefer states that might lead to a complete solution (those
-         --  include states that already are completely explored).
+         --  On the following, we establish three kinds of solutions in
+         --  order of preference: complete solutions do not lack any release;
+         --  satisfying solutions miss only dependencies that are impossible
+         --  (unavailable or always conflicting); incomplete solutions miss
+         --  some release.
 
-         case Comparisons.Which_One
-           (Is_Potentially_Complete (L),
-            Is_Potentially_Complete (R))
-         is
-            when Left        => return True;
-            when Right       => return False;
-            when Both | None => null;
+         --  Prefer potentially complete to any other
+
+         case Comparisons.Which_One (LS.Is_Complete, RS.Is_Complete) is
+            when Left   => return Left ("pcomplete");
+            when Right  => return Right ("pcomplete");
+            when others => null;
          end case;
 
-         --  Prefer states according to compiler priorities
+         --  Prefer potentially satisfiable to any other
+
+         case Comparisons.Which_One (Contains_All_Satisfiable (LS),
+                                     Contains_All_Satisfiable (RS)) is
+            when Left   => return Left ("psatisfy");
+            when Right  => return Right ("psatisfy");
+            when others => null;
+         end case;
+
+         --  Prefer without skipped states in the solved part (those are
+         --  suboptimal by definition).
+
+         case Comparisons.Which_One (not LS.Contains_Skipped,
+                                     not RS.Contains_Skipped) is
+            when Left   => return Left ("skipped");
+            when Right  => return Right ("skipped");
+            when others => null;
+         end case;
+
+         --  Prefer states according to compiler priorities; this is a hard
+         --  imposition by the user workspace configuration.
 
          case Preferred_Compiler is
-            when Left  => return True;
-            when Right => return False;
+            when Left  => return Left ("compiler");
+            when Right => return Right ("compiler");
             when Equal => null;
          end case;
 
-         --  Prefer solutions with better completions (given the first
-         --  criterion on completed first, this only affects the first
-         --  incomplete solution to be found if there are no complete ones).
+         --  Prefer terminal states
 
-         case Compare (L.Solution.Composition, R.Solution.Composition) is
-            when Left  => return True;
-            when Right => return False;
-            when Equal => null;
+         case Comparisons.Which_One (L.Is_Terminal, R.Is_Terminal) is
+            when Left   => return Left ("terminal");
+            when Right  => return Right ("terminal");
+            when others => null;
          end case;
 
-         --  Prefer solutions with more dependencies evaluated (depth-first
-         --  search within the previous breadth-first criteria)
+         --  From here on, we tweak the heuristic to guide the search towards
+         --  a complete solution faster or, when no complete solution exists,
+         --  this will decide which incomplete one is considered "better".
+         --  Those might affect search speed and we could experiment with
+         --  improvements here.
 
-         case Compare (Natural (L.Solution.All_Dependencies.Length),
-                       Natural (R.Solution.All_Dependencies.Length))
-         is
-            when Left  => return False;
-            when Right => return True;
-            when Equal => null;
+         --  Already solved dependencies provide hard differences between
+         --  solutions that we can use to prioritize within both partial
+         --  and terminal states.
+
+         case Compare_Attempted_Dependencies is
+            when Left  => return Left ("dependencies");
+            when Right => return Right ("dependencies");
+            when Equal => null; -- Check other things
          end case;
 
          --  Prefer solutions with fewer downgrades/upgrades. This is to
@@ -673,36 +901,48 @@ package body Alire.Solver is
          --  upgrades.)
 
          case Compare (L.Downgrade, R.Downgrade) is
-            when Left  => return True;
-            when Right => return False;
+            when Left  => return Left ("downgrades");
+            when Right => return Right ("downgrades");
             when Equal => null;
          end case;
+
+         --  TODO: check with more already expanded here
 
          --  Prefer states with fewer pending dependencies. This is simply to
          --  steer the search towards complete solutions first.
 
          case Compare (Pending_Count (L), Pending_Count (R)) is
-            when Left  => return True;
-            when Right => return False;
+            when Left  => return Left ("pending count");
+            when Right => return Right ("pending count");
             when Equal => null;
          end case;
 
-         --  All else being equal, the best solution is preferred
+         --  Prefer fewer missing crates, although at this point who knows what
+         --  indirect dependencies we are missing through unexpanded/missing
+         --  dependencies. Still, this way we avoid preferring solutions with
+         --  dependencies that are actually solvable.
 
-         case Comparisons.Which_One
-           (L.Solution.Is_Better (R.Solution),
-            R.Solution.Is_Better (L.Solution))
+         case Compare (LS.Misses.Length,
+                       RS.Misses.Length)
          is
-            when Left        => return True;
-            when Right       => return False;
-            when Both | None => null; -- Check other things
+            when Left  => return Left ("misses");
+            when Right => return Right ("misses");
+            when Equal => null;
          end case;
 
-         --  If we have reached the same solution from two branches (should
-         --  check if this can happen), disambiguate with the state ID. This
-         --  might be an impossible situation?
+         --  This point is reached (same solution from two paths) when abstract
+         --  crates are at play. This is probably something that should be
+         --  disambiguated somehow... (TODO)
 
-         return L.Id < R.Id; -- Can't be equal
+         Dupes := Dupes + 1;
+
+         case Comparisons.Which_One (L.Id < R.Id,
+                                     R.Id < L.Id)
+         is
+            when Left   => return Left ("id");
+            when Right  => return Right ("id");
+            when others => raise Program_Error with "impossible";
+         end case;
       end Is_Better;
 
       ---------
@@ -715,84 +955,174 @@ package body Alire.Solver is
       package State_Sets is new Ada.Containers.Indefinite_Ordered_Sets
         (Element_Type => State_Ptr);
 
-      --  This package is used to ensure consistent behaviors when accessing
-      --  the best solution found.
-      package Solutions is
-         procedure Include (Final_State : State_Ptr);
-         function First return Alire.Solutions.Solution;
-         function Length return Natural;
-         function Is_Trivial return Boolean;
-         --  Says if the first known solution is the trivial one (everything
-         --  missing:skipped). This solution sometimes is valid when there's
-         --  only unsolvable dependencies, as we do in some tests, so it would
-         --  be considered a complete solution. However, by allowing the solver
-         --  to proceed, it will find the reason for the missing dependencies,
-         --  which is preferable. IOWs, it's just a corner case to preserve
-         --  old behavior.
-      private
-         Trivial_Removed : Boolean := False;
-         --  We store a trivial solution to ensure that there is always one
-         --  available, but we discard it as soon as a proper one is stored.
-
-         States : State_Sets.Set;
-         --  We store here all terminal state solutions. To reuse the state
-         --  sorting, which is more comprehensive than solution sorting,
-         --  we store them with the whole state. In practice, we could move
-         --  comparison of solutions (Solutions.Is_Better) inside state
-         --  comparison, as it isn't used elsewhere.
-      end Solutions;
-
-      package body Solutions is
-
-         ----------------
-         -- Is_Trivial --
-         ----------------
-
-         function Is_Trivial return Boolean is (not Trivial_Removed);
-
-         -------------
-         -- Include --
-         -------------
-
-         procedure Include (Final_State : State_Ptr) is
-         begin
-            if States.Length = 1 and then not Trivial_Removed then
-               States.Delete_First;
-               Trivial_Removed := True;
-               Trace.Debug ("SOLVER: trivial solution dropped");
-            end if;
-
-            States.Include (Final_State);
-         end Include;
-
-         --------------------
-         -- First_Solution --
-         --------------------
-
-         function First return Alire.Solutions.Solution is
-         begin
-            return States.First_Element.To_Solution;
-         end First;
-
-         ------------
-         -- Length --
-         ------------
-
-         function Length return Natural is (Natural (States.Length));
-
-      end Solutions;
+      ------------------
+      -- Search Queue --
+      ------------------
 
       States : State_Sets.Set;
       --  To avoid possibly deep recursivity that also may not find the best
       --  solution by doing a depth-first search, we keep a priority queue of
       --  unexplored states.
 
-      -------------
-      -- Partial --
-      -------------
+      ---------------
+      -- Solutions --
+      ---------------
 
-      function Partial return Natural
-      is (Solutions.Length - Complete);
+      --  This package is used to ensure consistent behaviors when accessing
+      --  the best solution found.
+      package Solutions is
+
+         procedure Include (New_Sol : State_Ptr);
+
+         function Best_State   return State_Ptr;
+         function Best_To_Date return Alire.Solutions.Solution;
+         --  Returns the best solution to date. Initially this is the trivial
+         --  solution with all missing; then it will be replaced with partial
+         --  states, until the first fully explored terminal state is found.
+         --  At this point, that is the best solution, either complete (all
+         --  releases solved) or incomplete (some dependencies are unsolvable).
+
+         function Found_Best return Boolean;
+         --  Says if we have found the best solution we are going to find
+
+      private
+
+         Trivial_Id : State_Id := 0;
+
+         --  We use Partial/Terminal to refer to states partially/fully
+         --  explored, to not confuse with complete/incomplete solutions
+         --  (those that [don't] fulfil all dependencies).
+
+         Best       : State_Sets.Set;
+         --  Best solution seen to date (we need only keep track of one)
+
+      end Solutions;
+
+      package body Solutions is
+
+         -------------
+         -- Include --
+         -------------
+
+         procedure Include (New_Sol : State_Ptr) is
+         begin
+
+            if Best.Is_Empty then
+               --  First solution is the trivial one
+               Trivial_Id := New_Sol.Id;
+               Trace.Debug ("SOLVER: trivial solution stored id"
+                            & New_Sol.Id'Image);
+            elsif Best_State.Id = Trivial_Id then
+               Best.Clear;
+               Trace.Debug ("SOLVER: trivial solution dropped");
+            else
+               Trace.Debug ("SOLVER: new solution? "
+                            & Best_State.Id'Img & " vs"
+                            & New_Sol.Id'Img);
+            end if;
+
+            --  Before inserting, replace the solution with the full
+            --  pessimistic solution. This allows the sorting to prefer
+            --  "more solved" partial states.
+
+            New_Sol.Solution := New_Sol.Full_Solution (Unav);
+            --  Safe to replace because a state popped from the queue is never
+            --  revisited, and here we only receive states already evaluated.
+
+            --  Keep partials until first terminal arrives. We need to do this
+            --  explicitly because the solver keeps removing potentially better
+            --  solutions until finding the first terminal, whereas here any
+            --  potentially better partial state would be wrongly preferred
+            --  to a terminal.
+
+            if New_Sol.Is_Terminal
+              or else Best.Is_Empty
+              or else not Best_State.Is_Terminal
+            then
+
+               --  If moving from partial to terminal, clear the former best,
+               --  or else a partial potentially better one would be preferred
+               --  to an unavoidable worse terminal.
+
+               if not Best.Is_Empty
+                 and then not Best_State.Is_Terminal
+                 and then New_Sol.Is_Terminal
+               then
+                  Best.Clear;
+               end if;
+
+               Best.Include (New_Sol);
+            end if;
+
+            Trace.Debug
+              ("SOLVER: best is" & Best_State.Id'Image
+               & " (terminal: " & Best_State.Is_Terminal'Image & ")");
+
+            --  Clean-up to avoid unnecessary comparisons with a growing set
+
+            while Best.Length > 1 loop
+               Best.Delete_Last;
+            end loop;
+
+            if New_Sol.Is_Terminal then
+               if New_Sol.Solution.Is_Complete then
+                  Complete := Complete + 1;
+               elsif
+                 Contains_All_Satisfiable (New_Sol.Full_Solution (Unav))
+               then
+                  Best_Effort := Best_Effort + 1;
+               else
+                  Incomplete := Incomplete + 1;
+               end if;
+            end if;
+         end Include;
+
+         ----------------
+         -- Best_State --
+         ----------------
+
+         function Best_State return State_Ptr
+         is (Best.First_Element);
+         --  Because we always store the trivial solution first, there should
+         --  always be at least one partial solution available.
+
+         ------------------
+         -- Best_To_Date --
+         ------------------
+
+         function Best_To_Date return Alire.Solutions.Solution
+         is (Best_State.Full_Solution (Unav));
+
+         ----------------
+         -- Found_Best --
+         ----------------
+
+         function Found_Best return Boolean is
+         begin
+
+            if not Solutions.Best_State.Is_Terminal then
+               return False;
+            end if;
+
+            --  We have found the best solution, complete or not
+
+            if Best_To_Date.Is_Complete then
+               Trace.Debug
+                 ("SOLVER: search ENDED with first COMPLETE solution");
+            elsif Contains_All_Satisfiable (Best_To_Date) then
+               Trace.Debug
+                 ("SOLVER: search ENDED with first SATISFIABLE solution");
+               --  There are missing, but these are not due to conflicts but
+               --  impossibilities.
+            else
+               Trace.Debug
+                 ("SOLVER: search ENDED with first INCOMPLETE solution");
+            end if;
+
+            return True;
+         end Found_Best;
+
+      end Solutions;
 
       -------------------
       -- Progress_Line --
@@ -800,16 +1130,35 @@ package body Alire.Solver is
 
       function Progress_Line return String
       is
+         type Print_Pct is delta 0.01 range 0.0 .. 100.0;
          use AAA.Strings;
+         Expanded : constant Natural :=
+                      (if States.Is_Empty then 0
+                       else States.First_Element.Expanded.Leaf_Count);
+         Remain : constant Natural :=
+                    (if States.Is_Empty then 0
+                     else States.First_Element.Pending_Count);
+         Total : constant Natural := Expanded + Remain;
+         Pct : constant Float :=
+                 100.0 *
+                   (if States.Is_Empty then 0.0
+                    elsif Total = 0 then 0.0
+                    else Float (Expanded) / Float (Total));
+         Pot_Complete : Natural := 0;
       begin
+         --  This loop is pure eye candy overhead, TODO: evaluate impact
+
+         for St of States loop
+            exit when not Is_Potentially_Complete (St.all);
+            Pot_Complete := Pot_Complete + 1;
+         end loop;
+
          return "Solving dependencies: "
-           & Trim (Complete'Img) & "/"
-           & Trim (Partial'Img) & "/"
-           & Trim (Dupes'Image) & "//"
-           & Trim (States.Length'Image) & "/"
-           & Trim (Unfeasible'Image) & "/"
-           & Trim (Next_Id'Image)
-           & " (ok/part/dup//queue/bad/total)";
+           & Trim (Print_Pct (Pct)'Image)
+           & "% solved ("
+           & Trim (Expanded'Image) & "/" & Trim (Total'Image) & " deps, "
+           & Trim (Pot_Complete'Image) & "/" & Trim (Next_Id'Image)
+           & " solutions left)";
       end Progress_Line;
 
       ---------------------
@@ -823,36 +1172,6 @@ package body Alire.Solver is
             Progress.Step (Progress_Line);
          end if;
       end Progress_Report;
-
-      --------------------
-      -- Store_Solution --
-      --------------------
-
-      procedure Store_Solution (State : State_Ptr) is
-         Pre_Length : constant Natural := Solutions.Length;
-
-         Solution : constant Alire.Solutions.Solution := State.To_Solution;
-         Pending  : constant Natural := State.Pending_Count;
-      begin
-         Trace.Debug ("SOLVER: state "
-                      & (if Pending = 0
-                        then "(TERMINAL)"
-                        else "(pending deps:" & Pending'Image & ")")
-                      & " solved as: "
-                      & Solution.Image_One_Line
-                      & " complete: " & Solution.Is_Complete'Img
-                      & "; composition: " & Solution.Composition'Img);
-
-         Solutions.Include (State);
-
-         if Pre_Length = Solutions.Length then
-            Dupes := Dupes + 1;
-         elsif Solution.Is_Complete then
-            Complete := Complete + 1;
-         end if;
-
-         Progress_Report;
-      end Store_Solution;
 
       -------------
       -- Enqueue --
@@ -934,9 +1253,18 @@ package body Alire.Solver is
          if not Feasible then
             Unfeasible := Unfeasible + 1;
             Trace.Debug ("SOLVER: DROP id" & This.Id'Image & " "
-                      & Action
-                      & " STATE " & Image_One_Line (This.all));
+                         & Action
+                         & " STATE " & Image_One_Line (This.all)
+                         & " SOL " & This.Solution.Image_One_Line
+                         & "; COMP " & This.Solution.Composition'Image
+                        );
             return;
+            --  Here we are dropping some conflicts that might result in lack
+            --  of reporting (reported as simply skipped). The solver testsuite
+            --  however points to a notable slowdown in selected crates when
+            --  this is omitted; perhaps a more general solution would be to
+            --  prioritize pending dependencies that have been already seen.
+            --  (TODO very low prio).
          end if;
 
          Trace.Debug ("SOLVER: ENQUEUE id" & This.Id'Image & " "
@@ -950,10 +1278,6 @@ package body Alire.Solver is
 
          if Natural (States.Length) = Count then
             raise Program_Error with "Search state lost!";
-         end if;
-
-         if Pending_Count (This.all) = 0 then
-            Store_Solution (State_Ptr'(This.all'Unchecked_Access));
          end if;
       end Enqueue;
 
@@ -1046,11 +1370,16 @@ package body Alire.Solver is
                --  When we can hint, do so instead of simply reporting the
                --  crate as unavailable, but only when there is no conflict
 
-               if Reason in Skipped | Unavailable then
-                  if Check_Hinted then
-                     return;
-                  end if;
-               end if;
+               case Reason is
+                  when Skipped | Unavailable =>
+                     if Check_Hinted then
+                        return;
+                     end if;
+                  when Conflict =>
+                     Unfeasible := Unfeasible + 1;
+                  when Unknown =>
+                     null;
+               end case;
 
                --  If no reason to hint, plain missing
 
@@ -1296,11 +1625,10 @@ package body Alire.Solver is
                --  We may know from the get-go that the dependency cannot be
                --  satisfied; in this case don't bother to check candidates.
 
-               if Unavailable_Direct_Deps.Contains (Raw_Dep) or else
-                  Unavailable_All_Deps.Contains (Raw_Dep)
-               then
-                  Trace.Debug ("SOLVER: skipping known unsatisfiable: "
-                               & Raw_Dep.TTY_Image);
+               if Unav.Deps.Contains (Raw_Dep) then
+                  Trace.Debug
+                    ("SOLVER: missing:unavailable known unsatisfiable: "
+                     & Raw_Dep.TTY_Image);
                   Expand_Missing (Unavailable);
                   return;
                end if;
@@ -1308,9 +1636,7 @@ package body Alire.Solver is
                --  Likewise for the combined dependency, in which case there is
                --  some conflict.
 
-               if Unavailable_Direct_Deps.Contains (Dep) or else
-                 Unavailable_All_Deps.Contains (Dep)
-               then
+               if Unav.Combos.Contains (Dep) then
                   Trace.Debug ("SOLVER: skipping known conflict: "
                                & Raw_Dep.TTY_Image);
                   Expand_Missing (Conflict);
@@ -1345,7 +1671,7 @@ package body Alire.Solver is
                   if Candidates.Is_Empty then
                      Trace.Debug ("SOLVER: marking as unsatisfiable: "
                                   & Dep.TTY_Image);
-                     Unavailable_All_Deps.Include (Dep);
+                     Unav.Combos.Include (Dep);
 
                      --  If there are valid releases, though, there is some
                      --  conflict. We recurse call so this is reported at the
@@ -1355,7 +1681,7 @@ package body Alire.Solver is
                        Index.Releases_Satisfying
                          (Raw_Dep, Props, Index_Query_Options).Is_Empty
                      then
-                        Unavailable_All_Deps.Include (Raw_Dep);
+                        Unav.Deps.Include (Raw_Dep);
                      end if;
 
                      Check_Regular_Releases;
@@ -1525,6 +1851,7 @@ package body Alire.Solver is
                   & " when the search tree was "
                   & Image_One_Line (State));
 
+               Unav.Crates.Include (Dep.Crate);
                Expand_Missing (Unknown);
 
             end if;
@@ -1653,10 +1980,17 @@ package body Alire.Solver is
                    Pins.State (Dep.Crate).Is_Linked)
                    --  Linked crates are solvable, even if not found in index
             then
-               Unavailable_Direct_Deps.Include (Dep);
+               Unav.Deps.Include (Dep);
                Trace.Debug
                  ("Direct dependency has no fulfilling releases: "
                   & Utils.TTY.Name (Dep.Image));
+
+               if not Index.Exists (Dep.Crate) then
+                  Unav.Crates.Include (Dep.Crate);
+                  Trace.Debug
+                    ("Direct dependency crate is not in index nor linked: "
+                     & Utils.TTY.Name (Dep.Crate));
+               end if;
             end if;
 
          end loop;
@@ -1681,62 +2015,6 @@ package body Alire.Solver is
             Trace.Detail ("No user pins to apply");
          end if;
       end Trace_Pins;
-
-      --------------------
-      -- Solution_Found --
-      --------------------
-
-      function Solution_Found return Boolean is
-      begin
-
-         --  Keep looking if only trivial available but pending statuses remain
-
-         if Solutions.Is_Trivial and then not States.Is_Empty then
-            return False;
-         end if;
-
-         --  If the solution contains all solved dependencies, it is complete
-
-         if Solutions.First.Is_Complete then
-            Trace.Debug
-              ("SOLVER: search ended with first COMPLETE solution");
-            return True;
-         elsif Contains_All_Satisfiable (Solutions.First) then
-            Trace.Debug
-              ("SOLVER: search ended with first SATISFIABLE solution");
-            --  There are missing, but these are not due to conflicts but
-            --  impossibilities.
-            return True;
-         end if;
-
-         --  If we ran out of exploration states, then whatever stored solution
-         --  there is, is best, but this will be reported elsewhere.
-
-         if States.Is_Empty then
-            return False;
-         end if;
-
-         --  If there are no potentially complete solutions incoming anymore,
-         --  we can return already the best incomplete solution.
-
-         declare
-            Head : constant State_Ptr := States.First_Element;
-         begin
-            if Pending_Count (Head.all) = 0
-              and then
-                not Contains_All_Satisfiable (States.First_Element.To_Solution)
-            then
-               Trace.Debug
-                 ("SOLVER: search ended with first INCOMPLETE solution");
-               Trace.Debug
-                 ("SOLVER: when next state was: "
-                  & Image_One_Line (States.First_Element.all));
-               return True;
-            end if;
-         end;
-
-         return False;
-      end Solution_Found;
 
       --------------------
       -- Search_Timeout --
@@ -1764,7 +2042,7 @@ package body Alire.Solver is
                return Stop;
             end if;
 
-            if not Solutions.First.Is_Complete then
+            if not Solutions.Best_To_Date.Is_Complete then
                Put_Warning ("Complete solution not found after "
                             & Timer.Image (Decimals => 0)
                             & " seconds.");
@@ -1777,7 +2055,7 @@ package body Alire.Solver is
             end if;
 
             Trace.Info ("");
-            Solutions.First.Print_States (Level => Trace.Info);
+            Solutions.Best_To_Date.Print_States (Level => Trace.Info);
             Trace.Info ("");
 
             --  Options take precedence over any interaction yet to occur
@@ -1827,6 +2105,14 @@ package body Alire.Solver is
          procedure Top_Ten is
             Remain : Natural := 1;
          begin
+            if Trace.Level < Debug then
+               return;
+            end if;
+
+            Trace.Debug ("-- BEST TO DATE --");
+            Trace.Debug ("#1: " & Image_One_Line (Solutions.Best_State.all));
+            Trace.Debug ("------------------");
+
             Trace.Debug ("-- SOLVER STATES --");
             for St of States loop
                Trace.Debug ("#" & Remain'Image & ": "
@@ -1849,15 +2135,25 @@ package body Alire.Solver is
             declare
                State : constant State_Ptr := States.First_Element;
             begin
+               Explored := Explored + 1;
+
                States.Delete_First;
-               --  We could free memory here if we observe large memory use...
+               --  TODO: we could free memory here if we observe large memory
+               --  use, although the point of using an arena is to avoid manual
+               --  memory tinkering.
 
                Expand (State.all);
+
+               Solutions.Include (State);
+               --  Store the best state seen to date to improve either
+               --  partial/terminal solution. We do this last because partial
+               --  solutions are modified to have a better partial one
+               --  available in case of incomplete solution.
             end;
 
             Top_Ten;
 
-            exit when Solution_Found;
+            exit when Solutions.Found_Best;
             exit when Search_Timeout;
          end loop;
       end Explore;
@@ -1871,8 +2167,13 @@ package body Alire.Solver is
       begin
          declare
             Best_Solution : Alire.Solutions.Solution
-              := Solutions.First.With_Pins (Pins);
+              := Solutions.Best_To_Date.With_Pins (Pins);
          begin
+
+            Trace.Debug ("SOLVER: RETURNING sol "
+                         & Image_One_Line (Solutions.Best_State.all)
+                         & " --> "
+                         & " " & Solutions.Best_To_Date.Image_One_Line);
 
             --  Mark pins as direct dependencies
 
@@ -1898,22 +2199,31 @@ package body Alire.Solver is
                end if;
             end loop;
 
-            Trace.Detail ("Dependencies solvable in" &
-                            TTY.Emph (Solutions.Length'Img) & " ways"
-                          & " (complete:" & TTY.OK (Complete'Img)
-                          & "; partial:" & TTY.Warn (Partial'Img)
-                          & "; dupes:" & TTY.Bold (Dupes'Img) & ")");
+            --  In the following report, incomplete is just how many we saw,
+            --  but there can be more as we stop once the first terminal state
+            --  is found. We may find several complete ones at the same time
+            --  in the last dependency expansion.
+
+            Trace.Detail ("Dependencies fully solved"
+                          & " (steps:" & TTY.OK (Explored'Image)
+                          & "; states:" & TTY.Emph (Next_Id'Image)
+                          & "; complete:" & TTY.OK (Complete'Image)
+                          & "; best effort:" & TTY.Warn (Best_Effort'Image)
+                          & "; incomplete:" & TTY.Error (Incomplete'Image)
+                          & "; unfeasible:" & TTY.Warn (Unfeasible'Image)
+                          & "; dupes:" & TTY.Bold (Dupes'Image)
+                          & ")");
             Trace.Detail ("Dependencies solved with"
-                          & TTY.Emph (Best_Solution.Releases.Length'Img)
+                          & TTY.Emph (Best_Solution.Releases.Length'Image)
                           & " releases"
                           & (if not Best_Solution.Hints.Is_Empty
                             then " and"
-                            & TTY.Warn (Best_Solution.Hints.Length'Img)
+                            & TTY.Warn (Best_Solution.Hints.Length'Image)
                             & " missing external libraries"
                             else "")
                           & (if not Best_Solution.Misses.Is_Empty
                             then " and"
-                            & TTY.Error (Best_Solution.Misses.Length'Img)
+                            & TTY.Error (Best_Solution.Misses.Length'Image)
                             & " missing dependencies"
                             else "")
                           & " in " & Timer.Image & " seconds"
@@ -1968,7 +2278,9 @@ package body Alire.Solver is
 
       --  Store a trivially bad solution to ensure there always is a solution
 
-      Solutions.Include (States.First_Element);
+      Solutions.Include (new Search_State'(States.First_Element.all));
+      --  The trivial solution will be expanded later, so we need to store a
+      --  copy because its solution is modified inside Solutions.Include
 
       --  Check head state until success or exhaustion
 

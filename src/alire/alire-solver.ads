@@ -180,6 +180,9 @@ private
       --  and dependencies processed up to now
    end record;
 
+   function Is_Terminal (This : Search_State) return Boolean
+   is (This.Target.Is_Empty and then This.Remaining.Is_Empty);
+
    function Downgrading (This       : access Search_State;
                          Downgrades : Natural)
                          return access Search_State;
