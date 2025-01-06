@@ -8,6 +8,34 @@ stay on top of `alr` new features.
 
 ### Abbreviated `--tree` output for repeating dependencies
 
+PR [1814](https://github.com/alire-project/alire/pull/1814)
+
+By default, repeated dependencies are now omitted by `--tree` output, e.g.:
+
+```
+$ alr show --tree libgpr2
+...
+Dependencies (tree):
+   gnat=14.1.3 (gnat_native) (>=14)
+   gnatcoll=25.0.0 (~25.0.0)
+   ├── gnat=14.1.3 (gnat_native) (>=13)
+   └── libgpr=25.0.0 (~25.0.0)
+       ├── gnat=14.1.3 (gnat_native) (/=2020)
+       └── xmlada=25.0.0 (~25.0.0)
+           └── gnat=14.1.3 (gnat_native) (>=11)
+   gnatcoll_gmp=25.0.0 (~25.0.0)
+   ├── gnatcoll=25.0.0 (~25.0.0) ···
+   └── libgmp=6.3.0 (*)
+   gnatcoll_iconv=25.0.0 (~25.0.0)
+   └── gnatcoll=25.0.0 (~25.0.0) ···
+```
+
+Whenever '...' appears, it means that the preceding release has its
+dependencies already printed somewhere in the preceding tree lines.
+
+The old behavior can be obtained by increasing verbosity with the global `-v`
+switch.
+
 ### Faster `alr search` without resolving dependencies
 
 PR [1799](https://github.com/alire-project/alire/pull/1799)
