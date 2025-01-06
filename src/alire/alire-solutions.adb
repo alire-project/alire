@@ -926,6 +926,8 @@ package body Alire.Solutions is
                     (if TTY.Color_Enabled then U ("└── ") else "+-- ");
       Branch    : constant String :=
                     (if TTY.Color_Enabled then U ("│   ") else "|   ");
+      More_Deps : constant String :=
+                    (if TTY.Color_Enabled then U (" ···") else " ...");
       No_Branch : constant String := "    ";
 
       Printed   : AAA.Strings.Sets.Set;
@@ -950,6 +952,26 @@ package body Alire.Solutions is
         --  Omit is used to remove the top-level connectors, for when the tree
         --  is printed without the root release.
       is
+
+         -------------------------------------
+         -- Inline_Concise_Marker_If_Needed --
+         -------------------------------------
+
+         function Inline_Concise_Marker_If_Needed
+           (Dep : Dependencies.Dependency) return String is
+         begin
+            if Concise
+              and then Printed.Contains (Label (Dep))
+              and then This.State (Dep.Crate).Has_Release
+              and then not Conditional.Enumerate
+                (This.State (Dep.Crate).Release.Dependencies).Is_Empty
+            then
+               return More_Deps;
+            else
+               return "";
+            end if;
+         end Inline_Concise_Marker_If_Needed;
+
          Last : UString;
          --  Used to store the last dependency name in a subtree, to be able to
          --  use the proper ASCII connector. See just below.
@@ -986,46 +1008,30 @@ package body Alire.Solutions is
                   & Label (Dep)
 
                   --  And dependency that introduces the crate in the solution
-                  & " (" & TTY.Emph (Dep.Versions.Image) & ")");
+                  & " (" & TTY.Emph (Dep.Versions.Image) & ")"
 
-               --  Recurse for further releases
+                  --  If concise and this has dependencies, print the marker
+                  & Inline_Concise_Marker_If_Needed (Dep)
+                 );
 
-               if This.State (Dep.Crate).Has_Release then
-                  if Concise
-                    and then Printed.Contains (Label (Dep))
-                    and then not
-                      Conditional.Enumerate
-                        (This.State (Dep.Crate).Release.Dependencies).Is_Empty
-                  then
-                     Trace.Always
-                       (Prefix
-                        --  The prefix is the possible "|" connectors from
-                        --  upper tree levels.
-                        & (if Omit
-                          then ""
-                          else (if +Dep.Crate = +Last
-                                then No_Branch  -- End of this connector
-                                else Branch))   -- "│" over the subtree
+               --  Recurse for further releases if not conise and printed
 
-                        --  Print the appropriate final connector for the node
-                        & (if Omit -- top-level, no prefix
-                           then ""
-                           else Last_Node)
-
-                        & "...");
-                  else
-                     Print
-                       (Conditional.Enumerate
-                          (This.State (Dep.Crate).Release.Dependencies).To_Set,
-                        Prefix =>
-                          Prefix
-                          --  Indent adding the proper running connector
-                          & (if Omit
-                             then ""
-                             else (if +Dep.Crate = +Last
-                                   then No_Branch  -- End of this connector
-                                   else Branch))); -- "│" over the subtree
-                  end if;
+               if (not Concise or else not Printed.Contains (Label (Dep)))
+                 and then This.State (Dep.Crate).Has_Release
+                 and then not Conditional.Enumerate
+                   (This.State (Dep.Crate).Release.Dependencies).Is_Empty
+               then
+                  Print
+                    (Conditional.Enumerate
+                       (This.State (Dep.Crate).Release.Dependencies).To_Set,
+                     Prefix =>
+                       Prefix
+                       --  Indent adding the proper running connector
+                     & (if Omit
+                       then ""
+                       else (if +Dep.Crate = +Last
+                         then No_Branch  -- End of this connector
+                         else Branch))); -- "│" over the subtree
                end if;
 
                Printed.Include (Label (Dep));
