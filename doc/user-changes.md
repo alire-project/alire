@@ -23,7 +23,7 @@ configures `alr` to use the default command with the addition of the switch
 `--netrc` (which instructs `curl` to use the login information in the `.netrc`
 file found in the user's home directory).
 
-The default behaviour is unchanged.
+The default behavior is unchanged.
 
 ### Faster `alr search` without resolving dependencies
 

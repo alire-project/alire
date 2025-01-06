@@ -71,7 +71,7 @@ case a call to `alr index --update-all` will be required.
 ### Remote indexes
 
 You may wish to share your private index outside of your local filesystem. Any
-means of synchronising the contents of the index directory will suffice, but
+means of synchronizing the contents of the index directory will suffice, but
 Alire will manage this process automatically if you use a remote Git repository.
 
 It is often useful to have other files in the same repository as the index
