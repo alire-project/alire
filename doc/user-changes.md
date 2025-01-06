@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### Custom download command for archive crates
 
-PR [#????](https://github.com/alire-project/alire/pull/????)
+PR [#1815](https://github.com/alire-project/alire/pull/1815)
 
 The command used to download a crate as a source archive can now be configured
 using the `origins.archive.download_cmd` key of `alr settings`, instead of using
@@ -25,7 +25,7 @@ file found in the user's home directory).
 
 The default behaviour is unchanged.
 
-### `alr search` no longer solves dependencies by default
+### Faster `alr search` without resolving dependencies
 
 PR [#1799](https://github.com/alire-project/alire/pull/1799)
 
