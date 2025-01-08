@@ -59,7 +59,6 @@ package body Alr.Commands.Version is
                          / Paths.Cache_Folder_Inside_Working_Folder
                          / Paths.Deps_Folder_Inside_Cache_Folder)
                       else Builds.Path);
-
       ---------
       -- Add --
       ---------
@@ -78,7 +77,6 @@ package body Alr.Commands.Version is
 
          Table.Append (Key).Append (Val).New_Row;
       end Add;
-
    begin
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");

@@ -58,7 +58,6 @@ commit = "ddfeffe2d6c8f9d19161df7b31d16d37bef4ba71"
 [pins.ada_toml]
 url    = "https://github.com/mosteo/ada-toml"
 commit = "da4e59c382ceb0de6733d571ecbab7ea4919b33d"
-
 [pins.ansiada]
 url    = "https://github.com/mosteo/ansi-ada"
 commit = "0772e48d3e1f640829d142745a36b37edcd5470b"
@@ -70,7 +69,6 @@ commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 [pins.clic]
 url    = "https://github.com/alire-project/clic"
 commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
-
 [pins.den]
 url    = "https://github.com/mosteo/den"
 commit = "653a4c9ba4469d7e1a8896088789b6514ecdf834"
@@ -86,7 +84,6 @@ commit = "60729edf31816aca0036b13b2794c39a9bd0172e"
 [pins.gnatcoll]
 url    = "https://github.com/alire-project/gnatcoll-core.git"
 commit = "4e663b87a028252e7e074f054f8f453661397166"
-
 [pins.lml]
 url    = "https://github.com/mosteo/lml_ada.git"
 commit = "ae156ef82a2fedb7e28bb4dcaeb3d5c0a2e046ec"
