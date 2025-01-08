@@ -38,7 +38,7 @@ package body Alire.Properties.Scenarios is
                   if Val.Kind = TOML_String then
                      if Val.As_String = "" then
                         Props := Props and
-                          (New_Property (GPR.Free_Variable (Key)));
+                          New_Property (GPR.Free_Variable (Key));
                      else
                         Table.Checked_Error
                           ("free scenario variable must be given as """"");
