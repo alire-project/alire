@@ -24,10 +24,12 @@ Dependencies (tree):
        └── xmlada=25.0.0 (~25.0.0)
            └── gnat=14.1.3 (gnat_native) (>=11)
    gnatcoll_gmp=25.0.0 (~25.0.0)
-   ├── gnatcoll=25.0.0 (~25.0.0) ···
+   ├── gnatcoll=25.0.0 (~25.0.0)
+   │   └── ...
    └── libgmp=6.3.0 (*)
    gnatcoll_iconv=25.0.0 (~25.0.0)
-   └── gnatcoll=25.0.0 (~25.0.0) ···
+   └── gnatcoll=25.0.0 (~25.0.0)
+       └── ...
 ```
 
 Whenever '...' appears, it means that the preceding release has its

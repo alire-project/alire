@@ -24,7 +24,8 @@ xxx=0.1.0-dev
 +-- hello=1.0.1 (*)
 |   +-- libhello=1.0.0 (^1.0)
 +-- yyy=0.1.0-dev (*)
-    +-- hello=1.0.1 (*) ...\
+    +-- hello=1.0.1 (*)
+        +-- ...\
 """,
            run_alr("with", "--tree").out.strip())
 
