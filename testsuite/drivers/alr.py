@@ -640,7 +640,7 @@ def external_compiler_version() -> str:
     # Capture version
     return re.search("gnat_external ([0-9.]+)", p.out, re.MULTILINE).group(1)
 
-def unset_setting(key: str, local: bool = False):
+def alr_settings_unset(key: str, local: bool = False):
     """
     Unset a key with `alr settings`
 
@@ -651,7 +651,7 @@ def unset_setting(key: str, local: bool = False):
     else:
         run_alr("settings", "--global", "--unset", key)
 
-def set_setting(key: str, value: str, local: bool = False):
+def alr_settings_set(key: str, value: str, local: bool = False):
     """
     Set a key-value pair with `alr settings`
 
@@ -667,13 +667,13 @@ def unselect_compiler():
     Leave compiler configuration as if "None" was selected by the user in the
     assistant.
     """
-    unset_setting("toolchain.use.gnat")
-    unset_setting("toolchain.external.gnat")
+    alr_settings_unset("toolchain.use.gnat")
+    alr_settings_unset("toolchain.external.gnat")
 
 
 def set_default_user_settings():
     """
     Set the default alr settings that are undone by the testsuite defaults
     """
-    set_setting("index.auto_community", "true")
-    set_setting("toolchain.assistant", "true")
+    alr_settings_set("index.auto_community", "true")
+    alr_settings_set("toolchain.assistant", "true")

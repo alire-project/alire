@@ -3,7 +3,7 @@ Test alr edit with two project files defined.
 """
 
 from glob import glob
-from drivers.alr import run_alr, set_setting
+from drivers.alr import run_alr, alr_settings_set
 from drivers.asserts import assert_match, assert_not_substring
 from drivers.helpers import MockCommand
 import os
@@ -15,7 +15,7 @@ run_alr('get', 'libhello')
 os.chdir(glob('libhello*')[0])
 
 # Set GNATstudio as prefered editor
-set_setting('editor.cmd', 'gnatstudio -P ${GPR_FILE}')
+alr_settings_set('editor.cmd', 'gnatstudio -P ${GPR_FILE}')
 
 gs = shutil.which('gnatstudio')
 
@@ -30,17 +30,17 @@ p = run_alr('edit', complain_on_error=False)
 assert_match(".*Please specify a project file with --project=.*", p.out)
 
 # Set an editor that doesn't exist (different than GNAT Studio)
-set_setting('editor.cmd', 'doesnt_exist arg1 ab${GPR_FILE}ab arg3')
+alr_settings_set('editor.cmd', 'doesnt_exist arg1 ab${GPR_FILE}ab arg3')
 p = run_alr('edit', '--project=project1.gpr', complain_on_error=False)
 assert_match("ERROR: 'doesnt_exist' not available or not in PATH.*", p.out)
 
 # Use echo as an editor to check command line args
-set_setting('editor.cmd', 'echo arg1 ab${GPR_FILE}ab arg3')
+alr_settings_set('editor.cmd', 'echo arg1 ab${GPR_FILE}ab arg3')
 p = run_alr('edit', '--project=project1.gpr', quiet=False)
 assert_match(r"arg1 abproject1\.gprab arg3", p.out)
 
 # Verify that an `editor.cmd` value in a crate's local `settings.toml` is
-# ignored with a warning (otherwise this would offer an inconspicouous vector
+# ignored with a warning (otherwise this would offer an inconspicuous vector
 # through which a malicious crate could execute arbitrary commands).
 with open(os.path.join("alire", "settings.toml"), "a") as f:
     f.write('editor.cmd = "malicious_cmd"\n')

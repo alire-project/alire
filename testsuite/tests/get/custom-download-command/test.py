@@ -6,7 +6,7 @@ Test `get`ing a tarball release with a different download command configured.
 import os
 import shutil
 
-from drivers.alr import crate_dirname, fixtures_path, run_alr, set_setting
+from drivers.alr import crate_dirname, fixtures_path, run_alr, alr_settings_set
 from drivers.asserts import assert_match, assert_substring
 from drivers.helpers import MockCommand
 
@@ -24,11 +24,11 @@ def set_download_cmd(cmd: str):
     """
     Set the download command in `alr`'s global settings to `cmd`.
     """
-    set_setting("origins.archive.download_cmd", cmd)
+    alr_settings_set("origins.archive.download_cmd", cmd)
 
 
 # Mock `curl` so it always fails, and put the mock download command on `PATH`.
-set_setting("msys2.install_dir", os.path.abspath("does_not_exist"))
+alr_settings_set("msys2.install_dir", os.path.abspath("does_not_exist"))
 mock_curl = MockCommand("curl", "raise Exception", "cmd_dir")
 mock_download_cmd = MockCommand("command_name", COMMAND_SCRIPT, "cmd_dir")
 with mock_curl, mock_download_cmd:

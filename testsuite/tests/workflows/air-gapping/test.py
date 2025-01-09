@@ -8,7 +8,7 @@ import os
 import shutil
 import subprocess
 
-from drivers.alr import run_alr, set_setting
+from drivers.alr import run_alr, alr_settings_set
 from drivers.asserts import assert_eq, assert_match
 from drivers.helpers import MockCommand, on_windows
 
@@ -32,7 +32,7 @@ for tool in TOOLS:
 msys2_dir = run_alr("settings", "--global", "msys2.install_dir").out.strip()
 msys2_dir = msys2_dir.removeprefix("msys2.install_dir=")
 empty_dir = os.path.join(os.getcwd(), "empty-dir")
-set_setting("msys2.install_dir", empty_dir)
+alr_settings_set("msys2.install_dir", empty_dir)
 
 # Run `alr get hello`. This will fail because tar is unavailable.
 p = run_alr("get", "hello", quiet=False, complain_on_error=False)

@@ -369,7 +369,7 @@ package body Alire.Settings.Edit is
    function Valid_Builtin_Check (Lvl : Level) return CLIC.Config.Check_Import
    is (case Lvl is
        when Global => Valid_Global_Builtin'Access,
-       when others => Valid_Local_Builtin'Access);
+       when Local => Valid_Local_Builtin'Access);
 
    -------------------
    -- Builtins_Info --
