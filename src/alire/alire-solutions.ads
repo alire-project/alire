@@ -412,9 +412,11 @@ package Alire.Solutions is
    procedure Print_Tree (This       : Solution;
                          Root       : Alire.Releases.Release;
                          Prefix     : String := "";
-                         Print_Root : Boolean := True);
+                         Print_Root : Boolean := True;
+                         Concise    : Boolean := not Detailed);
    --  Print the solution in tree form. If Print_Root, Root is printed too;
    --  otherwise the tree is a forest starting at Root direct dependencies.
+   --  If Concise, print each unique dependency only once.
 
    procedure Print_Versions (This : Solution;
                              Root : Roots.Root);

@@ -916,7 +916,8 @@ package body Alire.Solutions is
    procedure Print_Tree (This       : Solution;
                          Root       : Alire.Releases.Release;
                          Prefix     : String := "";
-                         Print_Root : Boolean := True)
+                         Print_Root : Boolean := True;
+                         Concise    : Boolean := not Detailed)
    is
 
       Mid_Node  : constant String :=
@@ -926,6 +927,30 @@ package body Alire.Solutions is
       Branch    : constant String :=
                     (if TTY.Color_Enabled then U ("│   ") else "|   ");
       No_Branch : constant String := "    ";
+      More_Deps : constant String := (Last_Node & "...");
+
+      Printed   : AAA.Strings.Sets.Set;
+      --  Dependencies already printed, to avoid reprinting in Concise mode
+
+      -----------
+      -- Label --
+      -----------
+      --  The dependency Milestone or State
+      function Label (Dep : Dependencies.Dependency) return String
+      is (if This.State (Dep.Crate).Has_Release
+          then This.State (Dep.Crate).Milestone_Image
+          else This.State (Dep.Crate).TTY_Image);
+
+      ---------------------
+      -- Already_Printed --
+      ---------------------
+
+      function Already_Printed (Dep : Dependencies.Dependency) return Boolean
+      is (Printed.Contains (Label (Dep)));
+
+      -----------
+      -- Print --
+      -----------
 
       procedure Print (Deps   : Dependencies.Containers.Set;
                        Prefix : String := "";
@@ -933,9 +958,31 @@ package body Alire.Solutions is
         --  Omit is used to remove the top-level connectors, for when the tree
         --  is printed without the root release.
       is
+
+         ----------------------
+         -- Has_Dependencies --
+         ----------------------
+
+         function Has_Dependencies (Dep : Dependencies.Dependency)
+                                     return Boolean
+         is (This.State (Dep.Crate).Has_Release
+             and then not Conditional.Enumerate
+               (This.State (Dep.Crate).Release.Dependencies).Is_Empty);
+
          Last : UString;
          --  Used to store the last dependency name in a subtree, to be able to
          --  use the proper ASCII connector. See just below.
+
+         ----------------------
+         -- Parent_Connector --
+         ----------------------
+
+         function Parent_Connector (Dep : Dependencies.Dependency)
+                                    return String
+         is (if +Dep.Crate = +Last
+             then No_Branch  -- End of this connector
+             else Branch);   -- Continuation
+
       begin
 
          --  Find last printable dependency. This is related to OR trees, that
@@ -966,27 +1013,37 @@ package body Alire.Solutions is
 
                   --  For a dependency solved by a release, print exact
                   --  version. Otherwise print the state of the dependency.
-                  & (if This.State (Dep.Crate).Has_Release
-                    then This.State (Dep.Crate).Milestone_Image
-                    else This.State (Dep.Crate).TTY_Image)
+                  & Label (Dep)
 
                   --  And dependency that introduces the crate in the solution
                   & " (" & TTY.Emph (Dep.Versions.Image) & ")");
 
-               --  Recurse for further releases
+               --  Recurse for further releases, or print the concise marker
 
-               if This.State (Dep.Crate).Has_Release then
-                  Print (Conditional.Enumerate
-                          (This.State (Dep.Crate).Release.Dependencies).To_Set,
-                         Prefix =>
-                           Prefix
-                           --  Indent adding the proper running connector
-                           & (if Omit
-                              then ""
-                              else (if +Dep.Crate = +Last
-                                    then No_Branch  -- End of this connector
-                                    else Branch))); -- "│" over the subtree
+               if
+                 Concise
+                 and then Already_Printed (Dep)
+                 and then Has_Dependencies (Dep)
+               then
+                  Trace.Always (Prefix
+                                & Parent_Connector (Dep)
+                                & More_Deps);
+               elsif
+                 (not Concise or else not Printed.Contains (Label (Dep)))
+                 and then Has_Dependencies (Dep)
+               then
+                  Print
+                    (Conditional.Enumerate
+                       (This.State (Dep.Crate).Release.Dependencies).To_Set,
+                     Prefix =>
+                       Prefix
+                       --  Indent adding the proper running connector
+                       & (if Omit
+                          then ""
+                          else Parent_Connector (Dep)));
                end if;
+
+               Printed.Include (Label (Dep));
             end if;
          end loop;
       end Print;
