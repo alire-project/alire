@@ -5,7 +5,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Alire.OS_Lib;
 with Alire.Platforms.Current;
 
-package body Alire.Environment.Formatting is
+package body Alire.Formatting is
 
    --------------
    -- Contains --
@@ -21,6 +21,22 @@ package body Alire.Environment.Formatting is
 
    function Value (This : Replacements; Pattern : Patterns) return String
    is (This (Pattern));
+
+   --------------------------
+   -- For_Archive_Download --
+   --------------------------
+
+   function For_Archive_Download (URL : String;
+                                  Destination : Absolute_Path)
+                                  return Replacements
+   is
+      Result : Replacements;
+   begin
+      Result.Insert (Formatting.URL, URL);
+      Result.Insert (Formatting.Dest, Destination);
+
+      return Result;
+   end For_Archive_Download;
 
    ------------------------------
    -- For_Manifest_Environment --
@@ -98,9 +114,9 @@ package body Alire.Environment.Formatting is
    -- Format --
    ------------
 
-   function Format (Item    : String;
-                    Repl    : Replacements;
-                    Is_Path : Boolean)
+   function Format (Item              : String;
+                    Repl              : Replacements;
+                    Convert_Path_Seps : Boolean)
                     return String
    is
       -------------
@@ -121,7 +137,7 @@ package body Alire.Environment.Formatting is
             Replace_Slice (Str, From, To, "TEST");
 
          else
-            raise Unknown_Formatting_Key;
+            raise Unknown_Formatting_Key with "Unknown formatting key: " & Id;
          end if;
       end Replace;
 
@@ -170,11 +186,11 @@ package body Alire.Environment.Formatting is
 
       --  For final usage, we use the native separator
 
-      if Is_Path then
+      if Convert_Path_Seps then
          return To_Native (+Result);
       else
          return +Result;
       end if;
    end Format;
 
-end Alire.Environment.Formatting;
+end Alire.Formatting;

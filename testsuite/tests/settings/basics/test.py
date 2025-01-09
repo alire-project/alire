@@ -7,6 +7,7 @@ import os
 from glob import glob
 
 from drivers.alr import run_alr
+from drivers.asserts import assert_substring
 
 def invalid_key(*args):
     print("Running: alr settings %s" % " ".join([item for item in args]))
@@ -34,6 +35,16 @@ def check_value(key, expected_value, local=True):
     else:
         get = run_alr('settings', '--global', '--get', key)
     assert get.out == expected_value + "\n", "Got '%s'" % get.out
+
+def check_undefined(key, local=True):
+    if local:
+        get = run_alr('settings', '--get', key, complain_on_error=False)
+    else:
+        get = run_alr(
+            'settings', '--global', '--get', key, complain_on_error=False
+        )
+    assert f"Setting key '{key}' is not defined" in get.out, \
+           "Missing error message in: '%s" % get.out
 
 def set_get_unset(key, value, image=None):
 
@@ -75,7 +86,11 @@ invalid_key('--get', '--global', '^')
 # invalid builtins #
 ####################
 invalid_builtin('--set', '--global', 'user.github_login', 'This is not a valid login')
+check_undefined('user.github_login', local=False)
 invalid_builtin('--set', '--global', 'user.email', '@ This is not @ valid email address@')
+check_undefined('user.email', local=False)
+invalid_builtin('--set', '--global', 'distribution.override', 'invalid distribution')
+check_undefined('distribution.override', local=False)
 
 ###############################
 # Global Set, Get, Unset, Get #
@@ -108,6 +123,11 @@ check_value('test.override', 'is_local')
 # Set a global and check that the local value is still returned
 run_alr('settings', '--set', '--global', 'test.override', '"is_global"')
 check_value('test.override', 'is_local')
+
+# Try setting a Global_Only value and check that it doesn't work
+p = run_alr('settings', '--set', 'editor.cmd', 'value', complain_on_error=False)
+assert_substring("Configuration key 'editor.cmd' must be set globally", p.out)
+check_undefined('editor.cmd')
 
 # Leave the crate context (local keys are not available anymore)
 os.chdir('..')

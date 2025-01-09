@@ -2,17 +2,23 @@ with Alire.Roots;
 
 private with Ada.Containers.Indefinite_Ordered_Maps;
 
-package Alire.Environment.Formatting is
+package Alire.Formatting is
 
    type Patterns is (Crate_Root,
+                     Dest,
                      Distrib_Root,
-                     GPR_File);
+                     GPR_File,
+                     URL);
    --  These correspond directly with ${PATTERNs} that can be replaced
 
    function Dollar_Image (Pattern : Patterns) return String
    is ("${" & Pattern'Image & "}");
 
    type Replacements (<>) is tagged private;
+
+   function For_Archive_Download (URL         : String;
+                                  Destination : Absolute_Path)
+                                  return Replacements;
 
    function For_Manifest_Environment (Crate_Root : Any_Path)
                                       return Replacements;
@@ -28,12 +34,14 @@ package Alire.Environment.Formatting is
    function Value (This : Replacements; Pattern : Patterns) return String
      with Pre => This.Contains (Pattern);
 
-   function Format (Item    : String;
-                    Repl    : Replacements;
-                    Is_Path : Boolean)
+   function Format (Item              : String;
+                    Repl              : Replacements;
+                    Convert_Path_Seps : Boolean)
                     return String;
-   --  If Is_Path, a final pass is done to use platform-specific dir separators
-   --  Format the item with ${} replacement patterns.
+   --  Format Item with ${} replacement patterns.
+   --
+   --  If Convert_Path_Seps, a final pass is done to replace forward slashes
+   --  with native slashes on Windows, unless they are an escape sequence.
 
    Unknown_Formatting_Key : exception;
 
@@ -44,4 +52,4 @@ private
 
    type Replacements is new Pattern_String_Maps.Map with null record;
 
-end Alire.Environment.Formatting;
+end Alire.Formatting;

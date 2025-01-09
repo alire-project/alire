@@ -144,20 +144,22 @@ package body Alire.Settings is
    -- New_Builtin --
    -----------------
 
-   function New_Builtin (Key    : CLIC.Config.Config_Key;
-                         Kind   : Builtin_Kind;
-                         Def    : String := "";
-                         Help   : String := "";
-                         Public : Boolean := True;
-                         Check  : CLIC.Config.Check_Import := null)
+   function New_Builtin (Key         : CLIC.Config.Config_Key;
+                         Kind        : Builtin_Kind;
+                         Def         : String := "";
+                         Help        : String := "";
+                         Public      : Boolean := True;
+                         Global_Only : Boolean := False;
+                         Check       : CLIC.Config.Check_Import := null)
                          return Builtin_Option
    is
    begin
-      return Result : constant Builtin_Option := (Key   => +Key,
-                                                  Kind  => Kind,
-                                                  Def   => +Def,
-                                                  Help  => +Help,
-                                                  Check => Check)
+      return Result : constant Builtin_Option := (Key         => +Key,
+                                                  Kind        => Kind,
+                                                  Def         => +Def,
+                                                  Help        => +Help,
+                                                  Global_Only => Global_Only,
+                                                  Check       => Check)
       do
          if Public then
             All_Builtins.Insert (Key, Result);
@@ -169,11 +171,12 @@ package body Alire.Settings is
    -- New_Builtin --
    -----------------
 
-   function New_Builtin (Key    : CLIC.Config.Config_Key;
-                         Def    : Boolean;
-                         Help   : String := "";
-                         Public : Boolean := True;
-                         Check  : CLIC.Config.Check_Import := null)
+   function New_Builtin (Key         : CLIC.Config.Config_Key;
+                         Def         : Boolean;
+                         Help        : String := "";
+                         Public      : Boolean := True;
+                         Global_Only : Boolean := False;
+                         Check       : CLIC.Config.Check_Import := null)
                          return Builtin_Option
    is (New_Builtin (Key   => Key,
                     Kind   => Stn_Bool,

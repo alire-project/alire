@@ -1,5 +1,6 @@
 with AAA.Strings;
 
+with Alire.Formatting;
 with Alire.Releases;
 
 package Alire.Spawn is
@@ -13,6 +14,20 @@ package Alire.Spawn is
       Understands_Verbose : Boolean := False);
    --  Adds -v if understands in Debug log level
    --  Summary is shown after process successful end, if Log_Level = Info
+
+   procedure Settings_Command
+     (Cmd          : String;
+      Replacements : Alire.Formatting.Replacements;
+      Exec_Check   : access procedure (Exec : String) := null);
+   --  Launches a command from a string, according to the conventions used by
+   --  commands configurable with `alr settings`.
+   --
+   --  Parses a space-separated string and performs ${} pattern replacements
+   --  (on arguments only).
+   --
+   --  Exec_Check is called with the executable name between parsing Cmd into
+   --  arguments and executing the command, e.g. to check that the executable
+   --  is available.
 
    procedure Gprbuild
      (Project_File  : String;

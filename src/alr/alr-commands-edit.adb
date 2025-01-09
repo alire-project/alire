@@ -1,8 +1,9 @@
 with Ada.Containers;
 
 with Alire; use Alire;
-with Alire.Environment.Formatting;
+with Alire.Formatting;
 with Alire.Settings.Builtins;
+with Alire.Spawn;
 with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
 
@@ -10,7 +11,7 @@ with CLIC.User_Input;
 
 package body Alr.Commands.Edit is
 
-   package Format renames Alire.Environment.Formatting;
+   package Format renames Alire.Formatting;
 
    Switch_Select : constant String := "--select-editor";
 
@@ -34,28 +35,31 @@ package body Alr.Commands.Edit is
       Put_Info ("`alr edit " & Switch_Select & "`");
    end Set_Config_Cmd;
 
-   --------------------------
-   -- Report_Not_Installed --
-   --------------------------
+   -----------------------------
+   -- Report_If_Not_Installed --
+   -----------------------------
 
-   procedure Report_Not_Installed (Exec : String) is
+   procedure Report_If_Not_Installed (Exec : String) is
    begin
-      if Exec = "gnatstudio" or else Exec = "gnatstudio.exe" then
-         Reportaise_Command_Failed
-           ("GNAT Studio not available or not in PATH. " & ASCII.LF &
-              "You can download it at: " & ASCII.LF &
-              "https://github.com/AdaCore/gnatstudio/releases");
-      elsif Exec = "code" or else Exec = "code.exe" then
-         Reportaise_Command_Failed
-           ("VS Code not available or not in PATH. " & ASCII.LF &
-              "You can download it at: " & ASCII.LF &
-              "https://code.visualstudio.com/download"  & ASCII.LF &
-              "We also recomend installing the 'AdaCore.ada' extension.");
-      else
-         Reportaise_Command_Failed
-           ("'" & Exec & "' not available or not in PATH.");
+      if Alire.OS_Lib.Subprocess.Locate_In_Path (Exec) = "" then
+         --  Executable not in PATH, report an error
+         if Exec = "gnatstudio" or else Exec = "gnatstudio.exe" then
+            Reportaise_Command_Failed
+              ("GNAT Studio not available or not in PATH. " & ASCII.LF &
+                 "You can download it at: " & ASCII.LF &
+                 "https://github.com/AdaCore/gnatstudio/releases");
+         elsif Exec = "code" or else Exec = "code.exe" then
+            Reportaise_Command_Failed
+              ("VS Code not available or not in PATH. " & ASCII.LF &
+                 "You can download it at: " & ASCII.LF &
+                 "https://code.visualstudio.com/download"  & ASCII.LF &
+                 "We also recomend installing the 'AdaCore.ada' extension.");
+         else
+            Reportaise_Command_Failed
+              ("'" & Exec & "' not available or not in PATH.");
+         end if;
       end if;
-   end Report_Not_Installed;
+   end Report_If_Not_Installed;
 
    ------------------
    -- Query_Editor --
@@ -132,36 +136,6 @@ package body Alr.Commands.Edit is
       end;
    end Query_Editor;
 
-   ------------------
-   -- Start_Editor --
-   ------------------
-
-   procedure Start_Editor (Root : in out Alire.Roots.Root;
-                           Args : in out AAA.Strings.Vector;
-                           Prj  : Relative_Path)
-   is
-      Cmd : constant String := Args.First_Element;
-
-      Replaced_Args : AAA.Strings.Vector;
-   begin
-
-      Args.Delete_First;
-
-      for Elt of Args loop
-
-         --  Replace pattern in Elt, if any
-         Replaced_Args.Append
-           (Format.Format
-              (Elt,
-               Format.For_Editor (Root, Prj),
-               Is_Path => True));
-      end loop;
-
-      Trace.Info ("Editing crate with: ['" & Cmd & "' '" &
-                    AAA.Strings.Flatten (Replaced_Args, "', '") & "']");
-      Alire.OS_Lib.Subprocess.Checked_Spawn (Cmd, Replaced_Args);
-   end Start_Editor;
-
    -------------
    -- Execute --
    -------------
@@ -203,29 +177,19 @@ package body Alr.Commands.Edit is
       Cmd.Root.Export_Build_Environment;
 
       declare
-         Editor_Cmd  : constant String :=
-           Builtins.Editor_Cmd.Get;
-
-         Edit_Args : AAA.Strings.Vector :=
-           AAA.Strings.Split (Editor_Cmd, ' ');
-
-         Exec : constant String := Edit_Args.First_Element;
-
          Project_Files : constant AAA.Strings.Vector :=
            Cmd.Root.Release.Project_Files
              (Platforms.Current.Properties, With_Path => True);
       begin
-         if Alire.OS_Lib.Subprocess.Locate_In_Path (Exec) = "" then
-            --  Executable not in PATH, report an error
-            Report_Not_Installed (Exec);
-         end if;
-
          if Project_Files.Length = 0 then
             Reportaise_Command_Failed
               ("No project file to open for this crate.");
 
          elsif Project_Files.Length = 1 then
-            Start_Editor (Cmd.Root, Edit_Args, Project_Files.First_Element);
+            Spawn.Settings_Command
+              (Builtins.Editor_Cmd.Get,
+               Format.For_Editor (Cmd.Root, Project_Files.First_Element),
+               Report_If_Not_Installed'Access);
 
          elsif Cmd.Prj = null
            or else
@@ -240,7 +204,10 @@ package body Alr.Commands.Edit is
               ("Please specify a project file with --project=.");
 
          else
-            Start_Editor (Cmd.Root, Edit_Args, Cmd.Prj.all);
+            Spawn.Settings_Command
+              (Builtins.Editor_Cmd.Get,
+               Format.For_Editor (Cmd.Root, Cmd.Prj.all),
+               Report_If_Not_Installed'Access);
          end if;
       end;
    end Execute;

@@ -1,11 +1,7 @@
 with Ada.Directories;
 
-with AAA.Strings; use AAA.Strings;
-
 with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
-with Alire.Utils;             use Alire.Utils;
-with Alire.Utils.Tools;
 
 with GNATCOLL.VFS;
 
@@ -25,10 +21,6 @@ package body Alire.OS_Lib.Download is
       Archive_File : constant Directory_Path :=
                        Folder / Ada.Directories.Simple_Name (Filename);
    begin
-
-      --  Make sure curl is installed
-      Utils.Tools.Check_Tool (Utils.Tools.Curl);
-
       Trace.Debug ("Creating folder: " & Folder);
       Create (+Folder).Make_Dir;
 
