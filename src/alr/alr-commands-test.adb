@@ -157,6 +157,12 @@ package body Alr.Commands.Test is
                                  Empty_Vector
                                      & "-d"
                                      & "-n"
+                                     & (if Alire.Log_Level >= Detail
+                                        then To_Vector ("-v")
+                                        else Empty_Vector)
+                                     & (if Alire.Log_Level >= Debug
+                                        then To_Vector ("-v")
+                                        else Empty_Vector)
                                      & (if Alire.Force
                                         then To_Vector ("--force")
                                         else Empty_Vector);
