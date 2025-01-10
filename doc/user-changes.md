@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### Configurable trusted sites list for Git repositories
 
-PR [#????](https://github.com/alire-project/alire/pull/????)
+PR [#1819](https://github.com/alire-project/alire/pull/1819)
 
 The list of hosts which the `alr publish --for-private-index` and
 `alr index --check` commands consider to be trusted for Git repository origins
