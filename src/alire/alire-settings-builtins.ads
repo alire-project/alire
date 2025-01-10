@@ -126,6 +126,19 @@ package Alire.Settings.Builtins is
       & " character. The token ${DEST} is replaced by the destination path,"
       & " and ${URL} by the URL to download.");
 
+   Origins_Git_Trusted_Sites : constant Builtin := New_Builtin
+     (Key         => "origins.git.trusted_sites",
+      Kind        => Stn_String,
+      Def         => Community_Trusted_Sites,
+      Global_Only => True,
+      Help        =>
+        "Space-separated list of trusted sites for Git origins, used by"
+      & " 'alr index --check' and 'alr publish --for-private-index'. If"
+      & " empty (e.g. if set to ' '), all origins are trusted. Note that"
+      & " this does not have any effect when using 'alr publish' for"
+      & " submissions to the community index (which only permits the"
+      & " default list).");
+
    --  SOLVER
 
    Solver_Autonarrow : constant Builtin := New_Builtin

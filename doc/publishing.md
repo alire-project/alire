@@ -326,7 +326,9 @@ where the `--for-private-index` switch disables the submission step and certain
 checks which are only applicable to the community index, and the remaining
 arguments function as described above. This will generate a manifest file which
 you can place at the indicated path (relative to the location of `index.toml`)
-in your private index.
+in your private index. If you are using a remote Git repository which is not on
+one of the community index's trusted hosts, you will need to configure it with
+the `origins.git.trusted_sites` [setting](settings).
 
 One important thing to note is that publishing from a local repository will
 detect the URL configured as the Git remote (as displayed by

@@ -49,15 +49,6 @@ package body Alire.Publish is
    use Directories.Operators;
    use AAA.Strings;
 
-   Trusted_Sites : constant AAA.Strings.Vector :=
-                     AAA.Strings.Empty_Vector
-                       .Append ("bitbucket.org")
-                       .Append ("github.com")
-                       .Append ("gitlab.com")
-                       .Append ("savannah.gnu.org")
-                       .Append ("savannah.nongnu.org")
-                       .Append ("sf.net");
-
    Early_Stop : exception;
    --  Raise this exception from a step to terminate prematurely but without
    --  generating an error. E.g., if the user doesn't want to submit online
@@ -945,7 +936,7 @@ package body Alire.Publish is
          if (Force and then
              URI.URI_Kind (URL) in URI.Local_URIs)
            or else
-            Is_Trusted (URL)
+            Is_Trusted (URL, not Context.Options.For_Private_Index)
          then
             Put_Success ("Origin is hosted on trusted site: "
                          & URI.Host (URL));
@@ -1084,13 +1075,40 @@ package body Alire.Publish is
                     else No_Steps));
    end Directory_Tar;
 
+   -------------------
+   -- Trusted_Sites --
+   -------------------
+
+   function Trusted_Sites (Ignore_Setting : Boolean) return Vector is
+      Space_Separated : constant String :=
+        (if Ignore_Setting then Community_Trusted_Sites
+         else Settings.Builtins.Origins_Git_Trusted_Sites.Get);
+      Split_Vector    : constant Vector := Split (Space_Separated, ' ');
+      Sites           : Vector := Empty_Vector;
+   begin
+      for Site of Split_Vector loop
+         if Site /= "" then
+            Sites.Append (Site);
+         end if;
+      end loop;
+      return Sites;
+   end Trusted_Sites;
+
    ----------------
    -- Is_Trusted --
    ----------------
 
-   function Is_Trusted (URL : Alire.URL) return Boolean
-   is (for some Site of Trusted_Sites => URI.Host (URL) = Site
-       or else Has_Suffix (URI.Host (URL), "." & Site));
+   function Is_Trusted (URL : Alire.URL; Ignore_Setting : Boolean)
+                        return Boolean
+   is
+      Sites : constant Vector := Trusted_Sites (Ignore_Setting);
+   begin
+      return
+        Sites.Length in 0 -- Empty list means all sites are trusted
+        or else (for some Site of Sites
+                 => URI.Host (URL) = Site
+                 or else Has_Suffix (URI.Host (URL), "." & Site));
+   end Is_Trusted;
 
    ----------------------
    -- Local_Repository --
@@ -1452,11 +1470,17 @@ package body Alire.Publish is
    -- Print_Trusted_Sites --
    -------------------------
 
-   procedure Print_Trusted_Sites is
+   procedure Print_Trusted_Sites (For_Private_Index : Boolean) is
+      Ignore_Setting : constant Boolean := not For_Private_Index;
+      Sites          : constant Vector := Trusted_Sites (Ignore_Setting);
    begin
-      for Site of Trusted_Sites loop
-         Trace.Always (Site);
-      end loop;
+      if Sites.Length in 0 then
+         Trace.Always ("All sites are currently trusted for private indexes.");
+      else
+         for Site of Sites loop
+            Trace.Always (Site);
+         end loop;
+      end if;
    end Print_Trusted_Sites;
 
 end Alire.Publish;

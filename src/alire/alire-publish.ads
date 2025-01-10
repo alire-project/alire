@@ -47,11 +47,17 @@ package Alire.Publish is
        & M.Crate.As_String & "-"
        & M.Version.Image);
 
-   procedure Print_Trusted_Sites;
-   --  Print our list of allowed sites to host git releases
+   procedure Print_Trusted_Sites (For_Private_Index : Boolean);
+   --  Print our list of allowed sites to host git releases.
+   --
+   --  If For_Private_Index is True, the list is that configured with the
+   --  'origins.git.trusted_sites' setting, otherwise it is the hardcoded
+   --  Community_Trusted_Sites list.
 
-   function Is_Trusted (URL : Alire.URL) return Boolean;
-   --  According to our whitelist
+   function Is_Trusted (URL : Alire.URL; Ignore_Setting : Boolean)
+                        return Boolean;
+   --  According to the 'origins.git.trusted_sites' setting, or the hardcoded
+   --  Community_Trusted_Sites if Ignore_Setting is True.
 
    type Data is tagged limited private;
 

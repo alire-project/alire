@@ -6,6 +6,16 @@ stay on top of `alr` new features.
 
 ## Release `2.1`
 
+### Configurable trusted sites list for Git repositories
+
+PR [#????](https://github.com/alire-project/alire/pull/????)
+
+The list of hosts which the `alr publish --for-private-index` and
+`alr index --check` commands consider to be trusted for Git repository origins
+can now be configured with the `origins.git.trusted_sites` settings key. The
+existing hard-coded list still applies when using `alr publish` to submit to the
+community index.
+
 ### Custom download command for archive crates
 
 PR [#1815](https://github.com/alire-project/alire/pull/1815)

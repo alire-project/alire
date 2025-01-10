@@ -52,6 +52,17 @@ package Alire with Preelaborate is
    Extension_Separator    : constant Character := '.';
    --  Refers to extension releases! Nothing to do with files
 
+   Community_Trusted_Sites : constant String :=
+     "bitbucket.org"
+     & " github.com"
+     & " gitlab.com"
+     & " savannah.gnu.org"
+     & " savannah.nongnu.org"
+     & " sf.net";
+   --  Space separated list of hosts that are known to not be vulnerable to
+   --  SHA-1 collision attacks, and therefore trusted for use on the community
+   --  index. Also used as the default value for 'origins.git.trusted_sites'.
+
    --  Strings that are used quite generally
 
    package UStrings renames Ada.Strings.Unbounded;
