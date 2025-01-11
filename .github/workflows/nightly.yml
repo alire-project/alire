@@ -92,6 +92,7 @@ jobs:
     - name: Package binaries (macOS/x64)
       if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
       run: zip alr-nightly-bin-x86_64-macos.zip bin/alr* LICENSE.txt alr-*.txt
+
     - name: Package binaries (macOS/arm64)
       if: startsWith(matrix.os, 'macos') && runner.arch == 'ARM64'
       run: zip alr-nightly-bin-aarch64-macos.zip bin/alr* LICENSE.txt alr-*.txt
@@ -113,3 +114,53 @@ jobs:
           alr-nightly-*.zip
         tag: nightly
         rm: false
+
+  build-macos-universal:
+    runs-on: macos-latest
+    needs: [build]
+    steps:
+      - name: Install Python 3.x (required for releaser)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: download x86_64
+        uses: robinraju/release-downloader@v1
+        with:
+          fileName: '*-x86_64-macos.zip'
+          latest: true
+          preRelease: true
+          out-file-path: 'x86_64'
+          extract: true
+      - name: check x86_64 attributes
+        run: xattr -vr x86_64
+        
+      - name: download aarch64
+        uses: robinraju/release-downloader@v1
+        with:
+          latest: true
+          preRelease: true
+          fileName: '*-aarch64-macos.zip'
+          out-file-path: 'aarch64'
+          extract: true
+      - name: check aarch64 attributes
+        run: xattr -vr aarch64
+
+      - name: Create universal binary
+        run: |
+          mkdir universal
+          # copy extra files from aarch64 (and bin/alr, to be overwritten)
+          cp -pR aarch64/* universal
+          lipo x86_64/bin/alr aarch64/bin/alr -create -output universal/bin/alr
+          ls -l universal/bin/alr
+          chmod +x universal/bin/alr
+          (cd universal; zip ../alr-nightly-bin-universal-macos.zip bin/alr LICENSE.txt alr-*.txt)
+
+      - name: Upload to release
+        uses: pyTooling/Actions/releaser/composite@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            alr-nightly-bin-universal-macos.zip
+          tag: nightly
+          rm: false
