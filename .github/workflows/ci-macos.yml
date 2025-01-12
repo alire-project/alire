@@ -113,3 +113,67 @@ jobs:
         asset_path: alr-bin-macos.zip
         asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-${{ steps.get_arch.outputs.arch }}-macos.zip
         asset_content_type: application/zip
+
+  build-macos-universal:
+    runs-on: macos-latest
+    needs: [build]
+    steps:
+      - name: Install Python 3.x (required for releaser)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: download x86_64
+        uses: robinraju/release-downloader@v1
+        with:
+          fileName: '*-x86_64-macos.zip'
+          latest: true
+          preRelease: true
+          out-file-path: 'x86_64'
+          extract: true
+        
+      - name: download aarch64
+        uses: robinraju/release-downloader@v1
+        with:
+          latest: true
+          preRelease: true
+          fileName: '*-aarch64-macos.zip'
+          out-file-path: 'aarch64'
+          extract: true
+
+      - name: Create universal binary
+        run: |
+          mkdir bin
+          lipo x86_64/bin/alr aarch64/bin/alr -create -output bin/alr
+          chmod +x bin/alr
+          cp aarch64/LICENSE.txt .
+          zip alr-bin-macos.zip bin/alr LICENSE.txt
+
+      # Release steps
+
+      # I think I have to run these first two again, because
+      # the previous uses are in a different job?
+      
+      - name: Retrieve upload URL for the release
+        if: github.event_name == 'release'
+        id: get_release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Get release version
+        id: get_version
+        if: github.event_name == 'release'
+        uses: battila7/get-version-action@v2
+      
+      - name: Upload release assets
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: alr-bin-macos.zip
+          asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-universal-macos.zip
+          asset_content_type: application/zip
+
