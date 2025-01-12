@@ -7,9 +7,10 @@ package body Alire.Spawn is
    -- Command --
    -------------
 
-   procedure Command (Cmd                 : String;
-                      Args                : AAA.Strings.Vector;
-                      Understands_Verbose : Boolean := False)
+   procedure Command
+     (Cmd                 : String;
+      Args                : AAA.Strings.Vector;
+      Understands_Verbose : Boolean := False)
    is
       Unused_Output : AAA.Strings.Vector;
    begin
@@ -23,12 +24,38 @@ package body Alire.Spawn is
       end if;
    end Command;
 
+   ----------------------
+   -- Settings_Command --
+   ----------------------
+
+   procedure Settings_Command
+     (Cmd          : String;
+      Replacements : Alire.Formatting.Replacements;
+      Exec_Check   : access procedure (Exec : String) := null)
+   is
+      Args          : AAA.Strings.Vector := AAA.Strings.Split (Cmd, ' ');
+      Exec          : constant String := Args.First_Element;
+      Replaced_Args : AAA.Strings.Vector;
+   begin
+      if Exec_Check /= null then
+         Exec_Check (Exec);
+      end if;
+      if Alire.OS_Lib.Subprocess.Locate_In_Path (Exec) = "" then
+         Raise_Checked_Error ("'" & Exec & "' not available or not in PATH.");
+      end if;
+      Args.Delete_First;
+      for Element of Args loop
+         Replaced_Args.Append
+           (Alire.Formatting.Format (Element, Replacements, False));
+      end loop;
+      Command (Exec, Replaced_Args);
+   end Settings_Command;
+
    --------------
    -- Gprbuild --
    --------------
 
-   procedure Gprbuild (Project_File : String;
-                       Extra_Args   : AAA.Strings.Vector)
+   procedure Gprbuild (Project_File : String; Extra_Args : AAA.Strings.Vector)
    is
       use AAA.Strings;
    begin

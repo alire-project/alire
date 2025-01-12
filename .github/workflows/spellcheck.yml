@@ -16,4 +16,4 @@ jobs:
           reporter: github-pr-annotations
           locale: "US"
           pattern: '*.md'
-          fail_on_error: true
+          fail_level: warning

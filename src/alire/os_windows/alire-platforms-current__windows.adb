@@ -8,10 +8,9 @@ pragma Unreferenced (Alire_Early_Elaboration);
 
 with Alire.Environment;
 with Alire.OS_Lib;            use Alire.OS_Lib;
+with Alire.OS_Lib.Download;
 with Alire.Settings.Builtins.Windows;
 with Alire.Errors;
-
-with GNATCOLL.VFS;
 
 with CLIC.User_Input;
 
@@ -220,43 +219,6 @@ package body Alire.Platforms.Current is
    is
       use AAA.Strings;
 
-      -------------------
-      -- Download_File --
-      -------------------
-
-      function Download_File (URL      : String;
-                              Filename : Any_Path;
-                              Folder   : Directory_Path)
-                              return Outcome
-      is
-         use GNATCOLL.VFS;
-
-         Archive_File : constant Directory_Path :=
-           Folder / Ada.Directories.Simple_Name (Filename);
-      begin
-
-         Trace.Debug ("Creating folder: " & Folder);
-         Create (+Folder).Make_Dir;
-
-         Trace.Detail ("Downloading file: " & URL);
-
-         OS_Lib.Subprocess.Checked_Spawn
-           ("curl",
-            Empty_Vector &
-              URL &
-              "--location" &  -- allow for redirects at the remote host
-            (if Log_Level < Trace.Info
-               then Empty_Vector & "--silent"
-               else Empty_Vector & "--progress-bar") &
-              "--output" &
-              Archive_File);
-
-         return Outcome_Success;
-      exception
-         when E : others =>
-            return Alire.Errors.Get (E);
-      end Download_File;
-
       Msys2_Installer : constant String :=
                           Settings.Builtins.Windows.Msys2_Installer.Get;
 
@@ -276,9 +238,9 @@ package body Alire.Platforms.Current is
            with "Attempting to install msys2 during testsuite run";
       end if;
 
-      Result := Download_File (Msys2_Installer_URL,
-                               Msys2_Installer,
-                               Install_Dir);
+      Result := Alire.OS_Lib.Download.File (Msys2_Installer_URL,
+                                            Msys2_Installer,
+                                            Install_Dir);
       if not Result.Success then
          return Result;
       end if;

@@ -70,10 +70,17 @@ package Alire.Settings.Edit is
    procedure Print_Builtins_Doc;
    --  Print a Markdown documentation for the built-in settings options
 
-   function Valid_Builtin (Key   : CLIC.Config.Config_Key;
-                           Value : TOML.TOML_Value)
+   function Valid_Builtin (Key    : CLIC.Config.Config_Key;
+                           Value  : TOML.TOML_Value;
+                           Global : Boolean)
                            return Boolean;
    --  Check that the combination satisfies builtin rules
+   --
+   --  Global_Only settings will be ignored (with an error message) if Global
+   --  is False.
+
+   function Valid_Builtin_Check (Lvl : Level) return CLIC.Config.Check_Import;
+   --  Return the appropriate Check_Import procedure for a given Level
 
 private
 

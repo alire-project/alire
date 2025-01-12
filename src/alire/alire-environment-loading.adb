@@ -1,5 +1,5 @@
 with Alire_Early_Elaboration;
-with Alire.Environment.Formatting;
+with Alire.Formatting;
 with Alire.GPR;
 with Alire.Platforms.Current;
 with Alire.Properties.Scenarios;
@@ -125,7 +125,7 @@ package body Alire.Environment.Loading is
                          Formatting.Format
                            (Act.Value,
                             Formatting.For_Manifest_Environment (Release_Base),
-                            Is_Path => True);
+                            Convert_Path_Seps => True);
             begin
                case Act.Action is
 

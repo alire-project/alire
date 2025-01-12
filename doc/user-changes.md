@@ -6,7 +6,60 @@ stay on top of `alr` new features.
 
 ## Release `2.1`
 
-PR [1799](https://github.com/alire-project/alire/pull/1799)
+### Custom download command for archive crates
+
+PR [#1815](https://github.com/alire-project/alire/pull/1815)
+
+The command used to download a crate as a source archive can now be configured
+using the `origins.archive.download_cmd` key of `alr settings`, instead of using
+a hard-coded `curl` command. The tokens `${URL}` and `${DEST}` are replaced by
+the origin URL and destination file path respectively.
+
+For example
+```sh
+alr settings --set --global origins.archive.download_cmd 'curl ${URL} --netrc -L -s -o ${DEST}'
+```
+configures `alr` to use the default command with the addition of the switch
+`--netrc` (which instructs `curl` to use the login information in the `.netrc`
+file found in the user's home directory).
+
+The default behavior is unchanged.
+
+### Abbreviated `--tree` output for repeating dependencies
+
+PR [#1814](https://github.com/alire-project/alire/pull/1814)
+
+By default, repeated dependencies are now omitted by `--tree` output, e.g.:
+
+```
+$ alr show --tree libgpr2
+...
+Dependencies (tree):
+   gnat=14.1.3 (gnat_native) (>=14)
+   gnatcoll=25.0.0 (~25.0.0)
+   ├── gnat=14.1.3 (gnat_native) (>=13)
+   └── libgpr=25.0.0 (~25.0.0)
+       ├── gnat=14.1.3 (gnat_native) (/=2020)
+       └── xmlada=25.0.0 (~25.0.0)
+           └── gnat=14.1.3 (gnat_native) (>=11)
+   gnatcoll_gmp=25.0.0 (~25.0.0)
+   ├── gnatcoll=25.0.0 (~25.0.0)
+   │   └── ...
+   └── libgmp=6.3.0 (*)
+   gnatcoll_iconv=25.0.0 (~25.0.0)
+   └── gnatcoll=25.0.0 (~25.0.0)
+       └── ...
+```
+
+Whenever '...' appears, it means that the preceding release has its
+dependencies already printed somewhere in the preceding tree lines.
+
+The old behavior can be obtained by increasing verbosity with the global `-v`
+switch.
+
+### Faster `alr search` without resolving dependencies
+
+PR [#1799](https://github.com/alire-project/alire/pull/1799)
 
 `alr search` no longer solves dependencies of releases by default, in order to
 speed up the command. The `--solve` switch can be used to achieve the old
@@ -17,11 +70,21 @@ In the new default situation, releases that have dependencies are marked with a
 dependencies and replace the '?' with either nothing for a solvable release or
 the usual 'X' if dependencies are unsatisfiable.
 
+### Support for private indexes with `alr publish --for-private-index`
+
+PR [#1745](https://github.com/alire-project/alire/pull/1745)
+
+Automated manifest generation with `alr publish` can now be performed for crates
+which are not intended for submission to the community index by supplying the
+`--for-private-index` switch. This has the same effects as `--skip-submit`, and
+additionally disables a number of checks that enforce submission requirements
+specific to the community index.
+
 ## Release `2.0`
 
 ### `ALIRE_SETTINGS_DIR` replaces `ALR_CONFIG`
 
-PR [1625](https://github.com/alire-project/alire/pull/1625)
+PR [#1625](https://github.com/alire-project/alire/pull/1625)
 
 This reflects the new nomenclature of Alire settings versus crate
 configuration. Also, it better reflects that the effect is on the whole library
@@ -29,7 +92,7 @@ and not only the `alr` command-line tool.
 
 ### `alr settings` replaces `alr config`
 
-PR [1617](https://github.com/alire-project/alire/pull/1617)
+PR [#1617](https://github.com/alire-project/alire/pull/1617)
 
 The `alr settings` command replaces the `alr config` command. This change is
 introduced to tackle the confusion between the configuration of the Alire

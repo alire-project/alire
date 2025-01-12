@@ -5,4 +5,4 @@ maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 
 [origin]
-url = "file:../../../crates/libhello.tgz"
+url = "file:../../../crates/libhello.tar"

@@ -63,20 +63,22 @@ package Alire.Settings is
    procedure Unset (This  : Builtin_Option;
                     Level : Settings.Level);
 
-   function New_Builtin (Key    : CLIC.Config.Config_Key;
-                         Kind   : Builtin_Kind;
-                         Def    : String := "";
-                         Help   : String := "";
-                         Public : Boolean := True;
-                         Check  : CLIC.Config.Check_Import := null)
+   function New_Builtin (Key         : CLIC.Config.Config_Key;
+                         Kind        : Builtin_Kind;
+                         Def         : String := "";
+                         Help        : String := "";
+                         Public      : Boolean := True;
+                         Global_Only : Boolean := False;
+                         Check       : CLIC.Config.Check_Import := null)
                          return Builtin_Option
      with Pre => Help /= "" or else not Public;
 
-   function New_Builtin (Key    : CLIC.Config.Config_Key;
-                         Def    : Boolean;
-                         Help   : String := "";
-                         Public : Boolean := True;
-                         Check  : CLIC.Config.Check_Import := null)
+   function New_Builtin (Key         : CLIC.Config.Config_Key;
+                         Def         : Boolean;
+                         Help        : String := "";
+                         Public      : Boolean := True;
+                         Global_Only : Boolean := False;
+                         Check       : CLIC.Config.Check_Import := null)
                          return Builtin_Option
      with Pre => Help /= "" or else not Public;
 
@@ -88,11 +90,12 @@ private
    --  The Alire user settings database
 
    type Builtin_Option is tagged record
-      Key     : Ada.Strings.Unbounded.Unbounded_String;
-      Kind    : Builtin_Kind;
-      Def     : Ada.Strings.Unbounded.Unbounded_String;
-      Help    : Ada.Strings.Unbounded.Unbounded_String;
-      Check   : CLIC.Config.Check_Import := null;
+      Key         : Ada.Strings.Unbounded.Unbounded_String;
+      Kind        : Builtin_Kind;
+      Def         : Ada.Strings.Unbounded.Unbounded_String;
+      Help        : Ada.Strings.Unbounded.Unbounded_String;
+      Check       : CLIC.Config.Check_Import := null;
+      Global_Only : Boolean := False;
    end record;
 
    --------------

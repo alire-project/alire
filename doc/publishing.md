@@ -314,36 +314,22 @@ This will be shown as:
 ## Publishing to a local/private index
 
 Having a local or private index may be useful sometimes, be it for local
-testing, or for private crates not intended for publication.
+testing, or for private crates not intended for publication. For more
+information on private indexes, see
+[this guide](private-crates#using-a-private-index).
 
-There is no practical difference between the community index and a private index
-stored locally on disk or on your own infrastructure. An index must be located
-in a first level subdirectory of an accessible git repository or local
-filesystem location (or optionally at the top level in the case of a local
-filesystem index). This subdirectory should contain only an `index.toml`
-file and one or more `cr/crate_name` subdirectories within which the crate
-manifests themselves are located. The `index.toml` file contains one line with
-the form `version = "x.x.x"`, specifying the index format used. The range of
-versions Alire is compatible with can be found by running `alr version`, and
-breaking changes are listed in
-[BREAKING.md](https://github.com/alire-project/alire/blob/master/BREAKING.md).
+To "publish" a crate to a private index, run
+```
+alr publish --for-private-index [<path|URL> [<commit|tag|branch>]]
+```
+where the `--for-private-index` switch disables the submission step and certain
+checks which are only applicable to the community index, and the remaining
+arguments function as described above. This will generate a manifest file which
+you can place at the indicated path (relative to the location of `index.toml`)
+in your private index.
 
-To start using such an index, run
-
-`alr index --add=<URL> --name=<name>`,
-
-where `<name>` is a human-friendly label that `alr` will use to refer to it.
-
-To publish a crate to a private index, run
-
-`alr publish --for-private-index [<path|URL> <commit|tag|branch>]`
-
-as described in the sections above, then place the manifest file it generates at
-the indicated path (relative to the location of `index.toml`).
-
-Additions to indexes stored locally on the disk will take effect immediately,
-unless the crate being published contains `"provides"` definitions, in which
-case an index update will be required (either with `alr index --update-all`, or
-through a scheduled auto-update) to ensure it is properly used by the dependency
-solver. An index update will always be required when publishing to a git
-repository index.
+One important thing to note is that publishing from a local repository will
+detect the URL configured as the Git remote (as displayed by
+`git remote show origin`). If this is not configured with the recommended form
+(as discussed [here](private-crates#git-repositories)), you may wish to pass the
+desired URL explicitly.

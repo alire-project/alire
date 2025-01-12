@@ -112,12 +112,12 @@ package body Alr.Commands.Settings is
                Alire.Settings.Edit.Set_Boolean
                  (Lvl,
                   Key, Boolean'Value (Val),
-                  Check => Alire.Settings.Edit.Valid_Builtin'Access);
+                  Check => Alire.Settings.Edit.Valid_Builtin_Check (Lvl));
             else
                Alire.Settings.Edit.Set
                  (Lvl,
                   Key, Val,
-                  Check => Alire.Settings.Edit.Valid_Builtin'Access);
+                  Check => Alire.Settings.Edit.Valid_Builtin_Check (Lvl));
             end if;
          end;
 
