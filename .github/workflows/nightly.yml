@@ -132,8 +132,6 @@ jobs:
           preRelease: true
           out-file-path: 'x86_64'
           extract: true
-      - name: check x86_64 attributes
-        run: xattr -vr x86_64
         
       - name: download aarch64
         uses: robinraju/release-downloader@v1
@@ -143,8 +141,6 @@ jobs:
           fileName: '*-aarch64-macos.zip'
           out-file-path: 'aarch64'
           extract: true
-      - name: check aarch64 attributes
-        run: xattr -vr aarch64
 
       - name: Create universal binary
         run: |
