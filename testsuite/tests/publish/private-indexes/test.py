@@ -8,7 +8,7 @@ import re
 import shutil
 import subprocess
 
-from drivers.alr import run_alr, run_alr_interactive
+from drivers.alr import run_alr, run_alr_interactive, alr_settings_set
 from drivers.helpers import init_git_repo, WrapCommand
 from drivers.asserts import assert_match, assert_file_exists
 
@@ -140,6 +140,12 @@ def test(
     shutil.rmtree(idx_manifest_dir, ignore_errors=True) # may not exist
 
 
+# Configure a non-default list of trusted sites
+alr_settings_set(
+    "origins.git.trusted_sites",
+    "bitbucket.org trusted.host github.com"
+)
+
 # All tests should behave the same with and without "--force"
 for force_arg in ([], ["--force"]):
     # A crate suitable for the community index:
@@ -261,6 +267,61 @@ for force_arg in ([], ["--force"]):
                 f'.*url = "{re.escape(url)}".*',
             ],
             expect_success=True
+        )
+
+    # A crate unsuitable for the community index because it uses an origin with
+    # an untrusted host, but suitable for a private index because the user has
+    # configured the host as trusted:
+    #
+    # "alr publish" and "alr publish --skip-submit" should fail.
+    test(
+        args=force_arg + ["publish"],
+        url="https://trusted.host/some_user/repo-name",
+        maint_logins='["github-username"]',
+        num_confirms=1,
+        output=[r".*Origin is hosted on unknown site: trusted\.host.*"],
+        gen_manifest=None,
+        expect_success=False
+    )
+    test(
+        args=force_arg + ["publish", "--skip-submit"],
+        url="https://trusted.host/some_user/repo-name",
+        maint_logins='["github-username"]',
+        num_confirms=1,
+        output=[r".*Origin is hosted on unknown site: trusted\.host.*"],
+        gen_manifest=None,
+        expect_success=False
+    )
+    # "alr publish --for-private-index" will succeed.
+    test(
+        args=force_arg + ["publish", "--for-private-index"],
+        url="https://trusted.host/some_user/repo-name",
+        maint_logins='["github-username"]',
+        num_confirms=2,
+        output=[
+            r".*Success: Your index manifest file has been generated.*",
+            r".*Please upload this file to the index in the xx/xxx/ subdirectory",
+        ],
+        gen_manifest=[
+            r'.*url = "git\+https://trusted\.host/some_user/repo-name".*',
+        ],
+        expect_success=True
+    )
+
+    # A crate unsuitable for both the community index and a private index
+    # because it uses an origin with an untrusted host, which the user has not
+    # configured as trusted:
+    #
+    # "alr publish [--skip-submit | --for-private-index]" should all fail.
+    for switch in ([], ["--skip-submit"], ["--for-private-index"]):
+        test(
+            args=force_arg + ["publish"] + switch,
+            url="https://untrusted.host/some_user/repo-name",
+            maint_logins='["github-username"]',
+            num_confirms=1,
+            output=[r".*Origin is hosted on unknown site: untrusted\.host.*"],
+            gen_manifest=None,
+            expect_success=False
         )
 
     # A crate unsuitable for the community index because it has a

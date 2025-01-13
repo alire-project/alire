@@ -1,0 +1,10 @@
+description = "Sample crate"
+name = "crate"
+version = "1.0.0"
+licenses = "GPL-3.0-only"
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin]
+url = "git+https://some.host/path/to/repo"
+commit = "0000000000000000000000000000000000000000"
