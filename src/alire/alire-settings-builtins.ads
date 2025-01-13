@@ -133,11 +133,10 @@ package Alire.Settings.Builtins is
       Global_Only => True,
       Help        =>
         "Space-separated list of trusted sites for Git origins, used by"
-      & " 'alr index --check' and 'alr publish --for-private-index'. If"
-      & " empty (e.g. if set to ' '), all origins are trusted. Note that"
-      & " this does not have any effect when using 'alr publish' for"
-      & " submissions to the community index (which only permits the"
-      & " default list).");
+      & " 'alr index --check' and 'alr publish --for-private-index'. If set to"
+      & " '...', all origins are trusted. Note that this does not have any"
+      & " effect when using 'alr publish' for submissions to the community"
+      & " index (which only permits the default list).");
 
    --  SOLVER
 

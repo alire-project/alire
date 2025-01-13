@@ -129,7 +129,9 @@ package body Alire.Index is
       for Crate of All_Crates.all loop
          for Rel of Crate.Releases loop
             if Rel.Origin.Kind in Origins.VCS_Kinds then
-               if not Publish.Is_Trusted (Rel.Origin.URL, False) then
+               if not Publish.Is_Trusted
+                 (Rel.Origin.URL, For_Community => False)
+               then
                   OK := False;
                   Put_Warning ("Release " & Rel.Milestone.TTY_Image
                                & " has URL not in known hosts: "

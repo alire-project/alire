@@ -930,13 +930,14 @@ package body Alire.Publish is
 
       if Context.Origin.Kind in Origins.VCS_Kinds then
 
-         --  Check an VCS origin is from a trusted site, unless we are forcing
-         --  a local repository.
+         --  Check a VCS origin is from a trusted site, unless we are forcing
+         --  a local repository or '--for-private-index' is specified.
 
          if (Force and then
              URI.URI_Kind (URL) in URI.Local_URIs)
            or else
-            Is_Trusted (URL, not Context.Options.For_Private_Index)
+            Is_Trusted
+              (URL, For_Community => not Context.Options.For_Private_Index)
          then
             Put_Success ("Origin is hosted on trusted site: "
                          & URI.Host (URL));
@@ -1079,9 +1080,9 @@ package body Alire.Publish is
    -- Trusted_Sites --
    -------------------
 
-   function Trusted_Sites (Ignore_Setting : Boolean) return Vector is
+   function Trusted_Sites (For_Community : Boolean) return Vector is
       Space_Separated : constant String :=
-        (if Ignore_Setting then Community_Trusted_Sites
+        (if For_Community then Community_Trusted_Sites
          else Settings.Builtins.Origins_Git_Trusted_Sites.Get);
       Split_Vector    : constant Vector := Split (Space_Separated, ' ');
       Sites           : Vector := Empty_Vector;
@@ -1094,17 +1095,27 @@ package body Alire.Publish is
       return Sites;
    end Trusted_Sites;
 
+   ---------------------------
+   -- All_Sites_Are_Trusted --
+   ---------------------------
+
+   function All_Sites_Are_Trusted (For_Community : Boolean) return Boolean is
+      Sites : constant Vector := Trusted_Sites (For_Community);
+   begin
+      return Sites.Length in 1 and then Sites (1) = "...";
+   end All_Sites_Are_Trusted;
+
    ----------------
    -- Is_Trusted --
    ----------------
 
-   function Is_Trusted (URL : Alire.URL; Ignore_Setting : Boolean)
+   function Is_Trusted (URL : Alire.URL; For_Community : Boolean)
                         return Boolean
    is
-      Sites : constant Vector := Trusted_Sites (Ignore_Setting);
+      Sites : constant Vector := Trusted_Sites (For_Community);
    begin
       return
-        Sites.Length in 0 -- Empty list means all sites are trusted
+        All_Sites_Are_Trusted (For_Community)
         or else (for some Site of Sites
                  => URI.Host (URL) = Site
                  or else Has_Suffix (URI.Host (URL), "." & Site));
@@ -1470,11 +1481,10 @@ package body Alire.Publish is
    -- Print_Trusted_Sites --
    -------------------------
 
-   procedure Print_Trusted_Sites (For_Private_Index : Boolean) is
-      Ignore_Setting : constant Boolean := not For_Private_Index;
-      Sites          : constant Vector := Trusted_Sites (Ignore_Setting);
+   procedure Print_Trusted_Sites (For_Community : Boolean) is
+      Sites : constant Vector := Trusted_Sites (For_Community);
    begin
-      if Sites.Length in 0 then
+      if All_Sites_Are_Trusted (For_Community) then
          Trace.Always ("All sites are currently trusted for private indexes.");
       else
          for Site of Sites loop

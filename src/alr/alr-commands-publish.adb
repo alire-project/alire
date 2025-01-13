@@ -53,7 +53,8 @@ package body Alr.Commands.Publish is
       Cmd.Auto_Update_Index;
 
       if Cmd.Print_Trusted then
-         Alire.Publish.Print_Trusted_Sites (Cmd.For_Private_Index);
+         Alire.Publish.Print_Trusted_Sites
+           (For_Community => not Cmd.For_Private_Index);
 
       elsif Cmd.Tar then
 

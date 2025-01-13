@@ -20,8 +20,8 @@ assert_substring("\ngithub.com\n", p.out)
 p = run_alr("publish", "--for-private-index", "--trusted-sites")
 assert_eq("some.host\nother.host\nthird.host\n", p.out)
 
-# Set `origins.git.trusted_sites` to an empty list (which trusts all hosts)
-alr_settings_set("origins.git.trusted_sites", " ")
+# Set `origins.git.trusted_sites` to '...' (which trusts all hosts)
+alr_settings_set("origins.git.trusted_sites", "...")
 
 # Verify that the output of `alr publish --trusted-sites` is unchanged
 p = run_alr("publish", "--trusted-sites")

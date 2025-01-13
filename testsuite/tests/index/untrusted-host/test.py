@@ -67,9 +67,9 @@ assert_match(
     p.out
 )
 
-# Set 'origins.git.trusted_sites' to ' ' and verify that all hosts are now
+# Set 'origins.git.trusted_sites' to '...' and verify that all hosts are now
 # permitted.
-alr_settings_set("origins.git.trusted_sites", " ")
+alr_settings_set("origins.git.trusted_sites", "...")
 p = run_alr("index", "--check", quiet=False)
 assert_eq("Success: No issues found in index contents.\n", p.out)
 
