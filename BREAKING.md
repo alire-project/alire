@@ -1,9 +1,13 @@
 Log of breaking changes in index or alr.
 
-### alr 3.0.0 + index 1.3.0
+### alr 3.0.0 + index 1.4.0
 
 - alr: removed `ALR_CONFIG` environment variable.
 - alr: removed `alr config` command.
+
+### alr 2.1.0 + index 1.4.0
+
+- index: git remotes in origins are recognized even without `git+` prefix
 
 ### alr 2.0.0 + index 1.3.0
 
