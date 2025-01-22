@@ -1,6 +1,7 @@
 with Ada.Directories;
 
 with Alire.Directories;
+with Alire.Errors;
 with Alire.Origins;
 with Alire.Roots.Optional;
 with Alire.Utils.User_Input;
@@ -363,9 +364,12 @@ package body Alire.User_Pins is
 
          if not Root.Is_Valid then
             Put_Warning
-              ("Pin for " & Utils.TTY.Name (Crate) &
-                 " does not contain an Alire " &
-                 "manifest. It will be used as a raw GNAT project.");
+              ("Pin for " & Utils.TTY.Name (Crate) & " at "
+               & Utils.TTY.URL (Destination)
+               & " does not contain a valid Alire manifest. "
+               & "It will be used as a raw GNAT project.");
+            Errors.Pretty_Print
+              ("Pin diagnostic is:" & New_Line & Root.Message, Trace.Warning);
          end if;
 
       end;

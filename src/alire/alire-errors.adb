@@ -126,7 +126,9 @@ package body Alire.Errors is
    -- Pretty_Print --
    ------------------
 
-   procedure Pretty_Print (Error : String) is
+   procedure Pretty_Print (Error : String;
+                           Level : Trace.Levels := Trace.Error)
+   is
       Lines : constant AAA.Strings.Vector := Split (Error, ASCII.LF);
    begin
       for I in Lines.First_Index .. Lines.Last_Index loop
@@ -134,7 +136,7 @@ package body Alire.Errors is
             Line : constant String := Trim (Lines (I));
          begin
             if Line /= "" then
-               Trace.Error
+               Trace.Log
                  ((if I > Lines.First_Index then "   " else "")
                   --  Indentation
 
@@ -146,11 +148,11 @@ package body Alire.Errors is
                   & (if I < Lines.Last_Index
                     and then Line (Line'Last) /= ':'
                     then ":"
-                    else "")
+                    else ""),
                   --  Trailing ':' except for last line
-                 );
+                 Level);
             else
-               Trace.Error (Line);
+               Trace.Log (Line, Level);
             end if;
          end;
       end loop;
