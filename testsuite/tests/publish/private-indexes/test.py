@@ -254,6 +254,7 @@ for force_arg in ([], ["--force"]):
             expect_success=False
         )
         # "alr publish --for-private-index" will succeed.
+        explicit_url = url if url.startswith("git@") else f"git+{url}"
         test(
             args=force_arg + ["publish", "--for-private-index"],
             url=url,
@@ -264,7 +265,7 @@ for force_arg in ([], ["--force"]):
                 r".*Please upload this file to the index in the xx/xxx/ subdirectory",
             ],
             gen_manifest=[
-                f'.*url = "{re.escape(url)}".*',
+                f'.*url = "{re.escape(explicit_url)}".*',
             ],
             expect_success=True
         )
