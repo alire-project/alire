@@ -199,11 +199,14 @@ package body Alire.URI is
             elsif Current_Kind = SCP_Style_Git then
                --  git@host:/path is already explicit
                return This;
-            elsif Current_Kind in Probably_Git then
-               --  Prepend prefix to make it *_Definitely_Git
+            elsif not Has_Prefix (This, VCS_Prefix) then
+               --  Ensure a 'vcs+' prefix is present
+               --
+               --  We do this even for URLs with a '.git' suffix, as they are
+               --  not otherwise recognized by pre-2.1 versions of alr.
                return VCS_Prefix & This;
             else
-               --  This is already recognized as the correct VCS, so do nothing
+               --  This already has a 'vcs+' prefix, so do nothing
                return This;
             end if;
          when others =>

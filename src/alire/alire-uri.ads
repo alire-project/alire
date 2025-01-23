@@ -231,14 +231,11 @@ package Alire.URI with Preelaborate is
 
    function Make_VCS_Explicit (This : String; Kind : VCS_Kinds) return String
      with Post => URI_Kind (Make_VCS_Explicit'Result) in VCS_URIs;
-   --  Return the URL minimally modified to make the VCS recognizable.
+   --  Return the URL modified to ensure the VCS is recognizable.
    --
    --  For example, This => "https://host/path" with Kind => Git returns
    --  "git+https://host/path", and This => "/some/path" with Kind => Hg
    --  returns "hg+file:/some/path".
-   --
-   --  Changes are only made if necessary, so This => "https://host/path.git"
-   --  and Kind => Git returns the URL unmodified.
    --
    --  Raises Program_Error if the URL already looks like a different VCS
    --  or has a URI_Kind of External or System.
