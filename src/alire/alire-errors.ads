@@ -52,7 +52,8 @@ package Alire.Errors with Preelaborate is
    --  Returns the error for Ex if it exists, or defaults to Exception_Message.
    --  The stored error is cleared.
 
-   procedure Pretty_Print (Error : String);
+   procedure Pretty_Print (Error : String;
+                           Level : Trace.Levels := Trace.Error);
    --  Split Error at LFs to prefix each sub-error in a new line with the
    --  appropriate tracing prefix. Also, from the second line on, messages are
    --  indented. This way, several top-level errors are easier to distinguish.
