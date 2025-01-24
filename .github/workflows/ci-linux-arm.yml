@@ -42,6 +42,9 @@ jobs:
       with:
         python-version: '3.x'
 
+    - name: SSH for remote debugging
+      uses: mxschmitt/action-tmate@v3
+
     - name: Run test script
       run: scripts/ci-github.sh
       shell: bash
