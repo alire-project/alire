@@ -42,8 +42,8 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: SSH for remote debugging
-      uses: mxschmitt/action-tmate@v3
+    # - name: SSH for remote debugging
+    #   uses: mxschmitt/action-tmate@v3
 
     - name: Run test script
       run: scripts/ci-github.sh
@@ -51,6 +51,7 @@ jobs:
       env:
         BRANCH: ${{ github.base_ref }}
         INDEX: ""
+        ALIRE_TESTSUITE_DISABLE_DOCKER: "true"
 
     # Ascertain whether alr can run without the toolchain that built it
 
