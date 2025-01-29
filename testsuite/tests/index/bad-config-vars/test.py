@@ -3,6 +3,7 @@ Test invalid crate configuration variable definitions
 """
 
 import os
+import re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
@@ -52,9 +53,9 @@ check_error('var1=["plop"]', 'variable definition must be a table')
 check_error('var1={}', "configuration.variables.var1:")
 check_error('var1={}', "'type' missing")
 check_error('var1={type=42}', "'type' must be string")
-check_error('var1={type=""}', "Invalid configuration type '',"
-                               " must be \(real, integer, string,"
-                               " enum or boolean\)")
+check_error('var1={type=""}', r"Invalid configuration type '',"
+                              r" must be \(real, integer, string,"
+                              r" enum or boolean\)")
 check_error('var1={type="test"}', "Invalid configuration type 'test'.*")
 check_error('var1={type="String", plop="test"}', "forbidden extra entries: plop")
 
@@ -101,7 +102,7 @@ check_ok('var1={type="Integer", first=0, last=10, default=5}')
 
 check_error('var1={type="Integer", values=0}', "forbidden extra entries: values")
 
-expected = "invalid default value for Integer range .* \.\. .*"
+expected = "invalid default value for Integer range .* " + re.escape("..") + " .*"
 check_error('var1={type="Integer", first=0, default=-1}', expected)
 check_error('var1={type="Integer", last=0, default=1}', expected)
 check_error('var1={type="Integer", first=0, last=10, default=20}', expected)
@@ -160,7 +161,7 @@ check_error('var1={type="Enum", values=["A"], last="test"}', "forbidden extra en
 check_error('var1={type="Enum", values=[]}', "'values' must be a not empty array of strings")
 check_error('var1={type="Enum"}', "missing 'values' for enumeration type")
 
-expected = "invalid default value for Enum \(A, B\)"
+expected = r"invalid default value for Enum \(A, B\)"
 check_error('var1={type="Enum", values=["A", "B"], default="C"}', expected)
 check_error('var1={type="Enum", values=["A", "B"], default=42}', expected)
 check_error('var1={type="Enum", values=["A", "B"], default=42.0}', expected)
