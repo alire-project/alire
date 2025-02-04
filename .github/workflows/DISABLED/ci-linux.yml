@@ -62,7 +62,7 @@ jobs:
     - name: Upload binaries
       uses: actions/upload-artifact@v4
       with:
-        name: alr-bin-linux.zip
+        name: alr-bin-linux-x86_64.zip
         path: |
           bin/alr
           LICENSE.txt

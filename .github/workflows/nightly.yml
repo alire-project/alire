@@ -93,10 +93,20 @@ jobs:
         name: e3-log-linux.zip
         path: testsuite/out
 
+    - name: Select arch name
+      id: get_arch
+      shell: bash
+      run: |
+        case ${{ runner.arch }} in
+          X64)   echo "arch=x86_64"  >> $GITHUB_OUTPUT ;;
+          ARM64) echo "arch=aarch64" >> $GITHUB_OUTPUT ;;
+          *)     echo "Unknown architecture, failing..." && exit 1 ;;
+        esac
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: alr-bin-${{ matrix.os }}.zip
+        name: alr-bin-${{ matrix.os }}-${{steps.get_arch.outputs.arch}}.zip
         path: |
           bin/alr*
           LICENSE.txt
@@ -116,15 +126,11 @@ jobs:
 
     - name: Package binaries (Linux)
       if: startsWith(matrix.os, 'ubuntu')
-      run: zip alr-nightly-bin-x86_64-linux.zip bin/alr* LICENSE.txt alr-*.txt
+      run: zip alr-nightly-bin-${{steps.get_arch.outputs.arch}}-linux.zip bin/alr* LICENSE.txt alr-*.txt
 
     - name: Package binaries (macOS/x64)
-      if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
-      run: zip alr-nightly-bin-x86_64-macos.zip bin/alr* LICENSE.txt alr-*.txt
-
-    - name: Package binaries (macOS/arm64)
-      if: startsWith(matrix.os, 'macos') && runner.arch == 'ARM64'
-      run: zip alr-nightly-bin-aarch64-macos.zip bin/alr* LICENSE.txt alr-*.txt
+      if: startsWith(matrix.os, 'macos')
+      run: zip alr-nightly-bin-${{steps.get_arch.outputs.arch}}-macos.zip bin/alr* LICENSE.txt alr-*.txt
 
     # There's no zip on windows
     - name: Install zip (Windows)
@@ -133,7 +139,7 @@ jobs:
 
     - name: Package binaries (Windows)
       if: startsWith(matrix.os, 'windows')
-      run: zip alr-nightly-bin-x86_64-windows.zip bin/alr* LICENSE.txt alr-*.txt
+      run: zip alr-nightly-bin-${{steps.get_arch.outputs.arch}}-windows.zip bin/alr* LICENSE.txt alr-*.txt
 
     - name: Upload to release
       uses: pyTooling/Actions/releaser/composite@main

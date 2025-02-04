@@ -69,7 +69,7 @@ jobs:
     - name: Upload binaries
       uses: actions/upload-artifact@v4
       with:
-        name: alr-bin-linux.zip
+        name: alr-bin-linux-aarch64.zip
         path: |
           bin/alr
           LICENSE.txt
@@ -107,5 +107,5 @@ jobs:
       with:
         upload_url: ${{ steps.get_release.outputs.upload_url }}
         asset_path: alr-bin-linux.zip
-        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-x86_64-linux.zip
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-aarch64-linux.zip
         asset_content_type: application/zip

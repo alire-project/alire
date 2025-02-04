@@ -393,13 +393,6 @@ package body Alire.Properties.Configurations is
                Last  : Config_Real renames This.Real_Last;
             begin
 
-               Trace.Debug ("ASDF KIND: " & F.Kind'Image);
-               if F.Kind = Regular then
-                  Trace.Debug ("ASDF VAL:" & F.Value'Image);
-               else
-                  Trace.Debug ("ASDF POS: " & F.Positive'Image);
-               end if;
-
                --  We don't accept infinity or Nan here
                if F.Kind /= Regular then
                   return False;
