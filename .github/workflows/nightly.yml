@@ -33,18 +33,25 @@ jobs:
       with:
         submodules: true
 
+    # Determine special case (we need an OS GNAT)
+    - name: Need OS GNAT?
+      id: need_os_gnat
+      if: matrix.os == 'ubuntu-20.04-arm'
+      run: echo "need_os_gnat=true" >> $GITHUB_ENV
+
     # Toolchain according to arch
 
     - name: Install Alire toolchain
-      if: ! startsWith(matrix.os, 'ubuntu-24')
+      if: steps.need_os_gnat.outputs.need_os_gnat != 'true'
       uses: alire-project/alr-install@v2
       with:
         crates: gnat_native gprbuild
         prefix: alire_prefix
 
     - name: Install Ubuntu ARM toolchain
-      if: startsWith(matrix.os, 'ubuntu-24')
-      run: sudo apt-get install -y gnat-10 gprbuild
+      if: steps.need_os_gnat.outputs.need_os_gnat == 'true'
+      run: sudo apt-get install -y gnat gprbuild
+      # GNAT 10 has a bug that fails in the testsuite
 
     - name: Check toolchain architecture
       uses: mosteo-actions/gnat-toolchain-arch-checker@v1
@@ -68,8 +75,8 @@ jobs:
     # Ascertain whether alr can run without the toolchain that built it
 
     - name: Uninstall Ubuntu ARM GNAT
-      if: startsWith(matrix.os, 'ubuntu-24')
-      run: sudo apt-get remove -y gnat-10 gprbuild
+      if: steps.need_os_gnat.outputs.need_os_gnat == 'true'
+      run: sudo apt-get remove -y gnat gprbuild
       shell: bash
 
     - name: Check standalone alr

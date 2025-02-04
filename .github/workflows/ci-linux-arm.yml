@@ -32,7 +32,8 @@ jobs:
         submodules: true
 
     - name: Install FSF toolchain
-      run: sudo apt-get install -y gnat-10 gprbuild
+      run: sudo apt-get install -y gnat gprbuild
+      # GNAT 10 has a bug that fails in the testsuite
 
     - name: Check toolchain architecture
       uses: mosteo-actions/gnat-toolchain-arch-checker@v1
