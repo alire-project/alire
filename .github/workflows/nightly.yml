@@ -6,6 +6,7 @@ on:
     branches:
       - 'feat/nightly' # Allows to be tested before merging
       - 'fix/nightly'
+      - 'feat/ubuntu-arm'
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
@@ -36,8 +37,8 @@ jobs:
     # Determine special case (we need an OS GNAT)
     - name: Need OS GNAT?
       id: need_os_gnat
-      if: matrix.os == 'ubuntu-20.04-arm'
-      run: echo "need_os_gnat=true" >> $GITHUB_ENV
+      if: matrix.os == 'ubuntu-24.04-arm'
+      run: echo "need_os_gnat=true" >> $GITHUB_OUTPUT
 
     # Toolchain according to arch
 
