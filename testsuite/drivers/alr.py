@@ -671,6 +671,14 @@ def unselect_compiler():
     alr_settings_unset("toolchain.external.gnat")
 
 
+def unselect_gprbuild():
+    """
+    Leave gprbuild configuration as if "None" was selected by the user in the
+    assistant.
+    """
+    alr_settings_unset("toolchain.use.gprbuild")
+
+
 def set_default_user_settings():
     """
     Set the default alr settings that are undone by the testsuite defaults

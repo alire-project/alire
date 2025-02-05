@@ -287,6 +287,17 @@ def neutral_path(path : str) -> str:
     """
     return path.replace('\\', '/')
 
+def which(exec : str) -> str:
+    """
+    Return the full path to an executable if it can be found in PATH, or ""
+    otherwise. On Windows, ".exe" is automatically appended.
+    """
+    if on_windows() and not exec.endswith(".exe"):
+        return which(f"{exec}.exe")
+
+    return shutil.which(exec)
+
+
 class FileLock():
     """
     A filesystem-level lock for tests executed from different threads but

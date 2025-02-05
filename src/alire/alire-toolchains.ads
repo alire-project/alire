@@ -140,9 +140,7 @@ package Alire.Toolchains is
    --  to <cache>/toolchains, overridable via config builtin `toolchain.dir`
 
    procedure Deploy (Release  : Releases.Release;
-                     Location : Any_Path := Path)
-     with Pre =>
-       Release.Origin.Is_Index_Provided or else Release.Origin.Is_System;
+                     Location : Any_Path := Path);
    --  Deploy a release in the specified location
 
    procedure Deploy_Missing;
