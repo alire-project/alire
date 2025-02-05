@@ -35,6 +35,12 @@ package body Alire.Toolchains.Solutions is
       Result : Alire.Solutions.Solution := Solution;
    begin
 
+      --  Last-minute redeployment of any missing toolchain element. This may
+      --  happen if the user has manually deleted the cache of toolchains, or
+      --  uninstalled a system package for the external compiler.
+
+      Toolchains.Deploy_Missing;
+
       --  For every tool in the toolchain that does not appear in the solution,
       --  we will insert the user-configured tool, if any.
 

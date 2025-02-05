@@ -314,6 +314,31 @@ package body Alr.Commands.Toolchain is
       Table.Print (Always);
    end List;
 
+   ------------------------------
+   -- Report_Unavailable_Tools --
+   ------------------------------
+
+   procedure Report_Unavailable_Tools is
+      use Alire;
+      Complain : Boolean := False;
+   begin
+      for Tool of Toolchains.Tools loop
+         if not Toolchains.Tool_Is_Configured (Tool) and then
+           not OS_Lib.Exists_In_Path (+Tool)
+         then
+            Trace.Warning
+              ("Unconfigured tool is not in path, builds will likely fail: "
+               & TTY.Error (+Tool));
+            Complain := True;
+         end if;
+      end loop;
+
+      if Complain then
+         Trace.Warning ("Please ensure a complete toolchain is available with "
+                        & TTY.Terminal ("alr toolchain --select"));
+      end if;
+   end Report_Unavailable_Tools;
+
    -------------
    -- Execute --
    -------------
@@ -392,6 +417,10 @@ package body Alr.Commands.Toolchain is
                & TTY.Emph (if Cmd.Local then "local" else "global")
                & " configuration because of toolchain selection via "
                & "command line.");
+         end if;
+
+         if not Alire.Toolchains.Toolchain_Is_Complete then
+            Report_Unavailable_Tools;
          end if;
 
       elsif not Cmd.Disable then

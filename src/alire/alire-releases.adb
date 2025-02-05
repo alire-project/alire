@@ -377,6 +377,15 @@ package body Alire.Releases is
          raise;
    end Deploy;
 
+   ----------------------------
+   -- Install_System_Package --
+   ----------------------------
+
+   procedure Install_System_Package (This : Release) is
+   begin
+      Origins.Deployers.System.Install (This);
+   end Install_System_Package;
+
    ----------------
    -- Forbidding --
    ----------------

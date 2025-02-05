@@ -73,6 +73,10 @@ package Alire.Origins.Deployers.System is
    function Already_Installed (This : Origins.Origin) return Boolean
      with Pre => This.Is_System;
 
+   procedure Install (This : Releases.Release)
+     with Pre => This.Origin.Is_System;
+   --  Install the package that provides this release
+
    function Executable_Name return String;
    --  Returns the simple name of the executable package manager on the system
 

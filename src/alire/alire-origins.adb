@@ -4,6 +4,7 @@ with AAA.Strings;
 
 with Alire.Features;
 with Alire.Loading;
+with Alire.Origins.Deployers.System;
 with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.URI;
@@ -853,5 +854,12 @@ package body Alire.Origins is
    is (This.Kind /= Binary_Archive
        or else
        not This.Data.Bin_Archive.Evaluate (Env).Is_Empty);
+
+   ------------------
+   -- Is_Installed --
+   ------------------
+
+   function Already_Installed (This : Origin) return Boolean
+                               renames Deployers.System.Already_Installed;
 
 end Alire.Origins;
