@@ -75,7 +75,7 @@ package Alire.Origins.Deployers.System is
 
    procedure Install (This : Releases.Release)
      with Pre => This.Origin.Is_System;
-   --  Install the package that provides this release
+   --  Install the system package that provides this release
 
    function Executable_Name return String;
    --  Returns the simple name of the executable package manager on the system

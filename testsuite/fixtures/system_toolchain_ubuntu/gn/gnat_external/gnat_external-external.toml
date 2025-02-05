@@ -10,7 +10,7 @@ version-regexp = "^GNAT\\D*([\\d\\.]+).*"
 version-command = ["gnat", "--version"]
 provides = "gnat"
 
-# We do not want to have system external definitions because in typical systems
+# We do not want to have system package definitions because in typical systems
 # like Debian/Ubuntu only one version at a time can be installed. Hence using
 # different versions in different crates/configurations would imply messing the
 # users' system. Let them manually configure the compiler they want when they

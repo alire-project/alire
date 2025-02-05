@@ -1,5 +1,8 @@
 """
-Check that toolchains are correctly installed from the system as needed.
+Check that toolchains are correctly installed from the system as needed. Check
+also that manually removed tools are reinstalled if still selected. Finally,
+check that incomplete toolchain selection is reported whenever the missing tool
+is not in PATH.
 """
 
 import json
@@ -46,9 +49,11 @@ tools = json.loads(run_alr("--format", "toolchain").out)
 #     }
 # ]
 
-# Verify expected gnat is selected
+# Verify expected toolchain is selected
 assert_eq(tools[2]["crate"], "gnat_external")
 assert_eq(tools[2]["status"], "Default")
+assert_eq(tools[0]["crate"], "gprbuild")
+assert_eq(tools[0]["status"], "Default")
 
 # Remove gprbuild from the system and reselect, this should force gprbuild
 # installation. We need to --force because the external gnat wants a likewise

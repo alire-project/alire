@@ -170,6 +170,7 @@ package body Alire.Origins.Deployers.System is
    begin
       if Toolchains.Is_Tool (This) then
          Toolchains.Deploy (This);
+         --  This ensures the cache of tools is properly reset
       else
          Platform_Deployer (This.Origin).Deploy ("").Assert;
       end if;
