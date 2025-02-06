@@ -631,7 +631,7 @@ package body Alire.Toolchains is
       use type AAA.Strings.Vector;
    begin
       for Tool of Tools loop
-         if Tool_Is_Configured (Tool) then
+         if Tool_Is_Configured (Tool) and then not Tool_Is_Missing (Tool) then
             declare
                Tool_Rel : constant Releases.Release := Tool_Release (Tool);
             begin
