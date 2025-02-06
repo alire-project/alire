@@ -9,6 +9,9 @@ package Alire.Meta with Preelaborate is
       Commit  : constant String := "unknown";
       Changes : constant String := "unknown";
 
+      Main_Branch : constant String := "master";
+      --  In case some day we rename the master branch in the repo
+
    end Working_Tree;
 
 end Alire.Meta;

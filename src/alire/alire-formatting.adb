@@ -2,8 +2,10 @@ with AAA.Enum_Tools;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with Alire.Meta;
 with Alire.OS_Lib;
 with Alire.Platforms.Current;
+with Alire.Version;
 
 package body Alire.Formatting is
 
@@ -37,6 +39,27 @@ package body Alire.Formatting is
 
       return Result;
    end For_Archive_Download;
+
+   --------------------
+   -- For_Github_URL --
+   --------------------
+
+   function For_Github_URL return Replacements is
+      --  Examples:
+      --  https://github.com/alire-project/alire/blob/v2.0.2/doc/publishing.md
+      --  https://github.com/alire-project/alire/blob/master/doc/publishing.md
+      Result : Replacements;
+   begin
+      if Version.Current.Pre_Release /= "" then
+         Result.Insert (Formatting.Alire_Version,
+                        Meta.Working_Tree.Main_Branch);
+      else
+         Result.Insert (Formatting.Alire_Version,
+                        "v" & AAA.Strings.Head (Version.Current.Image, "+"));
+      end if;
+
+      return Result;
+   end For_Github_URL;
 
    ------------------------------
    -- For_Manifest_Environment --
