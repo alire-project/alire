@@ -4,7 +4,8 @@ private with Ada.Containers.Indefinite_Ordered_Maps;
 
 package Alire.Formatting is
 
-   type Patterns is (Crate_Root,
+   type Patterns is (Alire_Version,
+                     Crate_Root,
                      Dest,
                      Distrib_Root,
                      GPR_File,
@@ -28,6 +29,9 @@ package Alire.Formatting is
    function For_Editor (Root     : Alire.Roots.Root;
                         Prj_File : Relative_Path)
                         return Replacements;
+
+   function For_Github_URL return Replacements;
+   --  ${ALIRE_VERSION} --> vX.Y.Z or master if a devel version
 
    function Contains (This : Replacements; Pattern : Patterns) return Boolean;
 

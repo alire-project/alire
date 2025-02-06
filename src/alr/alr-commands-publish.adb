@@ -1,3 +1,4 @@
+with Alire.Formatting;
 with Alire.Origins;
 with Alire.Publish.States;
 with Alire.URI;
@@ -5,7 +6,12 @@ with Alire.Utils;
 
 package body Alr.Commands.Publish is
 
+   package Format renames Alire.Formatting;
    package URI renames Alire.URI;
+
+   ------------
+   -- To_Int --
+   ------------
 
    function To_Int (S : String) return Integer is
    begin
@@ -139,6 +145,41 @@ package body Alr.Commands.Publish is
          end if;
       end if;
    end Execute;
+
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
+       .Append ("Checks a release and generates an index manifest.")
+       .New_Line
+       .Append ("See full details at")
+       .New_Line
+       .Append
+         (" https://github.com/alire-project/alire/blob"
+          & Format.Format ("/${ALIRE_VERSION}/", Format.For_Github_URL,
+                           Convert_Path_Seps => False)
+          & "doc/publishing.md")
+       .New_Line
+       .Append ("URL is an optional path to a remote source archive, or"
+         & " a local or remote git repository.")
+       .New_Line
+       .Append ("For the common use case of a github-hosted repository,"
+         & " issue `alr publish` after committing and pushing"
+         & " the new release version.")
+       .New_Line
+       .Append ("See the above link for instructions on how to create a "
+         & "Github Personal Access Token (PAT), needed to allow `alr` to "
+         & "interact with Github (forking, PR creation) on your behalf.")
+       .New_Line
+       .Append ("Use --tar to create a source archive ready to be uploaded.")
+       .New_Line
+       .Append ("Use --manifest to use metadata in a non-default file.")
+       .New_Line
+       .Append ("See the above link for help with other scenarios."));
 
    --------------------
    -- Setup_Switches --
