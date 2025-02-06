@@ -6,6 +6,7 @@ on:
     branches:
       - 'feat/nightly' # Allows to be tested before merging
       - 'fix/nightly'
+      - 'feat/ubuntu-arm'
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
@@ -21,9 +22,10 @@ jobs:
       fail-fast: false # Attempt to generate as many of them as possible
       matrix:
         os:
-          - macos-13     # x64
-          - macos-14     # arm64
-          - ubuntu-20.04 # oldest supported to be able to run on those
+          - macos-13         # x64
+          - macos-14         # arm64
+          - ubuntu-20.04     # oldest supported to be able to run on those
+          - ubuntu-24.04-arm # oldest with ARM arch
           - windows-latest
 
     steps:
@@ -32,11 +34,25 @@ jobs:
       with:
         submodules: true
 
-    - name: Install FSF toolchain
+    # Determine special case (we need an OS GNAT)
+    - name: Need OS GNAT?
+      id: need_os_gnat
+      if: matrix.os == 'ubuntu-24.04-arm'
+      run: echo "need_os_gnat=true" >> $GITHUB_OUTPUT
+
+    # Toolchain according to arch
+
+    - name: Install Alire toolchain
+      if: steps.need_os_gnat.outputs.need_os_gnat != 'true'
       uses: alire-project/alr-install@v2
       with:
         crates: gnat_native gprbuild
         prefix: alire_prefix
+
+    - name: Install Ubuntu ARM toolchain
+      if: steps.need_os_gnat.outputs.need_os_gnat == 'true'
+      run: sudo apt-get install -y gnat gprbuild
+      # GNAT 10 has a bug that fails in the testsuite
 
     - name: Check toolchain architecture
       uses: mosteo-actions/gnat-toolchain-arch-checker@v1
@@ -46,11 +62,24 @@ jobs:
       with:
         python-version: '3.x'
 
+    # Determine whether to disable docker (cannot run on Ubuntu 24 ARM)
+
+    - name: Set ALIRE_TESTSUITE_DISABLE_DOCKER
+      if: startsWith(matrix.os, 'ubuntu-24.04')
+      run: echo "ALIRE_TESTSUITE_DISABLE_DOCKER=true" >> $GITHUB_ENV
+      shell: bash
+
     - name: Run test script
       run: scripts/ci-github.sh
       shell: bash
 
     # Ascertain whether alr can run without the toolchain that built it
+
+    - name: Uninstall Ubuntu ARM GNAT
+      if: steps.need_os_gnat.outputs.need_os_gnat == 'true'
+      run: sudo apt-get remove -y gnat gprbuild
+      shell: bash
+
     - name: Check standalone alr
       uses: mosteo-actions/alr-standalone-checker@v1
       with:
@@ -64,10 +93,20 @@ jobs:
         name: e3-log-linux.zip
         path: testsuite/out
 
+    - name: Select arch name
+      id: get_arch
+      shell: bash
+      run: |
+        case ${{ runner.arch }} in
+          X64)   echo "arch=x86_64"  >> $GITHUB_OUTPUT ;;
+          ARM64) echo "arch=aarch64" >> $GITHUB_OUTPUT ;;
+          *)     echo "Unknown architecture, failing..." && exit 1 ;;
+        esac
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: alr-bin-${{ matrix.os }}.zip
+        name: alr-bin-${{ matrix.os }}-${{steps.get_arch.outputs.arch}}.zip
         path: |
           bin/alr*
           LICENSE.txt
@@ -87,15 +126,11 @@ jobs:
 
     - name: Package binaries (Linux)
       if: startsWith(matrix.os, 'ubuntu')
-      run: zip alr-nightly-bin-x86_64-linux.zip bin/alr* LICENSE.txt alr-*.txt
+      run: zip alr-nightly-bin-${{steps.get_arch.outputs.arch}}-linux.zip bin/alr* LICENSE.txt alr-*.txt
 
     - name: Package binaries (macOS/x64)
-      if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
-      run: zip alr-nightly-bin-x86_64-macos.zip bin/alr* LICENSE.txt alr-*.txt
-
-    - name: Package binaries (macOS/arm64)
-      if: startsWith(matrix.os, 'macos') && runner.arch == 'ARM64'
-      run: zip alr-nightly-bin-aarch64-macos.zip bin/alr* LICENSE.txt alr-*.txt
+      if: startsWith(matrix.os, 'macos')
+      run: zip alr-nightly-bin-${{steps.get_arch.outputs.arch}}-macos.zip bin/alr* LICENSE.txt alr-*.txt
 
     # There's no zip on windows
     - name: Install zip (Windows)
@@ -104,7 +139,7 @@ jobs:
 
     - name: Package binaries (Windows)
       if: startsWith(matrix.os, 'windows')
-      run: zip alr-nightly-bin-x86_64-windows.zip bin/alr* LICENSE.txt alr-*.txt
+      run: zip alr-nightly-bin-${{steps.get_arch.outputs.arch}}-windows.zip bin/alr* LICENSE.txt alr-*.txt
 
     - name: Upload to release
       uses: pyTooling/Actions/releaser/composite@main
@@ -132,7 +167,7 @@ jobs:
           preRelease: true
           out-file-path: 'x86_64'
           extract: true
-        
+
       - name: download aarch64
         uses: robinraju/release-downloader@v1
         with:

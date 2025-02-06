@@ -20,9 +20,9 @@ env:
 jobs:
 
   build:
-    name: CI on Linux
+    name: CI on Linux (ARM)
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04-arm
     # Oldest supported so releases can run on older distros
 
     steps:
@@ -32,10 +32,8 @@ jobs:
         submodules: true
 
     - name: Install FSF toolchain
-      uses: alire-project/alr-install@v2
-      with:
-        crates: gnat_native gprbuild
-        prefix: alire_prefix
+      run: sudo apt-get install -y gnat gprbuild
+      # GNAT 10 has a bug that fails in the testsuite
 
     - name: Check toolchain architecture
       uses: mosteo-actions/gnat-toolchain-arch-checker@v1
@@ -45,24 +43,33 @@ jobs:
       with:
         python-version: '3.x'
 
+    - name: build only
+      run: ALIRE_OS=linux gprbuild -j0 -p -P alr_env
+
     - name: Run test script
       run: scripts/ci-github.sh
       shell: bash
       env:
         BRANCH: ${{ github.base_ref }}
         INDEX: ""
+        ALIRE_TESTSUITE_DISABLE_DOCKER: "true"
 
     # Ascertain whether alr can run without the toolchain that built it
+
+    - name: Remove OS GNAT
+      run: sudo apt-get remove -y gnat-10 gprbuild
+      shell: bash
+
     - name: Check standalone alr
       uses: mosteo-actions/alr-standalone-checker@v1
       with:
         alr_path: bin
-        toolchain_path: alire_prefix
+        toolchain_path: unused
 
     - name: Upload binaries
       uses: actions/upload-artifact@v4
       with:
-        name: alr-bin-linux-x86_64.zip
+        name: alr-bin-linux-aarch64.zip
         path: |
           bin/alr
           LICENSE.txt
@@ -100,5 +107,5 @@ jobs:
       with:
         upload_url: ${{ steps.get_release.outputs.upload_url }}
         asset_path: alr-bin-linux.zip
-        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-x86_64-linux.zip
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-aarch64-linux.zip
         asset_content_type: application/zip
