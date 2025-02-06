@@ -43,6 +43,13 @@ package Alire.Toolchains is
    --  plain `gnat`. This way we need not to litter the callers with similar
    --  transformations, as we always want whatever gnat_XXX is used for "gnat".
 
+   procedure Detect_Hash_Mismatch;
+   --  As reported in https://github.com/alire-project/alire/issues/1796,
+   --  mixing alrs with different architectures will confuse the toolchain. We
+   --  can detect this from the hashes of the installed toolchains, that will
+   --  not match once the architecture changes. We raise in that case with
+   --  advice for the user to reconfigure its toolchain.
+
    procedure Set_Automatic_Assistant (Enabled : Boolean;
                                       Level   : Settings.Level);
    --  Enable/Disable the automatic assistant on next run

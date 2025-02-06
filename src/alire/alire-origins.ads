@@ -134,6 +134,11 @@ package Alire.Origins is
           when Binary_Archive | External  | System     => False,
           when Source_Archive | VCS_Kinds | Filesystem => True);
 
+   function Unique_Ids (This : Origin) return AAA.Strings.Vector;
+   --  This returns the hashes that apply to the current environment; it may be
+   --  an empty vector for origins without a hash (e.g. external or system or
+   --  unavailable).
+
    function Short_Unique_Id (This : Origin) return String with
      Pre => This.Kind in Git | Hg | Archive_Kinds;
 
@@ -218,7 +223,9 @@ private
      Ada.Containers.Indefinite_Vectors (Positive, Hashes.Any_Hash);
 
    function Get_Hashes (This : Origin) return Hash_Vectors.Vector;
-   --  Ugly Get_ but it avoids lots of ambiguities down the line
+   --  Ugly Get_ but it avoids lots of ambiguities down the line. This returns
+   --  the hashes that apply to the current environment; it may be an empty
+   --  vector for origins without a hash (e.g. external or system).
 
    function "+" (S : String) return Unbounded_String
    renames To_Unbounded_String;
