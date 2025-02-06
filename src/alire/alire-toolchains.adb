@@ -618,7 +618,13 @@ package body Alire.Toolchains is
                       & " hash: " & Rel.Origin.Unique_Ids.Flatten (","));
       end loop;
 
-      Detect_Hash_Mismatch;
+      --  When we have cached results, this is the earliest moment in which we
+      --  can check we don't have a tool mismatch. If Results were empty the
+      --  detection results in a recursive loop.
+
+      if not Result.Is_Empty then
+         Detect_Hash_Mismatch;
+      end if;
 
       return Result;
    end Available;
