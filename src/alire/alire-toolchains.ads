@@ -84,6 +84,11 @@ package Alire.Toolchains is
    --  release being deployed (e.g. the user messed with files and deleted it
    --  manually).
 
+   function Toolchain_Is_Complete return Boolean;
+   --  If the user configures only part of the toolchain, this might work if
+   --  the unconfigured tool is in the environment, but otherwise it might
+   --  cause troubles, so we may want to warn about it.
+
    procedure Unconfigure (Crate         : Crate_Name;
                           Level         : Settings.Level;
                           Fail_If_Unset : Boolean := True);
@@ -194,5 +199,12 @@ private
    --  Return the milestone stored by the user for this tool
    function Tool_Milestone (Crate : Crate_Name) return Milestones.Milestone
    is (Milestones.New_Milestone (Settings.DB.Get (Tool_Key (Crate), "")));
+
+   ---------------------------
+   -- Toolchain_Is_Complete --
+   ---------------------------
+
+   function Toolchain_Is_Complete return Boolean
+   is (for all Tool of Tools => Tool_Is_Configured (Tool));
 
 end Alire.Toolchains;

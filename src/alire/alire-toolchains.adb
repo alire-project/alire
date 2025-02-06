@@ -7,7 +7,7 @@ with Alire.Cache;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Manifest;
-with Alire.Origins;
+with Alire.Origins.Deployers.System;
 with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Properties;
@@ -205,6 +205,8 @@ package body Alire.Toolchains is
 
          if Release.Origin.Is_Index_Provided then
             Toolchains.Deploy (Release);
+         elsif Release.Origin.Is_System then
+            Release.Install_System_Package;
          else
             Trace.Debug
               ("The user selected a external version as default for "
@@ -584,9 +586,23 @@ package body Alire.Toolchains is
                                                    Root.Platform_Properties)
          loop
             if not Release.Origin.Is_Index_Provided then
-               Trace.Debug ("Detected external toolchain release: "
-                            & Release.Milestone.TTY_Image);
-               Result.Include (Release);
+               --  For a system external, we must make sure it is installed
+               case Origins.External_Kinds'(Release.Origin.Kind) is
+                  when Origins.External =>
+                     Trace.Debug ("Detected external toolchain release: "
+                                  & Release.Milestone.TTY_Image);
+                     Result.Include (Release);
+                  when Origins.System =>
+                     if Release.Origin.Already_Installed then
+                        Trace.Debug ("Detected system toolchain release: "
+                                     & Release.Milestone.TTY_Image);
+                        Result.Include (Release);
+                     else
+                        Trace.Debug
+                          ("Skipping uninstalled system toolchain release: "
+                           & Release.Milestone.TTY_Image);
+                     end if;
+               end case;
             end if;
          end loop;
       end loop;
@@ -630,13 +646,23 @@ package body Alire.Toolchains is
          Trace.Detail ("Skipping installation of already available release: "
                        & Release.Milestone.TTY_Image);
          return;
+      elsif Release.Origin.Is_System then
+         if Release.Origin.Already_Installed then
+            Trace.Debug ("Skipping installation of already available release: "
+                         & Release.Milestone.TTY_Image);
+         else
+            Origins.Deployers.System.Platform_Deployer
+              (Release.Origin).Deploy ("").Assert;
+            Invalidate_Available_Cache;
+         end if;
+         return;
       elsif Release.Origin.Kind in Origins.External then
          Trace.Debug ("Skipping installation of external tool release: "
                        & Release.Milestone.TTY_Image);
          return;
       end if;
 
-      --  Deploy at the install location
+      --  Deploy a regular binary release at the install location
 
       Release.Deploy (Env             => Root.Platform_Properties,
                       Parent_Folder   => Location,

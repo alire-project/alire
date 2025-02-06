@@ -6,6 +6,7 @@ with Alire.Origins.Deployers.System.RPM_Wrappers;
 with Alire.Origins.Deployers.System.Unknown;
 with Alire.Origins.Deployers.System.Zypper;
 with Alire.OS_Lib;
+with Alire.Toolchains;
 
 with CLIC.User_Input;
 
@@ -160,5 +161,19 @@ package body Alire.Origins.Deployers.System is
          return "";
       end if;
    end Executable_Path;
+
+   -------------
+   -- Install --
+   -------------
+
+   procedure Install (This : Releases.Release) is
+   begin
+      if Toolchains.Is_Tool (This) then
+         Toolchains.Deploy (This);
+         --  This ensures the cache of tools is properly reset
+      else
+         Platform_Deployer (This.Origin).Deploy ("").Assert;
+      end if;
+   end Install;
 
 end Alire.Origins.Deployers.System;

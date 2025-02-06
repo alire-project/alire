@@ -381,6 +381,11 @@ package Alire.Releases is
    --  so future inspections of the folder can ensure the operation wasn't
    --  interrupted. No actions for the release are run at this time.
 
+   procedure Install_System_Package (This : Release)
+     with Pre => This.Origin.Is_System;
+   --  Install the system package that provides the release, without any
+   --  additional actions (unlike Deploy).
+
 private
 
    use Semantic_Versioning;

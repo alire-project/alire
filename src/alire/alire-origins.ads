@@ -117,6 +117,9 @@ package Alire.Origins is
 
    function Is_System (This : Origin) return Boolean is (This.Kind = System);
 
+   function Already_Installed (This : Origin) return Boolean
+     with Pre => This.Is_System;
+
    function Package_Name (This : Origin) return String
      with Pre => This.Kind = System;
 
