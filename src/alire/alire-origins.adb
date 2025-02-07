@@ -255,6 +255,19 @@ package body Alire.Origins is
           when others         => Hash_Vectors.Empty_Vector);
 
    ----------------
+   -- Unique_Ids --
+   ----------------
+
+   function Unique_Ids (This : Origin) return AAA.Strings.Vector is
+      Result : AAA.Strings.Vector;
+   begin
+      for Hash of Hash_Vectors.Vector'(This.Get_Hashes) loop
+         Result.Append (String (Hash));
+      end loop;
+      return Result;
+   end Unique_Ids;
+
+   ----------------
    -- Add_Hashes --
    ----------------
    --  Load hash information into the given origin

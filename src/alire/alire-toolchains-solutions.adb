@@ -35,6 +35,11 @@ package body Alire.Toolchains.Solutions is
       Result : Alire.Solutions.Solution := Solution;
    begin
 
+      --  Detect tool mismatch. This is a good place as this is the last moment
+      --  before a tool is really going to be used.
+
+      Detect_Hash_Mismatch;
+
       --  Last-minute redeployment of any missing toolchain element. This may
       --  happen if the user has manually deleted the cache of toolchains, or
       --  uninstalled a system package for the external compiler.

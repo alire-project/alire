@@ -614,11 +614,62 @@ package body Alire.Toolchains is
 
       Trace.Debug ("Detected available tools:");
       for Rel of Result loop
-         Trace.Debug ("   Tool: " & Rel.Milestone.TTY_Image);
+         Trace.Debug ("   Tool: " & Rel.Milestone.TTY_Image
+                      & " hash: " & Rel.Origin.Unique_Ids.Flatten (","));
       end loop;
+
+      --  When we have cached results, this is the earliest moment in which we
+      --  can check we don't have a tool mismatch. If Results were empty the
+      --  detection results in a recursive loop.
+
+      if not Result.Is_Empty then
+         Detect_Hash_Mismatch;
+      end if;
 
       return Result;
    end Available;
+
+   --------------------------
+   -- Detect_Hash_Mismatch --
+   --------------------------
+
+   procedure Detect_Hash_Mismatch is
+      use type AAA.Strings.Vector;
+   begin
+      for Tool of Tools loop
+         if Tool_Is_Configured (Tool) and then not Tool_Is_Missing (Tool) then
+            declare
+               Tool_Rel : constant Releases.Release := Tool_Release (Tool);
+            begin
+               if Index.Exists (Tool, Tool_Rel.Version) and then
+                 Tool_Rel.Origin.Unique_Ids /=
+                   Index.Find (Tool, Tool_Rel.Version).Origin.Unique_Ids
+               then
+                  Trace.Debug ("Tool hash mismatch for "
+                               & Tool_Rel.Milestone.TTY_Image);
+                  Trace.Debug ("Configured: "
+                               & Tool_Rel.Origin.Unique_Ids.Flatten);
+                  Trace.Debug ("From index: "
+                               & Index.Find (Tool, Tool_Rel.Version)
+                                      .Origin.Unique_Ids.Flatten);
+
+                  Raise_Checked_Error
+                    ("Selected tool " & Tool_Rel.Milestone.TTY_Image
+                     & " does not match its fingerprint from the index."
+                     & New_Line
+                     & "This may be caused by reusing the configuration "
+                     & "of an alr built for a different architecture"
+                     & New_Line
+                     & "Please manually delete the folder "
+                     & TTY.URL (Path / Tool_Rel.Deployment_Folder)
+                     & New_Line
+                     & "Afterwards, reconfigure your toolchain with "
+                     & TTY.Terminal ("alr toolchain --select"));
+               end if;
+            end;
+         end if;
+      end loop;
+   end Detect_Hash_Mismatch;
 
    ----------
    -- Path --
