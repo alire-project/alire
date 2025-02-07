@@ -40,7 +40,7 @@ package body Alire.User_Pins is
    --------------
 
    function New_Path (Path : Any_Path) return Pin
-   is (Kind => To_Path,
+   is (Kind       => To_Path,
        Local_Path => +Path);
 
    ----------------
@@ -51,10 +51,10 @@ package body Alire.User_Pins is
                         Commit : String := "";
                         Branch : String := "")
                         return Pin
-   is (Kind       => To_Git,
-       URL        => +URL,
-       Commit     => +Commit,
-       Branch     => +Branch,
+   is (Kind          => To_Git,
+       URL           => +URL,
+       Commit        => +Commit,
+       Branch        => +Branch,
        Checkout_Path => <>);
 
    -----------
@@ -255,7 +255,7 @@ package body Alire.User_Pins is
                     (for all Path of Paths =>
                        AAA.Strings.Has_Prefix (Path, "alire/")
                        or else AAA.Strings.Has_Prefix (Path, "config/"));
-                  --  'git status' yields '/' separated paths, even on Windows.
+                  --  'git status' yields '/' separated paths, even on Windows
 
                   Question : constant String :=
                     "Updating the pin '"
@@ -557,11 +557,11 @@ package body Alire.User_Pins is
          function Load_Remote return Pin is
             use Ada.Strings.Unbounded;
             Result : Pin :=
-                       (Kind       => To_Git,
-                        URL        => +This.Checked_Pop (Keys.URL,
-                          TOML_String).As_String,
-                        Branch     => <>,
-                        Commit     => <>,
+                       (Kind          => To_Git,
+                        URL           => +This.Checked_Pop (Keys.URL,
+                                                        TOML_String).As_String,
+                        Branch        => <>,
+                        Commit        => <>,
                         Checkout_Path => <>);
          begin
             if This.Contains (Keys.Branch)
