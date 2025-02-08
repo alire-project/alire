@@ -187,6 +187,11 @@ package body Alire.Properties.Actions.Executor is
 
          if Code /= 0 then
             if Capture then
+
+               --  This is at debug level because sometimes we want silent
+               --  failure (e.g. during `alr test`), so the final reporting
+               --  must be done upstream (by using code/output).
+
                Trace.Debug ("Execution failed for action: " & Act.Image);
                Trace.Debug ("Exit code: " & AAA.Strings.Trim (Code'Image));
                if Output.Is_Empty then
@@ -199,11 +204,6 @@ package body Alire.Properties.Actions.Executor is
                end if;
 
             else -- Don't capture
-
-               --  This is at debug level because sometimes we want silent
-               --  failure (e.g. during `alr test`), so the final reporting
-               --  must be done upstream (by using code/output).
-
                Trace.Warning ("Execution failed for action: " & Act.Image);
                Trace.Warning ("Exit code: " & AAA.Strings.Trim (Code'Image));
                Trace.Warning ("Action output not captured, check it above.");
