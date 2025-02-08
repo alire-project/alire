@@ -40,8 +40,8 @@ package body Alire.User_Pins is
    --------------
 
    function New_Path (Path : Any_Path) return Pin
-   is (Kind => To_Path,
-       Path => +Path);
+   is (Kind       => To_Path,
+       Local_Path => +Path);
 
    ----------------
    -- New_Remote --
@@ -51,11 +51,11 @@ package body Alire.User_Pins is
                         Commit : String := "";
                         Branch : String := "")
                         return Pin
-   is (Kind       => To_Git,
-       URL        => +URL,
-       Commit     => +Commit,
-       Branch     => +Branch,
-       Local_Path => <>);
+   is (Kind          => To_Git,
+       URL           => +URL,
+       Commit        => +Commit,
+       Branch        => +Branch,
+       Checkout_Path => <>);
 
    -----------
    -- Image --
@@ -64,11 +64,13 @@ package body Alire.User_Pins is
    function Image (This : Pin; User : Boolean) return String
    is (case This.Kind is
           when To_Version => "version=" & TTY.Version (This.Version.Image),
-          when To_Path    => "path=" & TTY.URL (if User
-                                       then VFS.Attempt_Portable (+This.Path)
-                                       else +This.Path),
+          when To_Path    => "path="
+                             & TTY.URL
+                               (if User
+                                then VFS.Attempt_Portable (+This.Local_Path)
+                                else +This.Local_Path),
           when To_Git     =>
-            (if Path (This) /= ""
+            (if This.Has_Path and then This.Path /= ""
              then "path=" & TTY.URL ((if User
                                       then VFS.Attempt_Portable (Path (This))
                                       else Path (This))) & ","
@@ -253,7 +255,7 @@ package body Alire.User_Pins is
                     (for all Path of Paths =>
                        AAA.Strings.Has_Prefix (Path, "alire/")
                        or else AAA.Strings.Has_Prefix (Path, "config/"));
-                  --  'git status' yields '/' separated paths, even on Windows.
+                  --  'git status' yields '/' separated paths, even on Windows
 
                   Question : constant String :=
                     "Updating the pin '"
@@ -308,7 +310,7 @@ package body Alire.User_Pins is
          return;
       end if;
 
-      This.Local_Path := +Destination;
+      This.Checkout_Path := +Destination;
 
       --  Don't check out an already existing commit pin, or a non-update
       --  branch pin
@@ -392,6 +394,16 @@ package body Alire.User_Pins is
          then "#" & TTY.Emph (+This.Branch)
          else ""));
 
+   --------------
+   -- Has_Path --
+   --------------
+
+   function Has_Path (This : Pin) return Boolean
+   is (This.Kind = To_Path
+       or else
+         (This.Kind = To_Git
+          and then +This.Checkout_Path /= ""));
+
    ----------
    -- Path --
    ----------
@@ -403,10 +415,10 @@ package body Alire.User_Pins is
    begin
       case This.Kind is
          when To_Path =>
-            return +This.Path;
+            return +This.Local_Path;
          when To_Git  =>
-            if +This.Local_Path /= "" then
-               return +This.Local_Path;
+            if +This.Checkout_Path /= "" then
+               return +This.Checkout_Path;
             else
                raise Program_Error with "Undeployed pin";
             end if;
@@ -465,7 +477,7 @@ package body Alire.User_Pins is
                     +This.Checked_Pop (Keys.URL,
                                        TOML_String).As_String;
 
-                  Result.Local_Path :=
+                  Result.Checkout_Path :=
                     +Utils.User_Input.To_Absolute_From_Portable
                     (This.Checked_Pop (Keys.Path, TOML_String).As_String);
 
@@ -483,14 +495,14 @@ package body Alire.User_Pins is
                --  Just a local pin
 
                return Result : Pin := (Kind => To_Path, others => <>) do
-                  Result.Path :=
+                  Result.Local_Path :=
                     +Utils.User_Input.To_Absolute_From_Portable
                     (This.Checked_Pop (Keys.Path, TOML_String).As_String);
 
-                  if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
+                  if not GNAT.OS_Lib.Is_Directory (+Result.Local_Path) then
                      This.Recoverable_Error
                        ("Pin path is not a valid directory: "
-                        & (+Result.Path));
+                        & (+Result.Local_Path));
                   end if;
                end return;
             end if;
@@ -503,7 +515,7 @@ package body Alire.User_Pins is
          function Load_To_Path return Pin is
             Result : Pin :=
                        (Kind => To_Path,
-                        Path => <>);
+                        Local_Path => <>);
             User_Path : constant String :=
                           This.Checked_Pop (Keys.Path,
                                             TOML_String).As_String;
@@ -523,16 +535,16 @@ package body Alire.User_Pins is
 
             --  Make the path absolute if not already, and store it
 
-            Result.Path :=
+            Result.Local_Path :=
               +Utils.User_Input.To_Absolute_From_Portable
               (User_Path                  => User_Path,
                Error_When_Relative_Native =>
                  "Pin relative paths must use forward slashes " &
                  " to be portable");
 
-            if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
+            if not GNAT.OS_Lib.Is_Directory (+Result.Local_Path) then
                This.Recoverable_Error ("Pin path is not a valid directory: "
-                                       & (+Result.Path));
+                                       & (+Result.Local_Path));
             end if;
 
             return Result;
@@ -545,12 +557,12 @@ package body Alire.User_Pins is
          function Load_Remote return Pin is
             use Ada.Strings.Unbounded;
             Result : Pin :=
-                       (Kind       => To_Git,
-                        URL        => +This.Checked_Pop (Keys.URL,
-                          TOML_String).As_String,
-                        Branch     => <>,
-                        Commit     => <>,
-                        Local_Path => <>);
+                       (Kind          => To_Git,
+                        URL           => +This.Checked_Pop (Keys.URL,
+                                                        TOML_String).As_String,
+                        Branch        => <>,
+                        Commit        => <>,
+                        Checkout_Path => <>);
          begin
             if This.Contains (Keys.Branch)
               and then This.Contains (Keys.Commit)

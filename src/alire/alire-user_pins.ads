@@ -49,6 +49,10 @@ package Alire.User_Pins is
    function Is_Broken (This : Pin) return Boolean
      with Pre => This.Kind in Kinds_With_Path;
 
+   function Has_Path (This : Pin) return Boolean;
+   --  True if Path will return a path for a local or deployed link, False if
+   --  Path will raise.
+
    function Path (This : Pin) return Absolute_Path
      with Pre => This.Kind in Kinds_With_Path;
    --  May raise if a Git pin hasn't been yet deployed (see Deploy proc). Even
@@ -134,13 +138,13 @@ private
    type Pin (Kind : Kinds) is tagged record
       case Kind is
          when To_Git =>
-            URL        : UString;
-            Branch     : UString; -- Optional
-            Commit     : UString; -- Optional
-            Local_Path : Unbounded_Absolute_Path;
+            URL           : UString;
+            Branch        : UString; -- Optional
+            Commit        : UString; -- Optional
+            Checkout_Path : Unbounded_Absolute_Path;
             --  Empty until the pin is locally deployed
          when To_Path =>
-            Path : Unbounded_Absolute_Path;
+            Local_Path : Unbounded_Absolute_Path;
          when To_Version =>
             Version : Semantic_Versioning.Version;
       end case;
