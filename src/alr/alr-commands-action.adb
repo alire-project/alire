@@ -135,6 +135,10 @@ package body Alr.Commands.Action is
                     (Rel,
                      Env     => Cmd.Root.Environment,
                      Moment  => Moment);
+               exception
+                  when Alire.Properties.Actions.Action_Failed =>
+                     Reportaise_Command_Failed
+                       ("An action exited with error");
                end;
             end if;
          end Run_Release;

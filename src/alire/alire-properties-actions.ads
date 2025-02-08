@@ -5,7 +5,7 @@ with Alire.TOML_Keys;
 package Alire.Properties.Actions with Preelaborate is
 
    Action_Failed : exception;
-   --  Raised by the action runner when an action fails
+   --  Raised by the action runner when action execution fails (exit code /= 0)
 
    type Moments is
      (
