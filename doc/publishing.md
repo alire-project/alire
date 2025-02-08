@@ -39,9 +39,9 @@ in beta and not documented here yet. Follow these steps to create a classic PAT:
 1. Click on "Settings" in the list of options in the profile menu.
 1. Click on "Developer settings" entry at the bottom in your Settings page.
 1. Click on "Personal access tokens" and then "Tokens (classic)".
-1. Click on "Generate new token" and the select the classic variant.
-1. In the "Select scopes" section, under "repo", check "public_repo" and "workflow". Those are
-   the only permissions needed for this PAT.
+1. Click on "Generate new token" and then select the classic variant.
+1. In the "Select scopes" section, under "repo", check "public_repo". That is
+   the only permission needed for this PAT.
 1. Click on "Generate token" at the bottom.
 
 You will get the PAT string after completing the generation.
