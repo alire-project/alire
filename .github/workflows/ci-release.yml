@@ -1,0 +1,101 @@
+# These are the builds that get uploaded as releases. When this workflow is run
+# from a regular PR, it stops before the release steps, but the checks are
+# always performed.
+
+name: Release
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+env:
+  alire_index: ""
+  # Empty index: test with master of community index
+  # Otherwise: test with particular commit/branch
+  # e.g.: index: "git+https://github.com/alire-project/alire-index@deadbeef"
+  MSYS64_ROOT:  C:\Users\runneradmin\AppData\Local\alire\cache\msys64
+  MINGW64_PATH: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\mingw64\bin
+  MSYS2_PATH:   C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin
+  MSYS2_PACMAN: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin\pacman --noconfirm
+
+jobs:
+
+  build:
+    name: ${{ matrix.platform.id }}
+
+    runs-on: ${{ matrix.platform.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os: macos-13            # x64
+            id: macos-x64
+          - os: macos-latest        # arm64
+            id: macos-arm
+          - os: ubuntu-20.04        # x64, oldest supported so releases can run on older distros
+            id: ubuntu-x64
+          - os: ubuntu-24.04-arm    # new ARM runners
+            id: ubuntu-arm
+          - os: windows-latest
+            id: windows-x64
+
+    steps:
+
+    - name: Check out repository
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    # Install GNAT, we only need a system one for Ubuntu ARM until we have
+    # Alire-indexed releases for it.
+
+    - name: Install Alire toolchain
+      uses: alire-project/alr-install@v2
+      if: matrix.platform.id != 'ubuntu-arm'
+      with:
+        crates: gnat_native gprbuild
+        prefix: alire_prefix
+
+    - name: Install system toolchain (Ubuntu ARM)
+      uses: alire-project/alr-install@v2
+      if: matrix.platform.id == 'ubuntu-arm'
+      with:
+        crates: gnat_native gprbuild
+        prefix: alire_prefix
+
+    - name: Check toolchain architecture
+      uses: mosteo-actions/gnat-toolchain-arch-checker@v1
+
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    # The test script itself will build alr
+
+    - name: Run test script
+      run: scripts/ci-github.sh
+      shell: bash
+      env:
+        BRANCH: ${{ github.base_ref }}
+        INDEX: ""
+
+    # Ascertain whether alr can run without the toolchain that built it
+
+    - name: Remove system GNAT (Ubuntu ARM)
+      run: sudo apt-get remove -y gnat-10 gprbuild
+      shell: bash
+
+    - name: Check standalone alr
+      uses: mosteo-actions/alr-standalone-checker@v1
+      with:
+        alr_path: bin
+        toolchain_path: alire_prefix
