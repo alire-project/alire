@@ -1041,7 +1041,7 @@ package body Alire.Roots is
             --  reprocess it
 
             if Linked.Contains (Crate) then
-               Trace.Debug ("Skipping adding of already added link target: "
+               Trace.Debug ("Skipping addition of already added link target: "
                             & Utils.TTY.Name (Crate));
                return;
             else
@@ -1072,6 +1072,10 @@ package body Alire.Roots is
                         & " but found "
                         & Utils.TTY.Name (Target.Value.Name));
                   end if;
+               elsif Target.Is_Broken then
+                  Trace.Error ("Invalid manifest in pinned crate at "
+                               & TTY.URL (Pin.Path) & ":");
+                  Raise_Checked_Error (Target.Message);
                else
                   Trace.Debug
                     ("No crate found at pin location " & Pin.Relative_Path);
