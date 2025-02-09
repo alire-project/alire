@@ -14,7 +14,7 @@ def check_output(dump):
 ERROR: Location  : .*
 ERROR: Extra info: Raising forcibly
 ERROR: Report at : .*
-ERROR: Re-run with `-vv -d` for a full log and stack trace.\
+ERROR: Re-run with global switches `-vv -d` for a full log and stack trace.\
 ''', dump)
 
 
@@ -29,7 +29,7 @@ check_output(run_alr('--debug', 'dev', '--raise',
 assert_match(
           ".*"
           "ERROR: Extra info: Raising forcibly.*"
-          "ERROR: Re-run with `-vv -d` for a full log and stack trace",
+          "ERROR: Re-run with global switches `-vv -d` for a full log and stack trace",
           run_alr('dev', '--raise', debug=False, complain_on_error=False).out
           )
 

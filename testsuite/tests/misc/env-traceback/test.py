@@ -12,7 +12,7 @@ ERROR: .* BEGIN Alire bug detected .*
 ERROR: Location  : .*
 ERROR: Extra info: Raising forcibly
 ERROR: Report at : .*
-ERROR: Re-run with `-vv -d` for a full log and stack trace.
+ERROR: Re-run with global switches `-vv -d` for a full log and stack trace.
 ERROR: .* END Alire bug detected .*\
 """,
               run_alr("dev", "--raise",
