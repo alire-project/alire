@@ -27,6 +27,10 @@ env:
 
 jobs:
 
+  #########
+  # build #
+  #########
+
   build:
     name: ${{ matrix.platform.id }}
 
@@ -37,15 +41,19 @@ jobs:
       matrix:
         platform:
           - os: macos-13            # x64
-            id: macos-x64
+            id: x86_64-macos
+
           - os: macos-latest        # arm64
-            id: macos-arm
+            id: aarch64-macos
+
           - os: ubuntu-20.04        # x64, oldest supported so releases can run on older distros
-            id: ubuntu-x64
+            id: x86_64-linux
+
           - os: ubuntu-24.04-arm    # new ARM runners
-            id: ubuntu-arm
+            id: aaarch64-linux
+
           - os: windows-latest
-            id: windows-x64
+            id: x86_64-windows
 
     steps:
 
@@ -58,14 +66,14 @@ jobs:
     # Alire-indexed releases for it.
 
     - name: Install Alire toolchain
-      if: matrix.platform.id != 'ubuntu-arm'
+      if: matrix.platform.id != 'aaarch64-linux'
       uses: alire-project/alr-install@v2
       with:
         crates: gnat_native gprbuild
         prefix: alire_prefix
 
     - name: Install system toolchain (Ubuntu ARM)
-      if: matrix.platform.id == 'ubuntu-arm'
+      if: matrix.platform.id == 'aaarch64-linux'
       run: |
         sudo apt-get install -y gnat gprbuild
         echo ALIRE_TESTSUITE_DISABLE_DOCKER=true >> $GITHUB_ENV
@@ -83,7 +91,7 @@ jobs:
     # The test script itself will build alr
 
     - name: Run test script
-      run: scripts/ci-github.sh
+      run: scripts/ci-github.sh test=false # REMOVE BEFORE MERGING
       shell: bash
       env:
         BRANCH: ${{ github.base_ref }}
@@ -92,7 +100,7 @@ jobs:
     # Ascertain whether alr can run without the toolchain that built it
 
     - name: Remove system GNAT (Ubuntu ARM)
-      if: matrix.platform.id == 'ubuntu-arm'
+      if: matrix.platform.id == 'aaarch64-linux'
       run: sudo apt-get remove -y gnat-13 gprbuild
       shell: bash
 
@@ -101,3 +109,101 @@ jobs:
       with:
         alr_path: bin
         toolchain_path: alire_prefix
+
+    # Artifacts from test run
+
+    - name: Upload binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: alr-bin-${{matrix.platform.id}}.zip
+        path: |
+          bin/alr*
+          LICENSE.txt
+
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e3-log-${{matrix.platform.id}}.zip
+        path: testsuite/out
+
+  ###########
+  # release #
+  ###########
+
+  #####################
+  # windows-installer #
+  #####################
+
+  windows-installer:
+    name: Windows Installer
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+
+    - name: Check out repository
+      uses: actions/checkout@v4
+      # We need it for the installer scripts. We don't need submodules now though.
+
+    - name: Download built alr
+      uses: actions/download-artifact@v4
+      with:
+        name: alr-bin-x86_64-windows.zip
+
+    # We need to install MSYS2 again. This is a bit wasteful since the build
+    # job already did it, but at least this way things are more clearly
+    # separated. If we rely on an existing Alire, we might hit the cache rather
+    # than always reinstalling from scratch. So, rather than using setup-alire,
+    # we use again alr-install, already used in the build job, to maximize
+    # chances of a cache hit.
+
+    - name: Set up stable Alire (for MSYS2)
+      uses: alire-project/alr-install@v2
+      with:
+        crates: gnat_native gprbuild
+        prefix: alire_prefix
+
+    - name: Check MSYS2 installation
+      run: bin/alr version
+      shell: bash
+
+    - name: Install qt-installer-framework in msys2
+      run: ${{env.MSYS2_PACMAN}} -S mingw64/mingw-w64-x86_64-qt-installer-framework
+
+    - name: Add msys2 /mingw64/bin to the path (for qt-installer-framework)
+      run: echo '${{env.MINGW64_PATH}}' >> $GITHUB_PATH
+      shell: bash
+
+    - name: Install zip in msys2
+      run: ${{env.MSYS2_PACMAN}} --noconfirm -S zip
+
+    - name: Add msys2 /usr/bin to the path (for zip)
+      run: echo '${{env.MSYS2_PATH}}' >> $GITHUB_PATH
+      shell: bash
+
+    - name: Run installer build script
+      run: bash make-alire-installer
+      shell: bash
+      working-directory: scripts/installer/
+      env:
+        ALR_INSTALL_DIR: ${{ runner.temp }}/alr_install
+        ALR_INSTALL_OS: ${{ runner.os }}
+
+    - name: Upload installer
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-installer.exe
+        path: scripts/installer/alire-*.exe
+
+    - name: Upload zip archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-installer.zip
+        path: scripts/installer/alire-*.zip
+
+    - name: Upload tar archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-installer.tar.xz
+        path: scripts/installer/alire-*.tar.xz
