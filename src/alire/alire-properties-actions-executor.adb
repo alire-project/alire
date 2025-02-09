@@ -78,6 +78,8 @@ package body Alire.Properties.Actions.Executor is
 
       Exec : String renames Cmd.First_Element;
    begin
+      Code := 0;
+
       if Alire.OS_Lib.Locate_Exec_On_Path (Exec) = "" and then
         not GNAT.OS_Lib.Is_Executable_File (Exec)
       then
@@ -161,7 +163,12 @@ package body Alire.Properties.Actions.Executor is
    begin
       Now (Moment) := True; -- Cannot be done in the initialization
 
-      if not Release.On_Platform_Actions (Env, Now).Is_Empty then
+      Output.Clear;
+
+      if Release.On_Platform_Actions (Env, Now).Is_Empty then
+         Code := 0;
+         return;
+      else
          Put_Info ("Running " &
                      Utils.TTY.Name (TOML_Adapters.Tomify (Moment'Image))
                    & " actions for " & Release.Milestone.TTY_Image & "...");
