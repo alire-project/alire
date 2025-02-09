@@ -136,7 +136,7 @@ jobs:
   #####################
 
   windows-installer:
-    name: Windows Installer
+    name: Windows installer
     runs-on: windows-latest
     needs: build
 
@@ -159,10 +159,7 @@ jobs:
     # chances of a cache hit.
 
     - name: Set up stable Alire (for MSYS2)
-      uses: alire-project/alr-install@v2
-      with:
-        crates: gnat_native gprbuild
-        prefix: alire_prefix
+      uses: alire-project/setup-alire@v4
 
     - name: Check MSYS2 installation
       run: bin/alr version
