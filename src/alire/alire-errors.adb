@@ -302,7 +302,8 @@ package body Alire.Errors is
       Put ("Report at : " & URL);
 
       if Log_Level < Debug or else not Log_Debug then
-         Put ("Re-run with `-vv -d` for a full log and stack trace.");
+         Put ("Re-run with global switches `-vv -d` "
+              & "for a full log and stack trace.");
       end if;
 
       if Recoverable then
