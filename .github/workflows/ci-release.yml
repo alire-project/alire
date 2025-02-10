@@ -175,7 +175,7 @@ jobs:
   release:
     name: Release on ${{ matrix.platform.id }}
     if: github.event_name == 'release'
-    needs: [build, build-macos-universal]
+    needs: [build, build-macos-universal, windows-installer]
     runs-on: ${{ matrix.platform.os }}
 
     strategy:
@@ -207,8 +207,16 @@ jobs:
         with:
           name: alr-bin-${{ matrix.platform.id }}.zip
 
-      - name: Package binaries
+      # On Windows runners, 7zip is available instead of zip. Rather than
+      # installing zip from MSYS2 we simply use 7zip.
+
+      - name: Package binaries (non-Windows)
+        if: matrix.platform.os != 'windows-latest'
         run: zip alr-bin.zip bin/alr* LICENSE.txt
+
+      - name: Package binaries (Windows)
+        if: matrix.platform.os == 'windows-latest'
+        run: 7z a alr-bin.zip bin/alr.exe LICENSE.txt
 
       - name: Retrieve upload URL for the release
         id: get_release
@@ -235,7 +243,7 @@ jobs:
   #####################
 
   windows-installer:
-    name: Windows installer
+    name: Create Windows installer
     runs-on: windows-latest
     needs: build
 
@@ -288,17 +296,63 @@ jobs:
     - name: Upload installer
       uses: actions/upload-artifact@v4
       with:
-        name: windows-installer.exe
+        name: installer-x86_64-windows
         path: scripts/installer/alire-*.exe
 
     - name: Upload zip archive
       uses: actions/upload-artifact@v4
       with:
-        name: windows-installer.zip
+        name: installer-x86_64-windows.zip
         path: scripts/installer/alire-*.zip
 
     - name: Upload tar archive
       uses: actions/upload-artifact@v4
       with:
-        name: windows-installer.tar.xz
+        name: installer-x86_64-windows.tar.xz
         path: scripts/installer/alire-*.tar.xz
+
+  #############################
+  # release-windows-installer #
+  #############################
+
+  release-windows-installer:
+    name: Release Windows installer
+    if: github.event_name == 'release'
+    needs: [build, windows-installer]
+    runs-on: windows-latest
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: installer-x86_64-windows
+          path: installer
+
+      # For the record, list the contents of the installer directory
+      - name: List installer directory
+        run: ls -alF installer
+        shell: bash
+
+      - name: Rename installer
+        run: copy installer/alire-*.exe installer/alire-install.exe
+
+      - name: Retrieve upload URL for the release
+        id: get_release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Get release version
+        id: get_version
+        uses: battila7/get-version-action@v2
+
+      - name: Upload installer asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: installer/alire-install.exe
+          asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-installer-x86_64-windows.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
