@@ -2,7 +2,7 @@
 # from a regular PR, it stops before the release steps, but the checks are
 # always performed.
 
-name: Release
+name: Build releases
 
 on:
   pull_request:
@@ -32,13 +32,14 @@ jobs:
   #########
 
   build:
-    name: ${{ matrix.platform.id }}
+    name: build on ${{ matrix.platform.id }}
 
     runs-on: ${{ matrix.platform.os }}
 
     strategy:
       fail-fast: false
       matrix:
+        # Remember to keep in sync with the matrix at the release: job below
         platform:
           - os: macos-13            # x64
             id: x86_64-macos
@@ -127,9 +128,107 @@ jobs:
         name: e3-log-${{matrix.platform.id}}.zip
         path: testsuite/out
 
+  #########################
+  # build-macos-universal #
+  #########################
+
+  build-macos-universal:
+    runs-on: macos-latest
+    needs: build
+    steps:
+      - name: Install Python 3.x (required for releaser)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Download x86_64
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-bin-x86_64-macos.zip
+          path: x86_64
+
+      - name: Download aarch64
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-bin-aarch64-macos.zip
+          path: aarch64
+
+      - name: Create universal binary
+        run: |
+          mkdir bin
+          lipo x86_64/bin/alr aarch64/bin/alr -create -output bin/alr
+          chmod +x bin/alr
+          cp aarch64/LICENSE.txt .
+
+      - name: Upload universal artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alr-bin-universal-macos.zip
+          path: |
+            bin/alr
+            LICENSE.txt
+
   ###########
   # release #
   ###########
+
+  release:
+    name: Release on ${{ matrix.platform.id }}
+    if: github.event_name == 'release'
+    needs: [build, build-macos-universal]
+    runs-on: ${{ matrix.platform.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os: macos-13
+            id: x86_64-macos
+
+          - os: macos-latest
+            id: aarch64-macos
+
+          - os: macos-latest
+            id: universal-macos
+
+          - os: ubuntu-20.04
+            id: x86_64-linux
+
+          - os: ubuntu-24.04-arm
+            id: aaarch64-linux
+
+          - os: windows-latest
+            id: x86_64-windows
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-bin-${{ matrix.platform.id }}.zip
+
+      - name: Package binaries
+        run: zip alr-bin.zip bin/alr* LICENSE.txt
+
+      - name: Retrieve upload URL for the release
+        id: get_release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Get release version
+        id: get_version
+        uses: battila7/get-version-action@v2
+
+      - name: Upload binary assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: alr-bin.zip
+          asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-${{ matrix.platform.id }}.zip
+          asset_content_type: application/zip
 
   #####################
   # windows-installer #
@@ -154,9 +253,8 @@ jobs:
     # We need to install MSYS2 again. This is a bit wasteful since the build
     # job already did it, but at least this way things are more clearly
     # separated. If we rely on an existing Alire, we might hit the cache rather
-    # than always reinstalling from scratch. So, rather than using setup-alire,
-    # we use again alr-install, already used in the build job, to maximize
-    # chances of a cache hit.
+    # than always reinstalling from scratch. Also, we use setup-alire that is
+    # lighter than alr-install (which uses setup-alire internally).
 
     - name: Set up stable Alire (for MSYS2)
       uses: alire-project/setup-alire@v4
