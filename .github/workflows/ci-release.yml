@@ -2,7 +2,7 @@
 # from a regular PR, it stops before the release steps, but the checks are
 # always performed.
 
-name: Build releases
+name: CI Release
 
 on:
   pull_request:
@@ -39,7 +39,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Remember to keep in sync with the matrix at the release: job below
         platform:
           - os: macos-13            # x64
             id: x86_64-macos
@@ -63,7 +62,7 @@ jobs:
       with:
         submodules: true
 
-    # Install GNAT, we only need a system one for Ubuntu ARM until we have
+    # Install GNAT, we only need a system compiler for Ubuntu ARM until we have
     # Alire-indexed releases for it.
 
     - name: Install Alire toolchain
@@ -111,7 +110,7 @@ jobs:
         alr_path: bin
         toolchain_path: alire_prefix
 
-    # Artifacts from test run
+    # Artifacts for later release uploading
 
     - name: Upload binaries
       uses: actions/upload-artifact@v4
@@ -131,15 +130,12 @@ jobs:
   #########################
   # build-macos-universal #
   #########################
+  # Joins the two binaries for macOS in a single universal one
 
   build-macos-universal:
     runs-on: macos-latest
     needs: build
     steps:
-      - name: Install Python 3.x (required for releaser)
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
 
       - name: Download x86_64
         uses: actions/download-artifact@v4
@@ -171,11 +167,12 @@ jobs:
   ###########
   # release #
   ###########
+  # Actual uploading of release assets
 
   release:
     name: Release on ${{ matrix.platform.id }}
     if: github.event_name == 'release'
-    needs: [build, build-macos-universal, windows-installer]
+    needs: [build, build-macos-universal]
     runs-on: ${{ matrix.platform.os }}
 
     strategy:
@@ -241,6 +238,7 @@ jobs:
   #####################
   # windows-installer #
   #####################
+  # Generation of the Windows installer from Windows-built alr
 
   windows-installer:
     name: Create Windows installer
@@ -314,6 +312,8 @@ jobs:
   #############################
   # release-windows-installer #
   #############################
+  # Upload the Windows installer as a release asset in its own job, as it
+  # follows a different naming convention and disk structure than other assets.
 
   release-windows-installer:
     name: Release Windows installer
