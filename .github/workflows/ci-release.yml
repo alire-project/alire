@@ -92,7 +92,7 @@ jobs:
     # The test script itself will build alr
 
     - name: Run test script
-      run: scripts/ci-github.sh test=false # REMOVE BEFORE MERGING
+      run: scripts/ci-github.sh
       shell: bash
       env:
         BRANCH: ${{ github.base_ref }}
