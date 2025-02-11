@@ -1,0 +1,358 @@
+# These are the builds that get uploaded as releases. When this workflow is run
+# from a regular PR, it stops before the release steps, but the checks are
+# always performed.
+
+name: CI Release
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+env:
+  alire_index: ""
+  # Empty index: test with master of community index
+  # Otherwise: test with particular commit/branch
+  # e.g.: index: "git+https://github.com/alire-project/alire-index@deadbeef"
+  MSYS64_ROOT:  C:\Users\runneradmin\AppData\Local\alire\cache\msys64
+  MINGW64_PATH: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\mingw64\bin
+  MSYS2_PATH:   C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin
+  MSYS2_PACMAN: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin\pacman --noconfirm
+
+jobs:
+
+  #########
+  # build #
+  #########
+
+  build:
+    name: build on ${{ matrix.platform.id }}
+
+    runs-on: ${{ matrix.platform.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os: macos-13            # x64
+            id: x86_64-macos
+
+          - os: macos-latest        # arm64
+            id: aarch64-macos
+
+          - os: ubuntu-20.04        # x64, oldest supported so releases can run on older distros
+            id: x86_64-linux
+
+          - os: ubuntu-24.04-arm    # new ARM runners
+            id: aaarch64-linux
+
+          - os: windows-latest
+            id: x86_64-windows
+
+    steps:
+
+    - name: Check out repository
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    # Install GNAT, we only need a system compiler for Ubuntu ARM until we have
+    # Alire-indexed releases for it.
+
+    - name: Install Alire toolchain
+      if: matrix.platform.id != 'aaarch64-linux'
+      uses: alire-project/alr-install@v2
+      with:
+        crates: gnat_native gprbuild
+        prefix: alire_prefix
+
+    - name: Install system toolchain (Ubuntu ARM)
+      if: matrix.platform.id == 'aaarch64-linux'
+      run: |
+        sudo apt-get install -y gnat gprbuild
+        echo ALIRE_TESTSUITE_DISABLE_DOCKER=true >> $GITHUB_ENV
+      # GNAT 10 has a bug that fails in the testsuite. Also, we need to disable
+      # Docker tests on Ubuntu ARM.
+
+    - name: Check toolchain architecture
+      uses: mosteo-actions/gnat-toolchain-arch-checker@v1
+
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    # The test script itself will build alr
+
+    - name: Run test script
+      run: scripts/ci-github.sh
+      shell: bash
+      env:
+        BRANCH: ${{ github.base_ref }}
+        INDEX: ""
+
+    # Ascertain whether alr can run without the toolchain that built it
+
+    - name: Remove system GNAT (Ubuntu ARM)
+      if: matrix.platform.id == 'aaarch64-linux'
+      run: sudo apt-get remove -y gnat-13 gprbuild
+      shell: bash
+
+    - name: Check standalone alr
+      uses: mosteo-actions/alr-standalone-checker@v1
+      with:
+        alr_path: bin
+        toolchain_path: alire_prefix
+
+    # Artifacts for later release uploading
+
+    - name: Upload binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: alr-bin-${{matrix.platform.id}}.zip
+        path: |
+          bin/alr*
+          LICENSE.txt
+
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e3-log-${{matrix.platform.id}}.zip
+        path: testsuite/out
+
+  #########################
+  # build-macos-universal #
+  #########################
+  # Joins the two binaries for macOS in a single universal one
+
+  build-macos-universal:
+    runs-on: macos-latest
+    needs: build
+    steps:
+
+      - name: Download x86_64
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-bin-x86_64-macos.zip
+          path: x86_64
+
+      - name: Download aarch64
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-bin-aarch64-macos.zip
+          path: aarch64
+
+      - name: Create universal binary
+        run: |
+          mkdir bin
+          lipo x86_64/bin/alr aarch64/bin/alr -create -output bin/alr
+          chmod +x bin/alr
+          cp aarch64/LICENSE.txt .
+
+      - name: Upload universal artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alr-bin-universal-macos.zip
+          path: |
+            bin/alr
+            LICENSE.txt
+
+  ###########
+  # release #
+  ###########
+  # Actual uploading of release assets
+
+  release:
+    name: Release on ${{ matrix.platform.id }}
+    if: github.event_name == 'release'
+    needs: [build, build-macos-universal]
+    runs-on: ${{ matrix.platform.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os: macos-13
+            id: x86_64-macos
+
+          - os: macos-latest
+            id: aarch64-macos
+
+          - os: macos-latest
+            id: universal-macos
+
+          - os: ubuntu-20.04
+            id: x86_64-linux
+
+          - os: ubuntu-24.04-arm
+            id: aaarch64-linux
+
+          - os: windows-latest
+            id: x86_64-windows
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-bin-${{ matrix.platform.id }}.zip
+
+      # On Windows runners, 7zip is available instead of zip. Rather than
+      # installing zip from MSYS2 we simply use 7zip.
+
+      - name: Package binaries (non-Windows)
+        if: matrix.platform.os != 'windows-latest'
+        run: zip alr-bin.zip bin/alr* LICENSE.txt
+
+      - name: Package binaries (Windows)
+        if: matrix.platform.os == 'windows-latest'
+        run: 7z a alr-bin.zip bin/alr.exe LICENSE.txt
+
+      - name: Retrieve upload URL for the release
+        id: get_release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Get release version
+        id: get_version
+        uses: battila7/get-version-action@v2
+
+      - name: Upload binary assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: alr-bin.zip
+          asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-${{ matrix.platform.id }}.zip
+          asset_content_type: application/zip
+
+  #####################
+  # windows-installer #
+  #####################
+  # Generation of the Windows installer from Windows-built alr
+
+  windows-installer:
+    name: Create Windows installer
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+
+    - name: Check out repository
+      uses: actions/checkout@v4
+      # We need it for the installer scripts. We don't need submodules now though.
+
+    - name: Download built alr
+      uses: actions/download-artifact@v4
+      with:
+        name: alr-bin-x86_64-windows.zip
+
+    # We need to install MSYS2 again. This is a bit wasteful since the build
+    # job already did it, but at least this way things are more clearly
+    # separated. If we rely on an existing Alire, we might hit the cache rather
+    # than always reinstalling from scratch. Also, we use setup-alire that is
+    # lighter than alr-install (which uses setup-alire internally).
+
+    - name: Set up stable Alire (for MSYS2)
+      uses: alire-project/setup-alire@v4
+
+    - name: Check MSYS2 installation
+      run: bin/alr version
+      shell: bash
+
+    - name: Install qt-installer-framework in msys2
+      run: ${{env.MSYS2_PACMAN}} -S mingw64/mingw-w64-x86_64-qt-installer-framework
+
+    - name: Add msys2 /mingw64/bin to the path (for qt-installer-framework)
+      run: echo '${{env.MINGW64_PATH}}' >> $GITHUB_PATH
+      shell: bash
+
+    - name: Install zip in msys2
+      run: ${{env.MSYS2_PACMAN}} --noconfirm -S zip
+
+    - name: Add msys2 /usr/bin to the path (for zip)
+      run: echo '${{env.MSYS2_PATH}}' >> $GITHUB_PATH
+      shell: bash
+
+    - name: Run installer build script
+      run: bash make-alire-installer
+      shell: bash
+      working-directory: scripts/installer/
+      env:
+        ALR_INSTALL_DIR: ${{ runner.temp }}/alr_install
+        ALR_INSTALL_OS: ${{ runner.os }}
+
+    - name: Upload installer
+      uses: actions/upload-artifact@v4
+      with:
+        name: installer-x86_64-windows
+        path: scripts/installer/alire-*.exe
+
+    - name: Upload zip archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: installer-x86_64-windows.zip
+        path: scripts/installer/alire-*.zip
+
+    - name: Upload tar archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: installer-x86_64-windows.tar.xz
+        path: scripts/installer/alire-*.tar.xz
+
+  #############################
+  # release-windows-installer #
+  #############################
+  # Upload the Windows installer as a release asset in its own job, as it
+  # follows a different naming convention and disk structure than other assets.
+
+  release-windows-installer:
+    name: Release Windows installer
+    if: github.event_name == 'release'
+    needs: [build, windows-installer]
+    runs-on: windows-latest
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: installer-x86_64-windows
+          path: installer
+
+      # For the record, list the contents of the installer directory
+      - name: List installer directory
+        run: ls -alF installer
+        shell: bash
+
+      - name: Rename installer
+        run: copy installer/alire-*.exe installer/alire-install.exe
+
+      - name: Retrieve upload URL for the release
+        id: get_release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Get release version
+        id: get_version
+        uses: battila7/get-version-action@v2
+
+      - name: Upload installer asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: installer/alire-install.exe
+          asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-installer-x86_64-windows.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
