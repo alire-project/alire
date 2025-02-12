@@ -46,7 +46,7 @@ jobs:
           - os: macos-latest        # arm64
             id: aarch64-macos
 
-          - os: ubuntu-20.04        # x64, oldest supported so releases can run on older distros
+          - os: ubuntu-22.04        # x64, oldest supported so releases can run on older distros
             id: x86_64-linux
 
           - os: ubuntu-24.04-arm    # new ARM runners
@@ -188,7 +188,7 @@ jobs:
           - os: macos-latest
             id: universal-macos
 
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             id: x86_64-linux
 
           - os: ubuntu-24.04-arm
