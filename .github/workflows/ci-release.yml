@@ -32,7 +32,7 @@ jobs:
   #########
 
   build:
-    name: build on ${{ matrix.platform.id }}
+    name: Build on ${{ matrix.platform.id }}
 
     runs-on: ${{ matrix.platform.os }}
 
@@ -133,6 +133,7 @@ jobs:
   # Joins the two binaries for macOS in a single universal one
 
   build-macos-universal:
+    name: Create macOS universal binary
     runs-on: macos-latest
     needs: build
     steps:
@@ -164,6 +165,30 @@ jobs:
             bin/alr
             LICENSE.txt
 
+  ################
+  # release-info #
+  ################
+
+  release-info:
+    name: Info for release uploads
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    outputs:
+      upload-url: ${{ steps.get_release.outputs.upload_url }}
+      version-without-v: ${{ steps.get_version.outputs.version-without-v }}
+
+    steps:
+      - name: Retrieve upload URL for the release
+        id: get_release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Get release version
+        id: get_version
+        uses: battila7/get-version-action@v2
+
+
   ###########
   # release #
   ###########
@@ -172,7 +197,7 @@ jobs:
   release:
     name: Release on ${{ matrix.platform.id }}
     if: github.event_name == 'release'
-    needs: [build, build-macos-universal]
+    needs: [build, build-macos-universal, release-info]
     runs-on: ${{ matrix.platform.os }}
 
     strategy:
@@ -215,24 +240,14 @@ jobs:
         if: matrix.platform.os == 'windows-latest'
         run: 7z a alr-bin.zip bin/alr.exe LICENSE.txt
 
-      - name: Retrieve upload URL for the release
-        id: get_release
-        uses: bruceadams/get-release@v1.3.2
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
-      - name: Get release version
-        id: get_version
-        uses: battila7/get-version-action@v2
-
       - name: Upload binary assets
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          upload_url: ${{ needs.release-info.outputs.upload-url }}
           asset_path: alr-bin.zip
-          asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-${{ matrix.platform.id }}.zip
+          asset_name: alr-${{ needs.release-info.outputs.version-without-v }}-bin-${{ matrix.platform.id }}.zip
           asset_content_type: application/zip
 
   #####################
@@ -318,7 +333,7 @@ jobs:
   release-windows-installer:
     name: Release Windows installer
     if: github.event_name == 'release'
-    needs: [build, windows-installer]
+    needs: [build, release-info, windows-installer]
     runs-on: windows-latest
 
     steps:
@@ -337,22 +352,101 @@ jobs:
       - name: Rename installer
         run: copy installer/alire-*.exe installer/alire-install.exe
 
-      - name: Retrieve upload URL for the release
-        id: get_release
-        uses: bruceadams/get-release@v1.3.2
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
-      - name: Get release version
-        id: get_version
-        uses: battila7/get-version-action@v2
-
       - name: Upload installer asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          upload_url: ${{ needs.release-info.outputs.upload-url }}
           asset_path: installer/alire-install.exe
-          asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-installer-x86_64-windows.exe
+          asset_name: alr-${{ needs.release-info.outputs.version-without-v }}-installer-x86_64-windows.exe
           asset_content_type: application/vnd.microsoft.portable-executable
+
+  ############
+  # appimage #
+  ############
+
+  appimage:
+    name: Create AppImage
+    needs: build
+    runs-on: ubuntu-22.04
+    outputs:
+      short_sha: ${{ steps.get_ref.outputs.short_sha }}
+
+    steps:
+
+    - name: Check out repository
+      uses: actions/checkout@v4
+      # No need for submodules, but we need some resources for the appimage
+
+    - name: Retrieve artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: alr-bin-x86_64-linux.zip
+
+    - name: Install AppImage dependencies (libfuse2)
+      shell: bash
+      run: |
+        sudo add-apt-repository universe
+        sudo apt-get install -y libfuse2
+
+    - name: Install AppImage's linuxdeploy
+      uses: miurahr/install-linuxdeploy-action@v1
+      with:
+        plugins: appimage
+
+    - name: Copy license into AppImage
+      run: |
+        mkdir -p AppDir
+        cp LICENSE.txt AppDir/
+
+    - name: Create AppImage
+      run: >
+        linuxdeploy-x86_64.AppImage --appdir AppDir -e bin/alr
+        -d resources/alr.desktop -i resources/alr.png --output appimage
+
+    - name: Rename AppImage
+      run: mv alr*AppImage alr.AppImage
+
+    - name: Test AppImage without the toolchain installed
+      run: |
+        chmod +x ./alr.AppImage
+        which gnat || { echo "Toolchain purged"; ./alr.AppImage version; }
+
+    - name: Get ref version
+      id: get_ref
+      run: echo "::set-output name=short_sha::$(echo ${{ github.sha }} | cut -c1-8)"
+
+    - name: Upload as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: alr-${{ steps.get_ref.outputs.short_sha }}-x86_64.AppImage.zip
+        path: alr.AppImage
+
+  ####################
+  # release-appimage #
+  ####################
+
+  release-appimage:
+    name: Release AppImage
+    if: github.event_name == 'release'
+    needs: [appimage, release-info]
+    runs-on: ubuntu-22.04
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-${{needs.appimage.outputs.short_sha}}-x86_64.AppImage.zip
+
+      - name: Upload AppImage asset
+        if: (github.event_name == 'release')
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release-info.outputs.upload-url }}
+          asset_path: alr.AppImage
+          asset_name: alr-${{ needs.release-info.outputs.version-without-v }}-x86_64.AppImage
+          asset_content_type: application/x-elf
