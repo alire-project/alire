@@ -356,3 +356,62 @@ jobs:
           asset_path: installer/alire-install.exe
           asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-installer-x86_64-windows.exe
           asset_content_type: application/vnd.microsoft.portable-executable
+
+  ############
+  # appimage #
+  ############
+
+  appimage:
+    name: Create AppImage
+    needs: build
+    runs-on: ubuntu-22.04
+
+    steps:
+
+    - name: Check out repository
+      uses: actions/checkout@v4
+      # No need for submodules, but we need some resources for the appimage
+
+    - name: Retrieve artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: alr-bin-x86_64-linux.zip
+
+    - name: Install AppImage dependencies (libfuse2)
+      shell: bash
+      run: |
+        sudo add-apt-repository universe
+        sudo apt-get install -y libfuse2
+
+    - name: Install AppImage's linuxdeploy
+      uses: miurahr/install-linuxdeploy-action@v1
+      with:
+        plugins: appimage
+
+    - name: Copy license into AppImage
+      run: |
+        mkdir -p AppDir
+        cp LICENSE.txt AppDir/
+
+    - name: Create AppImage
+      run: >
+        linuxdeploy-x86_64.AppImage --appdir AppDir -e bin/alr
+        -d resources/alr.desktop -i resources/alr.png --output appimage
+
+    - name: Rename AppImage
+      run: mv alr*AppImage alr.AppImage
+
+    - name: Test AppImage without the toolchain installed
+      run: |
+        chmod +x ./alr.AppImage
+        which gnat || { echo "Toolchain purged"; ./alr.AppImage version; }
+
+    - name: Get ref version
+      id: get_ref
+      run: echo "::set-output name=short_sha::$(echo ${{ github.sha }} | cut -c1-8)"
+
+    - name: Upload as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: alr-${{ steps.get_ref.outputs.short_sha }}-x86_64.AppImage.zip
+        path: alr.AppImage
