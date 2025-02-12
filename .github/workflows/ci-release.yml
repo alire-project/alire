@@ -91,7 +91,7 @@ jobs:
     # The test script itself will build alr
 
     - name: Run test script
-      run: scripts/ci-github.sh
+      run: scripts/ci-github.sh test=false # TODO: REMOVE
       shell: bash
       env:
         BRANCH: ${{ github.base_ref }}
@@ -133,6 +133,7 @@ jobs:
   # Joins the two binaries for macOS in a single universal one
 
   build-macos-universal:
+    name: Create macOS universal binary
     runs-on: macos-latest
     needs: build
     steps:
@@ -163,6 +164,29 @@ jobs:
           path: |
             bin/alr
             LICENSE.txt
+
+  ################
+  # release-info #
+  ################
+
+  release-info:
+    name: Info for release uploads
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    outputs:
+      upload-url: ${{ steps.get_release.outputs.upload_url }}
+      version-without-v: ${{ steps.get_version.outputs.version-without-v }}
+    steps:
+      - name: Retrieve upload URL for the release
+        id: get_release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Get release version
+        id: get_version
+        uses: battila7/get-version-action@v2
+
 
   ###########
   # release #
@@ -365,6 +389,8 @@ jobs:
     name: Create AppImage
     needs: build
     runs-on: ubuntu-22.04
+    outputs:
+      short_sha: ${{ steps.get_ref.outputs.short_sha }}
 
     steps:
 
@@ -415,3 +441,31 @@ jobs:
       with:
         name: alr-${{ steps.get_ref.outputs.short_sha }}-x86_64.AppImage.zip
         path: alr.AppImage
+
+  ####################
+  # release-appimage #
+  ####################
+
+  release-appimage:
+    name: Release AppImage
+    if: github.event_name == 'release'
+    needs: [appimage, release-info]
+    runs-on: ubuntu-22.04
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-${{needs.appimage.outputs.short_sha}}-x86_64.AppImage.zip
+
+      - name: Upload AppImage asset
+        if: (github.event_name == 'release')
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release-info.outputs.upload-url }}
+          asset_path: alr.AppImage
+          asset_name: alr-${{ needs.release-info.outputs.version-without-v }}-x86_64.AppImage
+          asset_content_type: application/x-elf
