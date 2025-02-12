@@ -24,7 +24,7 @@ jobs:
         os:
           - macos-13         # x64
           - macos-14         # arm64
-          - ubuntu-20.04     # oldest supported to be able to run on those
+          - ubuntu-22.04     # oldest supported to be able to run on those
           - ubuntu-24.04-arm # oldest with ARM arch
           - windows-latest
 

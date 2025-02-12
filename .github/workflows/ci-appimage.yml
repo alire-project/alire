@@ -18,7 +18,7 @@ jobs:
 
     # Oldest supported by Alire+GitHub to increase AppImage back-compatibility
     # Unfortunately we depend on the static elaboration model of recent GNATs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Check out repository
