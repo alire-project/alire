@@ -1,4 +1,4 @@
 #!/bin/bash
 
 clear
-python3 run.py -M1 "$@"
+python3 run.py --show-time-info -M1 "$@"
