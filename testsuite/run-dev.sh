@@ -16,4 +16,4 @@ if [ -z "$GH_USERNAME" ]; then
     echo
 fi
 
-./run.py -M1 "$@"
+./run.py --show-time-info -M1 "$@"
