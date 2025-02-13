@@ -2,6 +2,7 @@ import copy
 import os
 import shutil
 import sys
+import time
 
 from drivers.alr import prepare_env, prepare_indexes, run_alr
 from drivers.driver.base_driver import BaseDriver
@@ -151,6 +152,8 @@ class PythonScriptDriver(BaseDriver):
         if mode == "both":
             self.save_working_dir()
 
+        start_time = time.time()
+
         # First run with shared builds disabled
 
         if mode in ["sandboxed", "both"]:
@@ -173,3 +176,5 @@ class PythonScriptDriver(BaseDriver):
                     "dependencies.shared", "true")
             p = self.run_script(copy.deepcopy(pristine_env))
             self.check_result(p)
+
+        self.result.time = time.time() - start_time
