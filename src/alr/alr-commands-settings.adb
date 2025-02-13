@@ -21,6 +21,7 @@ package body Alr.Commands.Settings is
                                             then Alire.Settings.Global
                                             else Alire.Settings.Local);
    begin
+      Cmd.Forbids_Structured_Output;
 
       --  Check no multi-action
       Enabled := Enabled + (if Cmd.List then 1 else 0);

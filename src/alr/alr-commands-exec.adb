@@ -20,6 +20,8 @@ package body Alr.Commands.Exec is
       use AAA.Strings;
 
    begin
+      Cmd.Forbids_Structured_Output;
+
       if Args.Is_Empty then
          Reportaise_Wrong_Arguments
            (Cmd.Name & " takes at least one argument");

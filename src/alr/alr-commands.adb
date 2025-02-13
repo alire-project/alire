@@ -312,7 +312,7 @@ package body Alr.Commands is
    begin
       if Alire.Formatting.Structured_Output then
          Reportaise_Wrong_Arguments
-           ("Command " & TTY.Terminal (Cmd.Name) & " does not yet support the "
+           ("Command " & TTY.Terminal (Cmd.Name) & " does not support the "
             & TTY.Terminal ("--format") & " switch");
       end if;
    end Forbids_Structured_Output;

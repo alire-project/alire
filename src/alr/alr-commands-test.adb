@@ -617,6 +617,9 @@ package body Alr.Commands.Test is
 
    begin
       --  Validate command line
+
+      Cmd.Forbids_Structured_Output;
+
       if not Cmd.Search then
          for I in Integer range Args.First_Index .. Args.Last_Index loop
             declare

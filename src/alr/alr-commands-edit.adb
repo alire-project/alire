@@ -150,6 +150,8 @@ package body Alr.Commands.Edit is
 
       package Builtins renames Alire.Settings.Builtins;
    begin
+      Cmd.Forbids_Structured_Output;
+
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
       end if;
