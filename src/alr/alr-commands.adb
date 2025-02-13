@@ -12,6 +12,7 @@ with Alire.Settings.Builtins;
 with Alire.Settings.Edit;
 with Alire.Errors;
 with Alire.Features;
+with Alire.Formatting;
 with Alire.Index_On_Disk.Loading;
 with Alire.Index_On_Disk.Updates;
 with Alire.Lockfiles;
@@ -302,6 +303,19 @@ package body Alr.Commands is
          Detect_Externals => Externals,
          Strict           => Strict);
    end Load;
+
+   -------------------------------
+   -- Forbids_Structured_Output --
+   -------------------------------
+
+   procedure Forbids_Structured_Output (Cmd : in out Command'Class) is
+   begin
+      if Alire.Formatting.Structured_Output then
+         Reportaise_Wrong_Arguments
+           ("Command " & TTY.Terminal (Cmd.Name) & " does not yet support the "
+            & TTY.Terminal ("--format") & " switch");
+      end if;
+   end Forbids_Structured_Output;
 
    -------------------------
    -- Requires_Full_Index --

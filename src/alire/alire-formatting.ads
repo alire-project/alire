@@ -1,4 +1,7 @@
 with Alire.Roots;
+with Alire.Utils.Tables;
+
+with TOML;
 
 private with Ada.Containers.Indefinite_Ordered_Maps;
 
@@ -48,6 +51,21 @@ package Alire.Formatting is
    --  with native slashes on Windows, unless they are an escape sequence.
 
    Unknown_Formatting_Key : exception;
+
+   ------------------------------
+   --  Structured Data Output  --
+   ------------------------------
+
+   --  Features to dump lightweight markup when --format is in effect
+
+   subtype Formats is Utils.Tables.Formats;
+
+   Structured_Output : Boolean renames Utils.Tables.Structured_Output;
+
+   procedure Print (This   : TOML.TOML_Value;
+                    Format : Formats := Utils.Tables.Structured_Output_Format);
+   --  We require TOML input because that is what's currently being generated
+   --  everywhere. The actual output is according to Utils.Tables.Format
 
 private
 

@@ -2,6 +2,7 @@ with Ada.Containers;
 
 with Alire.Conditional;
 with Alire.Dependencies;
+with Alire.Formatting;
 with Alire.Index.Search;
 with Alire.Milestones;
 with Alire.Platforms.Current;
@@ -79,8 +80,22 @@ package body Alr.Commands.Show is
          Rel : constant Alire.Releases.Release :=
                  Cmd.Find_Target_Release (Name, Versions, Current);
       begin
+         if Alire.Formatting.Structured_Output and then
+           (Cmd.Graph or else Cmd.Solve or else Cmd.Tree)
+         then
+            Reportaise_Wrong_Arguments
+              ("--format global switch is incompatible with "
+               & (if Cmd.Graph then "--graph"
+                  elsif Cmd.Solve then "--solve"
+                  else "--tree"));
+         end if;
+
          if Cmd.System then
             Rel.Whenever (Platform.Properties).Print;
+         elsif Alire.Formatting.Structured_Output then
+            Reportaise_Wrong_Arguments
+              ("--format global switch requires command switch --system, e.g.:"
+               & " " & TTY.Terminal ("alr --format show --system"));
          else
             Rel.Print;
          end if;

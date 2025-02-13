@@ -7,11 +7,13 @@ with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
 with Alire.Flags;
+with Alire.Formatting;
 with Alire.Origins.Deployers.System;
 with Alire.Paths;
 with Alire.Properties.Bool;
 with Alire.Properties.Scenarios;
 with Alire.TOML_Load;
+with Alire.Utils.Tables;
 with Alire.Utils.YAML;
 with Alire.Warnings;
 
@@ -845,6 +847,15 @@ package body Alire.Releases is
    procedure Print (R : Release) is
       use GNAT.IO;
    begin
+      if Alire.Utils.Tables.Structured_Output then
+         Formatting.Print
+           (R.To_TOML
+              (if R.Origin.Kind in Origins.Filesystem
+               then Manifest.Local
+               else Manifest.Index));
+         return;
+      end if;
+
       --  MILESTONE
       Put_Line (R.Milestone.TTY_Image & ": " & R.TTY_Description);
 
