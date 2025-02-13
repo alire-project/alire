@@ -132,6 +132,14 @@ abstract project Alire_Common is
         );
    end Binder;
 
+   package Linker is
+      case Host_OS is
+         -- Link statically on Windows to avoid DLL dependencies
+         when "windows" => for Switches ("Ada") use ("-static");
+         when others    => null;
+      end case;
+   end Linker;
+
    package Ide is
       for Vcs_Kind use "Git";
    end Ide;
