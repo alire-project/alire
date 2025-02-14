@@ -44,6 +44,7 @@ with Alr.Commands.Search;
 with Alr.Commands.Settings;
 with Alr.Commands.Show;
 with Alr.Commands.Test;
+with Alr.Commands.Test2;
 with Alr.Commands.Toolchain;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
@@ -784,6 +785,7 @@ begin
    Sub_Cmd.Register ("Testing", new Action.Command);
    Sub_Cmd.Register ("Testing", new Dev.Command);
    Sub_Cmd.Register ("Testing", new Test.Command);
+   Sub_Cmd.Register ("Testing", new Test2.Command);
 
    -- Help topics --
    Sub_Cmd.Register (new Topics.Aliases.Topic);
