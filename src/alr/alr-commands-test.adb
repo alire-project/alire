@@ -37,6 +37,8 @@ package body Alr.Commands.Test is
    package Platform renames Alire.Platforms.Current;
    package Query    renames Alire.Solver;
 
+   Prefix : constant String := "[alr test] ";
+
    -----------------
    -- Check_Files --
    -----------------
@@ -190,7 +192,7 @@ package body Alr.Commands.Test is
                   --  release mode.
 
                   Output.Append_Line
-                    ("[alr test] Spawning default local test: "
+                    (Prefix & "Spawning default local test: "
                      & Command.Flatten);
 
                   Code := Unchecked_Spawn_And_Capture
@@ -216,7 +218,7 @@ package body Alr.Commands.Test is
                   --  Start with a standard crate retrieval
 
                   Output.Append_Line
-                    ("[alr test] Spawning retrieval for remote crate: "
+                    (Prefix & "Spawning retrieval for remote crate: "
                      & Command.Flatten);
 
                   Code := Unchecked_Spawn_And_Capture
@@ -251,7 +253,7 @@ package body Alr.Commands.Test is
                                  & "-gnatwn";
                   begin
                      Output.Append_Line
-                       ("[alr test] Spawning default test for remote crate: "
+                       (Prefix & "Spawning default test for remote crate: "
                         & Command.Flatten);
 
                      Code := Unchecked_Spawn_And_Capture
@@ -288,7 +290,7 @@ package body Alr.Commands.Test is
             -----------------
 
             procedure Custom_Test is
-               Exit_Code : Integer;
+               Exit_Code : Integer := 0;
                Alr_Custom_Cmd : constant Vector :=
                                   "alr"
                                   & Regular_Alr_Switches
@@ -324,7 +326,7 @@ package body Alr.Commands.Test is
                     with Unreferenced;
                begin
                   Alire.Properties.Actions.Executor.Execute_Actions
-                     (Release    => R,
+                    (Release    => R,
                      Env        => Platform.Properties,
                      Moment     => Alire.Properties.Actions.Test,
                      Capture    => True,
@@ -333,6 +335,9 @@ package body Alr.Commands.Test is
                      Output     => Output);
 
                   if Exit_Code /= 0 then
+                     Output.Append_Line
+                       (Prefix & "Test action exited with error code "
+                        & AAA.Strings.Trim (Exit_Code'Image));
                      raise Child_Failed;
                   end if;
                end;
@@ -378,13 +383,13 @@ package body Alr.Commands.Test is
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
          else
             begin
-               Output.Append ("[alr test] Testing " & R.Milestone.Image);
+               Output.Append (Prefix & "Testing " & R.Milestone.Image);
 
                --  Perform default or custom actions
                Test_Action;
 
                --  At this point the test ended successfully
-               Output.Append ("[alr test] Test completed SUCCESSFULLY");
+               Output.Append (Prefix & "Test completed SUCCESSFULLY");
 
                Reporters.End_Test (R, Testing.Pass, Clock - Start, Output);
                Trace.Detail (Output.Flatten (Newline));
@@ -400,7 +405,7 @@ package body Alr.Commands.Test is
                   Output.Append (Ada.Exceptions.Exception_Information (E));
                   Output.Append ("****** TRACE END");
 
-               when Child_Failed =>
+               when Child_Failed | Alire.Properties.Actions.Action_Failed =>
                   Reporters.End_Test (R, Testing.Fail, Clock - Start, Output);
                   Trace.Detail (Output.Flatten (Newline));
                   Some_Failed := True;

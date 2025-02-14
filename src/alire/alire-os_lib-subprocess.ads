@@ -35,4 +35,10 @@ package Alire.OS_Lib.Subprocess is
       Err_To_Out          : Boolean := False) return Integer;
    --  Returns the output and exit code of the spawned command
 
+   function Unchecked_Spawn
+     (Command             : String;
+      Arguments           : AAA.Strings.Vector;
+      Understands_Verbose : Boolean := False) return Integer;
+   --  Doesn't capture output but doesn't fail on error either
+
 end Alire.OS_Lib.Subprocess;

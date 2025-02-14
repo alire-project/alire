@@ -164,6 +164,16 @@ package body Alire.OS_Lib.Subprocess is
         Understands_Verbose => Understands_Verbose,
         Err_To_Out          => Err_To_Out));
 
+   ---------------------
+   -- Unchecked_Spawn --
+   ---------------------
+
+   function Unchecked_Spawn
+     (Command             : String;
+      Arguments           : AAA.Strings.Vector;
+      Understands_Verbose : Boolean := False) return Integer
+   is (Spawn (Command, Arguments, Understands_Verbose));
+
    -----------
    -- Spawn --
    -----------
