@@ -6,8 +6,8 @@ package Alire.Meta with Preelaborate is
 
    package Working_Tree is
 
-      Commit  : constant String := "0ec4e6ae2d231695a0cb57c7074afbfed1d6674c";
-      Changes : constant String := "dirty";
+      Commit  : constant String := "unknown";
+      Changes : constant String := "unknown";
 
       Main_Branch : constant String := "master";
       --  In case some day we rename the master branch in the repo

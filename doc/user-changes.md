@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### New `--format` global switch to produce structured output
 
-PR [#1819](https://github.com/alire-project/alire/pull/1819)
+PR [#1851](https://github.com/alire-project/alire/pull/1851)
 
 The global switch `--format` can be used to produce JSON format with some
 commands, e.g., `index`, `search`, `show`.

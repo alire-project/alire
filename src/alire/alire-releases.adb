@@ -487,8 +487,7 @@ package body Alire.Releases is
          Forbidden    => Base.Forbidden,
          Properties   => Base.Properties,
          Available    => Base.Available,
-
-         Imported     => TOML.No_TOML_Value)
+         Imported     => Base.Imported)
       do
          null;
       end return;
@@ -578,7 +577,6 @@ package body Alire.Releases is
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
       Available    => Conditional.Empty,
-
       Imported     => TOML.No_TOML_Value
      );
 
