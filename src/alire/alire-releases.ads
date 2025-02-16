@@ -412,6 +412,10 @@ private
       Forbidden    : Conditional.Dependencies;
       Properties   : Conditional.Properties;
       Available    : Conditional.Availability;
+
+      Imported     : TOML.TOML_Value;
+      --  For releases loaded from a manifest, this is the original structured
+      --  data that generated it, in which case Imported.Is_Present.
    end record;
 
    function From_TOML (This   : in out Release;

@@ -92,10 +92,6 @@ package body Alr.Commands.Show is
 
          if Cmd.System then
             Rel.Whenever (Platform.Properties).Print;
-         elsif Alire.Formatting.Structured_Output then
-            Reportaise_Wrong_Arguments
-              ("--format global switch requires command switch --system, e.g.:"
-               & " " & TTY.Terminal ("alr --format show --system"));
          else
             Rel.Print;
          end if;

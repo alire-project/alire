@@ -40,8 +40,7 @@ name = "gprbuild"
 
 init_local_crate()
 assert_eq("""\
-[
-]
+[]
 """,
           run_alr("--format=JSON", "pin").out)
 
