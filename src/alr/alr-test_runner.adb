@@ -43,11 +43,11 @@ package body Alr.Test_Runner is
          Failed := Failed + 1;
          Alr.Trace.Always ("[ " & CLIC.TTY.Error ("FAIL") & " ] " & Msg);
          if not Output.Is_Empty then
-            Alr.Trace.Info ("   *** Test output ***");
+            Alr.Trace.Info ("*** Test output ***");
             for L of Output loop
-               Alr.Trace.Info ("   " & CLIC.TTY.Dim (L));
+               Alr.Trace.Info (CLIC.TTY.Dim (L));
             end loop;
-            Alr.Trace.Info ("   *** End Test output ***");
+            Alr.Trace.Info ("*** End Test output ***");
          end if;
       end Fail;
 
@@ -107,14 +107,7 @@ package body Alr.Test_Runner is
       Output_Files  : Map.Map := Map.Empty_Map;
 
       procedure Spawn_Test (Test_Name : String) is
-         function Temp_File_Name return Alire.Absolute_Path is
-            Tmp : Temp_File;
-         begin
-            Tmp.Keep;
-            return Tmp.Filename;
-         end Temp_File_Name;
-
-         Filename : constant String        := Temp_File_Name;
+         Filename : constant String        := "output_" & Test_Name & ".tmp";
          Args     : constant Argument_List := (1 .. 0 => <>);
          Pid      : Process_Id;
       begin
@@ -141,7 +134,7 @@ package body Alr.Test_Runner is
       --  start the first `Jobs` tests
       for I in 1 .. Natural'Min (Jobs, Natural (Test_List.Length)) loop
          Spawn_Test (Remaining.First_Element);
-         Remaining := Remaining.Tail (False);
+         Remaining := Remaining.Tail;
       end loop;
 
       loop
@@ -154,24 +147,24 @@ package body Alr.Test_Runner is
          end if;
 
          if Success then
-            Driver.Pass (Running_Tests.Element (Pid));
+            Driver.Pass (Running_Tests (Pid));
          else
             declare
                use Alire.Utils.Text_Files;
-               Output : File := Load (Output_Files.Element (Pid), False);
+               Output : File := Load (Output_Files (Pid), False);
             begin
-               Driver.Fail (Running_Tests.Element (Pid), Output.Lines.all);
+               Driver.Fail (Running_Tests (Pid), Output.Lines.all);
             end;
          end if;
 
-         Delete_File (Output_Files.Element (Pid), Success);
+         Delete_File (Output_Files (Pid), Success);
          Running_Tests.Delete (Pid);
          Output_Files.Delete (Pid);
 
          if not Remaining.Is_Empty then
             --  start up a new test
             Spawn_Test (Remaining.First_Element);
-            Remaining := Remaining.Tail (False);
+            Remaining := Remaining.Tail;
          end if;
       end loop;
    end Run_All_Tests;
