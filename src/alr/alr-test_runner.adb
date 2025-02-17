@@ -5,7 +5,8 @@ with GNAT.OS_Lib;
 with System.Multiprocessors;
 
 with Alire;
-with Alire.Directories;      use Alire.Directories;
+with Alire.Directories; use Alire.Directories;
+with Alire.OS_Lib;
 with Alire.Utils.Text_Files; use Alire.Utils;
 
 with CLIC.TTY;
@@ -107,17 +108,17 @@ package body Alr.Test_Runner is
       Output_Files  : Map.Map := Map.Empty_Map;
 
       procedure Spawn_Test (Test_Name : String) is
-         Filename : constant String        := "output_" & Test_Name & ".tmp";
+         Exe_Name : constant String := Test_Name  & Alire.OS_Lib.Exe_Suffix;
+         Filename : constant String := "output_" & Test_Name & ".tmp";
+
          Args     : constant Argument_List := (1 .. 0 => <>);
          Pid      : Process_Id;
       begin
-         Pid :=
-           Non_Blocking_Spawn
-             (Root.Path / "bin" / Test_Name, Args, Filename,
-              Err_To_Out => True);
+         Pid := Non_Blocking_Spawn (Root.Path / "bin" / Exe_Name,
+                                    Args, Filename, Err_To_Out => True);
          if Pid = Invalid_Pid then
-            Driver.Fail
-              (Test_Name & " (failed to start!)", AAA.Strings.Empty_Vector);
+            Driver.Fail (Test_Name & " (failed to start!)",
+                         AAA.Strings.Empty_Vector);
          else
             Running_Tests.Insert (Pid, Test_Name);
             Output_Files.Insert (Pid, Filename);
