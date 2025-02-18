@@ -13,7 +13,7 @@ PR [#1851](https://github.com/alire-project/alire/pull/1851)
 The global switch `--format` can be used to produce JSON format with some
 commands, e.g., `index`, `search`, `show`.
 
-This new switch accepts an optional parameter that can be JSON or TOML, to
+This new switch accepts an optional parameter that can be JSON, TOML or YAML, to
 select the desired output language:
 
 ```

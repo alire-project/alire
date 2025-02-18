@@ -2,7 +2,7 @@
 Verify structured output of tables
 """
 
-import json
+import json, yaml
 
 import toml
 from drivers.alr import run_alr, init_local_crate
@@ -36,6 +36,14 @@ name = "gprbuild"
 """,
           run_alr("--format=TOML", "search", "--crates").out)
 
+assert_eq("""\
+- "name": "gnat_external"
+  "description": "GNAT is a compiler for the Ada programming language"
+- "name": "gprbuild"
+  "description": "Fake gprbuild external"
+""",
+          run_alr("--format=YAML", "search", "--crates").out)
+
 # Empty pin list
 
 init_local_crate()
@@ -51,13 +59,15 @@ assert_eq("""\
 
 # Check that objects can be reconstructed and queried from the output
 
-for fmt in ["JSON", "TOML"]:
+for fmt in ["JSON", "TOML", "YAML"]:
     # List of releases
     out = run_alr(f"--format={fmt}", "-q", "search", "--list", "--external").out
     # Load and adjust according to format
     if fmt == "TOML":
         releases = toml.loads(out)["data"]
         # In the TOML case, top-level is always a table with a single key "data"
+    elif fmt == "YAML":
+        releases = yaml.safe_load(out)
     else:
         releases = json.loads(out)
 
