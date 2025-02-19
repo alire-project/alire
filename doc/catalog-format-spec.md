@@ -762,11 +762,11 @@ The specific pin kinds and their attributes are:
   * `url`: the URL of a git repository.
   * `commit` (optional): a complete git commit hash.
   * `branch` (optional, mutually exclusive with commit): a branch to track on `alr update`.
-  * `subdir`: (optional): relative path which indicates where the crate is located when not at the repository root.
+  * `subdir`: (optional): relative path that indicates where the crate is located when not at the repository root.
   * `crate_name = { url = "https://my/repo.git" } # Updatable pin to default branch`
   * `crate_name = { url = "https://my/repo.git", branch="feature" } # Updatable pin`
   * `crate_name = { url = "https://my/repo.git", commit="abcdef..." } # Fixed pin`
-  * `crate_name = { url = "https://my/repo.git", subdir="alire"} # Crate located in a subdirectory`
+  * `crate_name = { url = "https://my/repo.git", subdir="mycrate"} # Crate located in a subdirectory`
 
 ### Using pins for crate testing
 

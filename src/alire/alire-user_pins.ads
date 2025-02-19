@@ -151,6 +151,7 @@ private
             Checkout_Path : Unbounded_Absolute_Path;
             --  Empty until the repo is locally deployed
             Subdir        : Unbounded_Relative_Path;
+            --  For monorepos, subdir in which the crate is found
          when To_Path =>
             Local_Path : Unbounded_Absolute_Path;
          when To_Version =>
