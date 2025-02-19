@@ -226,6 +226,12 @@ package body Alr.Commands.Withing is
                   & "branch or commit was specified.");
             end if;
 
+            if Cmd.Subdir.all /= "" then
+               Reportaise_Wrong_Arguments
+                 ("Pins to local directories do not accept the "
+                  & TTY.Terminal ("--subdir") & " switch");
+            end if;
+
             if not Alire.Utils.User_Input.Approve_Dir (Path) then
                Trace.Info ("Abandoned by user.");
                return;
