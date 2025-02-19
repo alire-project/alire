@@ -8,6 +8,7 @@ Log of breaking changes in index or alr.
 ### alr 2.1.0 + index 1.4.0
 
 - index: git remotes in origins are recognized even without `git+` prefix
+- manifest: remote pins accept a new `subdir` field to specify a subdirectory
 
 ### alr 2.0.0 + index 1.3.0
 
