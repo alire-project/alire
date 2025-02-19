@@ -96,11 +96,15 @@ package body Alire.User_Pins is
                "path='" & VFS.Attempt_Portable (Path (This)) & "'",
             when To_Git     =>
                "url='" & (+This.URL) & "'"
+               & (if This.Subdir /= ""
+                  then ", subdir='" & (+This.Subdir) & "'"
+                  else "")
                & (if This.Branch /= ""
                   then ", branch='" & (+This.Branch) & "'"
                   elsif This.Commit /= ""
                   then ", commit='" & (+This.Commit) & "'"
-                  else ""))
+                  else "")
+         )
        & " }");
 
    ---------------

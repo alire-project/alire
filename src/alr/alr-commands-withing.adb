@@ -206,7 +206,8 @@ package body Alr.Commands.Withing is
            (Crate  => Crate,
             Origin => Cmd.URL.all,
             Ref    => Cmd.Commit.all,
-            Branch => Cmd.Branch.all);
+            Branch => Cmd.Branch.all,
+            Subdir => Cmd.Subdir.all);
 
       else
 
@@ -434,6 +435,13 @@ package body Alr.Commands.Withing is
          Long_Switch => "--commit=",
          Argument    => "REF",
          Help        => "Commit to retrieve from repository");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Subdir'Access,
+         Long_Switch => "--subdir=",
+         Argument    => "REL_PATH",
+         Help        => "Relative path to crate inside repository");
 
       Define_Switch
         (Config      => Config,
