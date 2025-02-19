@@ -140,7 +140,7 @@ package Alire with Preelaborate is
 
    function Check_Absolute_Path (Path : Any_Path) return Boolean;
    --  Return True if the string Path represent an absolute path on the
-   --  platform.
+   --  platform, False otherwise.
 
    subtype Directory_Path is Any_Path;
 

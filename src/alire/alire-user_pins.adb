@@ -23,6 +23,7 @@ package body Alire.User_Pins is
       Commit   : constant String := "commit";
       Internal : constant String := "lockfiled";
       Path     : constant String := "path";
+      Subdir   : constant String := "subdir";
       URL      : constant String := "url";
       Version  : constant String := "version";
    end Keys;
@@ -49,12 +50,14 @@ package body Alire.User_Pins is
 
    function New_Remote (URL : Alire.URL;
                         Commit : String := "";
-                        Branch : String := "")
+                        Branch : String := "";
+                        Subdir : String := "")
                         return Pin
    is (Kind          => To_Git,
        URL           => +URL,
        Commit        => +Commit,
        Branch        => +Branch,
+       Subdir        => +Subdir,
        Checkout_Path => <>);
 
    -----------
@@ -348,7 +351,7 @@ package body Alire.User_Pins is
 
       declare
          Root : Roots.Optional.Root :=
-                  Roots.Optional.Detect_Root (Destination);
+                  Roots.Optional.Detect_Root (This.Path);
       begin
 
          --  Check crate name mismatch
@@ -410,6 +413,7 @@ package body Alire.User_Pins is
 
    function Path (This : Pin) return Absolute_Path
    is
+      use Alire.Directories.Operators;
       --  Having this as an expression function causes CE2021 to return a
       --  corrupted string some times.
    begin
@@ -418,7 +422,11 @@ package body Alire.User_Pins is
             return +This.Local_Path;
          when To_Git  =>
             if +This.Checkout_Path /= "" then
-               return +This.Checkout_Path;
+               if +This.Subdir /= "" then
+                  return (+This.Checkout_Path) / (+This.Subdir);
+               else
+                  return +This.Checkout_Path;
+               end if;
             else
                raise Program_Error with "Undeployed pin";
             end if;
@@ -487,6 +495,11 @@ package body Alire.User_Pins is
                   elsif This.Contains (Keys.Branch) then
                      Result.Branch :=
                        +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
+                  end if;
+
+                  if This.Contains (Keys.Subdir) then
+                     Result.Subdir :=
+                       +This.Checked_Pop (Keys.Subdir, TOML_String).As_String;
                   end if;
                end return;
 
@@ -562,6 +575,7 @@ package body Alire.User_Pins is
                                                         TOML_String).As_String,
                         Branch        => <>,
                         Commit        => <>,
+                        Subdir        => <>,
                         Checkout_Path => <>);
          begin
             if This.Contains (Keys.Branch)
@@ -583,6 +597,15 @@ package body Alire.User_Pins is
                  +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
                This.Assert (+Result.Branch /= "",
                             "branch cannot be the empty string");
+            end if;
+
+            --  Subdir
+
+            if This.Contains (Keys.Subdir) then
+               Result.Subdir :=
+                 +This.Checked_Pop (Keys.Subdir, TOML_String).As_String;
+               This.Assert (+Result.Subdir in Alire.Relative_Path,
+                            "invalid subdir : " & (+Result.Subdir));
             end if;
 
             --  TEST: empty branch value
@@ -665,10 +688,28 @@ package body Alire.User_Pins is
             Table.Set (Keys.Branch,
                        Create_String (Branch (This).Element.Ptr.all));
          end if;
+
+         if Subdir (This).Has_Element then
+            Table.Set (Keys.Subdir,
+                       Create_String (Subdir (This).Element.Ptr.all));
+         end if;
       end if;
 
-      Table.Set (Keys.Path,
-                 Create_String (VFS.Attempt_Portable (Path (This))));
+      --  Path; we store separately checkout and subdir path, like in the user
+      --  manifest.
+
+      case This.Kind is
+         when To_Path =>
+            Table.Set
+              (Keys.Path,
+               Create_String (VFS.Attempt_Portable (+This.Local_Path)));
+         when To_Git =>
+            Table.Set
+              (Keys.Path,
+               Create_String (VFS.Attempt_Portable (+This.Checkout_Path)));
+         when To_Version =>
+            null;
+      end case;
 
       Table.Set (Keys.Internal, Create_Boolean (True));
 
