@@ -100,7 +100,7 @@ package Alire.Roots.Editable is
                              Origin : URL;
                              Ref    : String := "";
                              Branch : String := "";
-                             Subdir : String := "")
+                             Subdir : Relative_Path := "")
      with Pre =>
        (not (Ref /= "" and then Branch /= "")
         or else raise Checked_Error with

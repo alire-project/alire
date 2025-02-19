@@ -373,7 +373,7 @@ package body Alire.Roots.Editable is
                              Origin : URL;
                              Ref    : String := "";
                              Branch : String := "";
-                             Subdir : String := "")
+                             Subdir : Relative_Path := "")
    is
 
       ---------------------------

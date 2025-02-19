@@ -48,10 +48,10 @@ package body Alire.User_Pins is
    -- New_Remote --
    ----------------
 
-   function New_Remote (URL : Alire.URL;
+   function New_Remote (URL    : Alire.URL;
                         Commit : String := "";
                         Branch : String := "";
-                        Subdir : String := "")
+                        Subdir : Alire.Relative_Path := "")
                         return Pin
    is (Kind          => To_Git,
        URL           => +URL,
