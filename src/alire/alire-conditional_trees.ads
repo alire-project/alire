@@ -447,7 +447,7 @@ private
    procedure To_TOML (This : Vector_Node; Parent : TOML.TOML_Value);
 
    overriding
-   function TO_YAML (V : Vector_Node) return String;
+   function To_YAML (V : Vector_Node) return String;
 
    function Is_Vector (This : Tree) return Boolean is
      (not This.Is_Empty and then This.Root in Vector_Node);
