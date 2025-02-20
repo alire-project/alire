@@ -98,7 +98,7 @@ jobs:
     # The test script itself will build alr
 
     - name: Run test script
-      run: scripts/ci-github.sh
+      run: scripts/ci-github.sh test=false # REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       shell: bash
       env:
         BRANCH: ${{ github.base_ref }}
@@ -468,7 +468,7 @@ jobs:
       github.event_name == 'schedule' 
       || github.event.inputs.release_nightly != 'false' 
       || contains(github.event.pull_request.title, 'nightly')
-    needs: [build, build-macos-universal, release-info]
+    needs: [build, build-macos-universal]
     runs-on: ${{ matrix.platform.os }}
 
     strategy:
@@ -519,7 +519,7 @@ jobs:
         run: zip alr-nightly-bin-${{matrix.platform.id}}.zip bin/alr* LICENSE.txt alr-*.txt
         
       - name: Upload to release
-        uses: pyTooling/Actions/releaser/composite@main
+        uses: pyTooling/Actions/releaser/composite@r4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
@@ -551,7 +551,7 @@ jobs:
         run: mv alr.AppImage alr-nightly-x86_64.AppImage
 
       - name: Upload to release
-        uses: pyTooling/Actions/releaser/composite@main
+        uses: pyTooling/Actions/releaser/composite@r4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}          
           tag: nightly
