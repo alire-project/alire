@@ -40,17 +40,6 @@ package body Alire.Releases is
        then Sort_Compilers (L, R)
        else Standard_Sorting (L, R));
 
-   ------------
-   -- Adjust --
-   ------------
-
-   overriding procedure Adjust (This : in out Release) is
-   begin
-      if This.Imported.Is_Present then
-         This.Imported := This.Imported.Clone;
-      end if;
-   end Adjust;
-
    --------------------
    -- All_Properties --
    --------------------
@@ -485,8 +474,7 @@ package body Alire.Releases is
 
       return Replacement : constant Release
         (Base.Name.Length, New_Notes'Length) :=
-        (Parent with
-         Prj_Len   => Base.Name.Length,
+        (Prj_Len   => Base.Name.Length,
          Notes_Len => New_Notes'Length,
          Name      => Base.Name,
          Notes     => New_Notes,
@@ -543,8 +531,7 @@ package body Alire.Releases is
                          Properties   : Conditional.Properties;
                          Available    : Conditional.Availability)
                          return Release
-   is (Parent with
-       Prj_Len      => Name.Length,
+   is (Prj_Len      => Name.Length,
        Notes_Len    => Notes'Length,
        Name         => Name,
        Version      => Version,
@@ -556,7 +543,7 @@ package body Alire.Releases is
        Forbidden    => Conditional.For_Dependencies.Empty,
        Properties   => Properties,
        Available    => Available,
-       Imported     => TOML.No_TOML_Value);
+       Imported     => No_TOML_Value);
 
    -----------------------
    -- New_Empty_Release --
@@ -578,8 +565,7 @@ package body Alire.Releases is
       Properties   : Conditional.Properties   :=
         Default_Properties)
       return         Release is
-     (Parent with
-      Prj_Len      => Name.Length,
+     (Prj_Len      => Name.Length,
       Notes_Len    => 0,
       Name         => Name,
       Version      => +"0.0.0",
@@ -591,7 +577,7 @@ package body Alire.Releases is
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
       Available    => Conditional.Empty,
-      Imported     => TOML.No_TOML_Value
+      Imported     => No_TOML_Value
      );
 
    -------------------------
@@ -872,7 +858,7 @@ package body Alire.Releases is
             --  missing for releases being created from scratch during `alr
             --  init`, but there's no way for a user to get us here until
             --  after the release has been reloaded from its manifest.
-            Formatting.Print (R.Imported);
+            Formatting.Print (R.Imported.all);
          else
             if R.Properties.Is_Unconditional then
                Formatting.Print
@@ -1067,7 +1053,7 @@ package body Alire.Releases is
          --  expressions unresolved. Keep a copy since TOML is using reference
          --  semantics.
 
-         This.Imported := From.Unwrap.Clone;
+         This.Imported.all := From.Unwrap.Clone;
 
          --  Extract the version ASAP to show it properly during logging
 
@@ -1312,8 +1298,7 @@ package body Alire.Releases is
    function Whenever (R : Release;
                       P : Alire.Properties.Vector)
                       return Release
-   is (Parent with
-       Prj_Len      => R.Prj_Len,
+   is (Prj_Len      => R.Prj_Len,
        Notes_Len    => R.Notes_Len,
        Name         => R.Name,
        Version      => R.Version,
@@ -1326,7 +1311,7 @@ package body Alire.Releases is
        Properties   => R.Properties.Evaluate (P),
        Available    => R.Available.Evaluate (P),
 
-       Imported     => TOML.No_TOML_Value
+       Imported     => No_TOML_Value
        --  We are discarding information above, so the imported information
        --  would no longer match.
       );

@@ -26,7 +26,6 @@ with Semantic_Versioning;
 
 with TOML;
 
-private with Ada.Finalization;
 private with Alire.OS_Lib;
 private with Alire.Utils.TTY;
 private with CLIC.TTY;
@@ -399,13 +398,14 @@ private
                             return Alire.Properties.Vector;
    --  Properties that R has under platform properties P
 
-   subtype Parent is Ada.Finalization.Controlled;
-   --  We need to make Release Controlled to work around a bug in GNAT<14. See
-   --  field Imported for more.
+   type TOML_Value_Ptr is access TOML.TOML_Value;
+
+   function No_TOML_Value return TOML_Value_Ptr
+   is (new TOML.TOML_Value'(TOML.No_TOML_Value));
 
    type Release (Prj_Len,
                  Notes_Len : Natural)
-   is new Parent and Interfaces.Yamlable
+   is new Interfaces.Yamlable
    with record
       Name         : Crate_Name (Prj_Len);
       Version      : Semantic_Versioning.Version;
@@ -418,7 +418,7 @@ private
       Properties   : Conditional.Properties;
       Available    : Conditional.Availability;
 
-      Imported     : TOML.TOML_Value;
+      Imported     : TOML_Value_Ptr := No_TOML_Value;
       --  For releases loaded from a manifest, this is the original structured
       --  data that generated it, in which case Imported.Is_Present.
       --
@@ -430,8 +430,6 @@ private
       --  allows keeping Release non-controlled (but leaky), or cloning the
       --  value on Adjust.
    end record;
-
-   overriding procedure Adjust (This : in out Release);
 
    function From_TOML (This   : in out Release;
                        From   :        TOML_Adapters.Key_Queue;
