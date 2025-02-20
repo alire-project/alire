@@ -26,9 +26,10 @@ with Semantic_Versioning;
 
 with TOML;
 
+private with Ada.Finalization;
 private with Alire.OS_Lib;
-private with CLIC.TTY;
 private with Alire.Utils.TTY;
+private with CLIC.TTY;
 
 package Alire.Releases is
 
@@ -398,9 +399,13 @@ private
                             return Alire.Properties.Vector;
    --  Properties that R has under platform properties P
 
+   subtype Parent is Ada.Finalization.Controlled;
+   --  We need to make Release Controlled to work around a bug in GNAT<14. See
+   --  field Imported for more.
+
    type Release (Prj_Len,
                  Notes_Len : Natural)
-   is new Interfaces.Yamlable
+   is new Parent and Interfaces.Yamlable
    with record
       Name         : Crate_Name (Prj_Len);
       Version      : Semantic_Versioning.Version;
@@ -416,7 +421,17 @@ private
       Imported     : TOML.TOML_Value;
       --  For releases loaded from a manifest, this is the original structured
       --  data that generated it, in which case Imported.Is_Present.
+      --
+      --  Not deep-copying this value on copy of Release triggers a hard to
+      --  diagnose bug somewhere for GNAT<14, in which finalization of the
+      --  main Ada library raises for some reason. This is likely caused
+      --  by TOML_Value being internally a by-reference type. I found two
+      --  workarounds: using explicit pointers to hold a TOML_Value, which
+      --  allows keeping Release non-controlled (but leaky), or cloning the
+      --  value on Adjust.
    end record;
+
+   overriding procedure Adjust (This : in out Release);
 
    function From_TOML (This   : in out Release;
                        From   :        TOML_Adapters.Key_Queue;

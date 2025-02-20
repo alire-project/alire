@@ -40,6 +40,17 @@ package body Alire.Releases is
        then Sort_Compilers (L, R)
        else Standard_Sorting (L, R));
 
+   ------------
+   -- Adjust --
+   ------------
+
+   overriding procedure Adjust (This : in out Release) is
+   begin
+      if This.Imported.Is_Present then
+         This.Imported := This.Imported.Clone;
+      end if;
+   end Adjust;
+
    --------------------
    -- All_Properties --
    --------------------
@@ -474,7 +485,8 @@ package body Alire.Releases is
 
       return Replacement : constant Release
         (Base.Name.Length, New_Notes'Length) :=
-        (Prj_Len   => Base.Name.Length,
+        (Parent with
+         Prj_Len   => Base.Name.Length,
          Notes_Len => New_Notes'Length,
          Name      => Base.Name,
          Notes     => New_Notes,
@@ -531,7 +543,8 @@ package body Alire.Releases is
                          Properties   : Conditional.Properties;
                          Available    : Conditional.Availability)
                          return Release
-   is (Prj_Len      => Name.Length,
+   is (Parent with
+       Prj_Len      => Name.Length,
        Notes_Len    => Notes'Length,
        Name         => Name,
        Version      => Version,
@@ -565,7 +578,8 @@ package body Alire.Releases is
       Properties   : Conditional.Properties   :=
         Default_Properties)
       return         Release is
-     (Prj_Len      => Name.Length,
+     (Parent with
+      Prj_Len      => Name.Length,
       Notes_Len    => 0,
       Name         => Name,
       Version      => +"0.0.0",
@@ -1298,7 +1312,8 @@ package body Alire.Releases is
    function Whenever (R : Release;
                       P : Alire.Properties.Vector)
                       return Release
-   is (Prj_Len      => R.Prj_Len,
+   is (Parent with
+       Prj_Len      => R.Prj_Len,
        Notes_Len    => R.Notes_Len,
        Name         => R.Name,
        Version      => R.Version,
