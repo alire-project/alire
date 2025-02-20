@@ -206,7 +206,8 @@ package body Alr.Commands.Withing is
            (Crate  => Crate,
             Origin => Cmd.URL.all,
             Ref    => Cmd.Commit.all,
-            Branch => Cmd.Branch.all);
+            Branch => Cmd.Branch.all,
+            Subdir => Cmd.Subdir.all);
 
       else
 
@@ -223,6 +224,12 @@ package body Alr.Commands.Withing is
                Alire.Put_Warning
                  ("Assuming '" & Cmd.URL.all & "' is a directory because no "
                   & "branch or commit was specified.");
+            end if;
+
+            if Cmd.Subdir.all /= "" then
+               Reportaise_Wrong_Arguments
+                 ("Pins to local directories do not accept the "
+                  & TTY.Terminal ("--subdir") & " switch");
             end if;
 
             if not Alire.Utils.User_Input.Approve_Dir (Path) then
@@ -434,6 +441,13 @@ package body Alr.Commands.Withing is
          Long_Switch => "--commit=",
          Argument    => "REF",
          Help        => "Commit to retrieve from repository");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Subdir'Access,
+         Long_Switch => "--subdir=",
+         Argument    => "REL_PATH",
+         Help        => "Relative path to crate inside repository");
 
       Define_Switch
         (Config      => Config,

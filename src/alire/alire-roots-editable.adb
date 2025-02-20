@@ -372,7 +372,8 @@ package body Alire.Roots.Editable is
                              Crate  : Alire.Optional.Crate_Name;
                              Origin : URL;
                              Ref    : String := "";
-                             Branch : String := "")
+                             Branch : String := "";
+                             Subdir : Relative_Path := "")
    is
 
       ---------------------------
@@ -387,7 +388,11 @@ package body Alire.Roots.Editable is
          if Commit /= "" then
             Put_Info ("Using commit " & TTY.Emph (Commit)
                       & " for reference " & TTY.Emph (Ref));
-            This.Add_Remote_Pin (Crate, Origin, Commit, Branch);
+            This.Add_Remote_Pin (Crate,
+                                 Origin,
+                                 Ref    => Commit,
+                                 Branch => Branch,
+                                 Subdir => Subdir);
          else
             Raise_Checked_Error
               ("Requested remote reference " & TTY.Emph (Ref)
@@ -427,14 +432,22 @@ package body Alire.Roots.Editable is
       --  We can proceed as if it where a local pin now
 
       declare
+         use Directories.Operators;
+
+         Crate_Path : constant Absolute_Path :=
+                        (if Subdir /= ""
+                         then Temp_Pin.Filename / Subdir
+                         else Temp_Pin.Filename);
+
          Crate : constant Crate_Name :=
                    Add_Pin_Preparations (This,
                                          Add_Remote_Pin.Crate,
-                                         Temp_Pin.Filename);
+                                         Crate_Path);
          New_Pin : User_Pins.Pin :=
                      User_Pins.New_Remote (URL    => Origin,
                                            Commit => Ref,
-                                           Branch => Branch);
+                                           Branch => Branch,
+                                           Subdir => Subdir);
 
          Destination : constant Absolute_Path :=
                          New_Pin.Deploy_Path (Crate, This.Edit.Pins_Dir);
@@ -462,7 +475,8 @@ package body Alire.Roots.Editable is
                                 Crate,
                                 User_Pins.New_Remote (URL    => Origin,
                                                       Commit => Ref,
-                                                      Branch => Branch));
+                                                      Branch => Branch,
+                                                      Subdir => Subdir));
          This.Reload_Manifest;
 
          --  And update lockfile. We need to call Deploy on the pin (although

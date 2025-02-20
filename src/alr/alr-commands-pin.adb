@@ -190,9 +190,18 @@ package body Alr.Commands.Pin is
                  (Crate  => Optional_Crate,
                   Origin => Cmd.URL.all,
                   Ref    => Cmd.Commit.all,
-                  Branch => Cmd.Branch.all);
+                  Branch => Cmd.Branch.all,
+                  Subdir => Cmd.Subdir.all);
 
             else
+
+               --  Ensure no subdir for local pins
+
+               if Cmd.Subdir.all /= "" then
+                  Reportaise_Wrong_Arguments
+                    ("Pins to local directories do not accept the "
+                     & TTY.Terminal ("--subdir") & " switch");
+               end if;
 
                --  Pin to dir, with a warning if it doesn't look like a path
                --  and a subsequent confirmation prompt if it doesn't exist.
@@ -311,6 +320,13 @@ package body Alr.Commands.Pin is
          Long_Switch => "--commit=",
          Argument    => "REF",
          Help        => "Reference to be retrieved from repository");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Subdir'Access,
+         Long_Switch => "--subdir=",
+         Argument    => "REL_PATH",
+         Help        => "Relative path to crate inside repository");
 
       Define_Switch
         (Config      => Config,

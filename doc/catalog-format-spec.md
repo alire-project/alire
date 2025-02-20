@@ -759,11 +759,14 @@ The specific pin kinds and their attributes are:
 
 * Pins to git repositories: the repository will be cloned locally and its directory will be used as in the previous case. This pin may optionally include a commit to fix the checkout to be used, or a branch to track. Otherwise, the default branch will be used. Running `alr update` will refresh the checkout.
 
-  * `url`: the URL of a git repository
+  * `url`: the URL of a git repository.
   * `commit` (optional): a complete git commit hash.
+  * `branch` (optional, mutually exclusive with commit): a branch to track on `alr update`.
+  * `subdir`: (optional): relative path that indicates where the crate is located when not at the repository root.
   * `crate_name = { url = "https://my/repo.git" } # Updatable pin to default branch`
   * `crate_name = { url = "https://my/repo.git", branch="feature" } # Updatable pin`
   * `crate_name = { url = "https://my/repo.git", commit="abcdef..." } # Fixed pin`
+  * `crate_name = { url = "https://my/repo.git", subdir="mycrate"} # Crate located in a subdirectory`
 
 ### Using pins for crate testing
 

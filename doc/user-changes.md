@@ -6,6 +6,19 @@ stay on top of `alr` new features.
 
 ## Release `2.1`
 
+### Allow pinning a crate in a subdirectory of a git repository
+
+PR [#1857](https://github.com/alire-project/alire/pull/1857)
+
+Until now, monorepos were supported in origins of indexed crates but not in user
+pins. A workaround was to manually clone a repository and pin the appropriate
+local path. This can now be achieved entirely within Alire, e.g.:
+
+`alr with --use=https://github.com/myuser/mymonorepo --subdir=mycrate`
+
+This way, `alr update` works as expected and it removes the need to manually
+update these repositories.
+
 ### Configurable trusted sites list for Git repositories
 
 PR [#1819](https://github.com/alire-project/alire/pull/1819)

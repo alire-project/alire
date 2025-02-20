@@ -99,7 +99,8 @@ package Alire.Roots.Editable is
                              Crate  : Optional.Crate_Name;
                              Origin : URL;
                              Ref    : String := "";
-                             Branch : String := "")
+                             Branch : String := "";
+                             Subdir : Relative_Path := "")
      with Pre =>
        (not (Ref /= "" and then Branch /= "")
         or else raise Checked_Error with
@@ -109,7 +110,7 @@ package Alire.Roots.Editable is
           or else This.Can_Be_Pinned (Crate.Element));
    --  Add a pin to a remote repo, with optional Ref xor Branch. If Ref is
    --  not a Commit, it will be converted to one using `git ls-remote`. If
-   --  Crate.Is_Empty then Path must point to an Alire workspace for which it
+   --  Crate.Is_Empty then Origin must point to an Alire workspace for which it
    --  can be deduced. If Crate.Has_Element, the crates should match. If the
    --  root does not depend already on the crate, a dependency will be added.
 
