@@ -53,7 +53,7 @@ windows = { ALIRE_OS = "windows" }
 [[pins]]
 [pins.aaa]
 url    = "https://github.com/mosteo/aaa"
-commit = "ddfeffe2d6c8f9d19161df7b31d16d37bef4ba71"
+commit = "04450085232edda086d7376a6dcaf17ab6b45aa9"
 
 [pins.ada_toml]
 url    = "https://github.com/pmderodat/ada-toml"
@@ -72,7 +72,7 @@ url    = "https://github.com/alire-project/clic"
 commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
 [pins.den]
 url    = "https://github.com/mosteo/den"
-commit = "653a4c9ba4469d7e1a8896088789b6514ecdf834"
+commit = "377d1d906f83262b81b45c7989de8cd5b4aba67f"
 
 [pins.dirty_booleans]
 url    = "https://github.com/mosteo/dirty_booleans"
@@ -87,7 +87,7 @@ url    = "https://github.com/alire-project/gnatcoll-core.git"
 commit = "4e663b87a028252e7e074f054f8f453661397166"
 [pins.lml]
 url    = "https://github.com/mosteo/lml_ada.git"
-commit = "ae156ef82a2fedb7e28bb4dcaeb3d5c0a2e046ec"
+commit = "8a9e8158f4ffda54af7f321607a94d689bf0cbb2"
 
 [pins.minirest]
 url    = "https://github.com/mosteo/minirest.git"
@@ -112,6 +112,11 @@ commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9"
 [pins.toml_slicer]
 url    = "https://github.com/mosteo/toml_slicer"
 commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
+
+[pins.yeison_12]
+url    = "https://github.com/mosteo/yeison"
+subdir = "yeison_12"
+commit = "d443204288fe67145f8a352073253db227065a69"
 
 # To disable version updating, export ALR_VERSION_DONT_PATCH with any value
 
