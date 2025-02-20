@@ -13,7 +13,14 @@ on:
       - '**.txt'
   release:
     types: [published]
+  schedule:
+    - cron: '0 0 * * *'
   workflow_dispatch:
+    inputs:
+      release_nightly:
+        description: Set to true to trigger the nightly build (will overwrite artifacts in the Nightly release!)
+        required: false
+        default: 'false'
 
 env:
   alire_index: ""
@@ -450,3 +457,103 @@ jobs:
           asset_path: alr.AppImage
           asset_name: alr-${{ needs.release-info.outputs.version-without-v }}-x86_64.AppImage
           asset_content_type: application/x-elf
+
+  ###################
+  # release-nightly #
+  ###################
+  
+  release-nightly:
+    name: Nightly release on ${{ matrix.platform.id }}
+    if: >
+      github.event_name == 'schedule' 
+      || github.event.inputs.release_nightly != 'false' 
+      || contains(github.event.pull_request.title, 'nightly')
+    needs: [build, build-macos-universal, release-info]
+    runs-on: ${{ matrix.platform.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os: macos-13
+            id: x86_64-macos
+
+          - os: macos-latest
+            id: aarch64-macos
+
+          - os: macos-latest
+            id: universal-macos
+
+          - os: ubuntu-22.04
+            id: x86_64-linux
+
+          - os: ubuntu-24.04-arm
+            id: aaarch64-linux
+
+          - os: windows-latest
+            id: x86_64-windows
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-bin-${{ matrix.platform.id }}.zip
+
+      - name: Install zip (Windows)
+        if: matrix.platform.os == 'windows-latest'
+        run: choco install zip
+
+      - name: Get date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        shell: bash
+  
+      - name: Get metadata
+        run: |
+          touch alr-date-is-${{steps.date.outputs.date}}.txt
+          touch alr-commit-is-${{github.sha}}.txt
+        shell: bash
+
+      - name: Package binaries
+        run: zip alr-nightly-bin-${{matrix.platform.id}}.zip bin/alr* LICENSE.txt alr-*.txt
+        
+      - name: Upload to release
+        uses: pyTooling/Actions/releaser/composite@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            alr-nightly-*.zip
+          tag: nightly
+          rm: false
+
+  ############################
+  # release-nightly-appimage #
+  ############################
+
+  release-nightly-appimage:
+    name: Nightly AppImage
+    if: >
+      github.event_name == 'schedule' 
+      || github.event.inputs.release_nightly != 'false' 
+      || contains(github.event.pull_request.title, 'nightly')
+    needs: [appimage]
+    runs-on: ubuntu-22.04
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-${{needs.appimage.outputs.short_sha}}-x86_64.AppImage.zip
+
+      - name: Rename binary
+        run: mv alr.AppImage alr-nightly-x86_64.AppImage
+
+      - name: Upload to release
+        uses: pyTooling/Actions/releaser/composite@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}          
+          tag: nightly
+          rm: false
+          files: alr-nightly-x86_64.AppImage
