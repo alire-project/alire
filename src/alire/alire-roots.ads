@@ -186,7 +186,7 @@ package Alire.Roots is
    --  conceivably we could use checksums to make it more robust against
    --  automated changes within the same second.
 
-   function Outdated_Links (This : in out Root) return Boolean;
+   function Has_Outdated_Links (This : in out Root) return Boolean;
    --  Check whether any linked dependency has a more recent manifest than
    --  ours. If so, that means the user has edited a linked dependency and
    --  we need to update. TL;DR: True if we need to update because a linked

@@ -8,7 +8,7 @@ import os.path
 
 from drivers.alr import alr_with, init_local_crate, run_alr
 from drivers.asserts import assert_substring
-from drivers.helpers import prepend_to_file
+from drivers.helpers import offset_timestamp, prepend_to_file
 from shutil import rmtree
 
 
@@ -29,6 +29,11 @@ def set_up():
     init_local_crate(MAIN_CRATE)
     alr_with(DEP_CRATE, path=f"../{DEP_CRATE}", update=True)
 
+    # Some OSes have a granularity of 1 second in file timestamps, so move the
+    # manifest timestamp of the dependency crate back in time import time to
+    # ensure change detection.
+    offset_timestamp(file=f"../{DEP_CRATE}/alire.toml", offset=-2.0)
+
     # Add new dependency to the linked crate
     os.chdir(f"../{DEP_CRATE}")
     alr_with("libhello")
@@ -39,8 +44,10 @@ def set_up():
     os.chdir(initial_dir)
 
 
-# After manually adding a dependency run commands that require a valid session.
-# This should cause the expected dependency folder to exist
+# After editing the manifest of a linked dependency, run commands that require a
+# synchronized workspace. Before the fix, this usually caused errors in the
+# logic of dependency deployment (as we were missing dependencies that should be
+# in the solution).
 for cmd in ['build', 'pin', 'run', 'show', 'with', 'printenv']:
     
     # Prepare faulty condition
@@ -54,7 +61,7 @@ for cmd in ['build', 'pin', 'run', 'show', 'with', 'printenv']:
     # update happened as expected:
     assert_substring("Changes detected in pinned dependencies", p.out)
 
-    # Go back up
+    # Go to where we started
     os.chdir("..")    
 
 print('SUCCESS')

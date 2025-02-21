@@ -136,11 +136,12 @@ def host_os():
     return host_os
 
 
-def mark_file_old(file):
+def offset_timestamp(file, offset):
     """
-    Set the modification date of the given file way in the past
+    Add offset to the modification time of a file
     """
-    os.utime(file, (0, 0))
+    os.utime(file, (os.path.getatime(file), 
+                    os.path.getmtime(file) + offset))
 
 
 # Add a 'with "something";' at the top of a project file
