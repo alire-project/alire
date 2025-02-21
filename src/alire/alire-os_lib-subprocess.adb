@@ -196,6 +196,17 @@ package body Alire.OS_Lib.Subprocess is
 
       Exit_Code : Integer;
 
+      ---------
+      -- Dim --
+      ---------
+
+      procedure Dim (State : States) is
+      begin
+         if CLIC.TTY.Is_TTY and then CLIC.TTY.Color_Enabled then
+            Ada.Text_IO.Put (Style (Dim, State));
+         end if;
+      end Dim;
+
    begin
       Trace.Detail ("Spawning: " & Image (Command, Full_Args));
 
@@ -204,17 +215,24 @@ package body Alire.OS_Lib.Subprocess is
          Arg_List (I) := new String'(Full_Args (I));
       end loop;
 
-      if CLIC.TTY.Is_TTY and then CLIC.TTY.Color_Enabled then
-         Ada.Text_IO.Put (Style (Dim, On));
-      end if;
+      Dim (On);
 
-      Exit_Code := GNAT.OS_Lib.Spawn
-        (Program_Name           => Locate_In_Path (Command),
-         Args                   => Arg_List.all);
+      declare
+         Full_Path : constant String := Locate_In_Path (Command);
+      begin
+         if Full_Path = "" then
+            Dim (Off);
+            Raise_Checked_Error
+              ("Executable not found in PATH when spawning: "
+               & TTY.Terminal (Command & " " & Arguments.Flatten (" ")));
+         end if;
 
-      if CLIC.TTY.Is_TTY and then CLIC.TTY.Color_Enabled then
-         Ada.Text_IO.Put (Style (Dim, Off));
-      end if;
+         Exit_Code := GNAT.OS_Lib.Spawn
+           (Program_Name           => Full_Path,
+            Args                   => Arg_List.all);
+      end;
+
+      Dim (Off);
 
       Cleanup (Arg_List);
 
@@ -283,11 +301,21 @@ package body Alire.OS_Lib.Subprocess is
          Arg_List (I) := new String'(Full_Args (I));
       end loop;
 
-      Spawn (Program_Name           => Locate_In_Path (Command),
-             Args                   => Arg_List.all,
-             Output_File_Descriptor => Outfile.Create,
-             Return_Code            => Exit_Code,
-             Err_To_Out             => Err_To_Out);
+      declare
+         Full_Path : constant String := Locate_In_Path (Command);
+      begin
+         if Full_Path = "" then
+            Raise_Checked_Error
+              ("Executable not found in PATH when spawning: "
+               & TTY.Terminal (Command & " " & Arguments.Flatten (" ")));
+         end if;
+
+         Spawn (Program_Name           => Full_Path,
+                Args                   => Arg_List.all,
+                Output_File_Descriptor => Outfile.Create,
+                Return_Code            => Exit_Code,
+                Err_To_Out             => Err_To_Out);
+      end;
 
       Read_Output;
 

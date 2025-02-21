@@ -52,9 +52,20 @@ package body Alr.OS_Lib is
    begin
       Trace.Debug ("Spawning " & Command & " " & Arguments);
 
-      Code := GNAT.OS_Lib.Spawn
-        (Alire.OS_Lib.Subprocess.Locate_In_Path (Command),
-         GNAT.OS_Lib.Argument_String_To_List (Arguments).all);
+      declare
+         Full_Path : constant String :=
+                       Alire.OS_Lib.Subprocess.Locate_In_Path (Command);
+      begin
+         if Full_Path = "" then
+            Alire.Raise_Checked_Error
+              ("Executable not found in PATH when spawning: "
+               & TTY.Terminal (Command & " " & Arguments));
+         end if;
+
+         Code := GNAT.OS_Lib.Spawn
+           (Full_Path,
+            GNAT.OS_Lib.Argument_String_To_List (Arguments).all);
+      end;
 
       if Code /= 0 then
          raise Child_Failed with "Exit code:" & Code'Image;
