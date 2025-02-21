@@ -135,6 +135,14 @@ def host_os():
         host_os = 'macos'
     return host_os
 
+
+def mark_file_old(file):
+    """
+    Set the modification date of the given file way in the past
+    """
+    os.utime(file, (0, 0))
+
+
 # Add a 'with "something";' at the top of a project file
 def with_project(file, project):
     with open(file, 'r+') as f:

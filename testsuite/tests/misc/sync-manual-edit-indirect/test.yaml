@@ -1,0 +1,4 @@
+driver: python-script
+indexes:
+    basic_index: {}
+    compiler_only_index: {}
