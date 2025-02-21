@@ -3,9 +3,10 @@ Bug #1379: -h/--help must not trigger our help system after a "--" argument
 """
 
 import re
+import shutil
 
 from drivers.alr import init_local_crate, run_alr
-from drivers.asserts import assert_match
+from drivers.asserts import assert_match, assert_substring
 
 # For no command, "--" with help afterwards should simply trigger an error
 
@@ -23,9 +24,10 @@ assert_match(".*" + re.escape("Unrecognized option '--' (command/topic \"show\")
 
 init_local_crate()
 
-assert_match(".*" + re.escape('Command ["alr_fake", "--help"] exited with code'),
-             run_alr("exec", "--", "alr_fake", "--help",
-                     complain_on_error=False).out)
-# We don't match the code as it varies between OSes
+assert shutil.which("alr_fake") is None
+
+assert_substring("Executable not found in PATH when spawning", 
+                 run_alr("exec", "--", "alr_fake", "--help",
+                         complain_on_error=False).out)
 
 print("SUCCESS")

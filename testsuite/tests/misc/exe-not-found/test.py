@@ -13,7 +13,7 @@ assert shutil.which(EXE) is None
 
 init_local_crate()
 
-p = run_alr("exec", "--", "madeUpC0mmand", complain_on_error=False)
+p = run_alr("exec", "--", EXE, complain_on_error=False)
 
 assert_substring("Executable not found in PATH when spawning", p.out)                 
 
