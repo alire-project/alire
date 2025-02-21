@@ -12,22 +12,27 @@ from drivers.helpers import prepend_to_file
 from shutil import rmtree
 
 
-target = 'alire/cache/dependencies/libhello_1.0.0_filesystem'
+MAIN_CRATE = "main"
+DEP_CRATE  = "dep"
 
 def set_up():
     initial_dir = os.getcwd()
 
-    # Indirect crate we will edit
-    init_local_crate("dep", enter=False)
+    # Ensure clean state
+    rmtree(MAIN_CRATE, ignore_errors=True)
+    rmtree(DEP_CRATE, ignore_errors=True)
 
-    # Main crate
-    init_local_crate("main")
-    alr_with("dep", path="../dep", update=True)
+    # Indirect crate we will edit
+    init_local_crate(DEP_CRATE, enter=False)
+
+    # Main crate    
+    init_local_crate(MAIN_CRATE)
+    alr_with(DEP_CRATE, path=f"../{DEP_CRATE}", update=True)
 
     # Add new dependency to the linked crate
-    os.chdir("../dep")
+    os.chdir(f"../{DEP_CRATE}")
     alr_with("libhello")
-    prepend_to_file("src/dep.adb",
+    prepend_to_file(f"src/{DEP_CRATE}.adb",
                     ["with Libhello;"])
     
     # Back to the root directory
@@ -42,16 +47,14 @@ for cmd in ['build', 'pin', 'run', 'show', 'with', 'printenv']:
     set_up()    
 
     # Run the command in the main crate folder
-    os.chdir("main")
-    p = run_alr(cmd)
+    os.chdir(MAIN_CRATE)
+    p = run_alr(cmd, quiet=False)
 
     # If no error was reported, then we should be okay. Still, check that the
     # update happened as expected:
-    assert_substring("asdf", p.out)
+    assert_substring("Changes detected in pinned dependencies", p.out)
 
-    # Go back up and clean up for next command
-    os.chdir("..")
-    rmtree("xxx")
-
+    # Go back up
+    os.chdir("..")    
 
 print('SUCCESS')
