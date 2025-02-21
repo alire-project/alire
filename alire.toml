@@ -87,7 +87,7 @@ url    = "https://github.com/alire-project/gnatcoll-core.git"
 commit = "4e663b87a028252e7e074f054f8f453661397166"
 [pins.lml]
 url    = "https://github.com/mosteo/lml_ada.git"
-commit = "8a9e8158f4ffda54af7f321607a94d689bf0cbb2"
+commit = "3d79edaff98bc4985014c641327ceb22d655df6b"
 
 [pins.minirest]
 url    = "https://github.com/mosteo/minirest.git"
@@ -120,7 +120,7 @@ commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
 [pins.yeison_12]
 url    = "https://github.com/mosteo/yeison"
 subdir = "yeison_12"
-commit = "d443204288fe67145f8a352073253db227065a69"
+commit = "88b66242f8826fd4847e0ea06c7901b753e03c74"
 
 # To disable version updating, export ALR_VERSION_DONT_PATCH with any value
 
