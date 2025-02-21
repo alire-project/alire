@@ -464,10 +464,10 @@ jobs:
   
   release-nightly:
     name: Nightly release on ${{ matrix.platform.id }}
-    if: >
+    if: > 
       github.event_name == 'schedule' 
-      || github.event.inputs.release_nightly != 'false' 
-      || contains(github.event.pull_request.title, 'nightly')
+      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false') 
+      || (github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'nightly'))
     needs: [build, build-macos-universal]
     runs-on: ${{ matrix.platform.os }}
 
@@ -542,8 +542,8 @@ jobs:
     name: Nightly AppImage
     if: >
       github.event_name == 'schedule' 
-      || github.event.inputs.release_nightly != 'false' 
-      || contains(github.event.pull_request.title, 'nightly')
+      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false') 
+      || (github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'nightly'))
     needs: [appimage]
     runs-on: ubuntu-22.04
 
