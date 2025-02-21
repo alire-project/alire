@@ -136,12 +136,12 @@ def host_os():
     return host_os
 
 
-def offset_timestamp(file, offset):
+def offset_timestamp(file, seconds):
     """
     Add offset to the modification time of a file
     """
     os.utime(file, (os.path.getatime(file), 
-                    os.path.getmtime(file) + offset))
+                    os.path.getmtime(file) + seconds))
 
 
 # Add a 'with "something";' at the top of a project file

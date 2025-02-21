@@ -27,18 +27,18 @@ def set_up():
 
     # Main crate    
     init_local_crate(MAIN_CRATE)
-    alr_with(DEP_CRATE, path=f"../{DEP_CRATE}", update=True)
-
-    # Some OSes have a granularity of 1 second in file timestamps, so move the
-    # manifest timestamp of the dependency crate back in time import time to
-    # ensure change detection.
-    offset_timestamp(file=f"../{DEP_CRATE}/alire.toml", offset=-2.0)
+    alr_with(DEP_CRATE, path=f"../{DEP_CRATE}", update=True)    
 
     # Add new dependency to the linked crate
     os.chdir(f"../{DEP_CRATE}")
     alr_with("libhello")
     prepend_to_file(f"src/{DEP_CRATE}.adb",
                     ["with Libhello;"])
+    
+    # Some OSes have a granularity of 1 second in file timestamps, so move the
+    # manifest timestamp of the dependency crate forward in time to ensure
+    # change detection.
+    offset_timestamp(file=f"../{DEP_CRATE}/alire.toml", seconds=2.0)
     
     # Back to the root directory
     os.chdir(initial_dir)
