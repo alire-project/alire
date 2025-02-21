@@ -422,13 +422,13 @@ private
       --  For releases loaded from a manifest, this is the original structured
       --  data that generated it, in which case Imported.Is_Present.
       --
-      --  Not deep-copying this value on copy of Release triggers a hard to
-      --  diagnose bug somewhere for GNAT<14, in which finalization of the
-      --  main Ada library raises for some reason. This is likely caused
-      --  by TOML_Value being internally a by-reference type. I found two
-      --  workarounds: using explicit pointers to hold a TOML_Value, which
-      --  allows keeping Release non-controlled (but leaky), or cloning the
-      --  value on Adjust.
+      --  GNATs<14 have trouble with this value, raising during main Ada lib
+      --  finalization. Given that GNAT 14 is happy, and that TOML_Value is
+      --  a by-reference type internally, it seems pretty likely this is some
+      --  obscure bug in older GNATs. The only workaround I've found at this
+      --  time is to avoid finalization by explicitly allocating the value.
+      --  This is leaky, so we may want to revisit this issue in the future.
+      --  TODO: find better workaround.
    end record;
 
    function From_TOML (This   : in out Release;

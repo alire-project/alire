@@ -854,7 +854,7 @@ package body Alire.Releases is
          if R.Imported.Is_Present then
             --  This field may be missing if R.Whenever has been used, in which
             --  case we properly want to print the re-exported information
-            --  without dynamic expressions (else branch). It may be also
+            --  without dynamic expressions (else branch below). It may be also
             --  missing for releases being created from scratch during `alr
             --  init`, but there's no way for a user to get us here until
             --  after the release has been reloaded from its manifest.
