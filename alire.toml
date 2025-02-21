@@ -53,7 +53,7 @@ windows = { ALIRE_OS = "windows" }
 [[pins]]
 [pins.aaa]
 url    = "https://github.com/mosteo/aaa"
-commit = "73d99ae1ff2f5210dc41c2ea7afebe600f9e9916"
+commit = "ddfeffe2d6c8f9d19161df7b31d16d37bef4ba71"
 
 [pins.ada_toml]
 url    = "https://github.com/pmderodat/ada-toml"
