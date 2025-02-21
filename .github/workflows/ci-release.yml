@@ -57,7 +57,7 @@ jobs:
             id: x86_64-linux
 
           - os: ubuntu-24.04-arm    # new ARM runners
-            id: aaarch64-linux
+            id: aarch64-linux
 
           - os: windows-latest
             id: x86_64-windows
@@ -73,14 +73,14 @@ jobs:
     # Alire-indexed releases for it.
 
     - name: Install Alire toolchain
-      if: matrix.platform.id != 'aaarch64-linux'
+      if: matrix.platform.id != 'aarch64-linux'
       uses: alire-project/alr-install@v2
       with:
         crates: gnat_native gprbuild
         prefix: alire_prefix
 
     - name: Install system toolchain (Ubuntu ARM)
-      if: matrix.platform.id == 'aaarch64-linux'
+      if: matrix.platform.id == 'aarch64-linux'
       run: |
         sudo apt-get install -y gnat gprbuild
         echo ALIRE_TESTSUITE_DISABLE_DOCKER=true >> $GITHUB_ENV
@@ -107,7 +107,7 @@ jobs:
     # Ascertain whether alr can run without the toolchain that built it
 
     - name: Remove system GNAT (Ubuntu ARM)
-      if: matrix.platform.id == 'aaarch64-linux'
+      if: matrix.platform.id == 'aarch64-linux'
       run: sudo apt-get remove -y gnat-13 gprbuild
       shell: bash
 
@@ -224,7 +224,7 @@ jobs:
             id: x86_64-linux
 
           - os: ubuntu-24.04-arm
-            id: aaarch64-linux
+            id: aarch64-linux
 
           - os: windows-latest
             id: x86_64-windows
@@ -488,7 +488,7 @@ jobs:
             id: x86_64-linux
 
           - os: ubuntu-24.04-arm
-            id: aaarch64-linux
+            id: aarch64-linux
 
           - os: windows-latest
             id: x86_64-windows
@@ -518,6 +518,13 @@ jobs:
       - name: Package binaries
         run: zip alr-nightly-bin-${{matrix.platform.id}}.zip bin/alr* LICENSE.txt alr-*.txt
         
+      # The uploader needs Python with the github module
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
       - name: Upload to release
         uses: pyTooling/Actions/releaser/composite@r4
         with:
