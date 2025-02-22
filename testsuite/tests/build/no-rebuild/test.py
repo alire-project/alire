@@ -8,6 +8,7 @@ This test differs from crate_config/no-rebuilds in that here we have dependencie
 
 from drivers.alr import alr_with, init_local_crate, run_alr
 from drivers.asserts import assert_substring
+from drivers.helpers import exe_name
 
 # Basic check in which building twice should not trigger a rebuild
 
@@ -15,15 +16,15 @@ init_local_crate()
 alr_with("libhello")
 run_alr("build")
 p = run_alr("build", quiet=False)
-assert_substring ('gprbuild: "xxx" up to date', p.out)
+assert_substring (f'gprbuild: "{exe_name("xxx")}" up to date', p.out)
 
 # Check that removing and re-adding a dependency does not trigger a rebuild
-# (since the build folders already exist)
+# (since the build folders already exist).
 
 run_alr("with", "--del", "libhello")
 run_alr("with", "libhello")
 p = run_alr("build", quiet=False)
-assert_substring ('gprbuild: "xxx" up to date', p.out)
+assert_substring (f'gprbuild: "{exe_name("xxx")}" up to date', p.out)
 
 
 print("SUCCESS")
