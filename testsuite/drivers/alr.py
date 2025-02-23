@@ -134,8 +134,9 @@ def run_alr(*args, **kwargs):
 def run_alr_interactive(args: list[str], output: list[str], input: list[str],
                         timeout=5, complain_on_error=True) -> str:
     """
-    NON-WINDOWS-ONLY Run "alr" with the given arguments, feeding it the given
-    input. No other arguments like -q or -d are added (except --no-color).
+    NON-WINDOWS-ONLY     
+    Run "alr" with the given arguments, feeding it the given input. No other
+    arguments like -q or -d are added (except --no-color).
 
     Returns the output of the command, with CRLF replaced by LF.
 

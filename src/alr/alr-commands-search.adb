@@ -42,6 +42,10 @@ package body Alr.Commands.Search is
       is
          package Solver renames Alire.Solver;
 
+         ----------------
+         -- Resolvable --
+         ----------------
+
          function Resolvable return String is
             Result : constant Solver.Result :=
                        Solver.Resolve

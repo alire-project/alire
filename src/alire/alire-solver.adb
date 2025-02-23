@@ -953,6 +953,8 @@ package body Alire.Solver is
             when Right  => return Right ("id");
             when others =>
                if Stall then
+                  --  When stalling we are not removing states, so eventually
+                  --  we compare an state against itself.
                   return Left ("id");
                else
                   raise Program_Error with "impossible";
@@ -2105,6 +2107,7 @@ package body Alire.Solver is
 
       begin
          if Timeout < 0.0 or else Timer.Elapsed < Timeout then
+            --  Timeout < 0.0 means no timeout at all
             return False;
          end if;
 
@@ -2155,6 +2158,8 @@ package body Alire.Solver is
                Explored := Explored + 1;
 
                if not Stall then
+                  --  When stalling we don't want to exhaust states, so we do
+                  --  not remove them.
                   States.Delete_First;
                end if;
                --  TODO: we could free memory here if we observe large memory
@@ -2172,6 +2177,7 @@ package body Alire.Solver is
 
             Top_Ten;
 
+            --  Never exit search when stalling
             exit when not Stall and then Solutions.Found_Best;
             exit when Search_Timeout;
          end loop;
