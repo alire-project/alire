@@ -99,7 +99,7 @@ package body Alr.Commands.Show is
                               Platform.Properties,
                               Alire.Solutions.Empty_Valid_Solution,
                               Options => (Age    => Query_Policy,
-                                          others => <>)));
+                                          others => <>)).Solution);
             begin
                if Cmd.Solve then
                   Needed.Print (Rel,

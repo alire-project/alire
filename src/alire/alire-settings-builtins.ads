@@ -147,6 +147,24 @@ package Alire.Settings.Builtins is
         "If true, `alr with` will replace 'any' dependencies with the"
       & " appropriate caret/tilde dependency.");
 
+   Solver_Timeout : constant Builtin := New_Builtin
+     (Key    => "solver.timeout",
+      Kind   => Stn_Int,
+      Def    => "5",
+      Help   => "Seconds until solver first timeout (-1 to disable)");
+
+   Solver_Grace_Period : constant Builtin := New_Builtin
+     (Key    => "solver.grace_period",
+      Kind   => Stn_Int,
+      Def    => "10",
+      Help   => "Extra seconds to look for solutions after timeout");
+
+   Solver_Never_Finish : constant Builtin := New_Builtin
+     (Key    => "solver.never_finish",
+      Public => False,
+      Def    => False,
+      Help   => "Never progress towards a solution (for testing only)");
+
    --  TOOLCHAIN
 
    Toolchain_Assistant : constant Builtin := New_Builtin

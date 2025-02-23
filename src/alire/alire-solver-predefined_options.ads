@@ -10,7 +10,7 @@ package Alire.Solver.Predefined_Options is
    Interactive : constant Query_Options :=
                    (Stopping => Ask,
                     others   => <>);
-   --  Ask of timeout
+   --  Ask on timeout
 
    Exhaustive  : constant Query_Options :=
                    (Stopping   => Continue,

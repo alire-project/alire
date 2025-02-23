@@ -98,7 +98,7 @@ package body Alr.Commands.Get is
             Solution := Query.Resolve
               (Rel.Dependencies (Platform.Properties),
                Platform.Properties,
-               Alire.Solutions.Empty_Valid_Solution);
+               Alire.Solutions.Empty_Valid_Solution).Solution;
             Diff := Alire.Solutions.Empty_Valid_Solution.Changes (Solution);
 
             if not Solution.Is_Complete then

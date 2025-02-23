@@ -267,7 +267,9 @@ package body Alire.Solver is
                            Pins    : Solution;
                            Options : Query_Options := Default_Options)
                            return Boolean
-   is (Resolve (Deps, Props, Pins, Options).Is_Complete);
+   is (Resolve (Deps, Props, Pins, Options).Solution.Is_Complete);
+   --  No need to check the Timed_Out field; if the solution is complete it has
+   --  to be the first one found, and it was found before timing out.
 
    -------------
    -- Resolve --
@@ -276,7 +278,7 @@ package body Alire.Solver is
    function Resolve
      (Dep : Dependencies.Dependency;
       Options : Query_Options := Default_Options)
-      return Solution
+      return Result
    is (Resolve (Deps  => Conditional.New_Dependency (Dep),
                 Props => Platforms.Current.Properties,
                 Pins    => Solutions.Empty_Valid_Solution,
@@ -290,7 +292,7 @@ package body Alire.Solver is
                      Props   : Properties.Vector;
                      Pins    : Solution;
                      Options : Query_Options := Default_Options)
-                     return Solution
+                     return Result
    is
       Tmp_Pool : System.Pool_Local.Unbounded_Reclaim_Pool;
       --  We use a local pool for easy reduction of copying of large states,
@@ -326,7 +328,15 @@ package body Alire.Solver is
       --  To avoid reporting progress too often, as this will have some impact
       --  on time spent searching.
 
+      Stall    : constant Boolean := Settings.Builtins.Solver_Never_Finish.Get;
+      --  If Stalling, we will never end the search, but timeouts will trigger.
+      --  We use this option for testing.
+
       Timeout  : Duration := Options.Timeout;
+      --  We grow the timeout if asked to look during extra time
+
+      Timed_Out : Boolean := False;
+      --  Set to True if timed out before completing
 
       use Alire.Conditional.For_Dependencies;
 
@@ -941,7 +951,12 @@ package body Alire.Solver is
          is
             when Left   => return Left ("id");
             when Right  => return Right ("id");
-            when others => raise Program_Error with "impossible";
+            when others =>
+               if Stall then
+                  return Left ("id");
+               else
+                  raise Program_Error with "impossible";
+               end if;
          end case;
       end Is_Better;
 
@@ -2089,11 +2104,13 @@ package body Alire.Solver is
          end Ask_User_To_Continue;
 
       begin
-         if Timer.Elapsed < Timeout then
+         if Timeout < 0.0 or else Timer.Elapsed < Timeout then
             return False;
          end if;
 
-         return Ask_User_To_Continue = Stop;
+         return Stopped : constant Boolean := Ask_User_To_Continue = Stop do
+            Timed_Out := Stopped;
+         end return;
       end Search_Timeout;
 
       -------------
@@ -2137,7 +2154,9 @@ package body Alire.Solver is
             begin
                Explored := Explored + 1;
 
-               States.Delete_First;
+               if not Stall then
+                  States.Delete_First;
+               end if;
                --  TODO: we could free memory here if we observe large memory
                --  use, although the point of using an arena is to avoid manual
                --  memory tinkering.
@@ -2153,7 +2172,7 @@ package body Alire.Solver is
 
             Top_Ten;
 
-            exit when Solutions.Found_Best;
+            exit when not Stall and then Solutions.Found_Best;
             exit when Search_Timeout;
          end loop;
       end Explore;
@@ -2255,7 +2274,8 @@ package body Alire.Solver is
       if Full_Dependencies.Is_Empty then
          Trace.Debug
            ("SOLVER: returning trivial solution for empty dependencies");
-         return Trivial_Solution;
+         return (Solution  => Trivial_Solution,
+                 Timed_Out => False);
       end if;
 
       --  Preprocess direct dependencies to identify any impossible ones
@@ -2290,7 +2310,8 @@ package body Alire.Solver is
       --  stopping criteria, or have fully explored the solution space. In any
       --  case, we will have a best solution.
 
-      return Solution_With_Extras;
+      return (Solution  => Solution_With_Extras,
+              Timed_Out => Timed_Out);
 
    end Resolve;
 
