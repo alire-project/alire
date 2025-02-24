@@ -27,8 +27,8 @@ with Semantic_Versioning;
 with TOML;
 
 private with Alire.OS_Lib;
-private with CLIC.TTY;
 private with Alire.Utils.TTY;
+private with CLIC.TTY;
 
 package Alire.Releases is
 
@@ -398,6 +398,11 @@ private
                             return Alire.Properties.Vector;
    --  Properties that R has under platform properties P
 
+   type TOML_Value_Ptr is access TOML.TOML_Value;
+
+   function No_TOML_Value return TOML_Value_Ptr
+   is (new TOML.TOML_Value'(TOML.No_TOML_Value));
+
    type Release (Prj_Len,
                  Notes_Len : Natural)
    is new Interfaces.Yamlable
@@ -412,6 +417,18 @@ private
       Forbidden    : Conditional.Dependencies;
       Properties   : Conditional.Properties;
       Available    : Conditional.Availability;
+
+      Imported     : TOML_Value_Ptr := No_TOML_Value;
+      --  For releases loaded from a manifest, this is the original structured
+      --  data that generated it, in which case Imported.Is_Present.
+      --
+      --  GNATs<14 have trouble with this value, raising during main Ada lib
+      --  finalization. Given that GNAT 14 is happy, and that TOML_Value is
+      --  a by-reference type internally, it seems pretty likely this is some
+      --  obscure bug in older GNATs. The only workaround I've found at this
+      --  time is to avoid finalization by explicitly allocating the value.
+      --  This is leaky, so we may want to revisit this issue in the future.
+      --  TODO: find better workaround.
    end record;
 
    function From_TOML (This   : in out Release;

@@ -1556,11 +1556,22 @@ package body Alire.Roots is
          end;
       elsif This.Solution.State (Crate).Is_Linked then
          return This.Solution.State (Crate).Link.Path;
+         --  Usage doesn't matter in this case, the crate is where it is
       else
          raise Program_Error with
            "release must be either solved or linked";
       end if;
    end Release_Base;
+
+   ----------------------
+   -- Release_Manifest --
+   ----------------------
+
+   function Release_Manifest (This  : in out Root;
+                              Crate : Crate_Name;
+                              Usage : Usages)
+                              return Absolute_File
+   is (This.Release_Base (Crate, Usage) / Paths.Crate_File_Name);
 
    ----------------------
    -- Migrate_Lockfile --
@@ -1703,6 +1714,48 @@ package body Alire.Roots is
         File_Time_Stamp (This.Crate_File) > File_Time_Stamp (This.Lock_File);
    end Is_Lockfile_Outdated;
 
+   --------------------
+   -- Outdated_Links --
+   --------------------
+
+   function Has_Outdated_Links (This : in out Root) return Boolean is
+      use GNAT.OS_Lib;
+      Changed : AAA.Strings.Set;
+   begin
+
+      --  If we do not even have a lockfile, for sure we must update
+
+      if not This.Has_Lockfile then
+         return True;
+      end if;
+
+      --  Otherwise, check manifests of linked dependencies. Note that we do
+      --  not care about their lockfiles, which may well be outdated; we care
+      --  that the user has modified the dependency info in the manifest and
+      --  thus *we* need updating. The lockfile in the dependency will be
+      --  automatically updated if it ever is used as the root.
+
+      for Dep of This.Solution.All_Dependencies loop
+         if Dep.Is_Linked and then Dep.Has_Release
+           and then
+             File_Time_Stamp (This.Release_Manifest (Dep.Crate, For_Build)) >
+               File_Time_Stamp (This.Lock_File)
+         then
+            Trace.Debug ("Changes detected in pinned dependency: "
+                         & Dep.Crate.TTY_Image);
+            Changed.Include (Dep.Crate.As_String);
+         end if;
+      end loop;
+
+      if Changed.Is_Empty then
+         return False;
+      else
+         Put_Info ("Changes detected in pinned dependencies: "
+                   & Changed.To_Vector.Flatten (", "));
+         return True;
+      end if;
+   end Has_Outdated_Links;
+
    -------------
    -- Is_Root --
    -------------
@@ -1731,12 +1784,10 @@ package body Alire.Roots is
                                  Force    : Boolean := False)
    is
    begin
-      if Force or else This.Is_Lockfile_Outdated then
-         --  TODO: we may want to recursively check manifest timestamps of
-         --  linked crates to detect changes in these manifests and re-resolve.
-         --  Otherwise a manual `alr update` is needed to detect these changes.
-         --  This would imply to store the timestamps in our lockfile for
-         --  linked crates with a manifest.
+      if Force
+        or else This.Is_Lockfile_Outdated
+        or else This.Has_Outdated_Links
+      then
 
          Put_Info ("Synchronizing workspace...");
 

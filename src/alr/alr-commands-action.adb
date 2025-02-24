@@ -182,6 +182,8 @@ package body Alr.Commands.Action is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector) is
    begin
+      Cmd.Forbids_Structured_Output;
+
       if Args.Is_Empty then
          Cmd.List;
       else

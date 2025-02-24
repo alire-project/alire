@@ -15,6 +15,8 @@ package body Alr.Commands.Install is
 
    procedure Validate (Cmd : in out Command; Args : AAA.Strings.Vector) is
    begin
+      Cmd.Forbids_Structured_Output;
+
       --  If nothing given, we must be in workspace
       if not Cmd.Info and then Args.Is_Empty then
          Cmd.Requires_Workspace

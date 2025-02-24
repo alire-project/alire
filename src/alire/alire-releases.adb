@@ -7,11 +7,13 @@ with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
 with Alire.Flags;
+with Alire.Formatting;
 with Alire.Origins.Deployers.System;
 with Alire.Paths;
 with Alire.Properties.Bool;
 with Alire.Properties.Scenarios;
 with Alire.TOML_Load;
+with Alire.Utils.Tables;
 with Alire.Utils.YAML;
 with Alire.Warnings;
 
@@ -484,7 +486,8 @@ package body Alire.Releases is
          Pins         => Base.Pins,
          Forbidden    => Base.Forbidden,
          Properties   => Base.Properties,
-         Available    => Base.Available)
+         Available    => Base.Available,
+         Imported     => Base.Imported)
       do
          null;
       end return;
@@ -539,7 +542,8 @@ package body Alire.Releases is
        Pins         => <>,
        Forbidden    => Conditional.For_Dependencies.Empty,
        Properties   => Properties,
-       Available    => Available);
+       Available    => Available,
+       Imported     => No_TOML_Value);
 
    -----------------------
    -- New_Empty_Release --
@@ -572,7 +576,8 @@ package body Alire.Releases is
       Pins         => <>,
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
-      Available    => Conditional.Empty
+      Available    => Conditional.Empty,
+      Imported     => No_TOML_Value
      );
 
    -------------------------
@@ -845,6 +850,33 @@ package body Alire.Releases is
    procedure Print (R : Release) is
       use GNAT.IO;
    begin
+      if Alire.Utils.Tables.Structured_Output then
+         if R.Imported.Is_Present then
+            --  This field may be missing if R.Whenever has been used, in which
+            --  case we properly want to print the re-exported information
+            --  without dynamic expressions (else branch below). It may be also
+            --  missing for releases being created from scratch during `alr
+            --  init`, but there's no way for a user to get us here until
+            --  after the release has been reloaded from its manifest.
+            Formatting.Print (R.Imported.all);
+         else
+            if R.Properties.Is_Unconditional then
+               Formatting.Print
+                 (R.To_TOML
+                    (if R.Origin.Kind in Origins.Filesystem
+                     then Manifest.Local
+                     else Manifest.Index));
+            else
+               --  Shouldn't happen as conditional releases should have the
+               --  Imported field populated (they always come from a loaded
+               --  manifest).
+               raise Program_Error with
+                 "Cannot export release with dynamic information";
+            end if;
+         end if;
+         return;
+      end if;
+
       --  MILESTONE
       Put_Line (R.Milestone.TTY_Image & ": " & R.TTY_Description);
 
@@ -1017,6 +1049,12 @@ package body Alire.Releases is
       return This : Release := New_Empty_Release
         (Name => +From.Unwrap.Get (TOML_Keys.Name).As_String)
       do
+         --  Keep the original TOML to be able to export with conditional
+         --  expressions unresolved. Keep a copy since TOML is using reference
+         --  semantics.
+
+         This.Imported.all := From.Unwrap.Clone;
+
          --  Extract the version ASAP to show it properly during logging
 
          if From.Contains (TOML_Keys.Version) then
@@ -1271,7 +1309,12 @@ package body Alire.Releases is
        Pins         => R.Pins,
        Forbidden    => R.Forbidden.Evaluate (P),
        Properties   => R.Properties.Evaluate (P),
-       Available    => R.Available.Evaluate (P));
+       Available    => R.Available.Evaluate (P),
+
+       Imported     => No_TOML_Value
+       --  We are discarding information above, so the imported information
+       --  would no longer match.
+      );
 
    ----------------------
    -- Long_Description --

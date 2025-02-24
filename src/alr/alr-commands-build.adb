@@ -127,6 +127,8 @@ package body Alr.Commands.Build is
    is
       use type Alire.Builds.Stop_Points;
    begin
+      Cmd.Forbids_Structured_Output;
+
       --  Prevent premature update of dependencies, as the exact folders
       --  will depend on the build hashes, which are yet unknown until
       --  build profiles are applied.

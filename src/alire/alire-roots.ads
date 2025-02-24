@@ -125,7 +125,11 @@ package Alire.Roots is
        Post => Release'Result.Provides (Crate);
    --  Retrieve a release, that can be either the root or any in the solution
 
-   type Usages is (For_Deploy, For_Build);
+   type Usages is (For_Deploy,
+                   --  Deployments are to the vault, a specific write-once dir
+                   For_Build
+                   --  Builds take place in a copy located in the builds dir
+                  );
 
    function Release_Parent (This  : in out Root;
                             Rel   : Releases.Release;
@@ -140,6 +144,12 @@ package Alire.Roots is
                           Usage : Usages)
                           return Absolute_Path;
    --  Find the base folder in which a release can be found for the given root
+
+   function Release_Manifest (This  : in out Root;
+                              Crate : Crate_Name;
+                              Usage : Usages)
+                              return Absolute_File;
+   --  Return the full path to the manifest of a release in the solution
 
    function Requires_Build_Sync (This : in out Root;
                                  Rel  : Releases.Release)
@@ -175,6 +185,12 @@ package Alire.Roots is
    --  requires being updated. This currently relies on timestamps, but (TODO)
    --  conceivably we could use checksums to make it more robust against
    --  automated changes within the same second.
+
+   function Has_Outdated_Links (This : in out Root) return Boolean;
+   --  Check whether any linked dependency has a more recent manifest than
+   --  ours. If so, that means the user has edited a linked dependency and
+   --  we need to update. TL;DR: True if we need to update because a linked
+   --  dependency has changed.
 
    function Is_Root_Release (This : in out Root;
                              Dep  : Dependencies.States.State)

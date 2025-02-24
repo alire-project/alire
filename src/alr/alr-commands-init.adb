@@ -606,6 +606,7 @@ package body Alr.Commands.Init is
          or else Builtins.User_Name.Is_Empty
          or else Builtins.User_Github_Login.Is_Empty;
    begin
+      Cmd.Forbids_Structured_Output;
 
       if Cmd.Bin and then Cmd.Lib then
          Reportaise_Wrong_Arguments ("Please provide either --bin or --lib");

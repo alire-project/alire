@@ -6,6 +6,26 @@ stay on top of `alr` new features.
 
 ## Release `2.1`
 
+### New `--format` global switch to produce structured output
+
+PR [#1851](https://github.com/alire-project/alire/pull/1851)
+
+The global switch `--format` can be used to produce JSON format with some
+commands, e.g., `index`, `search`, `show`.
+
+This new switch accepts an optional parameter that can be JSON, TOML or YAML, to
+select the desired output language:
+
+```
+$ alr --format=TOML search --crates hello
+[[data]]                                        
+description = "'Hello, world!' demonstration project"
+name = "hello"
+[[data]]
+description = "Basic library demonstration project"
+name = "libhello"
+```
+
 ### Allow pinning a crate in a subdirectory of a git repository
 
 PR [#1857](https://github.com/alire-project/alire/pull/1857)

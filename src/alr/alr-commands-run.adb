@@ -102,6 +102,7 @@ package body Alr.Commands.Run is
       end List;
 
    begin
+      Cmd.Forbids_Structured_Output;
       Cmd.Requires_Workspace;
 
       --  Validation

@@ -119,6 +119,7 @@ package body Alr.Commands.Clean is
    is
       use AAA.Strings;
    begin
+      Cmd.Forbids_Structured_Output;
 
       if not (Cmd.Cache or else Cmd.Temp) then
          Cmd.Requires_Workspace;

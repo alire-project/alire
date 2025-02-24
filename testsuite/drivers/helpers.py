@@ -135,6 +135,15 @@ def host_os():
         host_os = 'macos'
     return host_os
 
+
+def offset_timestamp(file, seconds):
+    """
+    Add offset to the modification time of a file
+    """
+    os.utime(file, (os.path.getatime(file), 
+                    os.path.getmtime(file) + seconds))
+
+
 # Add a 'with "something";' at the top of a project file
 def with_project(file, project):
     with open(file, 'r+') as f:
@@ -287,6 +296,7 @@ def neutral_path(path : str) -> str:
     """
     return path.replace('\\', '/')
 
+
 def which(exec : str) -> str:
     """
     Return the full path to an executable if it can be found in PATH, or ""
@@ -296,6 +306,13 @@ def which(exec : str) -> str:
         return which(f"{exec}.exe")
 
     return shutil.which(exec)
+
+
+def exe_name(exec : str) -> str:
+    """
+    Return the executable name with ".exe" appended on Windows.
+    """
+    return f"{exec}.exe" if on_windows() else exec
 
 
 class FileLock():
