@@ -16,6 +16,8 @@ package body Alr.Commands.Printenv is
    is
       Enabled : Natural := 0;
    begin
+      Cmd.Forbids_Structured_Output;
+
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
       end if;

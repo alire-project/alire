@@ -183,13 +183,22 @@ package body Alire.Dependencies.Graphs is
 
       Filtered : constant Graph := This.Filtering_Unused (Solution.Crates);
    begin
+      if Utils.Tables.Structured_Output then
+         Table.Header ("Dependent").Header ("Dependency").New_Row;
+      end if;
+
       for Dep of Filtered loop
          Table.Append
            (Prefix & Label_Dependent (+Dep.Dependent, Solution, TTY => True));
-         Table.Append ("-->");
+
+         if not Utils.Tables.Structured_Output then
+            Table.Append ("-->");
+         end if;
+
          Table.Append
            (Label_Dependee
               (+Dep.Dependent, +Dep.Dependee, Solution, For_Plot => False));
+
          Table.New_Row;
       end loop;
 

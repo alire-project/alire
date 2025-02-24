@@ -31,7 +31,8 @@ aggregate project Alr_Env is
                          "deps/toml_slicer",
                          "deps/umwi",
                          "deps/uri-ada",
-                         "deps/xmlezout"
+                         "deps/xmlezout",
+                         "deps/yeison/yeison_12"
                         );
 
    for Project_Files use ("alr.gpr");

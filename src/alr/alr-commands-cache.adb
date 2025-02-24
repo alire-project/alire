@@ -1,5 +1,6 @@
 with Alire.Cache;
 with Alire.Directories;
+with Alire.Formatting;
 with Alire.Utils.Tables;
 
 package body Alr.Commands.Cache is
@@ -12,17 +13,26 @@ package body Alr.Commands.Cache is
       use Alire.Directories;
       Table : Alire.Utils.Tables.Table;
       Usage : constant Alire.Cache.Usages := Alire.Cache.Usage;
+      Size  : constant String :=
+                TTY_Image (if Usage.Is_Empty
+                           then 0
+                           else Alire.Cache.Usage.First_Element.Size);
    begin
-      Table
-        .Append ("Path:")
-        .Append (Alire.Cache.Path)
-        .New_Row;
+      if Alire.Formatting.Structured_Output then
+         Table.Header ("Path").Header ("Size").New_Row;
+         Table.Append (Alire.Cache.Path).Append (Size);
+      else
+         Table
+           .Append ("Path:")
+           .Append (Alire.Cache.Path)
+           .New_Row;
 
-      Table
-        .Append ("Size:")
-        .Append (TTY_Image (if Usage.Is_Empty
-                            then 0
-                            else Alire.Cache.Usage.First_Element.Size));
+         Table
+           .Append ("Size:")
+           .Append (TTY_Image (if Usage.Is_Empty
+                    then 0
+                    else Alire.Cache.Usage.First_Element.Size));
+      end if;
 
       Table.Print (Trace.Always);
    end Summary;

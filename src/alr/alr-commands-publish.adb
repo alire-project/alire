@@ -46,6 +46,8 @@ package body Alr.Commands.Publish is
                      For_Private_Index => Cmd.For_Private_Index);
 
    begin
+      Cmd.Forbids_Structured_Output;
+
       if Alire.Utils.Count_True
         ((Cmd.Tar, Cmd.Print_Trusted, Cmd.Status,
           Cmd.Cancel.all /= Unset, Cmd.Review.all /= Unset)) > 1

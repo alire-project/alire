@@ -7,6 +7,9 @@ with Alire.OS_Lib;
 with Alire.Platforms.Current;
 with Alire.Version;
 
+with LML.Input.TOML;
+with LML.Output.Factory;
+
 package body Alire.Formatting is
 
    --------------
@@ -215,5 +218,18 @@ package body Alire.Formatting is
          return +Result;
       end if;
    end Format;
+
+   -----------
+   -- Print --
+   -----------
+
+   procedure Print (This   : TOML.TOML_Value;
+                    Format : Formats := Utils.Tables.Structured_Output_Format)
+   is
+      Builder : LML.Output.Builder'Class := LML.Output.Factory.Get (Format);
+   begin
+      LML.Input.TOML.From_TOML (This, Builder);
+      Trace.Always (LML.Encode (Builder.To_Text));
+   end Print;
 
 end Alire.Formatting;

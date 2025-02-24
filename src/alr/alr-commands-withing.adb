@@ -271,6 +271,7 @@ package body Alr.Commands.Withing is
 
    begin
       Cmd.Requires_Workspace;
+      Cmd.Forbids_Structured_Output;
 
       if Cmd.URL.all /= "" then
          Flags := Flags + 1;

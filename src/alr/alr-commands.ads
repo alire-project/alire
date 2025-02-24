@@ -70,6 +70,10 @@ package Alr.Commands is
    --  performing a silent update. If not Sync, only a minimal empty lockfile
    --  is created. If Error, replace the first generic error message with it.
 
+   procedure Forbids_Structured_Output (Cmd : in out Command'Class);
+   --  Use this to mark that the output of a command is not (yet) compatible
+   --  with global flag --format.
+
    function Has_Root (Cmd : in out Command'Class) return Boolean;
    --  True when Requires_Workspace would succeed, false otherwise
 
