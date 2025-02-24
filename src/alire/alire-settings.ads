@@ -44,6 +44,8 @@ package Alire.Settings is
    function Get (This : Builtin_Option) return Boolean;
    function Get (This : Builtin_Option) return Setting_Int;
 
+   function Get_Int (This : Builtin_Option) return Setting_Int renames Get;
+
    procedure Set_Locally (This : Builtin_Option; Value : String);
 
    procedure Set_Globally (This : Builtin_Option; Value : String);

@@ -188,7 +188,7 @@ package body Alire.Install is
          --  Look for a regular solution to a dependency as fallback if we
          --  didn't find any binary solution.
          procedure Compute_Regular (Dep : Dependencies.Dependency) is
-            Sol : constant Solutions.Solution := Solver.Resolve (Dep);
+            Sol : constant Solutions.Solution := Solver.Resolve (Dep).Solution;
          begin
             if Sol.Is_Complete then
                Result.Insert (Dep.Crate, Sol);

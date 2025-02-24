@@ -31,6 +31,7 @@ package body Alr.Commands.Search is
       Flag_Unav     : constant String := TTY.Error ("U");
       Flag_Unsolv   : constant String := TTY.Error ("X");
       Flag_External : constant String := TTY.Warn ("E");
+      Flag_Unk_Solv : constant String := TTY.Dim ("?");
 
       -------------------
       -- Print_Release --
@@ -40,6 +41,29 @@ package body Alr.Commands.Search is
                                Match_Locations : AAA.Strings.Set)
       is
          package Solver renames Alire.Solver;
+
+         ----------------
+         -- Resolvable --
+         ----------------
+
+         function Resolvable return String is
+            Result : constant Solver.Result :=
+                       Solver.Resolve
+                         (R.Dependencies (Platform.Properties),
+                          Platform.Properties,
+                          Alire.Solutions.Empty_Valid_Solution,
+                          Options => (Age      => Query_Policy,
+                                      Stopping => Solver.Stop,
+                                      others   => <>));
+         begin
+            if Result.Solution.Is_Complete then
+               return " ";
+            elsif Result.Timed_Out then
+               return Flag_Unk_Solv;
+            else
+               return Flag_Unsolv;
+            end if;
+         end Resolvable;
 
       begin
          Trace.Debug ("Listing release: " & R.Milestone.TTY_Image);
@@ -55,16 +79,9 @@ package body Alr.Commands.Search is
                     then
                       (if R.Dependencies (Platform.Properties).Is_Empty
                        then " "
-                       else TTY.Dim ("?"))
-                    elsif Solver.Is_Resolvable
-                      (R.Dependencies (Platform.Properties),
-                       Platform.Properties,
-                       Alire.Solutions.Empty_Valid_Solution,
-                       Options => (Age      => Query_Policy,
-                                   Stopping => Solver.Stop,
-                                   others   => <>))
-                    then " "
-                    else Flag_Unsolv)));
+                       else Flag_Unk_Solv)
+                    else
+                       Resolvable)));
          Tab.Append (TTY.Version (Semantic_Versioning.Image (R.Version)));
          Tab.Append (TTY.Description (R.Description));
          Tab.Append (R.Notes);

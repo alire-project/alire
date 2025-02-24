@@ -1945,7 +1945,7 @@ package body Alire.Roots is
         (Deps    => Deps,
          Props   => This.Environment,
          Pins    => This.Pins,
-         Options => Options);
+         Options => Options).Solution;
    end Compute_Update;
 
    -------------------------

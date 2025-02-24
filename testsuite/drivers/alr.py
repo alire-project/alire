@@ -138,15 +138,18 @@ def run_alr_interactive(args: list[str], output: list[str], input: list[str],
     Run "alr" with the given arguments, feeding it the given input. No other
     arguments like -q or -d are added (except --no-color).
 
+    Returns the output of the command, with CRLF replaced by LF.
+
     :param args: List of arguments to pass to "alr".
     :param output: List of strings expected to be output by the subprocess.
     :param input: List of strings to feed to the subprocess's standard input.
-    :param timeout: Timeout in seconds for the subprocess to complete.
+    :param timeout: Timeout in seconds for the subprocess to complete. If
+        exceeded, RuntimeError is raised.
     :param complain_on_error: If True and the subprocess exits with a non-zero
         status code, print information on the standard output (for debugging)
-        and raise a CalledProcessError (to abort the test).
-        Conversely if False and the process ends without error, it's presumed
-        an error was expected and CalledProcessError is raised too.
+        and raise a CalledProcessError (to abort the test). Conversely if False
+        and the process ends without error, it's presumed an error was expected
+        and CalledProcessError is raised too.
     """
 
     # Check whether on Windows to fail early (revisit if pexpect is updated?)

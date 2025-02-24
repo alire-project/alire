@@ -6,6 +6,7 @@ with Alire.Directories;
 with Alire.Index;
 with Alire.Manifest;
 with Alire.Roots.Optional;
+with Alire.Solver.Predefined_Options;
 with Alire.User_Pins;
 with Alire.Utils.User_Input;
 with Alire.VCSs.Git;
@@ -106,7 +107,15 @@ package body Alire.Roots.Editable is
                                   .Dependencies (This.Edit.Environment)
                                   and Dep,
                        Props   => This.Edit.Environment,
-                       Pins    => This.Edit.Pins);
+                       Pins    => This.Edit.Pins,
+                       Options => Solver.Predefined_Options.Best_Effort)
+                    .Solution;
+            --  Here we are internally looking for a solution, but we do
+            --  not want to nag the user in case of trouble, as it would be
+            --  confusing (this is not the main search for a solution with all
+            --  the new dependencies, which will do ask). So we use Best_Effort
+            --  to come with a solution quickly (usual case) or abandon
+            --  silently.
          begin
             if Sol.State (Dep.Crate).Has_Release then
                return

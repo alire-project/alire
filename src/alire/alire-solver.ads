@@ -3,6 +3,7 @@ with Alire.Index;
 with Alire.Origins;
 with Alire.Properties;
 with Alire.Releases;
+with Alire.Settings.Builtins;
 with Alire.Solutions;
 with Alire.Types;
 with Alire.User_Pins.Maps;
@@ -105,10 +106,12 @@ package Alire.Solver is
       Detecting    : Detection_Policies    := Detect;
       Hinting      : Hinting_Policies      := Hint;
 
-      Timeout      : Duration              := 5.0;
+      Timeout      : Duration
+        := Duration (Settings.Builtins.Solver_Timeout.Get_Int);
       --  Time until reporting problems finding a complete solution
 
-      Timeout_More : Duration              := 10.0;
+      Timeout_More : Duration
+        := Duration (Settings.Builtins.Solver_Grace_Period.Get_Int);
       --  Extra period if the user wants to keep looking
    end record;
 
@@ -117,10 +120,15 @@ package Alire.Solver is
 
    --  See child package Predefined_Options for more.
 
+   type Result is record
+      Solution  : Solutions.Solution;
+      Timed_Out : Boolean;
+   end record;
+
    function Resolve
      (Dep : Dependencies.Dependency;
       Options : Query_Options := Default_Options)
-      return Solution;
+      return Result;
    --  For when we only know the root crate without a precise version and want
    --  either a complete solution or a reasonable idea of what's preventing it.
    --  E.g., in `alr get` and `alr install`.
@@ -129,18 +137,18 @@ package Alire.Solver is
                      Props   : Properties.Vector;
                      Pins    : Solution;
                      Options : Query_Options := Default_Options)
-                     return Solution;
+                     return Result;
    --  Exhaustively look for a solution to the given dependencies, under the
    --  given platform properties and lookup options. Pins can be supplied to
-   --  override Deps. May raise No_Solution_Error when not using Exhaustive
-   --  options.
+   --  override Deps. A solution is always returned; in the worst case it is
+   --  a trivially unsolved one (all dependencies skipped).
 
    function Is_Resolvable (Deps    : Types.Abstract_Dependencies;
                            Props   : Properties.Vector;
                            Pins    : Solution;
                            Options : Query_Options := Default_Options)
                            return Boolean;
-   --  Simplified call to Resolve, discarding result
+   --  Simplified call to Resolve, discarding result. False if timed out.
 
 private
 
