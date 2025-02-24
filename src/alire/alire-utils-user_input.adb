@@ -71,11 +71,18 @@ package body Alire.Utils.User_Input is
 
    procedure Enable_Silent_Running is
    begin
-      Trace.Debug ("Enabling silent running");
-      --  If we are running with -vv, it's too late to remain silent anyway
+      --  If we are already at debug log level, we want to preserve it as we do
+      --  not want to miss any messages.
 
-      Alire.Log_Level := Simple_Logging.Error;
-      CLIC.User_Input.Not_Interactive := True;
+      if Alire.Log_Level < Simple_Logging.Debug then
+         Trace.Debug ("Enabling silent running");
+         --  If we are running with -vv, it's too late to remain silent anyway
+
+         Alire.Log_Level := Simple_Logging.Error;
+         CLIC.User_Input.Not_Interactive := True;
+      else
+         Trace.Debug ("Cannot enable silent running when log level is debug");
+      end if;
    end Enable_Silent_Running;
 
    -------------------------------
