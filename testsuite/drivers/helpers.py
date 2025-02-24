@@ -135,6 +135,15 @@ def host_os():
         host_os = 'macos'
     return host_os
 
+
+def offset_timestamp(file, seconds):
+    """
+    Add offset to the modification time of a file
+    """
+    os.utime(file, (os.path.getatime(file), 
+                    os.path.getmtime(file) + seconds))
+
+
 # Add a 'with "something";' at the top of a project file
 def with_project(file, project):
     with open(file, 'r+') as f:
