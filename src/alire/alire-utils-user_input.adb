@@ -65,6 +65,19 @@ package body Alire.Utils.User_Input is
       end if;
    end Confirm_Solution_Changes;
 
+   ---------------------------
+   -- Enable_Silent_Running --
+   ---------------------------
+
+   procedure Enable_Silent_Running is
+   begin
+      Trace.Debug ("Enabling silent running");
+      --  If we are running with -vv, it's too late to remain silent anyway
+
+      Alire.Log_Level := Simple_Logging.Error;
+      CLIC.User_Input.Not_Interactive := True;
+   end Enable_Silent_Running;
+
    -------------------------------
    -- To_Absolute_From_Portable --
    -------------------------------
