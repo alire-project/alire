@@ -2,9 +2,8 @@
 Ensure that no unnecessary rebuilds happend due to crate config generation
 """
 
-from drivers.alr import alr_with, init_local_crate, run_alr
+from drivers.alr import init_local_crate, run_alr
 from drivers.asserts import assert_match
-from drivers.helpers import prepend_to_file
 
 init_local_crate()
 run_alr("build") # First build

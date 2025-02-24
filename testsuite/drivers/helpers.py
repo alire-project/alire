@@ -296,6 +296,7 @@ def neutral_path(path : str) -> str:
     """
     return path.replace('\\', '/')
 
+
 def which(exec : str) -> str:
     """
     Return the full path to an executable if it can be found in PATH, or ""
@@ -305,6 +306,13 @@ def which(exec : str) -> str:
         return which(f"{exec}.exe")
 
     return shutil.which(exec)
+
+
+def exe_name(exec : str) -> str:
+    """
+    Return the executable name with ".exe" appended on Windows.
+    """
+    return f"{exec}.exe" if on_windows() else exec
 
 
 class FileLock():
