@@ -75,8 +75,8 @@ package body Alire.Utils.User_Input is
       --  not want to miss any messages.
 
       if Alire.Log_Level < Simple_Logging.Debug then
-         Trace.Debug ("Enabling silent running");
-         --  If we are running with -vv, it's too late to remain silent anyway
+         Trace.Detail ("Enabling silent running");
+         --  If we are running with -v, it's too late to remain silent anyway
 
          Alire.Log_Level := Simple_Logging.Error;
          CLIC.User_Input.Not_Interactive := True;
