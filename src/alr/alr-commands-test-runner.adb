@@ -1,27 +1,15 @@
-with Alire.Directories;
-with Alr.Test_Runner;
+with Alire.Test_Runner;
 
-package body Alr.Commands.Test2 is
+package body Alr.Commands.Test.Runner is
    overriding procedure Execute
      (Cmd : in out Command; Args : AAA.Strings.Vector)
    is
-      use Alire.Directories;
-      use GNAT.Strings;
-
-      Subfolder : constant String :=
-        (if Cmd.Directory.all /= "" then Cmd.Directory.all else "tests");
+      Fails : Integer;
    begin
       Cmd.Requires_Workspace;
-      Cmd.Set (Alire.Roots.Load_Root (Cmd.Root.Path / Subfolder));
-      Cmd.Requires_Workspace (Sync => True);
 
-      declare
-         G : Guard (Enter_Folder (Cmd.Root.Path));
-         pragma Unreferenced (G);
-      begin
-         Alr.Test_Runner.Run
-           (Cmd.Root, AAA.Strings.Empty_Vector, Integer'Max (Cmd.Jobs, 0));
-      end;
+      Alire.Test_Runner.Run
+         (Cmd.Root, Jobs => Integer'Max (Cmd.Jobs, 0), Fails => Fails);
    end Execute;
 
    ----------------------
@@ -48,10 +36,5 @@ package body Alr.Commands.Test2 is
         (Config, Cmd.Jobs'Access, "-j:", "--jobs=",
          "Run up to N tests in parallel, or as many as processors " &
          "if 0 (default)", Default => 0, Argument => "N");
-
-      Define_Switch
-        (Config, Cmd.Directory'Access, Long_Switch => "--dir=",
-         Help => "Run tests from the given folder (default: tests)",
-         Argument => "<dir>");
    end Setup_Switches;
-end Alr.Commands.Test2;
+end Alr.Commands.Test.Runner;

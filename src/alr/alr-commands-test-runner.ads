@@ -1,13 +1,12 @@
 with AAA.Strings;
-with GNAT.Strings;
 
-package Alr.Commands.Test2 is
+package Alr.Commands.Test.Runner is
 
    type Command is new Commands.Command with private;
 
    overriding function Name
      (Cmd : Command) return CLIC.Subcommand.Identifier is
-     ("test2");
+     ("test-runner");
 
    overriding procedure Execute
      (Cmd : in out Command; Args : AAA.Strings.Vector);
@@ -20,7 +19,7 @@ package Alr.Commands.Test2 is
       Config : in out CLIC.Subcommand.Switches_Configuration);
 
    overriding function Short_Description (Cmd : Command) return String is
-     ("Test the current crate with the default alire test runner");
+     ("Run the default alire test runner (for test actions)");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
      ("");
@@ -29,7 +28,6 @@ private
 
    type Command is new Commands.Command with record
       Jobs      : aliased Integer;
-      Directory : aliased GNAT.Strings.String_Access;
    end record;
 
-end Alr.Commands.Test2;
+end Alr.Commands.Test.Runner;
