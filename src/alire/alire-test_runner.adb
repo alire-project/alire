@@ -4,14 +4,13 @@ with Ada.Text_IO;
 with GNAT.OS_Lib;
 with System.Multiprocessors;
 
-with Alire;
 with Alire.Directories; use Alire.Directories;
 with Alire.OS_Lib;
 with Alire.Utils.Text_Files; use Alire.Utils;
 
 with CLIC.TTY;
 
-package body Alr.Test_Runner is
+package body Alire.Test_Runner is
 
    protected Driver is
       --  Protected driver for synchronising stats and output
@@ -36,19 +35,19 @@ package body Alr.Test_Runner is
       procedure Pass (Msg : String) is
       begin
          Passed := Passed + 1;
-         Alr.Trace.Always ("[ " & CLIC.TTY.OK ("PASS") & " ] " & Msg);
+         Trace.Always ("[ " & CLIC.TTY.OK ("PASS") & " ] " & Msg);
       end Pass;
 
       procedure Fail (Msg : String; Output : AAA.Strings.Vector) is
       begin
          Failed := Failed + 1;
-         Alr.Trace.Always ("[ " & CLIC.TTY.Error ("FAIL") & " ] " & Msg);
+         Trace.Always ("[ " & CLIC.TTY.Error ("FAIL") & " ] " & Msg);
          if not Output.Is_Empty then
-            Alr.Trace.Info ("*** Test output ***");
+            Trace.Always ("*** Test output ***");
             for L of Output loop
-               Alr.Trace.Info (CLIC.TTY.Dim (L));
+               Trace.Always (CLIC.TTY.Dim (L));
             end loop;
-            Alr.Trace.Info ("*** End Test output ***");
+            Trace.Always ("*** End Test output ***");
          end if;
       end Fail;
 
@@ -171,9 +170,10 @@ package body Alr.Test_Runner is
    end Run_All_Tests;
 
    procedure Run
-     (Root : in out Alire.Roots.Root;
-      Args :        AAA.Strings.Vector := AAA.Strings.Empty_Vector;
-      Jobs :        Natural            := 0)
+     (Root  : in out Alire.Roots.Root;
+      Args  :        AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+      Jobs  :        Natural            := 0;
+      Fails : out Integer)
    is
       Job_Count : constant Positive            :=
         (if Jobs = 0 then Positive (System.Multiprocessors.Number_Of_CPUs)
@@ -197,17 +197,20 @@ package body Alr.Test_Runner is
       Adirs.Search (Path / "src", "", Process => Append'Access);
       Create_Gpr_List (Root, Test_List);
 
-      Alr.Trace.Info ("Building tests");
-      if Alire.Roots.Build (Root, Args, Build_All_Deps => True) then
-         Alr.Trace.Info ("Running" & Test_List.Length'Image & " tests");
+      Trace.Info ("Building tests");
+      if Alire.Roots.Build (Root, Args) then
+         Trace.Info ("Running" & Test_List.Length'Image & " tests");
          Run_All_Tests (Root, Test_List, Job_Count);
 
-         Alr.Trace.Info ("Total:" & Driver.Total_Count'Image & " tests");
+         Trace.Always ("Total:" & Driver.Total_Count'Image & " tests");
          Ada.Text_IO.Flush;
          if Driver.Fail_Count /= 0 then
-            Alr.Trace.Error ("failed" & Driver.Fail_Count'Image & " test");
+            Trace.Error ("failed" & Driver.Fail_Count'Image & " test");
             Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          end if;
+         Fails := Driver.Fail_Count;
+      else
+         Fails := 1;
       end if;
    end Run;
-end Alr.Test_Runner;
+end Alire.Test_Runner;
