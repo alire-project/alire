@@ -96,7 +96,9 @@ package body Alr.Commands.Show is
             Rel.Print;
          end if;
 
-         if Rel.Origin.Is_System then
+         if Rel.Origin.Is_System and then
+           not Alire.Utils.Tables.Structured_Output
+         then
                Put_Line ("Platform package: " & Rel.Origin.Package_Name);
          end if;
 
