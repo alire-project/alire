@@ -16,7 +16,7 @@ assert_eq('Not found: make*\n'
 
 # External definition
 p = run_alr('show', 'make', '--external')
-assert_eq('Kind       Description    Details            Available\n'
+assert_eq('KIND       DESCRIPTION    DETAILS            AVAILABLE\n'
           'Executable make --version .*Make ([\\d\\.]+).* True\n',
           p.out)
 
@@ -38,8 +38,7 @@ assert_match(".*There are external definitions for the crate.",
 
 # External definition check (crate is actually there)
 p = run_alr('show', 'bad_switch', '--external')
-assert_eq('Kind       Description                   '
-          'Details            Available\n'
+assert_eq('KIND       DESCRIPTION                   DETAILS            AVAILABLE\n'
           'Executable make --bad-nonexistent-switch '
           '.*Make ([\\d\\.]+).* True\n',
           p.out)
