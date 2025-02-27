@@ -422,7 +422,8 @@ jobs:
 
     - name: Get ref version
       id: get_ref
-      run: echo "::set-output name=short_sha::$(echo ${{ github.sha }} | cut -c1-8)"
+      run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Upload as artifact
       uses: actions/upload-artifact@v4
@@ -461,12 +462,12 @@ jobs:
   ###################
   # release-nightly #
   ###################
-  
+
   release-nightly:
     name: Nightly release on ${{ matrix.platform.id }}
-    if: > 
-      github.event_name == 'schedule' 
-      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false') 
+    if: >
+      github.event_name == 'schedule'
+      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false')
       || (github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'nightly'))
     needs: [build, build-macos-universal]
     runs-on: ${{ matrix.platform.os }}
@@ -508,7 +509,7 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
         shell: bash
-  
+
       - name: Get metadata
         run: |
           touch alr-date-is-${{steps.date.outputs.date}}.txt
@@ -517,7 +518,7 @@ jobs:
 
       - name: Package binaries
         run: zip alr-nightly-bin-${{matrix.platform.id}}.zip bin/alr* LICENSE.txt alr-*.txt
-        
+
       # The uploader needs Python with the github module
 
       - name: Set up Python
@@ -541,8 +542,8 @@ jobs:
   release-nightly-appimage:
     name: Nightly AppImage
     if: >
-      github.event_name == 'schedule' 
-      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false') 
+      github.event_name == 'schedule'
+      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false')
       || (github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'nightly'))
     needs: [appimage]
     runs-on: ubuntu-22.04
@@ -560,7 +561,7 @@ jobs:
       - name: Upload to release
         uses: pyTooling/Actions/releaser/composite@r4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}          
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag: nightly
           rm: false
           files: alr-nightly-x86_64.AppImage
