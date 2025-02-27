@@ -1,9 +1,12 @@
-Log of breaking changes in index or alr.
+Log of breaking changes in index or alr. Future versions are as of today and
+may change.
 
 ### alr 3.0.0 + index 1.4.0
 
 - alr: removed `ALR_CONFIG` environment variable.
 - alr: removed `alr config` command.
+
+### We are here
 
 ### alr 2.1.0 + index 1.4.0
 

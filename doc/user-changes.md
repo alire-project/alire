@@ -4,6 +4,8 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+## Release `2.2`
+
 ## Release `2.1`
 
 ### New `--format` global switch to produce structured output
@@ -18,7 +20,7 @@ select the desired output language:
 
 ```
 $ alr --format=TOML search --crates hello
-[[data]]                                        
+[[data]]
 description = "'Hello, world!' demonstration project"
 name = "hello"
 [[data]]
