@@ -96,7 +96,9 @@ package body Alr.Commands.Show is
             Rel.Print;
          end if;
 
-         if Rel.Origin.Is_System then
+         if Rel.Origin.Is_System and then
+           not Alire.Utils.Tables.Structured_Output
+         then
                Put_Line ("Platform package: " & Rel.Origin.Package_Name);
          end if;
 
@@ -175,15 +177,16 @@ package body Alr.Commands.Show is
                                Cmd  : Command) is
       use Alire;
       Table : Utils.Tables.Table;
+      Structured : Boolean renames Utils.Tables.Structured_Output;
    begin
       if Alire.Index.Crate (Name).Externals.Is_Empty then
          Trace.Info ("No externals defined for the requested crate.");
       else
          Table
-           .Append ("Kind")
-           .Append ("Description")
-           .Append ("Details")
-           .Append ("Available");
+           .Header ("Kind")
+           .Header ("Description")
+           .Header ("Details")
+           .Header ("Available");
 
          for External of Alire.Index.Crate (Name).Externals loop
             Table.New_Row;
@@ -207,14 +210,14 @@ package body Alr.Commands.Show is
                for I in Detail.First_Index .. Detail.Last_Index loop
                   --  Skip last element, which is unknown distro
                   Table
-                    .Append (if I = Detail.First_Index
+                    .Append (if I = Detail.First_Index or else Structured
                              then External.Kind
                              else "")
-                    .Append (if I = Detail.First_Index
+                    .Append (if I = Detail.First_Index or else Structured
                              then External.Image
                              else "")
                     .Append (Detail (I))
-                    .Append (if I = Detail.First_Index
+                    .Append (if I = Detail.First_Index or else Structured
                              then Available.Image_One_Line
                              else "");
                   if I /= Detail.Last_Index then
