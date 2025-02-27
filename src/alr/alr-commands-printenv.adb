@@ -1,6 +1,7 @@
 with Alire.Crate_Configuration;
 with Alire.Environment;
 with Alire.Platforms;
+with Alire.Utils.User_Input;
 
 package body Alr.Commands.Printenv is
 
@@ -16,6 +17,7 @@ package body Alr.Commands.Printenv is
    is
       Enabled : Natural := 0;
    begin
+      Alire.Utils.User_Input.Enable_Silent_Running;
       Cmd.Forbids_Structured_Output;
 
       if Args.Count /= 0 then

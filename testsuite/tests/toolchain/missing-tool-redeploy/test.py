@@ -19,7 +19,8 @@ init_local_crate()
 rmtree(os.path.join(alr_settings_dir(), "cache"))
 
 # This should not fail. A message should warn of redeployments happening.
-p = run_alr("printenv", quiet=False)
+# Verbose level required to work-around silent sync during `printenv`.
+p = run_alr("-vv", "printenv", quiet=False)
 assert_match(".*Tool .* is missing, redeploying", p.out)
 
 print("SUCCESS")

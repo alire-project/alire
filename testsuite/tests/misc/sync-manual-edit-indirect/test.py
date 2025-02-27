@@ -58,8 +58,9 @@ for cmd in ['build', 'pin', 'run', 'show', 'with', 'printenv']:
     p = run_alr(cmd, quiet=False)
 
     # If no error was reported, then we should be okay. Still, check that the
-    # update happened as expected:
-    assert_substring("Changes detected in pinned dependencies", p.out)
+    # update happened as expected (except for printenv, that syncs silently):
+    if cmd != "printenv":
+        assert_substring("Changes detected in pinned dependencies", p.out)
 
     # Go to where we started
     os.chdir("..")    
