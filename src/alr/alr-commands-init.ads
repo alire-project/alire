@@ -35,7 +35,8 @@ private
       Bin,
       Lib,
       In_Place,
-      No_Skel : aliased Boolean := False;
+      No_Skel,
+      No_Test : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Init;
