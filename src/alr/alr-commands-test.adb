@@ -20,6 +20,8 @@ package body Alr.Commands.Test is
       Custom_Test : Alire.Properties.Vector;
       S           : Settings;
    begin
+      Cmd.Forbids_Structured_Output;
+
       Cmd.Requires_Workspace;
       Custom_Test :=
         Cmd.Root.Release.On_Platform_Properties
@@ -45,12 +47,11 @@ package body Alr.Commands.Test is
          Dir      : constant Alire.Any_Path := To_String (S.Directory);
          Failures : Integer;
 
-         Guard : Alire.Directories.Guard (Alire.Directories.Enter (Dir))
+         Guard : Alire.Directories.Guard (Enter (Dir))
          with Unreferenced;
       begin
-         Cmd.Set (Alire.Roots.Load_Root (Cmd.Root.Path / Dir));
-         Cmd.Requires_Workspace
-           (Sync => True, Error => "the testing subcrate does not exist");
+         Cmd.Optional_Root.Discard;
+         Cmd.Requires_Workspace;
 
          case S.Runner.Kind is
             when Alire_Runner =>
