@@ -1,12 +1,14 @@
 with Ada.Command_Line;
 with Ada.Containers.Indefinite_Ordered_Maps;
+with Ada.Strings.Fixed;
 with Ada.Text_IO;
 with GNAT.OS_Lib;
 with System.Multiprocessors;
 
 with Alire.Directories; use Alire.Directories;
 with Alire.OS_Lib;
-with Alire.Utils.Text_Files; use Alire.Utils;
+with Alire.Utils.Text_Files;
+use Alire.Utils;
 
 with CLIC.TTY;
 
@@ -51,21 +53,23 @@ package body Alire.Test_Runner is
          end if;
       end Fail;
 
-      function Total_Count return Natural is (Passed + Failed);
-      function Fail_Count return Natural is (Failed);
+      function Total_Count return Natural
+      is (Passed + Failed);
+      function Fail_Count return Natural
+      is (Failed);
    end Driver;
 
    procedure Create_Gpr_List
      (Root : Alire.Roots.Root; List : AAA.Strings.Vector)
-      --  Create a gpr file containing a list of the test files
-      --  (named `Test_Files`).
+     --  Create a gpr file containing a list of the test files
+     --  (named `Test_Files`).
 
    is
       File_Path : constant Alire.Absolute_Path :=
         Root.Path / "config" / (Root.Name.As_String & "_list_config.gpr");
       File      : Text_Files.File := Text_Files.Create (File_Path);
       Lines     : access AAA.Strings.Vector renames File.Lines;
-      First     : Boolean                      := True;
+      First     : Boolean := True;
 
       Indent : constant String := "   ";
 
@@ -97,27 +101,34 @@ package body Alire.Test_Runner is
    is
       use GNAT.OS_Lib;
 
-      function Cmp (A, B : Process_Id) return Boolean is
-        (Pid_To_Integer (A) < Pid_To_Integer (B));
+      function Cmp (A, B : Process_Id) return Boolean
+      is (Pid_To_Integer (A) < Pid_To_Integer (B));
 
-      package Map is new Ada.Containers.Indefinite_Ordered_Maps
-        (Process_Id, String, "<" => Cmp);
+      package Map is new
+        Ada.Containers.Indefinite_Ordered_Maps
+          (Process_Id,
+           String,
+           "<" => Cmp);
 
       Running_Tests : Map.Map := Map.Empty_Map;
       Output_Files  : Map.Map := Map.Empty_Map;
 
       procedure Spawn_Test (Test_Name : String) is
-         Exe_Name : constant String := Test_Name  & Alire.OS_Lib.Exe_Suffix;
+         Exe_Name : constant String := Test_Name & Alire.OS_Lib.Exe_Suffix;
          Filename : constant String := "output_" & Test_Name & ".tmp";
 
-         Args     : constant Argument_List := (1 .. 0 => <>);
-         Pid      : Process_Id;
+         Args : constant Argument_List := (1 .. 0 => <>);
+         Pid  : Process_Id;
       begin
-         Pid := Non_Blocking_Spawn (Root.Path / "bin" / Exe_Name,
-                                    Args, Filename, Err_To_Out => True);
+         Pid :=
+           Non_Blocking_Spawn
+             (Root.Path / "bin" / Exe_Name,
+              Args,
+              Filename,
+              Err_To_Out => True);
          if Pid = Invalid_Pid then
-            Driver.Fail (Test_Name & " (failed to start!)",
-                         AAA.Strings.Empty_Vector);
+            Driver.Fail
+              (Test_Name & " (failed to start!)", AAA.Strings.Empty_Vector);
          else
             Running_Tests.Insert (Pid, Test_Name);
             Output_Files.Insert (Pid, Filename);
@@ -170,12 +181,14 @@ package body Alire.Test_Runner is
    end Run_All_Tests;
 
    procedure Run
-     (Root  : in out Alire.Roots.Root;
-      Args  :        AAA.Strings.Vector := AAA.Strings.Empty_Vector;
-      Jobs  :        Natural            := 0;
-      Fails : out Integer)
+     (Root   : in out Alire.Roots.Root;
+      Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+      Jobs   : Natural := 0;
+      Fails  : out Integer)
    is
-      Job_Count : constant Positive            :=
+      use all type AAA.Strings.Vector;
+
+      Job_Count : constant Positive :=
         (if Jobs = 0 then Positive (System.Multiprocessors.Number_Of_CPUs)
          else Jobs);
       Path      : constant Alire.Absolute_Path := Root.Path;
@@ -187,18 +200,21 @@ package body Alire.Test_Runner is
 
          Name : constant String := Adirs.Simple_Name (Dir_Entry);
       begin
-         if Name'Length > 4 and then Name (Name'Last - 3 .. Name'Last) = ".adb"
+         if Name'Length > 4
+           and then Name (Name'Last - 3 .. Name'Last) = ".adb"
+           and then (Filter.Is_Empty
+                     or else (for some F of Filter
+                              => Ada.Strings.Fixed.Index (Name, F) /= 0))
          then
             Test_List.Append (Name (Name'First .. Name'Last - 4));
          end if;
       end Append;
-
    begin
       Adirs.Search (Path / "src", "", Process => Append'Access);
       Create_Gpr_List (Root, Test_List);
 
       Trace.Info ("Building tests");
-      if Alire.Roots.Build (Root, Args) then
+      if Alire.Roots.Build (Root, AAA.Strings.Empty_Vector) then
          Trace.Info ("Running" & Test_List.Length'Image & " tests");
          Run_All_Tests (Root, Test_List, Job_Count);
 
