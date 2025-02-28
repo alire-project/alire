@@ -17,16 +17,16 @@ LOGFILE = os.path.join("alire", "alr_test_local.log")
 init_local_crate()
 
 # Default log level
-run_alr("test", quiet=False)
+run_alr("index-test", quiet=False)
 assert_not_substring("alr build done", content_of(LOGFILE))
 
 # Verbose
-run_alr("-v", "test", quiet=False)
+run_alr("-v", "index-test", quiet=False)
 assert_substring("alr build done", content_of(LOGFILE))
 assert_not_substring("Setenv ALIRE=True", content_of(LOGFILE))
 
 # More verbose
-run_alr("-vv", "test", quiet=False)
+run_alr("-vv", "index-test", quiet=False)
 assert_substring("alr build done", content_of(LOGFILE))
 assert_substring("Setenv ALIRE=True", content_of(LOGFILE))
 
