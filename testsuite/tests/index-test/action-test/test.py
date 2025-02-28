@@ -1,5 +1,5 @@
 """
-Test custom actions for `alr test`
+Test custom actions for `alr index-test`
 """
 
 from drivers.alr import run_alr

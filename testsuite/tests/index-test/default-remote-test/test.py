@@ -1,5 +1,5 @@
 """
-Check that the default "get & build" test for remote crates in `alr test` works
+Check that the default "get & build" test for remote crates in `alr index-test` works
 """
 
 import re

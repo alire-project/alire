@@ -1,5 +1,5 @@
 """
-Check `alr test` of the local release
+Check `alr index-test` of the local release
 """
 
 import os

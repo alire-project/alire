@@ -1,5 +1,5 @@
 """
-Check that when running `alr test` with the verbose flag, the spawned command
+Check that when running `alr index-test` with the verbose flag, the spawned command
 of the default test action inherits the verbosity flag.
 """
 
@@ -8,7 +8,7 @@ from drivers.alr import init_local_crate, run_alr
 from drivers.asserts import assert_not_substring, assert_substring
 from drivers.helpers import content_of
 
-# Run `alr test` in a local crate for this test with increasing verbosity
+# Run `alr index-test` in a local crate for this test with increasing verbosity
 # levels; we check the existence of expected output in the test log. The
 # selected messages are representative of the log level at play.
 
