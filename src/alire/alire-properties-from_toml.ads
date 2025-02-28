@@ -10,6 +10,7 @@ with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.Properties.Scenarios;
 with Alire.Properties.Bool;
+with Alire.Properties.Tests;
 with Alire.TOML_Adapters;
 
 package Alire.Properties.From_TOML is
@@ -38,6 +39,7 @@ package Alire.Properties.From_TOML is
                           Notes,
                           Project_Files,
                           Tags,
+                          Test,
                           Version,
                           Website);
    --  These enum values must match the toml key they represent with '-' => '_'
@@ -130,7 +132,8 @@ package Alire.Properties.From_TOML is
       Project_Files      |
       Tags               |
       Version            |
-      Website        => Labeled.From_TOML'Access);
+      Website        => Labeled.From_TOML'Access,
+      Test           => Tests.From_TOML'Access);
    --  This loader applies to a normal release manifest
 
    --  The following array determines which properties accept dynamic
