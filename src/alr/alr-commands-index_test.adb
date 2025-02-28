@@ -37,7 +37,7 @@ package body Alr.Commands.Index_Test is
    package Platform renames Alire.Platforms.Current;
    package Query    renames Alire.Solver;
 
-   Prefix : constant String := "[alr test] ";
+   Prefix : constant String := "[alr index-test] ";
 
    -----------------
    -- Check_Files --
