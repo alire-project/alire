@@ -236,16 +236,17 @@ jobs:
         with:
           name: alr-bin-${{ matrix.platform.id }}.zip
 
-      # On Windows runners, 7zip is available instead of zip. Rather than
-      # installing zip from MSYS2 we simply use 7zip.
-
-      - name: Package binaries (non-Windows)
-        if: matrix.platform.os != 'windows-latest'
-        run: zip alr-bin.zip bin/alr* LICENSE.txt
-
-      - name: Package binaries (Windows)
+      # On Windows, install zip as it is not available by default
+      - name: Install zip (Windows)
         if: matrix.platform.os == 'windows-latest'
-        run: 7z a alr-bin.zip bin/alr.exe LICENSE.txt
+        run: choco install zip
+
+      - name: Package binaries
+        shell: bash
+        # Mark executable as artifacts remove the executable bit
+        run: |
+          chmod +x bin/alr*
+          zip alr-bin.zip bin/alr* LICENSE.txt
 
       - name: Upload binary assets
         uses: actions/upload-release-asset@v1
@@ -448,6 +449,9 @@ jobs:
         with:
           name: alr-${{needs.appimage.outputs.short_sha}}-x86_64.AppImage.zip
 
+      - name: Mark as executable
+        run: chmod +x alr.AppImage
+
       - name: Upload AppImage asset
         if: (github.event_name == 'release')
         uses: actions/upload-release-asset@v1
@@ -517,7 +521,9 @@ jobs:
         shell: bash
 
       - name: Package binaries
-        run: zip alr-nightly-bin-${{matrix.platform.id}}.zip bin/alr* LICENSE.txt alr-*.txt
+        run: |
+          chmod +x bin/alr*
+          zip alr-nightly-bin-${{matrix.platform.id}}.zip bin/alr* LICENSE.txt alr-*.txt
 
       # The uploader needs Python with the github module
 
@@ -556,7 +562,9 @@ jobs:
           name: alr-${{needs.appimage.outputs.short_sha}}-x86_64.AppImage.zip
 
       - name: Rename binary
-        run: mv alr.AppImage alr-nightly-x86_64.AppImage
+        run: |
+          chmod +x alr.AppImage
+          mv alr.AppImage alr-nightly-x86_64.AppImage
 
       - name: Upload to release
         uses: pyTooling/Actions/releaser/composite@r4
