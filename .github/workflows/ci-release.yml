@@ -279,6 +279,15 @@ jobs:
       with:
         name: alr-bin-x86_64-windows.zip
 
+    - name: Copy to preinstall location
+      shell: bash
+      run: |
+        INSTALL_DIR=$PWD/alr_install
+        echo "INSTALL_DIR=$INSTALL_DIR" >> $GITHUB_ENV
+        mkdir -p $INSTALL_DIR/bin
+        cp bin/alr.exe $INSTALL_DIR/bin
+        cp LICENSE.txt $INSTALL_DIR
+
     # We need to install MSYS2 again. This is a bit wasteful since the build
     # job already did it, but at least this way things are more clearly
     # separated. If we rely on an existing Alire, we might hit the cache rather
@@ -311,7 +320,7 @@ jobs:
       shell: bash
       working-directory: scripts/installer/
       env:
-        ALR_INSTALL_DIR: ${{ runner.temp }}/alr_install
+        ALR_INSTALL_DIR: ${{ env.INSTALL_DIR }}
         ALR_INSTALL_OS: ${{ runner.os }}
 
     - name: Upload installer
