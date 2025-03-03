@@ -1,3 +1,5 @@
+with Ada.Exceptions;
+
 with Alire_Early_Elaboration;
 with Alire.Formatting;
 with Alire.GPR;
@@ -144,10 +146,11 @@ package body Alire.Environment.Loading is
                end case;
             end;
          exception
-            when Formatting.Unknown_Formatting_Key =>
+            when E : Formatting.Unknown_Formatting_Key =>
                Raise_Checked_Error
-                 ("Unknown environment variable formatting key in var '" &
-                    Act.Name & " of '" & Origin & "'");
+                 ("Unknown predefined variable in environment variable '" &
+                    Act.Name & "' of '" & Origin & "': " &
+                    Ada.Exceptions.Exception_Message (E));
          end;
       end loop;
 
