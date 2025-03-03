@@ -2,6 +2,8 @@
 
 .clang-format
 .clangd/
+.repomix
+.vscode
 
 *.cgpr
 *.db
@@ -11,7 +13,6 @@
 *.xml
 *.pyc
 
-.repomix
 .*sw?
 
 /alire/

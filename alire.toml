@@ -1,7 +1,7 @@
 name = "alr"
 description = "Command-line tool from the Alire project"
 
-version = "2.1.0-rc2"
+version = "2.1.0"
 
 authors = ["Alejandro R. Mosteo", "Fabien Chouteau", "Pierre-Marie de Rodat"]
 maintainers = ["alejandro@mosteo.com", "chouteau@adacore.com"]
