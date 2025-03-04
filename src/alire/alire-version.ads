@@ -12,11 +12,8 @@ private
 
    --  Remember to update Alire.Index branch if needed too
 
-   --  NOTE: in the following version string, the build part (after '+') will
-   --  be replaced by `alr build` with the current commit, and appended with
-   --  "_or_later" after build.
-
-   Current_Str : constant String := "2.1.0-dev";
+   Current_Str : constant String := "2.1.0";
+   --  2.1.0:     new solver and other internal largish refactorings, bugfixes
    --  2.0.2:     quarterly bugfix maintenance release
    --  2.0.1:     fix `alr install` and minor fixes
    --  2.0.0:     alr settings refactor and minor fixes

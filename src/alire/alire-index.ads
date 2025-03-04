@@ -16,6 +16,10 @@ with Semantic_Versioning.Extended;
 
 package Alire.Index is
 
+   Community_Branch : constant String := "stable-1.4.0";
+   --  The branch used for the community index. Must be updated when new index
+   --  features are introduced.
+
    Community_Host : constant String := Settings.Builtins.Index_Host.Get;
 
    Community_Organization : constant String :=
@@ -26,8 +30,8 @@ package Alire.Index is
 
    Community_Repo : constant URL :=
                       "git+" & Community_Host
-                      & "/" & Community_Organization
-                      & "/" & Community_Repo_Name;
+                      & "/"  & Community_Organization
+                      & "/"  & Community_Repo_Name;
    --  Default index installed on first run
 
    Community_Name : constant Restricted_Name := "community";
@@ -44,10 +48,6 @@ package Alire.Index is
      Branch_String (Branch_String'First) /= '-'
      and then Branch_String (Branch_String'Last) /= '-'
      and then (for some C of Branch_String => C = '-');
-
-   Community_Branch : constant String := "stable-1.3.0";
-   --  The branch used for the community index. Must be updated when new index
-   --  features are introduced.
 
    Min_Compatible_Version : constant Semantic_Versioning.Version;
    --  Based on the constant defined in private section

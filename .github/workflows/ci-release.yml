@@ -236,16 +236,17 @@ jobs:
         with:
           name: alr-bin-${{ matrix.platform.id }}.zip
 
-      # On Windows runners, 7zip is available instead of zip. Rather than
-      # installing zip from MSYS2 we simply use 7zip.
-
-      - name: Package binaries (non-Windows)
-        if: matrix.platform.os != 'windows-latest'
-        run: zip alr-bin.zip bin/alr* LICENSE.txt
-
-      - name: Package binaries (Windows)
+      # On Windows, install zip as it is not available by default
+      - name: Install zip (Windows)
         if: matrix.platform.os == 'windows-latest'
-        run: 7z a alr-bin.zip bin/alr.exe LICENSE.txt
+        run: choco install zip
+
+      - name: Package binaries
+        shell: bash
+        # Mark executable as artifacts remove the executable bit
+        run: |
+          chmod +x bin/alr*
+          zip alr-bin.zip bin/alr* LICENSE.txt
 
       - name: Upload binary assets
         uses: actions/upload-release-asset@v1
@@ -277,6 +278,15 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: alr-bin-x86_64-windows.zip
+
+    - name: Copy to preinstall location
+      shell: bash
+      run: |
+        INSTALL_DIR=$PWD/alr_install
+        echo "INSTALL_DIR=$INSTALL_DIR" >> $GITHUB_ENV
+        mkdir -p $INSTALL_DIR/bin
+        cp bin/alr.exe $INSTALL_DIR/bin
+        cp LICENSE.txt $INSTALL_DIR
 
     # We need to install MSYS2 again. This is a bit wasteful since the build
     # job already did it, but at least this way things are more clearly
@@ -310,7 +320,7 @@ jobs:
       shell: bash
       working-directory: scripts/installer/
       env:
-        ALR_INSTALL_DIR: ${{ runner.temp }}/alr_install
+        ALR_INSTALL_DIR: ${{ env.INSTALL_DIR }}
         ALR_INSTALL_OS: ${{ runner.os }}
 
     - name: Upload installer
@@ -422,7 +432,8 @@ jobs:
 
     - name: Get ref version
       id: get_ref
-      run: echo "::set-output name=short_sha::$(echo ${{ github.sha }} | cut -c1-8)"
+      run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Upload as artifact
       uses: actions/upload-artifact@v4
@@ -447,6 +458,9 @@ jobs:
         with:
           name: alr-${{needs.appimage.outputs.short_sha}}-x86_64.AppImage.zip
 
+      - name: Mark as executable
+        run: chmod +x alr.AppImage
+
       - name: Upload AppImage asset
         if: (github.event_name == 'release')
         uses: actions/upload-release-asset@v1
@@ -461,12 +475,12 @@ jobs:
   ###################
   # release-nightly #
   ###################
-  
+
   release-nightly:
     name: Nightly release on ${{ matrix.platform.id }}
-    if: > 
-      github.event_name == 'schedule' 
-      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false') 
+    if: >
+      github.event_name == 'schedule'
+      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false')
       || (github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'nightly'))
     needs: [build, build-macos-universal]
     runs-on: ${{ matrix.platform.os }}
@@ -508,7 +522,7 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
         shell: bash
-  
+
       - name: Get metadata
         run: |
           touch alr-date-is-${{steps.date.outputs.date}}.txt
@@ -516,8 +530,10 @@ jobs:
         shell: bash
 
       - name: Package binaries
-        run: zip alr-nightly-bin-${{matrix.platform.id}}.zip bin/alr* LICENSE.txt alr-*.txt
-        
+        run: |
+          chmod +x bin/alr*
+          zip alr-nightly-bin-${{matrix.platform.id}}.zip bin/alr* LICENSE.txt alr-*.txt
+
       # The uploader needs Python with the github module
 
       - name: Set up Python
@@ -541,8 +557,8 @@ jobs:
   release-nightly-appimage:
     name: Nightly AppImage
     if: >
-      github.event_name == 'schedule' 
-      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false') 
+      github.event_name == 'schedule'
+      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false')
       || (github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'nightly'))
     needs: [appimage]
     runs-on: ubuntu-22.04
@@ -555,12 +571,14 @@ jobs:
           name: alr-${{needs.appimage.outputs.short_sha}}-x86_64.AppImage.zip
 
       - name: Rename binary
-        run: mv alr.AppImage alr-nightly-x86_64.AppImage
+        run: |
+          chmod +x alr.AppImage
+          mv alr.AppImage alr-nightly-x86_64.AppImage
 
       - name: Upload to release
         uses: pyTooling/Actions/releaser/composite@r4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}          
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag: nightly
           rm: false
           files: alr-nightly-x86_64.AppImage

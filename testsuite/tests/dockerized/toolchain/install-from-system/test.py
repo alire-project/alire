@@ -8,18 +8,19 @@ is not in PATH.
 import json
 from shutil import which
 import subprocess
-from drivers.alr import run_alr, set_default_user_settings, unselect_compiler, unselect_gprbuild
-from drivers.asserts import assert_eq, assert_match, assert_substring
+from drivers.alr import run_alr, unselect_compiler, unselect_gprbuild
+from drivers.asserts import assert_eq, assert_substring
 
 INSTALL_TELLTALE = "The system package 'gprbuild' is about to be installed"
 
 def apt_uninstall(pkg:str, exe:str=""):
     """
     Uninstall a package and verify that an executable, by default named as the
-    package, is no longer in PATH.
+    package, is no longer in PATH. Also remove any packages no longer anchored.
     """
     real_exe = exe if exe != "" else pkg
     subprocess.run(["sudo", "apt-get", "remove", "-y", pkg]).check_returncode()
+    subprocess.run(["sudo", "apt-get", "autoremove", "-y"]).check_returncode()
     assert which(real_exe) is None, f"Unexpected executable: {which(real_exe)}"
 
 
@@ -83,7 +84,7 @@ assert_substring(INSTALL_TELLTALE, p.out)
 # be found. Note that we cannot force a gnat installation, as there are no
 # system package definitions for it (because several versions are available
 # through system packages) and we don't want to force switches between them.
-apt_uninstall("gnat-10", "gnat")  # gnat-10 for our current Dockerfile
+apt_uninstall("gnat")
 apt_uninstall("gprbuild")
 p = run_alr("toolchain", "--select", "gprbuild", quiet=False)
 assert_substring(INSTALL_TELLTALE, p.out)

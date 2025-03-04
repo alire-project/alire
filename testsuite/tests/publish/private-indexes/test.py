@@ -209,7 +209,7 @@ for force_arg in ([], ["--force"]):
             (
                 r".*This file can then be uploaded to "
                 r"https://github\.com/github-username/alire-index/upload/"
-                r"stable-1\.3\.0/index/xx/xxx to create a pull request against"
+                r".*/index/xx/xxx to create a pull request against"
                 r" the community index.*"
             ),
         ],
