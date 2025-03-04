@@ -58,6 +58,7 @@ package body Alr.Commands.Init is
       Src_Directory : constant Virtual_File := Directory / "src";
       Share_Directory : constant Virtual_File :=
          Directory / "share" / Filesystem_String (Lower_Name);
+      Test_Directory : constant Virtual_File := Directory / "tests";
 
       File : TIO.File_Type;
 
@@ -331,6 +332,78 @@ package body Alr.Commands.Init is
                                    Force_Regen    => False);
       end Generate_Config;
 
+      procedure Generate_Test_Crate is
+         Test_Srcs : constant Virtual_File := Test_Directory / "src";
+         Test_Common : constant Virtual_File := Test_Directory / "common";
+      begin
+         pragma Style_Checks ("M100");
+
+         Test_Directory.Make_Dir;
+         if not Create (+Full_Name (Test_Directory / "alire.toml")) then
+            Trace.Warning ("Could not create test crate skeleton");
+            return;
+         end if;
+         Put_Line ("name = 'tests'");
+         Put_Line ("description = ''");
+         Put_Line ("version = '0.0.0-test'");
+         Put_New_Line;
+         Put_Line ("[[depends-on]]");
+         Put_Line (To_String (Info.Name) & " = '*'");
+         Put_New_Line;
+         Put_Line ("[[pins]]");
+         Put_Line (To_String (Info.Name) & " = { path = '..' }");
+         Put_New_Line;
+         Put_Line ("[build-profiles]");
+         Put_Line (To_String (Info.Name) & " = 'validation'");
+         TIO.Close (File);
+
+         if not Create (+Full_Name (Test_Directory / "tests.gpr")) then
+            Trace.Warning ("Could not create project file 'tests/tests.gpr'");
+            return;
+         end if;
+         Put_Line ("with ""config/tests_config.gpr"";");
+         Put_Line ("with ""config/tests_list_config.gpr"";");
+         Put_New_Line;
+         Put_Line ("project Tests is");
+         Put_Line ("   for Source_Dirs use (""src/"", ""common/"", ""config/"");");
+         Put_Line ("   for Object_Dir use ""obj/"" & Tests_Config.Build_Profile;");
+         Put_Line ("   for Create_Missing_Dirs use ""True"";");
+         Put_Line ("   for Exec_Dir use ""bin"";");
+         Put_Line ("   for Main use Tests_List_Config.Test_Files;");
+         Put_New_Line;
+         Put_Line ("   package Compiler is");
+         Put_Line ("      for Default_Switches (""Ada"") use Tests_Config.Ada_Compiler_Switches;");
+         Put_Line ("   end Compiler;");
+         Put_New_Line;
+         Put_Line ("   package Binder is");
+         Put_Line ("      for Switches (""Ada"") use (""-Es""); --  Symbolic traceback");
+         Put_Line ("   end Binder;");
+         Put_Line ("end Tests;");
+         TIO.Close (File);
+
+         Test_Srcs.Make_Dir;
+         if not Create (+Full_Name (Test_Srcs / "tests-example_test.adb")) then
+            Trace.Warning ("Could not create example test in 'tests/src'");
+            return;
+         end if;
+         Put_Line ("with Ada.Assertions;");
+         Put_New_Line;
+         Put_Line ("procedure Tests.Example_Test is");
+         Put_Line ("begin");
+         Put_Line ("   Ada.Assertions.Assert (False, ""assertion failed"");");
+         Put_Line ("end Tests.Example_Test;");
+         TIO.Close (File);
+
+         Test_Common.Make_Dir;
+         if not Create (+Full_Name (Test_Common / "tests.ads")) then
+            Trace.Warning ("Could not create tests package in 'tests/common'");
+            return;
+         end if;
+         Put_Line ("package Tests is");
+         Put_Line ("end Tests;");
+         TIO.Close (File);
+      end Generate_Test_Crate;
+
    begin
       --  Crate dir
       Directory.Make_Dir;
@@ -351,6 +424,10 @@ package body Alr.Commands.Init is
 
       if not Cmd.No_Skel then
          Generate_Config;
+
+         if not Cmd.No_Test then
+            Generate_Test_Crate;
+         end if;
       end if;
 
       Alire.Put_Success (TTY.Emph (Lower_Name) & " initialized successfully.");
@@ -708,6 +785,12 @@ package body Alr.Commands.Init is
                      Cmd.No_Skel'Access,
                      "", "--no-skel",
                      "Do not generate non-alire skeleton files");
+
+      Define_Switch (Config,
+                     Cmd.No_Test'Access,
+                     "", "--no-test",
+                     "Do not generate a minimal test crate skeleton"
+                     & " (implied by --no-skel)");
    end Setup_Switches;
 
 end Alr.Commands.Init;

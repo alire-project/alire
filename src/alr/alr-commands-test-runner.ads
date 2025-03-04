@@ -1,20 +1,18 @@
 with AAA.Strings;
 
-package Alr.Commands.Init is
+package Alr.Commands.Test.Runner is
 
    type Command is new Commands.Command with private;
 
    overriding
    function Name (Cmd : Command) return CLIC.Subcommand.Identifier
-   is ("init");
+   is ("test-runner");
 
    overriding
-   procedure Execute (Cmd  : in out Command;
-                      Args :        AAA.Strings.Vector);
+   procedure Execute (Cmd : in out Command; Args : AAA.Strings.Vector);
 
    overriding
-   function Long_Description (Cmd : Command)
-                              return AAA.Strings.Vector;
+   function Long_Description (Cmd : Command) return AAA.Strings.Vector;
 
    overriding
    procedure Setup_Switches
@@ -23,20 +21,16 @@ package Alr.Commands.Init is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Create a new crate for an executable or library");
+   is ("Run the default alire test runner in the current folder.");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("{--bin|--lib} <crate name>");
+   is ("[test_names]...");
 
 private
 
    type Command is new Commands.Command with record
-      Bin,
-      Lib,
-      In_Place,
-      No_Skel,
-      No_Test : aliased Boolean := False;
+      Jobs : aliased Integer;
    end record;
 
-end Alr.Commands.Init;
+end Alr.Commands.Test.Runner;
