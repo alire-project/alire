@@ -38,10 +38,10 @@ compare(contents('xxx'), ['xxx/.gitignore',
                           'xxx/tests',
                           'xxx/tests/alire.toml',
                           'xxx/tests/common',
-                          'xxx/tests/common/tests.ads',
+                          'xxx/tests/common/xxx_tests.ads',
                           'xxx/tests/src',
-                          'xxx/tests/src/tests-example_test.adb',
-                          'xxx/tests/tests.gpr',
+                          'xxx/tests/src/xxx_tests-example_test.adb',
+                          'xxx/tests/xxx_tests.gpr',
                           'xxx/xxx.gpr'])
 
 # Plain init, existing empty dir
@@ -63,12 +63,12 @@ compare(contents('aaa'), ['aaa/.gitignore',
                           'aaa/src',
                           'aaa/src/aaa.adb',
                           'aaa/tests',
+                          'aaa/tests/aaa_tests.gpr',
                           'aaa/tests/alire.toml',
                           'aaa/tests/common',
-                          'aaa/tests/common/tests.ads',
+                          'aaa/tests/common/aaa_tests.ads',
                           'aaa/tests/src',
-                          'aaa/tests/src/tests-example_test.adb',
-                          'aaa/tests/tests.gpr'])
+                          'aaa/tests/src/aaa_tests-example_test.adb'])
 
 # Init without skeleton
 run_alr('init', '--bin', '--no-skel', 'yyy')
@@ -133,10 +133,10 @@ compare(contents('.'), ['./.gitignore',
                         './tests',
                         './tests/alire.toml',
                         './tests/common',
-                        './tests/common/tests.ads',
+                        './tests/common/zzz_tests.ads',
                         './tests/src',
-                        './tests/src/tests-example_test.adb',
-                        './tests/tests.gpr',
+                        './tests/src/zzz_tests-example_test.adb',
+                        './tests/zzz_tests.gpr',
                         './zzz.gpr'])
 
 

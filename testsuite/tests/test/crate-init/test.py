@@ -10,7 +10,7 @@ run_alr("init", "--lib", "xxx")
 os.chdir("xxx")
 
 p = run_alr("test", complain_on_error=False)
-assert_match(".*\[ FAIL \] tests-example_test.*", p.out)
+assert_match(".*\[ FAIL \] example_test.*", p.out)
 # default test after init always fails
 
 print('SUCCESS')

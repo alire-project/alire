@@ -10,14 +10,14 @@ from drivers.asserts import assert_match
 run_alr("init", "--lib", "xxx")
 os.chdir("xxx")
 
-with open("./tests/src/tests-example_test.adb", "w") as f:
-   f.write("""procedure Tests.Example_Test is
+with open("./tests/src/xxx_tests-example_test.adb", "w") as f:
+   f.write("""procedure Xxx_Tests.Example_Test is
 begin
    null;
-end Tests.Example_Test;
+end Xxx_Tests.Example_Test;
 """)
 
 p = run_alr("test")
-assert_match(".*\[ PASS \] [^\n]*tests-example_test.*", p.out)
+assert_match(".*\[ PASS \] example_test.*", p.out)
 
 print('SUCCESS')

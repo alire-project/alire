@@ -9,16 +9,16 @@ from drivers.asserts import assert_match
 
 def make_test(name: str):
    cap = name[0].upper() + name[1:]
-   with open(f"./tests/src/tests-{name}.adb", "w") as f:
-      f.write(f"""procedure Tests.{cap} is
+   with open(f"./tests/src/xxx_tests-{name}.adb", "w") as f:
+      f.write(f"""procedure Xxx_Tests.{cap} is
 begin
    null;
-end Tests.{cap};
+end Xxx_Tests.{cap};
 """)
 
 run_alr("init", "--lib", "xxx")
 os.chdir("xxx")
-os.remove("./tests/src/tests-example_test.adb")
+os.remove("./tests/src/xxx_tests-example_test.adb")
 
 for test in ["yes1", "yes2", "yes3", "no1", "no2"]:
    make_test(test)
