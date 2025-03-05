@@ -310,7 +310,7 @@ pristine settings](settings#relocating-your-settings)
 of the `testsuite` folder.
 
 Additionally, you can test in batch the building of crates in your platform
-with the `alr test` command. (See `alr test --help` output for instructions.)
+with the `alr index-test` command. (See `alr index-test --help` output for instructions.)
 
 ## Migration of an existing Ada/SPARK project to Alire
 
