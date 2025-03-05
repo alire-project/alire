@@ -28,7 +28,7 @@ package body Alr.Commands.Test is
           (Cmd.Root.Environment, Settings'Tag);
       if Custom_Test.Length > 1 then
          Reportaise_Command_Failed
-           ("more than one primary test runner is available for the current "
+           ("more than one test runner is available for the current "
             & "platform");
       end if;
 
@@ -36,8 +36,9 @@ package body Alr.Commands.Test is
          S := Settings (Custom_Test.First_Element);
       else
          Trace.Info
-           ("no primary runner defined, using the builtin test runner");
-         S := Alire.Properties.Tests.Default;
+           ("no runner defined, building the crate");
+         Cmd.Root.Build;
+         return;
       end if;
 
       declare
@@ -55,17 +56,16 @@ package body Alr.Commands.Test is
 
          case S.Runner.Kind is
             when Alire_Runner =>
-               Alire.Test_Runner.Run
+               Failures := Alire.Test_Runner.Run
                  (Cmd.Root,
                   Args,
-                  (if Cmd.Jobs = -1 then S.Jobs else Cmd.Jobs),
-                  Failures);
+                  (if Cmd.Jobs = -1 then S.Jobs else Cmd.Jobs));
 
             when External =>
                Failures :=
                  Alire.OS_Lib.Subprocess.Unchecked_Spawn
                    (S.Runner.Command.First_Element,
-                    S.Runner.Command.Tail,
+                    S.Runner.Command.Tail.Append (Args),
                     Dim_Output => False);
 
          end case;
