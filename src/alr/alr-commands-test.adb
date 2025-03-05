@@ -6,11 +6,16 @@ with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
 with Alire.Properties;
 with Alire.Properties.Tests;
+with Alire.Roots;
 with Alire.Test_Runner;
 
 with CLIC.Subcommand;
 
 package body Alr.Commands.Test is
+
+   -------------
+   -- Execute --
+   -------------
 
    overriding
    procedure Execute (Cmd : in out Command; Args : AAA.Strings.Vector) is
@@ -35,9 +40,12 @@ package body Alr.Commands.Test is
       if Custom_Test.Length = 1 then
          S := Settings (Custom_Test.First_Element);
       else
-         Trace.Info
+         Trace.Warning
            ("no runner defined, building the crate");
-         Cmd.Root.Build;
+         if not Alire.Roots.Build (Cmd.Root, Args, Saved_Profiles => False)
+         then
+            Reportaise_Command_Failed ("failed to build crate");
+         end if;
          return;
       end if;
 
@@ -45,7 +53,7 @@ package body Alr.Commands.Test is
          use Alire.Directories;
          use all type Ada.Strings.Unbounded.Unbounded_String;
 
-         Dir      : constant Alire.Any_Path := To_String (S.Directory);
+         Dir      : constant Alire.Relative_Path := To_String (S.Directory);
          Failures : Integer;
 
          Guard : Alire.Directories.Guard (Enter (Dir))
@@ -77,6 +85,10 @@ package body Alr.Commands.Test is
       end;
    end Execute;
 
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
    overriding
    function Long_Description (Cmd : Command) return AAA.Strings.Vector
    is (AAA.Strings.Empty_Vector.Append
@@ -93,6 +105,10 @@ package body Alr.Commands.Test is
              & "in the case of the builtin runner, a basic filtering mechanism"
              & " only compiles and runs the tests whose names contain one of"
              & " the arguments."));
+
+   --------------------
+   -- Setup_Switches --
+   --------------------
 
    overriding
    procedure Setup_Switches

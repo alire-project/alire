@@ -18,6 +18,6 @@ end Tests.Example_Test;
 """)
 
 p = run_alr("test")
-assert_match(".*\[ PASS \] tests-example_test.*", p.out)
+assert_match(".*\[ PASS \] [^\n]*tests-example_test.*", p.out)
 
 print('SUCCESS')

@@ -1,4 +1,3 @@
-with Ada.Command_Line;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Fixed;
 with Ada.Text_IO;
@@ -34,11 +33,20 @@ package body Alire.Test_Runner is
    end Driver;
 
    protected body Driver is
+
+      ----------
+      -- Pass --
+      ----------
+
       procedure Pass (Msg : String) is
       begin
          Passed := Passed + 1;
          Trace.Always ("[ " & CLIC.TTY.OK ("PASS") & " ] " & Msg);
       end Pass;
+
+      ----------
+      -- Fail --
+      ----------
 
       procedure Fail (Msg : String; Output : AAA.Strings.Vector) is
       begin
@@ -53,11 +61,24 @@ package body Alire.Test_Runner is
          end if;
       end Fail;
 
+      -----------------
+      -- Total_Count --
+      -----------------
+
       function Total_Count return Natural
       is (Passed + Failed);
+
+      ----------------
+      -- Fail_Count --
+      ----------------
+
       function Fail_Count return Natural
       is (Failed);
    end Driver;
+
+   ---------------------
+   -- Create_Gpr_List --
+   ---------------------
 
    procedure Create_Gpr_List
      (Root : Alire.Roots.Root; List : AAA.Strings.Vector)
@@ -96,6 +117,10 @@ package body Alire.Test_Runner is
       Lines.Append_Line ("end " & Root_Name & "_List_Config;");
    end Create_Gpr_List;
 
+   -------------------
+   -- Run_All_Tests --
+   -------------------
+
    procedure Run_All_Tests
      (Root : Alire.Roots.Root; Test_List : AAA.Strings.Vector; Jobs : Positive)
    is
@@ -113,9 +138,30 @@ package body Alire.Test_Runner is
       Running_Tests : Map.Map := Map.Empty_Map;
       Output_Files  : Map.Map := Map.Empty_Map;
 
+      Root_Prefix : constant String :=
+        AAA.Strings.To_Lower_Case (Root.Name.As_String) & "-";
+
+      ------------------
+      -- Strip_Prefix --
+      ------------------
+
+      function Strip_Prefix (Src, Prefix : String) return String is
+      begin
+         if AAA.Strings.Has_Prefix (Src, Prefix) then
+            return Src (Src'First + Prefix'Length .. Src'Last);
+         else
+            return Src;
+         end if;
+      end Strip_Prefix;
+
+      ----------------
+      -- Spawn_Test --
+      ----------------
+
       procedure Spawn_Test (Test_Name : String) is
          Exe_Name : constant String := Test_Name & Alire.OS_Lib.Exe_Suffix;
-         Filename : constant String := "output_" & Test_Name & ".tmp";
+         Filename : constant String :=
+           Root.Working_Folder / ("output_" & Test_Name & ".tmp");
 
          Args : constant Argument_List := (1 .. 0 => <>);
          Pid  : Process_Id;
@@ -130,7 +176,7 @@ package body Alire.Test_Runner is
             Driver.Fail
               (Test_Name & " (failed to start!)", AAA.Strings.Empty_Vector);
          else
-            Running_Tests.Insert (Pid, Test_Name);
+            Running_Tests.Insert (Pid, Strip_Prefix (Test_Name, Root_Prefix));
             Output_Files.Insert (Pid, Filename);
          end if;
       end Spawn_Test;
@@ -180,11 +226,14 @@ package body Alire.Test_Runner is
       end loop;
    end Run_All_Tests;
 
-   procedure Run
+   ---------
+   -- Run --
+   ---------
+
+   function Run
      (Root   : in out Alire.Roots.Root;
       Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
-      Jobs   : Natural := 0;
-      Fails  : out Integer)
+      Jobs   : Natural := 0) return Integer
    is
       use all type AAA.Strings.Vector;
 
@@ -193,6 +242,10 @@ package body Alire.Test_Runner is
          else Jobs);
       Path      : constant Alire.Absolute_Path := Root.Path;
       Test_List : AAA.Strings.Vector;
+
+      ------------
+      -- Append --
+      ------------
 
       procedure Append (Dir_Entry : Adirs.Directory_Entry_Type) is
          --  Helper function to append all .adb files in a folder
@@ -221,12 +274,12 @@ package body Alire.Test_Runner is
          Trace.Always ("Total:" & Driver.Total_Count'Image & " tests");
          Ada.Text_IO.Flush;
          if Driver.Fail_Count /= 0 then
-            Trace.Error ("failed" & Driver.Fail_Count'Image & " test");
-            Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+            Trace.Error ("failed" & Driver.Fail_Count'Image & " tests");
          end if;
-         Fails := Driver.Fail_Count;
+         return Driver.Fail_Count;
       else
-         Fails := 1;
+         Trace.Error ("failed to build tests");
+         return 1;
       end if;
    end Run;
 end Alire.Test_Runner;

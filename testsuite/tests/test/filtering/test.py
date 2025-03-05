@@ -1,5 +1,5 @@
 """
-Filter test runs
+Filter test runs by name in the builtin test runner
 """
 
 import os.path

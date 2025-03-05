@@ -1,4 +1,9 @@
 package body Alire.Properties.Tests is
+
+   -------------
+   -- To_TOML --
+   -------------
+
    overriding
    function To_TOML (S : Settings) return TOML.TOML_Value is
       use TOML;
@@ -24,6 +29,10 @@ package body Alire.Properties.Tests is
       return Res;
    end To_TOML;
 
+   ---------------
+   -- From_TOML --
+   ---------------
+
    function From_TOML
      (From : TOML_Adapters.Key_Queue) return Conditional.Properties
    is
@@ -48,7 +57,7 @@ package body Alire.Properties.Tests is
          declare
             Local : constant TOML_Adapters.Key_Queue :=
               From.Descend (Raw, "values");
-            Res   : Settings;
+            Res   : Settings := Default;
             Val   : TOML_Value;
          begin
             if Local.Pop (TOML_Keys.Test_Runner, Val) then
@@ -56,10 +65,9 @@ package body Alire.Properties.Tests is
                   if Val.As_String = "alire" then
                      Res.Runner := (Kind => Alire_Runner);
                   else
-                     Res.Runner :=
-                       (Kind    => External,
-                        Command =>
-                          AAA.Strings.Empty_Vector.Append (Val.As_String));
+                     Local.Checked_Error
+                       ("invalid builtin runner (accepted values: 'alire'). "
+                        & "External runners must be an array of strings.");
                   end if;
                elsif Val.Kind = TOML_Array then
                   declare
@@ -67,7 +75,7 @@ package body Alire.Properties.Tests is
                   begin
                      for I in 1 .. Val.Length loop
                         if Val.Item (I).Kind /= TOML_String then
-                           Raise_Checked_Error
+                           Local.Checked_Error
                              ("test runner array must be an array of strings");
                         end if;
                         Cmd.Append (Val.Item (I).As_String);
@@ -87,8 +95,6 @@ package body Alire.Properties.Tests is
                   Local.Checked_Error ("directory must be a string");
                end if;
                Res.Directory := Val.As_Unbounded_String;
-            else
-               Res.Directory := UStrings.To_Unbounded_String ("tests");
             end if;
 
             if Local.Pop (TOML_Keys.Test_Jobs, Val) then
@@ -104,8 +110,6 @@ package body Alire.Properties.Tests is
                   Local.Checked_Error ("jobs must be a non negative integer");
                end if;
                Res.Jobs := Natural (Val.As_Integer);
-            else
-               Res.Jobs := 0;
             end if;
             Local.Report_Extra_Keys;
 

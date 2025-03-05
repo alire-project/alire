@@ -38,7 +38,7 @@ is
 
    function Runner (S : Settings) return Runner_Type;
 
-   function Directory (S : Settings) return UString;
+   function Directory (S : Settings) return Unbounded_Relative_Path;
 
    function Jobs (S : Settings) return Natural;
 
@@ -48,7 +48,7 @@ private
 
    type Settings is new Properties.Property with record
       Runner    : Runner_Type;
-      Directory : UString;
+      Directory : Unbounded_Relative_Path;
       Jobs      : Natural;
    end record;
 
@@ -80,7 +80,7 @@ private
    function Runner (S : Settings) return Runner_Type
    is (S.Runner);
 
-   function Directory (S : Settings) return UString
+   function Directory (S : Settings) return Unbounded_Relative_Path
    is (S.Directory);
 
    function Jobs (S : Settings) return Natural
