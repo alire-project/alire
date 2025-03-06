@@ -25,8 +25,10 @@ package body Alr.Commands.Test is
            (Root.Environment,
             (Alire.Properties.Actions.Test => True, others => False))
            .Is_Empty
-        and then Alire.Roots.Build
-                   (Root, AAA.Strings.Empty_Vector, Saved_Profiles => False)
+        and then not Alire.Roots.Build
+                       (Root,
+                        AAA.Strings.Empty_Vector,
+                        Saved_Profiles => False)
       then
          Success := 1;
       else
