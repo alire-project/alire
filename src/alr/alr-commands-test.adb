@@ -4,7 +4,7 @@ with Ada.Strings.Unbounded;
 with Alire.Directories;
 with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
-with Alire.Properties;
+with Alire.Properties.Actions.Executor;
 with Alire.Properties.Tests;
 with Alire.Roots;
 with Alire.Test_Runner;
@@ -12,6 +12,40 @@ with Alire.Test_Runner;
 with CLIC.Subcommand;
 
 package body Alr.Commands.Test is
+
+   --------------------
+   -- Execute_Legacy --
+   --------------------
+
+   procedure Execute_Legacy (Root : in out Alire.Roots.Root) is
+      Success : Integer := 0;
+      Output  : AAA.Strings.Vector;
+   begin
+      if Root.Release.On_Platform_Actions
+           (Root.Environment,
+            (Alire.Properties.Actions.Test => True, others => False))
+           .Is_Empty
+        and then Alire.Roots.Build
+                   (Root, AAA.Strings.Empty_Vector, Saved_Profiles => False)
+      then
+         Success := 1;
+      else
+         Alire.Properties.Actions.Executor.Execute_Actions
+           (Root.Release,
+            Root.Environment,
+            Alire.Properties.Actions.Test,
+            Capture    => False,
+            Err_To_Out => False,
+            Code       => Success,
+            Output     => Output);
+      end if;
+
+      if Success = 0 then
+         Alire.Put_Success ("Successful actions run");
+      else
+         Reportaise_Command_Failed ("failed actions run");
+      end if;
+   end Execute_Legacy;
 
    -------------
    -- Execute --
@@ -22,67 +56,76 @@ package body Alr.Commands.Test is
       use type Ada.Containers.Count_Type;
       use Alire.Properties.Tests;
 
-      Custom_Test : Alire.Properties.Vector;
-      S           : Settings;
+      All_Settings : Alire.Properties.Vector;
    begin
       Cmd.Forbids_Structured_Output;
-
       Cmd.Requires_Workspace;
-      Custom_Test :=
+
+      All_Settings :=
         Cmd.Root.Release.On_Platform_Properties
           (Cmd.Root.Environment, Settings'Tag);
-      if Custom_Test.Length > 1 then
-         Reportaise_Command_Failed
-           ("more than one test runner is available for the current "
-            & "platform");
+
+      if All_Settings.Is_Empty then
+         Trace.Warning ("no test runner defined, running legacy actions");
+         Execute_Legacy (Cmd.Root);
       end if;
 
-      if Custom_Test.Length = 1 then
-         S := Settings (Custom_Test.First_Element);
-      else
+      if not Args.Is_Empty and then All_Settings.Length > 1 then
          Trace.Warning
-           ("no runner defined, building the crate");
-         if not Alire.Roots.Build (Cmd.Root, Args, Saved_Profiles => False)
-         then
-            Reportaise_Command_Failed ("failed to build crate");
-         end if;
-         return;
+           ("arguments cannot be forwarded to test runners when several "
+            & "exist.");
+         Trace.Warning ("use --id=<runner id> to call a specific test runner");
       end if;
 
-      declare
-         use Alire.Directories;
-         use all type Ada.Strings.Unbounded.Unbounded_String;
+      for Test_Setting of All_Settings loop
+         declare
+            use Alire.Directories;
+            use all type Ada.Strings.Unbounded.Unbounded_String;
 
-         Dir      : constant Alire.Relative_Path := To_String (S.Directory);
-         Failures : Integer;
+            function Get_Args return AAA.Strings.Vector
+            is (if All_Settings.Length = 1 then Args
+                else AAA.Strings.Empty_Vector);
+            --  Only forward arguments if the runner is the only one.
 
-         Guard : Alire.Directories.Guard (Enter (Dir))
-         with Unreferenced;
-      begin
-         Cmd.Optional_Root.Discard;
-         Cmd.Requires_Workspace;
+            S : constant Settings := Settings (Test_Setting);
 
-         case S.Runner.Kind is
-            when Alire_Runner =>
-               Failures := Alire.Test_Runner.Run
-                 (Cmd.Root,
-                  Args,
-                  (if Cmd.Jobs = -1 then S.Jobs else Cmd.Jobs));
+            Dir      : constant Alire.Relative_Path := To_String (S.Directory);
+            Failures : Integer;
 
-            when External =>
-               Failures :=
-                 Alire.OS_Lib.Subprocess.Unchecked_Spawn
-                   (S.Runner.Command.First_Element,
-                    S.Runner.Command.Tail.Append (Args),
-                    Dim_Output => False);
+            Guard : Alire.Directories.Guard (Enter (Dir))
+            with Unreferenced;
+         begin
+            Cmd.Optional_Root.Discard;
 
-         end case;
+            if All_Settings.Length > 1 then
+               Trace.Info ("running test with" & S.Image);
+            end if;
 
-         if Failures /= 0 then
-            Reportaise_Command_Failed
-              (if S.Runner.Kind = Alire_Runner then "" else "test failure");
-         end if;
-      end;
+            case S.Runner.Kind is
+               when Alire_Runner =>
+                  Cmd.Requires_Workspace;
+
+                  Failures :=
+                    Alire.Test_Runner.Run
+                      (Cmd.Root,
+                       Get_Args,
+                       (if Cmd.Jobs = -1 then S.Jobs else Cmd.Jobs));
+
+               when External =>
+                  Failures :=
+                    Alire.OS_Lib.Subprocess.Unchecked_Spawn
+                      (S.Runner.Command.First_Element,
+                       S.Runner.Command.Tail.Append (Get_Args),
+                       Dim_Output => False);
+
+            end case;
+
+            if Failures /= 0 then
+               Reportaise_Command_Failed
+                 (if S.Runner.Kind = Alire_Runner then "" else "test failure");
+            end if;
+         end;
+      end loop;
    end Execute;
 
    ----------------------
