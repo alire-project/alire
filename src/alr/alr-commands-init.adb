@@ -403,7 +403,7 @@ package body Alr.Commands.Init is
          Put_New_Line;
          Put_Line ("procedure " & Test_Upper & ".Example_Test is");
          Put_Line ("begin");
-         Put_Line ("   Ada.Assertions.Assert (False, ""assertion failed"");");
+         Put_Line ("   Ada.Assertions.Assert (True);");
          Put_Line ("end " & Test_Upper & ".Example_Test;");
          TIO.Close (File);
 

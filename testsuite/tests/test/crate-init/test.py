@@ -9,8 +9,8 @@ from drivers.asserts import assert_match
 run_alr("init", "--lib", "xxx")
 os.chdir("xxx")
 
-p = run_alr("test", complain_on_error=False)
-assert_match(".*\[ FAIL \] example_test.*", p.out)
+p = run_alr("test")
+assert_match(".*\[ PASS \] example_test.*", p.out)
 # default test after init always fails
 
 print('SUCCESS')
