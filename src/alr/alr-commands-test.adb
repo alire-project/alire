@@ -76,57 +76,67 @@ package body Alr.Commands.Test is
          Trace.Warning
            ("arguments cannot be forwarded to test runners when several "
             & "exist.");
-         Trace.Warning ("use --id=<runner id> to call a specific test runner");
       end if;
 
       for Test_Setting of All_Settings loop
-         declare
-            use Alire.Directories;
-            use all type Ada.Strings.Unbounded.Unbounded_String;
+         if Alire.Directories.Is_Directory (+Settings (Test_Setting).Directory)
+         then
+            declare
+               use Alire.Directories;
+               use all type Ada.Strings.Unbounded.Unbounded_String;
 
-            function Get_Args return AAA.Strings.Vector
-            is (if All_Settings.Length = 1 then Args
-                else AAA.Strings.Empty_Vector);
-            --  Only forward arguments if the runner is the only one.
+               function Get_Args return AAA.Strings.Vector
+               is (if All_Settings.Length = 1 then Args
+                   else AAA.Strings.Empty_Vector);
+               --  Only forward arguments if the runner is the only one.
 
-            S : constant Settings := Settings (Test_Setting);
+               S : constant Settings := Settings (Test_Setting);
 
-            Dir      : constant Alire.Relative_Path := To_String (S.Directory);
-            Failures : Integer;
+               Dir      : constant Alire.Relative_Path :=
+                 To_String (S.Directory);
+               Failures : Integer;
 
-            Guard : Alire.Directories.Guard (Enter (Dir))
-            with Unreferenced;
-         begin
-            Cmd.Optional_Root.Discard;
+               Guard : Alire.Directories.Guard (Enter (Dir))
+               with Unreferenced;
+            begin
+               Cmd.Optional_Root.Discard;
 
-            if All_Settings.Length > 1 then
-               Trace.Info ("running test with" & S.Image);
-            end if;
+               if All_Settings.Length > 1 then
+                  Trace.Info ("running test with" & S.Image);
+               end if;
 
-            case S.Runner.Kind is
-               when Alire_Runner =>
-                  Cmd.Requires_Workspace;
+               case S.Runner.Kind is
+                  when Alire_Runner =>
+                     Cmd.Requires_Workspace;
 
-                  Failures :=
-                    Alire.Test_Runner.Run
-                      (Cmd.Root,
-                       Get_Args,
-                       (if Cmd.Jobs = -1 then S.Jobs else Cmd.Jobs));
+                     Failures :=
+                       Alire.Test_Runner.Run
+                         (Cmd.Root,
+                          Get_Args,
+                          (if Cmd.Jobs = -1 then S.Jobs else Cmd.Jobs));
 
-               when External =>
-                  Failures :=
-                    Alire.OS_Lib.Subprocess.Unchecked_Spawn
-                      (S.Runner.Command.First_Element,
-                       S.Runner.Command.Tail.Append (Get_Args),
-                       Dim_Output => False);
+                  when External =>
+                     Failures :=
+                       Alire.OS_Lib.Subprocess.Unchecked_Spawn
+                         (S.Runner.Command.First_Element,
+                          S.Runner.Command.Tail.Append (Get_Args),
+                          Dim_Output => False);
 
-            end case;
+               end case;
 
-            if Failures /= 0 then
-               Reportaise_Command_Failed
-                 (if S.Runner.Kind = Alire_Runner then "" else "test failure");
-            end if;
-         end;
+               if Failures /= 0 then
+                  Reportaise_Command_Failed
+                    (if S.Runner.Kind = Alire_Runner then ""
+                     else "test failure");
+               end if;
+            end;
+         else
+            Trace.Error ("while running" & (Settings (Test_Setting).Image));
+            Reportaise_Command_Failed
+              ("directory '"
+               & (+Settings (Test_Setting).Directory)
+               & "' does not exist.");
+         end if;
       end loop;
    end Execute;
 

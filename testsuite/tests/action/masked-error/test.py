@@ -11,7 +11,7 @@ from drivers.asserts import assert_substring
 
 def check_errors():
     assert_substring("failed",
-                 run_alr("index-test", complain_on_error=False).out)
+                 run_alr("test", complain_on_error=False).out)
     assert_substring("action exited with error",
                     run_alr("action", "test", complain_on_error=False).out)
 
@@ -20,7 +20,7 @@ init_local_crate()
 
 # Verify a successful action
 add_action("test", ["echo", "OK"])
-run_alr("index-test")
+run_alr("test")
 
 # Verify a failing action both via `alr index-test` and `alr action`
 uuid = uuid.uuid4().hex

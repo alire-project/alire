@@ -6,6 +6,7 @@ with System.Multiprocessors;
 
 with Alire.Directories; use Alire.Directories;
 with Alire.OS_Lib;
+with Alire.Paths;
 with Alire.Utils.Text_Files;
 use Alire.Utils;
 
@@ -87,7 +88,9 @@ package body Alire.Test_Runner is
 
    is
       File_Path : constant Alire.Absolute_Path :=
-        Root.Path / "config" / (Root.Name.As_String & "_list_config.gpr");
+        Root.Path
+        / Alire.Paths.Default_Config_Folder
+        / (Root.Name.As_String & "_list_config.gpr");
       File      : Text_Files.File := Text_Files.Create (File_Path);
       Lines     : access AAA.Strings.Vector renames File.Lines;
       First     : Boolean := True;
@@ -125,6 +128,10 @@ package body Alire.Test_Runner is
      (Root : Alire.Roots.Root; Test_List : AAA.Strings.Vector; Jobs : Positive)
    is
       use GNAT.OS_Lib;
+
+      ---------
+      -- Cmp --
+      ---------
 
       function Cmp (A, B : Process_Id) return Boolean
       is (Pid_To_Integer (A) < Pid_To_Integer (B));
@@ -275,6 +282,8 @@ package body Alire.Test_Runner is
          Ada.Text_IO.Flush;
          if Driver.Fail_Count /= 0 then
             Trace.Error ("failed" & Driver.Fail_Count'Image & " tests");
+         else
+            Alire.Put_Success ("Test run completed successfully");
          end if;
          return Driver.Fail_Count;
       else

@@ -4,6 +4,7 @@ with Ada.Directories;
 with Ada.Wide_Wide_Text_IO;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with Alire.Paths;
 with Alire.Settings.Builtins;
 with Alire.Roots.Optional;
 with Alire.Utils.User_Input.Query_Config;
@@ -58,7 +59,8 @@ package body Alr.Commands.Init is
       Src_Directory : constant Virtual_File := Directory / "src";
       Share_Directory : constant Virtual_File :=
          Directory / "share" / Filesystem_String (Lower_Name);
-      Test_Directory : constant Virtual_File := Directory / "tests";
+      Test_Directory : constant Virtual_File :=
+         Directory / (+Alire.Paths.Default_Tests_Folder);
 
       File : TIO.File_Type;
 

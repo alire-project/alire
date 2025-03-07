@@ -60,8 +60,8 @@ private
             when External => S.Runner.Command.Flatten)
        & ", directory: "
        & UStrings.To_String (S.Directory)
-       & ", jobs:"
-       & S.Jobs'Image);
+       & (if S.Runner.Kind = Alire_Runner then (", jobs:" & S.Jobs'Image)
+          else ""));
 
    overriding
    function To_Yaml (S : Settings) return String

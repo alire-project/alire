@@ -5,12 +5,11 @@ Run tests using a custom runner
 import os.path
 import uuid
 
-from drivers.alr import run_alr
+from drivers.alr import init_local_crate, run_alr
 from drivers.asserts import assert_match
 from drivers.helpers import replace_in_file
 
-run_alr("init", "--lib", "xxx", "--no-test")
-os.chdir("xxx")
+init_local_crate()
 
 assert not os.path.exists("./tests")
 

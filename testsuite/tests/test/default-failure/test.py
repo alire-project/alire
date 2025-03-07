@@ -4,11 +4,10 @@ Run a failing test and check it is detected correctly
 
 import os.path
 
-from drivers.alr import run_alr
+from drivers.alr import init_local_crate, run_alr
 from drivers.asserts import assert_match
 
-run_alr("init", "--lib", "xxx")
-os.chdir("xxx")
+init_local_crate("xxx", with_test=True)
 
 with open("./tests/src/xxx_tests-example_test.adb", "w") as f:
    f.write("""procedure Xxx_Tests.Example_Test is

@@ -4,7 +4,7 @@ Filter test runs by name in the builtin test runner
 
 import os.path
 
-from drivers.alr import run_alr
+from drivers.alr import init_local_crate, run_alr
 from drivers.asserts import assert_match
 
 def make_test(name: str):
@@ -16,8 +16,7 @@ begin
 end Xxx_Tests.{cap};
 """)
 
-run_alr("init", "--lib", "xxx")
-os.chdir("xxx")
+init_local_crate("xxx", with_test=True)
 os.remove("./tests/src/xxx_tests-example_test.adb")
 
 for test in ["yes1", "yes2", "yes3", "no1", "no2"]:
