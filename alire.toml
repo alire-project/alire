@@ -120,7 +120,7 @@ commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
 [pins.yeison_12]
 url    = "https://github.com/mosteo/yeison"
 subdir = "yeison_12"
-commit = "88b66242f8826fd4847e0ea06c7901b753e03c74"
+commit = "20033cf90a3eb2eff69d9ff9d0820291aed79b57"
 
 # To disable version updating, export ALR_VERSION_DONT_PATCH with any value
 
