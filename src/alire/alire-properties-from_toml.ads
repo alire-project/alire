@@ -147,8 +147,9 @@ package Alire.Properties.From_TOML is
          Executables       |
          GPR_Set_Externals |
          Hint              |
-         Project_Files => True,
-         others        => False);
+         Project_Files     |
+         Test              => True,
+         others            => False);
 
    function Loader (From    : TOML_Adapters.Key_Queue;
                     Loaders : Loader_Array;
