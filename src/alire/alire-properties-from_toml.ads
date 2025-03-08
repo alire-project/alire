@@ -79,6 +79,49 @@ package Alire.Properties.From_TOML is
                     Website => True,
                     others  => False);
 
+   --  Cardinalities say if a property must be a single value or an array.
+   --  Since we store properties always as elements in a list, we lose this
+   --  information after load so we use this not only during loading to enforce
+   --  index correctness, but also during exporting to ensure the proper type
+   --  (atom/array) is created.
+
+   type Cardinalities is
+     (Unique,
+      --  Must be a single value
+      Multiple_Deprecated,
+      --  We accept either, but with warning if found as array (licenses
+      --  property). Still, the array should have length 1 (this must be
+      --  enforced by the property loader). We must not use this one for
+      --  new properties.
+      Multiple
+      --  We accept either, but we will always export an array
+     );
+
+   Cardinality : constant array (Property_Keys) of Cardinalities :=
+                   (Actions            => Multiple,
+                    Authors            => Multiple,
+                    Auto_GPR_With      => Unique,
+                    Build_Profiles     => Unique,
+                    Build_Switches     => Unique,
+                    Configuration      => Unique,
+                    Description        => Unique,
+                    Environment        => Unique,
+                    Executables        => Multiple,
+                    GPR_Externals      => Unique,
+                    GPR_Set_Externals  => Unique,
+                    Hint               => Unique,
+                    Licenses           => Multiple_Deprecated,
+                    Long_Description   => Unique,
+                    Maintainers        => Multiple,
+                    Maintainers_Logins => Multiple,
+                    Name               => Unique,
+                    Notes              => Unique,
+                    Project_Files      => Multiple,
+                    Version            => Unique,
+                    Website            => Unique,
+                    Tags               => Multiple,
+                    Test               => Multiple);
+
    type Loader_Array is array (Property_Keys range <>) of Property_Loader;
 
    --  We use the following arrays to determine which properties may appear
