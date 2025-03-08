@@ -147,10 +147,9 @@ package Alire.TOML_Adapters with Preelaborate is
    function "+" (Vect : AAA.Strings.Vector) return TOML.TOML_Value;
 
    function To_Array (V : TOML.TOML_Value) return TOML.TOML_Value with
-     Pre  => V.Kind in TOML.Atom_Value_Kind or else V.Kind = TOML.TOML_Array,
      Post => To_Array'Result.Kind = TOML.TOML_Array;
-   --  Take an atom value and return an array of a single element
-   --  If already an array, do nothing
+   --  Take a value and return an array of a single element.
+   --  If already an array, do nothing.
 
    function To_Table (Key : String;
                       Val : TOML.TOML_Value) return TOML.TOML_Value with
