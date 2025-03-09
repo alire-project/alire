@@ -22,7 +22,7 @@ init_local_crate()
 add_action("test", ["echo", "OK"])
 run_alr("test")
 
-# Verify a failing action both via `alr test` and `alr action`
+# Verify a failing action both via `alr index-test` and `alr action`
 uuid = uuid.uuid4().hex
 assert not os.path.exists(uuid)
 add_action("test", ["ls", uuid])

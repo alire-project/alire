@@ -51,7 +51,7 @@ package body Alr.Testing.JUnit is
                  (Rel.Milestone.Image,
                   AJUnitGen.Error,
                   Classname => "ERROR",
-                  Message   => "alr test unexpected error: " &
+                  Message   => "alr index-test unexpected error: " &
                     Commands.Version.Fingerprint,
                   Output    => Log.Flatten (Newline)));
 
