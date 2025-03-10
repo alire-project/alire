@@ -1,4 +1,5 @@
 with Alire.Conditional;
+with Alire.Paths;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
 with Alire.Utils.YAML;
@@ -88,6 +89,6 @@ private
 
    function Default return Settings
    is (Properties.Property
-       with (Kind => Alire_Runner), UStrings.To_Unbounded_String ("tests"), 0);
+       with (Kind => Alire_Runner), +Alire.Paths.Default_Tests_Folder, 0);
 
 end Alire.Properties.Tests;

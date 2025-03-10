@@ -16,7 +16,7 @@ assert not os.path.exists("./tests")
 # successful custom test runner
 with open("./alire.toml", "a") as f:
    f.write("""[test]
-runner = ["echo", "custom runner OK"]
+command = ["echo", "custom runner OK"]
 directory = "."
 """)
 
@@ -27,7 +27,7 @@ assert_match(".*custom runner OK.*", p.out)
 nonexistent = uuid.uuid4().hex
 assert not os.path.exists(nonexistent)
 replace_in_file("./alire.toml",
-                'runner = ["echo", "custom runner OK"]',
+                'command = ["echo", "custom runner OK"]',
                 f'runner = ["ls", "{nonexistent}"]')
 run_alr("test", complain_on_error=False)
 

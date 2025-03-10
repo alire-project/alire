@@ -55,20 +55,29 @@ package body Alire.Properties.Tests is
 
       return Props : Conditional.Properties do
          declare
-            Local : constant TOML_Adapters.Key_Queue :=
+            Local          : constant TOML_Adapters.Key_Queue :=
               From.Descend (Raw, "values");
-            Res   : Settings := Default;
-            Val   : TOML_Value;
+            Res            : Settings := Default;
+            Val            : TOML_Value;
+            Runner_Visited : Boolean := False;
          begin
             if Local.Pop (TOML_Keys.Test_Runner, Val) then
-               if Val.Kind = TOML_String then
-                  if Val.As_String = "alire" then
-                     Res.Runner := (Kind => Alire_Runner);
-                  else
-                     Local.Checked_Error
-                       ("invalid builtin runner (accepted values: 'alire'). "
-                        & "External runners must be an array of strings.");
-                  end if;
+               Runner_Visited := True;
+               if Val.Kind = TOML_String and then Val.As_String = "alire" then
+                  Res.Runner := (Kind => Alire_Runner);
+               else
+                  Local.Checked_Error
+                    ("invalid builtin runner (accepted values: 'alire'). Use "
+                     & "the 'command' field with an array to configure an "
+                     & "external test runner.");
+               end if;
+            end if;
+
+            if Local.Pop (TOML_Keys.Test_Command, Val) then
+               if Runner_Visited then
+                  Local.Checked_Error
+                    ("the 'runner' and 'command' fields cannot be present at "
+                     & "the same time");
                elsif Val.Kind = TOML_Array then
                   declare
                      Cmd : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
@@ -76,7 +85,7 @@ package body Alire.Properties.Tests is
                      for I in 1 .. Val.Length loop
                         if Val.Item (I).Kind /= TOML_String then
                            Local.Checked_Error
-                             ("test runner array must be an array of strings");
+                             ("the test command must be an array of strings");
                         end if;
                         Cmd.Append (Val.Item (I).As_String);
                      end loop;
@@ -84,15 +93,22 @@ package body Alire.Properties.Tests is
                   end;
                else
                   Local.Checked_Error
-                    ("test runner must be a string or an array of strings");
+                    ("the 'command' field must be an array of strings. Use "
+                     & "the 'runner' field to configure a builtin runner.");
                end if;
-            else
-               Local.Checked_Error ("runner field required");
+            elsif not Runner_Visited then
+               Local.Checked_Error
+                 ("one of 'runner' or 'command' is required");
             end if;
 
             if Local.Pop (TOML_Keys.Test_Folder, Val) then
                if Val.Kind /= TOML_String then
                   Local.Checked_Error ("directory must be a string");
+               elsif not (Val.As_Unbounded_String in Unbounded_Relative_Path)
+               then
+                  Local.Checked_Error
+                    ("the 'directory' field must be a relative path from the "
+                     & "crate root.");
                end if;
                Res.Directory := Val.As_Unbounded_String;
             end if;
@@ -104,8 +120,8 @@ package body Alire.Properties.Tests is
                end if;
 
                if Val.Kind /= TOML_Integer
-                 or else Val.As_Integer < 0
-                 or else Val.As_Integer > Any_Integer (Natural'Last)
+                 or else not (Val.As_Integer
+                              in 0 .. Any_Integer (Natural'Last))
                then
                   Local.Checked_Error ("jobs must be a non negative integer");
                end if;

@@ -46,6 +46,7 @@ package Alire.TOML_Keys with Preelaborate is
    Target         : constant String := "target";
    Test           : constant String := "test";
    Test_Runner    : constant String := "runner";
+   Test_Command   : constant String := "command";
    Test_Folder    : constant String := "directory";
    Test_Jobs      : constant String := "jobs";
    Toolchain      : constant String := "toolchain";
