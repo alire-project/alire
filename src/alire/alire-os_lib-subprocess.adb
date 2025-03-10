@@ -21,7 +21,8 @@ package body Alire.OS_Lib.Subprocess is
    function Spawn
      (Command             : String;
       Arguments           : AAA.Strings.Vector;
-      Understands_Verbose : Boolean := False)
+      Understands_Verbose : Boolean := False;
+      Dim_Output          : Boolean := True)
       return Integer;
 
    function Spawn_And_Capture
@@ -99,13 +100,12 @@ package body Alire.OS_Lib.Subprocess is
    procedure Checked_Spawn
      (Command             : String;
       Arguments           : AAA.Strings.Vector;
-      Understands_Verbose : Boolean := False)
+      Understands_Verbose : Boolean := False;
+      Dim_Output          : Boolean := True)
    is
       Exit_Code : constant Integer :=
                     Spawn
-                      (Command             => Command,
-                       Arguments           => Arguments,
-                       Understands_Verbose => Understands_Verbose);
+                      (Command, Arguments, Understands_Verbose, Dim_Output);
    begin
       if Exit_Code /= 0 then
          Raise_Checked_Error
@@ -171,8 +171,9 @@ package body Alire.OS_Lib.Subprocess is
    function Unchecked_Spawn
      (Command             : String;
       Arguments           : AAA.Strings.Vector;
-      Understands_Verbose : Boolean := False) return Integer
-   is (Spawn (Command, Arguments, Understands_Verbose));
+      Understands_Verbose : Boolean := False;
+      Dim_Output          : Boolean := True) return Integer
+   is (Spawn (Command, Arguments, Understands_Verbose, Dim_Output));
 
    -----------
    -- Spawn --
@@ -181,7 +182,8 @@ package body Alire.OS_Lib.Subprocess is
    function Spawn
      (Command             : String;
       Arguments           : AAA.Strings.Vector;
-      Understands_Verbose : Boolean := False)
+      Understands_Verbose : Boolean := False;
+      Dim_Output          : Boolean := True)
       return Integer
    is
       use GNAT.OS_Lib;
@@ -202,7 +204,10 @@ package body Alire.OS_Lib.Subprocess is
 
       procedure Dim (State : States) is
       begin
-         if CLIC.TTY.Is_TTY and then CLIC.TTY.Color_Enabled then
+         if Dim_Output
+            and then CLIC.TTY.Is_TTY
+            and then CLIC.TTY.Color_Enabled
+         then
             Ada.Text_IO.Put (Style (Dim, State));
          end if;
       end Dim;

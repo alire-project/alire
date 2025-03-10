@@ -40,7 +40,7 @@ package Alire.Properties.Actions with Preelaborate is
    --  * Post_Build is triggered for all releases after a build completes.
 
    --  * Test is triggered only for the root crate after the crate build (and
-   --  after all Post_Build complete), only when `alr test` is run.
+   --  after all Post_Build complete), only when `alr index-test` is run.
 
    type Action (<>) is abstract new Properties.Property with private;
    --  Action was abstract in case we ever need other kinds of actions than

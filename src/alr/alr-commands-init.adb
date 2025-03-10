@@ -4,6 +4,7 @@ with Ada.Directories;
 with Ada.Wide_Wide_Text_IO;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with Alire.Paths;
 with Alire.Settings.Builtins;
 with Alire.Roots.Optional;
 with Alire.Utils.User_Input.Query_Config;
@@ -58,6 +59,8 @@ package body Alr.Commands.Init is
       Src_Directory : constant Virtual_File := Directory / "src";
       Share_Directory : constant Virtual_File :=
          Directory / "share" / Filesystem_String (Lower_Name);
+      Test_Directory : constant Virtual_File :=
+         Directory / (+Alire.Paths.Default_Tests_Folder);
 
       File : TIO.File_Type;
 
@@ -282,6 +285,12 @@ package body Alr.Commands.Init is
             Put_Line ("executables = " & Arr (Q (Lower_Name)));
          end if;
 
+         if not (Cmd.No_Skel or else Cmd.No_Test) then
+            Put_New_Line;
+            Put_Line ("[test]");
+            Put_Line ("runner = ""alire""");
+         end if;
+
          TIO.Close (File);
       end Generate_Manifest;
 
@@ -331,6 +340,85 @@ package body Alr.Commands.Init is
                                    Force_Regen    => False);
       end Generate_Config;
 
+      -------------------------
+      -- Generate_Test_Crate --
+      -------------------------
+
+      procedure Generate_Test_Crate is
+         Test_Srcs   : constant Virtual_File := Test_Directory / "src";
+         Test_Common : constant Virtual_File := Test_Directory / "common";
+
+         Test_Lower : constant String := Lower_Name & "_tests";
+         Test_Upper : constant String := Mixed_Name & "_Tests";
+      begin
+         pragma Style_Checks ("M120");
+
+         Test_Directory.Make_Dir;
+         if not Create (+Full_Name (Test_Directory / "alire.toml")) then
+            Trace.Warning ("Could not create test crate skeleton");
+            return;
+         end if;
+         Put_Line ("name = '" & Test_Lower & "'");
+         Put_Line ("description = ''");
+         Put_Line ("version = '0.0.0-test'");
+         Put_New_Line;
+         Put_Line ("[[depends-on]]");
+         Put_Line (Lower_Name & " = '*'");
+         Put_New_Line;
+         Put_Line ("[[pins]]");
+         Put_Line (Lower_Name & " = { path = '..' }");
+         Put_New_Line;
+         Put_Line ("[build-profiles]");
+         Put_Line (Lower_Name & " = 'validation'");
+         TIO.Close (File);
+
+         if not Create (+Full_Name (Test_Directory / (+Test_Lower & ".gpr"))) then
+            Trace.Warning ("Could not create project file 'tests/" & Test_Lower & ".gpr");
+            return;
+         end if;
+         Put_Line ("with ""config/" & Test_Lower & "_config.gpr"";");
+         Put_Line ("with ""config/" & Test_Lower & "_list_config.gpr"";");
+         Put_New_Line;
+         Put_Line ("project " & Test_Upper & " is");
+         Put_Line ("   for Source_Dirs use (""src/"", ""common/"", ""config/"");");
+         Put_Line ("   for Object_Dir use ""obj/"" & " & Test_Upper & "_Config.Build_Profile;");
+         Put_Line ("   for Create_Missing_Dirs use ""True"";");
+         Put_Line ("   for Exec_Dir use ""bin"";");
+         Put_Line ("   for Main use " & Test_Upper & "_List_Config.Test_Files;");
+         Put_New_Line;
+         Put_Line ("   package Compiler is");
+         Put_Line ("      for Default_Switches (""Ada"") use " & Test_Upper & "_Config.Ada_Compiler_Switches;");
+         Put_Line ("   end Compiler;");
+         Put_New_Line;
+         Put_Line ("   package Binder is");
+         Put_Line ("      for Switches (""Ada"") use (""-Es""); --  Symbolic traceback");
+         Put_Line ("   end Binder;");
+         Put_Line ("end " & Test_Upper & ";");
+         TIO.Close (File);
+
+         Test_Srcs.Make_Dir;
+         if not Create (+Full_Name (Test_Srcs / (+Test_Lower & "-example_test.adb"))) then
+            Trace.Warning ("Could not create example test in 'tests/src'");
+            return;
+         end if;
+         Put_Line ("with Ada.Assertions;");
+         Put_New_Line;
+         Put_Line ("procedure " & Test_Upper & ".Example_Test is");
+         Put_Line ("begin");
+         Put_Line ("   Ada.Assertions.Assert (True);");
+         Put_Line ("end " & Test_Upper & ".Example_Test;");
+         TIO.Close (File);
+
+         Test_Common.Make_Dir;
+         if not Create (+Full_Name (Test_Common / (+Test_Lower & ".ads"))) then
+            Trace.Warning ("Could not create tests package in 'tests/common'");
+            return;
+         end if;
+         Put_Line ("package " & Test_Upper & " is");
+         Put_Line ("end " & Test_Upper & ";");
+         TIO.Close (File);
+      end Generate_Test_Crate;
+
    begin
       --  Crate dir
       Directory.Make_Dir;
@@ -351,6 +439,10 @@ package body Alr.Commands.Init is
 
       if not Cmd.No_Skel then
          Generate_Config;
+
+         if not Cmd.No_Test then
+            Generate_Test_Crate;
+         end if;
       end if;
 
       Alire.Put_Success (TTY.Emph (Lower_Name) & " initialized successfully.");
@@ -708,6 +800,12 @@ package body Alr.Commands.Init is
                      Cmd.No_Skel'Access,
                      "", "--no-skel",
                      "Do not generate non-alire skeleton files");
+
+      Define_Switch (Config,
+                     Cmd.No_Test'Access,
+                     "", "--no-test",
+                     "Do not generate a minimal test crate skeleton"
+                     & " (implied by --no-skel)");
    end Setup_Switches;
 
 end Alr.Commands.Init;

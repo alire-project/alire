@@ -1,12 +1,12 @@
 with AAA.Strings;
 
-package Alr.Commands.Init is
+package Alr.Commands.Index_Test is
 
    type Command is new Commands.Command with private;
 
    overriding
    function Name (Cmd : Command) return CLIC.Subcommand.Identifier
-   is ("init");
+   is ("index-test");
 
    overriding
    procedure Execute (Cmd  : in out Command;
@@ -23,20 +23,20 @@ package Alr.Commands.Init is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Create a new crate for an executable or library");
+   is ("Test the compilation of all or some releases");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("{--bin|--lib} <crate name>");
+   is ("[crate[versions]]...");
 
 private
 
    type Command is new Commands.Command with record
-      Bin,
-      Lib,
-      In_Place,
-      No_Skel,
-      No_Test : aliased Boolean := False;
+      Cont   : aliased Boolean := False;
+      Full   : aliased Boolean := False;
+      Last   : aliased Boolean := False;
+      Redo   : aliased Boolean := False;
+      Search : aliased Boolean := False;
    end record;
 
-end Alr.Commands.Init;
+end Alr.Commands.Index_Test;

@@ -308,7 +308,7 @@ def index_version():
 
 
 def init_local_crate(name="xxx", binary=True, enter=True, update=True,
-                     with_maintainer_login=False):
+                     with_maintainer_login=False, with_test=False):
     """
     Initialize a local crate and enter its folder for further testing.
 
@@ -322,7 +322,10 @@ def init_local_crate(name="xxx", binary=True, enter=True, update=True,
         field of the manifest to `["github-username"]` so that the crate is
         valid for submission to the community index.
     """
-    run_alr("init", name, "--bin" if binary else "--lib")
+    args = [name, "--bin" if binary else "--lib"]
+    if not with_test:
+        args.append("--no-test")
+    run_alr("init", *args)
     os.chdir(name)
 
     if update:

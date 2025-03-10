@@ -24,6 +24,12 @@ package Alire.Paths with Preelaborate is
    --  Folder within a workspace that will contain metadata/build files,
    --  dependency releases, etc.
 
+   Default_Config_Folder : constant Relative_Path := "config";
+   --  Default folder containing crate config GPR files
+
+   Default_Tests_Folder : constant Relative_Path := "tests";
+   --  Default folder for tests crate created with alr init
+
    Scripts_Graph_Easy            : constant String := "graph-easy";
    --  Script for ASCII graphs
 

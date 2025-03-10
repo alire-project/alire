@@ -1,5 +1,5 @@
 """
-Check that the default "get & build" test for remote crates in `alr test` works
+Check that the default "get & build" test for remote crates in `alr index-test` works
 """
 
 import re
@@ -26,7 +26,7 @@ for args in test_args:
     os.mkdir("t")
     os.chdir("t")
 
-    run_alr("test", *args)  # Should not err
+    run_alr("index-test", *args)  # Should not err
 
     # Check test outcome
     assert_match(".*" +
