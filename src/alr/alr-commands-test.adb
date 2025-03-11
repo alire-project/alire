@@ -138,6 +138,8 @@ package body Alr.Commands.Test is
                & "' does not exist.");
          end if;
       end loop;
+
+      Alire.Put_Success ("Successful test run");
    end Execute;
 
    ----------------------
