@@ -15,7 +15,7 @@
 	url = https://github.com/alire-project/simple_logging.git
 [submodule "deps/ada-toml"]
 	path = deps/ada-toml
-	url = https://github.com/pmderodat/ada-toml
+	url = https://github.com/mosteo/ada-toml
 [submodule "deps/gnatcoll-slim"]
 	path = deps/gnatcoll-slim
 	url = https://github.com/alire-project/gnatcoll-core.git
@@ -69,3 +69,9 @@
 [submodule "deps/yeison"]
 	path = deps/yeison
 	url = https://github.com/mosteo/yeison
+[submodule "deps/templates-parser"]
+	path = deps/templates-parser
+	url = https://github.com/alire-project/templates-parser
+[submodule "deps/xmlada"]
+	path = deps/xmlada
+	url = https://github.com/alire-project/xmlada

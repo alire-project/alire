@@ -28,9 +28,15 @@ aggregate project Alr_Env is
                          "deps/simple_logging",
                          "deps/spdx",
                          "deps/stopwatch",
+                         "deps/templates-parser",
                          "deps/toml_slicer",
                          "deps/umwi",
                          "deps/uri-ada",
+                         "deps/xmlada",
+                         "deps/xmlada/dom",
+                         "deps/xmlada/input_sources",
+                         "deps/xmlada/sax",
+                         "deps/xmlada/unicode",
                          "deps/xmlezout",
                          "deps/yeison/yeison_12"
                         );
@@ -39,12 +45,24 @@ aggregate project Alr_Env is
 
    --  Set environment variables for dependencies
 
+   for External ("XMLADA_BUILD_MODE") use "Production";
+
    case Alire_Common.Host_Os is
-      when "freebsd" => for External ("GNATCOLL_OS") use "unix";
-      when "openbsd" => for External ("GNATCOLL_OS") use "unix";
-      when "linux"   => for External ("GNATCOLL_OS") use "unix";
-      when "macos"   => for External ("GNATCOLL_OS") use "osx";
-      when "windows" => for External ("GNATCOLL_OS") use "windows";
+      when "freebsd" =>
+         for External ("GNATCOLL_OS") use "unix";
+         for External ("PRJ_TARGET") use "FreeBSD"; -- used by templates_parser
+      when "openbsd" =>
+         for External ("GNATCOLL_OS") use "unix";
+         for External ("PRJ_TARGET") use "UNIX";
+      when "linux"   =>
+         for External ("GNATCOLL_OS") use "unix";
+         for External ("PRJ_TARGET") use "Linux";
+      when "macos"   =>
+         for External ("GNATCOLL_OS") use "osx";
+         for External ("PRJ_TARGET") use "macOS";
+      when "windows" =>
+         for External ("GNATCOLL_OS") use "windows";
+         for External ("PRJ_TARGET") use "Windows";
    end case;
 
    for External ("LIBRARY_TYPE") use "static";

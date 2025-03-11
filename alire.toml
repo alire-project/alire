@@ -32,6 +32,7 @@ semantic_versioning = "^3.0"
 simple_logging = "^2.0"
 si_units = "~0.2.2"
 stopwatch = "~0.1"
+templates_parser = "^21" # Once we drop GNAT 10 we can go to ^24 (last Ada 2012 version)
 toml_slicer = "~0.1"
 uri_ada = "^2.0"
 spdx = "~0.2"
@@ -39,14 +40,15 @@ spdx = "~0.2"
 # For some reason static-pic is causing problems in CLIC
 [gpr-set-externals]
 CLIC_LIBRARY_TYPE="static"
+XMLADA_BUILD_MODE="Production"
 
-# Building alr requires the explicit setting of this variable
+# Building alr requires the explicit setting of these variables
 [gpr-set-externals."case(os)"]
-freebsd = { ALIRE_OS = "freebsd" }
-openbsd = { ALIRE_OS = "openbsd" }
-linux   = { ALIRE_OS = "linux" }
-macos   = { ALIRE_OS = "macos" }
-windows = { ALIRE_OS = "windows" }
+freebsd = { ALIRE_OS = "freebsd", GNATCOLL_OS = "unix",    PRJ_TARGET = "FreeBSD" }
+openbsd = { ALIRE_OS = "openbsd", GNATCOLL_OS = "unix",    PRJ_TARGET = "UNIX" }
+linux   = { ALIRE_OS = "linux",   GNATCOLL_OS = "unix",    PRJ_TARGET = "Linux" }
+macos   = { ALIRE_OS = "macos",   GNATCOLL_OS = "osx",     PRJ_TARGET = "macOS" }
+windows = { ALIRE_OS = "windows", GNATCOLL_OS = "windows", PRJ_TARGET = "Windows" }
 "..."   = { ALIRE_OS = "unknown" } # Will cause the build to fail
 
 # Some dependencies require precise versions during the development cycle:
@@ -133,4 +135,13 @@ command = ["pwsh", "scripts/version-patcher.ps1"]
 [actions.'case(os)'.'...']
 type = "pre-build"
 command = ["scripts/version-patcher.sh"]
+
+# Before building, on Linux only, we regenerate resources. This is not needed
+# on other platforms as this is only to ensure that in the rare case of
+# template modification, the developer on Linux has not to regenerate manually
+# every time. For builds on GitHub, embedded templates should be up to date.
+[[actions]]
+[actions.'case(os)'.linux]
+type = "pre-build"
+command = ["support/embedder/embedder.sh"]
 

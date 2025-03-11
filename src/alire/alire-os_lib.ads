@@ -4,12 +4,14 @@ with GNATCOLL.OS.Constants;
 
 package Alire.OS_Lib with Preelaborate is
 
-   function "/" (L, R : String) return String;
+   function "/" (L : Any_Path; R : Relative_Path) return Any_Path with
+     Post => (if R = "" then "/"'Result = L);
    --  Shorthand for path composition
 
    --  Package to enable easy use of "/"
    package Operators is
-      function "/" (L, R : String) return String renames OS_Lib."/";
+      function "/" (L : Any_Path; R : Relative_Path) return Any_Path
+                    renames OS_Lib."/";
    end Operators;
 
    procedure Bailout (Code : Integer := 0);

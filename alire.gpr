@@ -17,6 +17,7 @@ with "simple_logging";
 with "si_units";
 with "spdx";
 with "stopwatch";
+with "templates_parser";
 with "toml_slicer";
 with "uri_ada";
 with "xml_ez_out";
@@ -25,10 +26,12 @@ library project Alire is
 
    for Library_Name use "alire";
 
-   --  Set OS-dependent source files
+   --  OS-independent source files
 
-   Src_Dirs := ("src/alire");
+   Src_Dirs := ("src/alire",
+                "src/templates");
 
+   --  OS-dependent source files
    case Alire_Common.Host_Os is
       when "freebsd" => Src_Dirs := Src_Dirs & ("src/alire/os_freebsd");
       when "openbsd" => Src_Dirs := Src_Dirs & ("src/alire/os_openbsd");

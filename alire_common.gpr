@@ -64,7 +64,7 @@ abstract project Alire_Common is
             "-gnatx",
             "-gnatwJ" -- Disable warnings about obsolescent "()"
            );
-      when "disabled" => Experimental_Ada_Switches := ();
+      when "disabled" => Experimental_Ada_Switches := ("-gnat2012");
    end case;
 
    Ada_Common_Switches :=
@@ -110,7 +110,8 @@ abstract project Alire_Common is
                --  Enable lots of extra runtime checks
                "-gnatVa", "-gnatwa", "-gnato", "-fstack-check", "-gnata",
                "-gnatf", "-fPIC")
-              & Style_Check_Switches;
+              & Style_Check_Switches
+              & Experimental_Ada_Switches;
 
             for Default_Switches ("C") use ("-g", "-O2", "-Wall", "-fPIC");
             --  Likewise for C units

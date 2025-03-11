@@ -9,6 +9,9 @@ with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.TOML_Adapters with Preelaborate is
 
+   function Escape (S : String) return String;
+   --  Returns an unquoted string escaped for use in a doubly-quoted string
+
    function Create_Table (Key   : String;
                           Value : TOML.TOML_Value)
                           return TOML.TOML_Value with
@@ -147,10 +150,9 @@ package Alire.TOML_Adapters with Preelaborate is
    function "+" (Vect : AAA.Strings.Vector) return TOML.TOML_Value;
 
    function To_Array (V : TOML.TOML_Value) return TOML.TOML_Value with
-     Pre  => V.Kind in TOML.Atom_Value_Kind or else V.Kind = TOML.TOML_Array,
      Post => To_Array'Result.Kind = TOML.TOML_Array;
-   --  Take an atom value and return an array of a single element
-   --  If already an array, do nothing
+   --  Take a value and return an array of a single element.
+   --  If already an array, do nothing.
 
    function To_Table (Key : String;
                       Val : TOML.TOML_Value) return TOML.TOML_Value with
@@ -165,6 +167,12 @@ package Alire.TOML_Adapters with Preelaborate is
    --  Take some enumeration image and turn it into a TOML-style key, replacing
    --  every "_" with a "-" and in lower case.
 
+   generic
+      type Enum is (<>);
+   function Tomify_Enum (E : Enum) return TOML.TOML_Value with
+     Post => Tomify_Enum'Result.Kind = TOML.TOML_String;
+   --  As Tomify function, but taking enumeration values directly
+
    function To_Vector (Val : TOML.TOML_Value) return AAA.Strings.Vector
      with
        Pre => Val.Kind = TOML.TOML_Array;
@@ -173,11 +181,6 @@ package Alire.TOML_Adapters with Preelaborate is
    function Merge_Tables (L, R : TOML.TOML_Value) return TOML.TOML_Value with
      Pre => L.Kind in TOML.TOML_Table and then R.Kind in TOML.TOML_Table,
      Post => Merge_Tables'Result.Kind in TOML.TOML_Table;
-
-   generic
-      type Enum is (<>);
-   function Tomify_Enum (E : Enum) return TOML.TOML_Value;
-   --  As the previous function, but taking enumeration values directly.
 
 private
 
