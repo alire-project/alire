@@ -282,8 +282,6 @@ package body Alire.Test_Runner is
          Ada.Text_IO.Flush;
          if Driver.Fail_Count /= 0 then
             Trace.Error ("failed" & Driver.Fail_Count'Image & " tests");
-         else
-            Alire.Put_Success ("Test run completed successfully");
          end if;
          return Driver.Fail_Count;
       else
