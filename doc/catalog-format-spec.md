@@ -396,11 +396,11 @@ static, i.e. they cannot depend on the context.
      successfully completed. This kind of action is run for all releases in the
      solution.
 
-   - `test`: the command is run on demand for crate testing within the Alire
-      ecosystem (using `alr index-test`). This kind of action is run only for the
-      root crate being tested. The crate is not built beforehand when a test
-      action is defined so, if a build is necessary, it should be explicitly
-      given as part of the action sequence.
+   - _[⚠️ deprecated]_ `test`: the command is run on demand for crate testing
+     within the Alire ecosystem (using `alr test`). This kind of action is run
+     only for the root crate being tested. The crate is not built beforehand
+     when a test action is defined so, if a build is necessary, it should be
+     explicitly given as part of the action sequence.
 
    Since actions may end being run more than once they should take this into
    account and allow multiple runs with the expected results intended by the
@@ -434,6 +434,35 @@ static, i.e. they cannot depend on the context.
    [[actions]]
    # Another action, that needs not be also conditional (but could be).
    ```
+
+ -  `test`: optional section that configures the behaviour of `alr test`.
+    The test section accepts dynamic expressions, making it possible to use 
+    different test runners on different platforms. The general syntax for this
+    section is:
+
+    ```toml
+    [test]
+    runner = <builtin>
+    # OR
+    command = <command>
+
+    directory = <relative path>
+    jobs = <number>
+    ```
+
+    `<builtin>` is a builtin test runner name, currently only `'alire'`.
+    `<command>` is an array of strings that will be run as an external command.
+
+    When running `alr test`, Alire will first enter the given `directory`, a
+    subfolder of the crate root, and execute either the builtin test runner or
+    the given external command.
+
+    The `jobs` parameter describes how many tests should be run in parallel. It
+    is only valid in the context of the builtin test runner for now.
+
+    The `[test]` section also accepts an array of test runners (with
+    `[[test]]`), although this is not recommended, as you lose the ability to
+    pass extra arguments to the test command with `alr test`.
 
  - `auto-gpr-with`: optional Boolean value that specifies if the project (gpr) files
    of a crate can be automatically depended upon ('withed') directly by the root
