@@ -402,6 +402,9 @@ static, i.e. they cannot depend on the context.
      when a test action is defined so, if a build is necessary, it should be
      explicitly given as part of the action sequence.
 
+     *Test actions are deprecated; use the `[test]` section in the manifest to
+     configure crate tests instead.*
+
    Since actions may end being run more than once they should take this into
    account and allow multiple runs with the expected results intended by the
    packager.
@@ -435,7 +438,7 @@ static, i.e. they cannot depend on the context.
    # Another action, that needs not be also conditional (but could be).
    ```
 
- -  `test`: optional section that configures the behaviour of `alr test`.
+ -  `test`: optional section that configures the behavior of `alr test`.
     The test section accepts dynamic expressions, making it possible to use 
     different test runners on different platforms. The general syntax for this
     section is:
@@ -444,7 +447,7 @@ static, i.e. they cannot depend on the context.
     [test]
     runner = <builtin>
     # OR
-    command = <command>
+    command = ["<command>", "<argument>", ...]
 
     directory = <relative path>
     jobs = <number>
