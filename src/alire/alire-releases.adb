@@ -1196,12 +1196,15 @@ package body Alire.Releases is
             if Root.Has (Toml_Key) then
                case Alire.Properties.From_TOML.Cardinality (Prop) is
                   when Unique | Multiple_Deprecated =>
-                     pragma Assert
+                     Assert
                        (Root.Get (Toml_Key).Kind in
                             TOML.Atom_Value_Kind
                           | TOML.TOML_Table,
                         "Expected unique value/table for key '" & Toml_Key
-                        & "' but is: " & Root.Get (Toml_Key).Kind'Image);
+                        & "' but is: " & Root.Get (Toml_Key).Kind'Image,
+                        Unchecked => True);
+                     --  Unchecked as it shouldn't happen if manifest reading
+                     --  did its checks as intended.
                   when Multiple =>
                      Root.Set
                        (Toml_Key,
