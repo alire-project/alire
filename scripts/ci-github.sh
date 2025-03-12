@@ -118,7 +118,14 @@ $run_python ./run.py --show-time-info -E || { echo Python test suite failures, u
 cd ..
 echo ............................
 
-# Run Ada testsuite last as re-building alr in validation mode is time-consuming
-# and we want to catch any issues with the Python testsuite first.
+# Run Ada testsuite last as re-building alr in validation mode is
+# time-consuming and we want to catch any issues with the Python testsuite
+# first. Also, as we want to keep the already built alr for the artifacts and
+# possible releases, we preserve the current alr and restore it afterwards.
+# This also allows Windows to generate a new executable (otherwise it cannot
+# overwrite the running binary).
+
+mkdir bak && cp bin/alr* bak
 echo Running Ada test suite now:
-alr test || {echo Ada test suite failures, unstable build!; exit 1; }
+bak/alr test || { echo Ada test suite failures, unstable build!; exit 1; }
+rm -rf bin/alr* && mv bak/alr* bin
