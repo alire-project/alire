@@ -125,6 +125,13 @@ echo ............................
 # This also allows Windows to generate a new executable (otherwise it cannot
 # overwrite the running binary).
 
+# if external=true is passed, we select the system external compiler
+
+if [[ " $* " == *" external=true "* ]]; then
+    echo "Selecting external compiler"
+    alr toolchain --select gnat_external gprbuild
+fi
+
 mkdir bak && cp bin/alr* bak
 echo Running Ada test suite now:
 bak/alr test || { echo Ada test suite failures, unstable build!; exit 1; }
