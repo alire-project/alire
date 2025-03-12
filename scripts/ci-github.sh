@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# Parameters (optional):
+# skip_build   : skip alr build
+# skip_test    : skip testsuites
+# use_external : use the system external compiler for the Ada testsuite
+
 trap 'echo "ERROR at line ${LINENO} (code: $?)" >&2' ERR
 trap 'echo "Interrupted" >&2 ; exit 1' INT
 
@@ -35,8 +40,8 @@ if [ "$(get_OS)" == "macos" ]; then
     ALR_LINKER_ARGS="-static-libgcc"
 fi
 
-# Build alr if no argument is "build=false"
-if [[ " $* " == *" build=false "* ]]; then
+# Build alr if "skip_build" is not passed"
+if [[ " $* " == *" skip_build "* ]]; then
     echo "Skipping alr build, explicitly disabled via arguments"
 else
     export ALIRE_OS=$(get_OS)
@@ -77,8 +82,8 @@ echo ALR SEARCH:
 alr -q -d search --list --external
 echo ............................
 
-# Exit without testing if some argument is "test=false"
-if [[ " $* " == *" test=false "* ]]; then
+# Exit without testing if some argument is "skip_test"
+if [[ " $* " == *" skip_test "* ]]; then
     echo "SKIPPING testsuite, explicitly disabled via arguments"
     exit 0
 fi
@@ -125,9 +130,9 @@ echo ............................
 # This also allows Windows to generate a new executable (otherwise it cannot
 # overwrite the running binary).
 
-# if external=true is passed, we select the system external compiler
+# if use_external is passed, we select the system external compiler
 
-if [[ " $* " == *" external=true "* ]]; then
+if [[ " $* " == *" use_external "* ]]; then
     echo "Selecting external compiler"
     alr toolchain --select gnat_external gprbuild
 fi

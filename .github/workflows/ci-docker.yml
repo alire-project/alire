@@ -46,7 +46,7 @@ jobs:
       uses: mosteo-actions/docker-run@v2
       with:
         image: ghcr.io/alire-project/docker/gnat:${{matrix.tag}}
-        command: scripts/ci-github.sh external=true
+        command: scripts/ci-github.sh use_external # Use external compiler already installed
         params: -v${PWD}:/alire -w /alire
 
     - name: Upload logs (if failed)
