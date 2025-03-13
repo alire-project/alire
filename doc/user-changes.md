@@ -4,7 +4,31 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
-## Release `2.2`
+## Release `3.0`
+
+### New test command
+
+PR [#1874](https://github.com/alire-project/alire/pull/1874)
+
+The `alr test` command can now be configured with a new `[test]` section in the
+Alire manifest, with the option to use a built-in test runner or an external
+command.
+
+```toml
+[test]
+runner = 'alire'
+# OR
+command = ["my", "custom", "runner"]
+```
+
+The built-in test runner allows crate authors to compile and run tests from
+simple `.adb` files. It compiles and runs every `.adb` file of the subcrate's
+`/src` folder as a separate test. A skeleton test subcrate is now generated
+with `alr init` (this can be prevented with the `--no-test` flag).
+
+For backwards compatibility, running `alr test` without a `[test]` section in
+the manifest will still run local test actions, but they should be considered
+deprecated. The remote testing capabilities of `alr test` have been removed.
 
 ## Release `2.1`
 
