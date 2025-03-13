@@ -2,7 +2,24 @@ Alire/ALR's testsuite
 =====================
 
 This directory intends to host a comprehensive testsuite for Alire/ALR as a
-library/tool. The testsuite framework currently requires a Python 3 interpreter
+library/tool. There are actually two testsuites: one in Python, which tests
+behaviors of `alr` as a user would use it, and another one in Ada, that tests
+internal aspects of the codebase.
+
+# Ada testsuite
+
+The Ada testsuite leverages the built-in test facilities of `alr`, and hence is
+run simply by issuing `alr test` from anywhere inside the crate.
+
+To add tests to this testsuite, you add new procedures under
+`testsuite/tests_ada/src`. You can easily edit all tests by running `alr edit`
+from within then `testsuite/tests_ada` folder.
+
+The remainder of this document deals with the Python testsuite.
+
+# Python testsuite
+
+The Python testsuite framework currently requires a Python 3 interpreter
 with the [e3-testsuite](https://e3-testsuite.readthedocs.io) package (from PyPI)
 installed.
 
@@ -40,14 +57,14 @@ $ pip install -r requirements.txt
 $ ./run.py
 ```
 
-# Creating tests
+## Creating tests
 All tests are based on running a Python script. There are these test drivers:
 
 - `python-script`: run in host in both sandboxed and shared build mode.
     - The build mode can be narrowed down with the `build_mode` attribute.
 - `docker-wrapper`: run in a pristine docker Ubuntu image in shared build mode.
 
-# Environment variables
+## Environment variables
 The following variables can be used to modify testsuite behavior.
 
 For `ALIRE_TESTSUITE_DISABLE_*` variables, their mere existence activates their

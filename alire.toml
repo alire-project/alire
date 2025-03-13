@@ -10,7 +10,6 @@ maintainers-logins = ["mosteo", "Fabien-Chouteau"]
 # At some point we should have a separate alire/libalire crate for use of
 # alire.gpr only. For now this crate is not intended as a dependency but to be
 # used to build alr.
-auto-gpr-with = false
 project-files = ["alr.gpr"]
 executables = ["alr"]
 
@@ -134,3 +133,6 @@ command = ["pwsh", "scripts/version-patcher.ps1"]
 type = "pre-build"
 command = ["scripts/version-patcher.sh"]
 
+[test]
+runner = "alire"
+directory = "testsuite/tests_ada"

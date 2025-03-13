@@ -1,0 +1,12 @@
+name = 'alr_tests'
+description = ''
+version = '0.0.0-test'
+
+[[depends-on]]
+alr = '*'
+
+[[pins]]
+alr = { path = '../..' }
+
+[build-profiles]
+alr = 'validation'
