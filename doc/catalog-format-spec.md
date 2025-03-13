@@ -397,7 +397,7 @@ static, i.e. they cannot depend on the context.
      solution.
 
    - `test`: the command is run on demand for crate testing within the Alire
-      ecosystem (using `alr test`). This kind of action is run only for the
+      ecosystem (using `alr index-test`). This kind of action is run only for the
       root crate being tested. The crate is not built beforehand when a test
       action is defined so, if a build is necessary, it should be explicitly
       given as part of the action sequence.

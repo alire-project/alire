@@ -8,7 +8,7 @@ import re
 import shutil
 import subprocess
 
-from drivers.alr import run_alr, run_alr_interactive, alr_settings_set
+from drivers.alr import init_local_crate, run_alr, run_alr_interactive, alr_settings_set
 from drivers.helpers import init_git_repo, WrapCommand
 from drivers.asserts import assert_match, assert_file_exists
 
@@ -64,8 +64,7 @@ def test(
     # Create an alire workspace to act as a "remote"
     os.makedirs("remote")
     os.chdir("remote")
-    run_alr("init", "--bin", "xxx")
-    os.chdir("xxx")
+    init_local_crate()
     # Adjust the value of maintainers-logins if required
     if maint_logins is not None:
         with open("alire.toml", "a") as f:

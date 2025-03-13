@@ -35,6 +35,13 @@ compare(contents('xxx'), ['xxx/.gitignore',
                           'xxx/share/xxx',
                           'xxx/src',
                           'xxx/src/xxx.adb',
+                          'xxx/tests',
+                          'xxx/tests/alire.toml',
+                          'xxx/tests/common',
+                          'xxx/tests/common/xxx_tests.ads',
+                          'xxx/tests/src',
+                          'xxx/tests/src/xxx_tests-example_test.adb',
+                          'xxx/tests/xxx_tests.gpr',
                           'xxx/xxx.gpr'])
 
 # Plain init, existing empty dir
@@ -54,12 +61,37 @@ compare(contents('aaa'), ['aaa/.gitignore',
                           'aaa/share',
                           'aaa/share/aaa',
                           'aaa/src',
-                          'aaa/src/aaa.adb'])
+                          'aaa/src/aaa.adb',
+                          'aaa/tests',
+                          'aaa/tests/aaa_tests.gpr',
+                          'aaa/tests/alire.toml',
+                          'aaa/tests/common',
+                          'aaa/tests/common/aaa_tests.ads',
+                          'aaa/tests/src',
+                          'aaa/tests/src/aaa_tests-example_test.adb'])
 
 # Init without skeleton
 run_alr('init', '--bin', '--no-skel', 'yyy')
 compare(contents('yyy'), ['yyy/alire.toml',
                           ])
+
+# Init without tests
+run_alr('init', '--bin', '--no-test', 'bbb')
+compare(contents('bbb'), ['bbb/.gitignore',
+                          'bbb/alire',
+                          'bbb/alire.toml',
+                          'bbb/alire/alire.lock',
+                          'bbb/alire/build_hash_inputs',
+                          'bbb/alire/settings.toml',
+                          'bbb/bbb.gpr',
+                          'bbb/config',
+                          'bbb/config/bbb_config.ads',
+                          'bbb/config/bbb_config.gpr',
+                          'bbb/config/bbb_config.h',
+                          'bbb/share',
+                          'bbb/share/bbb',
+                          'bbb/src',
+                          'bbb/src/bbb.adb'])
 
 # Init with existing crate
 os.chdir('yyy')
@@ -98,6 +130,13 @@ compare(contents('.'), ['./.gitignore',
                         './share/zzz',
                         './src',
                         './src/zzz.adb',
+                        './tests',
+                        './tests/alire.toml',
+                        './tests/common',
+                        './tests/common/zzz_tests.ads',
+                        './tests/src',
+                        './tests/src/zzz_tests-example_test.adb',
+                        './tests/zzz_tests.gpr',
                         './zzz.gpr'])
 
 

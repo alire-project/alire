@@ -1,5 +1,5 @@
 """
-Test custom actions for `alr test`
+Test custom actions for `alr index-test`
 """
 
 from drivers.alr import run_alr
@@ -9,7 +9,7 @@ from glob import glob
 
 from os import chdir
 
-p = run_alr('test', '--continue', 'hello')
+p = run_alr('index-test', '--continue', 'hello')
 
 # Enter logging folder
 chdir(glob('hello*')[0])
