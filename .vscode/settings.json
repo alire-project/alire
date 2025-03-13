@@ -11,4 +11,5 @@
     "terminal.integrated.env.linux": {
         "ALIRE_OS": "linux",
     },
+    "sarif-viewer.connectToGithubCodeScanning": "off",
 }

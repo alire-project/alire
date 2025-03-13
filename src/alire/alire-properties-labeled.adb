@@ -85,11 +85,6 @@ package body Alire.Properties.Labeled is
                      Val.Item (I).As_String);
                   use all type Conditional.Properties;
                begin
-                  if Cardinality (L.Name) = Unique and then I > 1 then
-                     raise Checked_Error with
-                       "Expected single value for " & Key;
-                  end if;
-
                   --  Label-specific validation:
                   L.Validate (From);
 

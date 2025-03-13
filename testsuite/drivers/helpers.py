@@ -140,7 +140,7 @@ def offset_timestamp(file, seconds):
     """
     Add offset to the modification time of a file
     """
-    os.utime(file, (os.path.getatime(file), 
+    os.utime(file, (os.path.getatime(file),
                     os.path.getmtime(file) + seconds))
 
 
@@ -270,6 +270,14 @@ def md5sum(file):
             file_hash.update(chunk)
 
     return file_hash.hexdigest()
+
+
+def append_to_file(filename : str, lines : []) -> None:
+    """
+    Append the given lines to a file
+    """
+    with open(filename, "at") as file:
+        file.write("\n".join(lines))
 
 
 def prepend_to_file(filename : str, lines : []) -> None:
