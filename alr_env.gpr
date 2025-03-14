@@ -32,11 +32,6 @@ aggregate project Alr_Env is
                          "deps/toml_slicer",
                          "deps/umwi",
                          "deps/uri-ada",
-                         "deps/xmlada",
-                         "deps/xmlada/dom",
-                         "deps/xmlada/input_sources",
-                         "deps/xmlada/sax",
-                         "deps/xmlada/unicode",
                          "deps/xmlezout",
                          "deps/yeison/yeison_12"
                         );
@@ -44,8 +39,6 @@ aggregate project Alr_Env is
    for Project_Files use ("alr.gpr");
 
    --  Set environment variables for dependencies
-
-   for External ("XMLADA_BUILD_MODE") use "Production";
 
    case Alire_Common.Host_Os is
       when "freebsd" =>
