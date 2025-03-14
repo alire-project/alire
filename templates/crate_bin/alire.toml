@@ -12,7 +12,7 @@ website = "@_WEBSITE_@"
 tags = [@_TAGS_@]
 
 executables = ["@_LOWER:NAME_@"]
-@@IF@@ @_TEST_@
+@@IF@@ @_WITH_TEST_@
 
 [test]
 runner = "alire"

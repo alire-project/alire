@@ -22,18 +22,19 @@ package Alire.Templates.Builtins is
 
    --  Hardcoded initializations in Alire
 
-   --  Info needed to initialize a crate, MUST NOT be TOML-escaped (done here)
+   --  Info needed to initialize a crate, MUST NOT be TOML-escaped (done here),
+   --  and its corresponding template name.
    type Crate_Init_Info is record
-      Name         : UString;
-      Is_Library   : Boolean;
-      GitHub_Login : UString;
-      Username     : UString;
-      Email        : UString;
-      Licenses     : UString;
-      Description  : UString;
-      Website      : UString;
-      Tags         : AAA.Strings.Vector;
-      With_Tests   : Boolean;
+      Name         : UString;            -- NAME
+      Is_Library   : Boolean;            -- IS_LIBRARY
+      GitHub_Login : UString;            -- LOGIN
+      Username     : UString;            -- USERNAME
+      Email        : UString;            -- EMAIL
+      Licenses     : UString;            -- LICENSES
+      Description  : UString;            -- DESCRIPTION
+      Website      : UString;            -- WEBSITE
+      Tags         : AAA.Strings.Vector; -- TAGS (expanded: "tag1", "tag2"...)
+      With_Test    : Boolean;            -- WITH_TEST
    end record;
 
    function Init_Crate_Translation (Info : Crate_Init_Info)
@@ -92,6 +93,7 @@ private
                                     return Translations
    is (New_Translation
        .Append ("NAME",        Info.Name)
+       .Append ("IS_LIBRARY",  Info.Is_Library)
        .Append ("LOGIN",       Info.GitHub_Login)
        .Append ("USERNAME",    Escape (+Info.Username))
        .Append ("EMAIL",       Info.Email)
@@ -102,7 +104,7 @@ private
          (if Info.Tags.Is_Empty
           then ""
           else '"' & Info.Tags.Flatten ('"' & ", " & '"') & '"'))
-       .Append ("TEST", Info.With_Tests)
+       .Append ("WITH_TEST", Info.With_Test)
       );
 
 end Alire.Templates.Builtins;

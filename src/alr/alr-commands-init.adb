@@ -93,7 +93,7 @@ package body Alr.Commands.Init is
 
       procedure Generate_Test_Crate is
       begin
-         if Info.With_Tests then
+         if Info.With_Test then
             Templates.Translate_Tree
               (Test_Directory,
                Templates.Builtins.Crate_Test,
@@ -379,7 +379,7 @@ package body Alr.Commands.Init is
          Reportaise_Wrong_Arguments ("Please provide either --bin or --lib");
       end if;
 
-      Info.With_Tests := not (Cmd.No_Test or else Cmd.No_Skel);
+      Info.With_Test := not (Cmd.No_Test or else Cmd.No_Skel);
 
       Query_Crate_Name (Args, Info);
 
