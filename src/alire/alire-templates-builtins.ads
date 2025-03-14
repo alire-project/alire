@@ -101,7 +101,7 @@ private
        .Append ("TAGS",
          (if Info.Tags.Is_Empty
           then ""
-          else Info.Tags.Flatten ('"' & ", " & '"')))
+          else '"' & Info.Tags.Flatten ('"' & ", " & '"') & '"'))
        .Append ("TEST", Info.With_Tests)
       );
 
