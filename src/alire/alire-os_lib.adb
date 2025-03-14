@@ -7,9 +7,12 @@ package body Alire.OS_Lib is
    ---------
 
    function "/" (L : Any_Path; R : Relative_Path) return Any_Path is
-     (L &
-        (if R /= ""
-         then GNAT.OS_Lib.Directory_Separator & R
+     (L
+      & (if R /= "" and then L (L'Last) /= GNAT.OS_Lib.Directory_Separator
+         then "" & GNAT.OS_Lib.Directory_Separator
+         else "")
+      & (if R /= ""
+         then  R
          else ""));
 
    -------------

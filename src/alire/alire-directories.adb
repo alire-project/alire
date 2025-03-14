@@ -1031,7 +1031,7 @@ package body Alire.Directories is
          Backup_Dir => Backup_Dir,
          Temp_Copy  => <>)
       do
-         if Den.Exists (File) then
+         if Den.Exists (Den.Scrub (File)) then
             if Is_File (File) then
                Ada.Directories.Copy_File (File, This.Temp_Copy.Filename);
             else
@@ -1040,7 +1040,6 @@ package body Alire.Directories is
                   & " denoting not a file but: " & Den.Kind (File)'Image);
             end if;
          end if;
-
       end return;
    end New_Replacement;
 

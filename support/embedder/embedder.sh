@@ -12,7 +12,7 @@ set -o nounset
 # Function that recursively hashes a directory and prints the hash
 function hashdir() {
     local dir="$1" # Directory to hash
-    find "$dir" -type f -exec sha256sum {} + | sort | sha256sum | cut -d ' ' -f 1
+    find "$dir" -type f -exec sha256sum {} + | cut -d' ' -f1 | sort | sha256sum | cut -d' ' -f1
 }
 
 # Start by entering the directory of the script
@@ -26,11 +26,15 @@ base=$(git rev-parse --show-toplevel)
 # Check whether we need to regenerate, based on the hash of the templates
 # stored in ./templates.hash
 
-old_hash=$(cat ./templates.hash 2>/dev/null || true)
+old_hash=$(cat ./templates.hash 2>/dev/null || echo "missing")
 new_hash=$(hashdir "$base/templates")
 if [ "$old_hash" = "$new_hash" ]; then
     echo "No changes in templates, skipping generation"
     exit 0
+else
+    echo "Changes detected in templates, regenerating"
+    echo "Old hash: $old_hash"
+    echo "New hash: $new_hash"
 fi
 
 # Location of generated files

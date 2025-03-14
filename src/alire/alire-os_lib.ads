@@ -5,6 +5,7 @@ with GNATCOLL.OS.Constants;
 package Alire.OS_Lib with Preelaborate is
 
    function "/" (L : Any_Path; R : Relative_Path) return Any_Path with
+     Pre  => L /= "",
      Post => (if R = "" then "/"'Result = L);
    --  Shorthand for path composition
 

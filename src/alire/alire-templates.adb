@@ -103,12 +103,16 @@ package body Alire.Templates is
                       (Filename     => Temp.Filename,
                        Translations => Map.Set,
                        Report       => Parsing_Error'Access);
-         Content : constant AAA.Strings.Vector
+         Content : AAA.Strings.Vector
            := AAA.Strings.Split (Parsed,
-                                 Ada.Characters.Latin_1.LF,
-                                 Trim => True);
+                                 Ada.Characters.Latin_1.LF);
          File : Utils.Text_Files.File := Utils.Text_Files.Create (Dst);
       begin
+         --  Remove a possibly empty last line
+         if not Content.Is_Empty and then Content.Last_Element = "" then
+            Content.Delete_Last;
+         end if;
+
          File.Lines.all := Content;
       end;
    end Translate_File;
