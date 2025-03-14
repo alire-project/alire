@@ -396,6 +396,16 @@ package body Alr.Commands.Init is
          Put_Line ("end " & Test_Upper & ";");
          TIO.Close (File);
 
+         if not Create (+Full_Name (Test_Directory / ".gitignore")) then
+            Trace.Warning ("Could not create .gitignore for test crate");
+            return;
+         end if;
+         Put_Line ("/obj/");
+         Put_Line ("/bin/");
+         Put_Line ("/alire/");
+         Put_Line ("/config/");
+         TIO.Close (File);
+
          Test_Srcs.Make_Dir;
          if not Create (+Full_Name (Test_Srcs / (+Test_Lower & "-example_test.adb"))) then
             Trace.Warning ("Could not create example test in 'tests/src'");
