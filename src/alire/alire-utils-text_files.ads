@@ -6,6 +6,8 @@ package Alire.Utils.Text_Files is
    --  lines. On destruction, changes to the contents are written back to disk.
    --  A backup ".prev" file is also created by default.
 
+   --  Lines are presumed to be UTF-8 and are written via Wide_Wide_Text_IO
+
    type File (<>) is tagged limited private;
 
    function Create (Name : Any_Path) return File;

@@ -6,8 +6,14 @@ package body Alire.OS_Lib is
    -- "/" --
    ---------
 
-   function "/" (L, R : String) return String is
-     (L & GNAT.OS_Lib.Directory_Separator & R);
+   function "/" (L : Any_Path; R : Relative_Path) return Any_Path is
+     (L
+      & (if R /= "" and then L (L'Last) /= GNAT.OS_Lib.Directory_Separator
+         then "" & GNAT.OS_Lib.Directory_Separator
+         else "")
+      & (if R /= ""
+         then  R
+         else ""));
 
    -------------
    -- Bailout --

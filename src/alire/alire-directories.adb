@@ -469,6 +469,13 @@ package body Alire.Directories is
          Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
+   ------------
+   -- Exists --
+   ------------
+
+   function Exists (Path : Any_Path) return Boolean
+   is (Den.Exists (Den.Scrub (Path)));
+
    ------------------
    -- Is_Directory --
    ------------------
@@ -1023,14 +1030,23 @@ package body Alire.Directories is
                              Backup_Dir : Any_Path := "")
                              return Replacer is
    begin
-      return This : constant Replacer := (Length     => File'Length,
-                                          Backup_Len => Backup_Dir'Length,
-                                          Original   => File,
-                                          Backup     => Backup,
-                                          Backup_Dir => Backup_Dir,
-                                          Temp_Copy  => <>)
+      return This : constant Replacer :=
+        (Length     => File'Length,
+         Backup_Len => Backup_Dir'Length,
+         Original   => File,
+         Backup     => Is_File (File) and then Backup,
+         Backup_Dir => Backup_Dir,
+         Temp_Copy  => <>)
       do
-         Ada.Directories.Copy_File (File, This.Temp_Copy.Filename);
+         if Exists (File) then
+            if Is_File (File) then
+               Ada.Directories.Copy_File (File, This.Temp_Copy.Filename);
+            else
+               Raise_Checked_Error
+                 ("Cannot replace path " & File
+                  & " denoting not a file but: " & Den.Kind (File)'Image);
+            end if;
+         end if;
       end return;
    end New_Replacement;
 

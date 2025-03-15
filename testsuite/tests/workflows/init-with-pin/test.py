@@ -4,14 +4,13 @@ Test a basic init-with-pin-run workflow.
 
 import os
 
-from drivers.alr import run_alr, alr_pin
+from drivers.alr import run_alr, alr_pin, init_local_crate
 from drivers.asserts import assert_eq
 from drivers.helpers import check_line_in
 
 
 # Create a new "xxx" program project
-run_alr('init', '--bin', 'xxx')
-os.chdir('xxx')
+init_local_crate(binary=True)
 
 # Make it depend on libhello, it is auto-narrowed down to ^1
 session_file = os.path.join('alire.toml')
