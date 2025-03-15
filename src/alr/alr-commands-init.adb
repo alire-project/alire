@@ -370,6 +370,7 @@ package body Alr.Commands.Init is
          Put_New_Line;
          Put_Line ("[build-profiles]");
          Put_Line (Lower_Name & " = 'validation'");
+         Put_Line (Test_Lower & " = 'validation'");
          TIO.Close (File);
 
          if not Create (+Full_Name (Test_Directory / (+Test_Lower & ".gpr"))) then
