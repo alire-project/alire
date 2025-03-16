@@ -1,9 +1,11 @@
 procedure Alr_Tests.Assertions_Enabled is
 begin
    --  Ensure assertions are enabled and working as expected
-   pragma Assert (False, "should always raise");
+   begin
+      pragma Assert (False, "should always raise");
+   exception
+      when others =>
+         return; -- Assert raised as expected and we are done
+   end;
    raise Program_Error with "assertion was not honored";
-exception
-   when others =>
-      null; -- Assert raised as expected and we are done
 end Alr_Tests.Assertions_Enabled;
