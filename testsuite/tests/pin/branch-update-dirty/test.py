@@ -5,13 +5,14 @@ manual changes to the cached clone.
 
 
 import os
+import pathlib
 import re
 import shutil
 import subprocess
 
 from drivers.alr import run_alr, alr_pin, init_local_crate
 from drivers.asserts import assert_match, assert_in_file, assert_not_substring
-from drivers.helpers import git_commit_file, init_git_repo, replace_in_file
+from drivers.helpers import git_commit_file, init_git_repo, replace_in_file, git_blast
 
 
 def run(args):
@@ -20,99 +21,124 @@ def run(args):
     return p
 
 
-# Create crate yyy, with git tracking the 'config/*' files
-init_local_crate("yyy")
-yyy_path = os.getcwd()
-replace_in_file(".gitignore", "/config/\n", "")
-init_git_repo(".")
-os.chdir("..")
+for subdir in ("", "subdir", os.path.join("subdir", "subsubdir")):
+    # Create crate yyy, with the 'config/*' files not `.gitignore`ed
+    init_local_crate("yyy")
+    replace_in_file(".gitignore", "/config/\n", "")
+    os.chdir("..")
 
-# Create and build another crate, with yyy's default branch added as a pin
-init_local_crate()
-xxx_path = os.getcwd()
-alr_pin("yyy", url=f"git+file:{yyy_path}")
-run_alr("build")
+    # Move this crate to the desired subdirectory of `yyy`
+    shutil.move("yyy", "temp")
+    shutil.move("temp", os.path.join("yyy", subdir))
 
-# Verify that the cached copy of yyy has a dirty repo (due to Alire's changes to
-# the 'config/*' files during the build)
-cached_yyy_path = os.path.join(xxx_path, "alire", "cache", "pins", "yyy")
-gpr_rel_path = os.path.join("config", "yyy_config.gpr")
-gpr_rel_path_pattern = r"config/yyy_config\.gpr" # with '/', as returned by Git
-os.chdir(cached_yyy_path)
-p = run(["git", "status", "--porcelain"])
-assert_match(rf".* M {gpr_rel_path_pattern}", p.stdout.decode())
+    # Setup a Git repository with `yyy/` as the root
+    yyy_path = os.path.realpath("yyy")
+    init_git_repo(yyy_path)
 
-# Add commits to yyy's default branch, including a change to a file in 'config/'
-os.chdir(yyy_path)
-git_commit_file("Change_config", gpr_rel_path, "This is a new addition\n", "a")
-git_commit_file("Add_test_file", "test_file", "This is a new file\n")
+    # Create and build another crate, with yyy's default branch added as a pin
+    init_local_crate()
+    xxx_path = os.getcwd()
+    alr_pin("yyy", url=f"git+file:{yyy_path}", subdir=subdir)
+    run_alr("build")
 
-# Check that the dirty repo doesn't prevent updating the pin (subject to user
-# confirmation)
-os.chdir(xxx_path)
-p = run_alr("update")
-assert_match(
-    (
+    # Verify that the cached copy of yyy has a dirty repo (due to Alire's
+    # changes to the 'config/*' files during the build)
+    cached_yyy_path = os.path.join(xxx_path, "alire", "cache", "pins", "yyy")
+    rel_config_dir_path = os.path.join(subdir, "config")
+    gpr_rel_path = os.path.join(rel_config_dir_path, "yyy_config.gpr")
+    # Git's output uses '/', even on Windows
+    gpr_rel_path_pattern = re.escape(pathlib.Path(gpr_rel_path).as_posix())
+    os.chdir(cached_yyy_path)
+    p = run(["git", "status", "--porcelain"])
+    assert_match(rf".* M {gpr_rel_path_pattern}", p.stdout.decode())
+
+    # Add commits to yyy's default branch, including a change to a file in
+    # 'config/'
+    os.chdir(yyy_path)
+    git_commit_file(
+        "Change_config", gpr_rel_path, "This is a new addition\n", "a"
+    )
+    git_commit_file("Add_test_file", "test_file", "This is a new file\n")
+
+    # Check that the dirty repo doesn't prevent updating the pin (subject to
+    # user confirmation)
+    os.chdir(xxx_path)
+    p = run_alr("update")
+    assert_match(
+        (
+            ".*Updating the pin 'yyy' will discard local uncommitted changes "
+            f"in '{re.escape(cached_yyy_path)}' to the following:"
+            rf".*[\r\n]+  {gpr_rel_path_pattern}"
+            r".*[\r\n]+These changes affect only Alire's automatically "
+            r"generated files, which are safe to overwrite\.[\r\n]+Do you want "
+            r"to proceed\?"
+        ),
+        p.out
+    )
+
+    # Check that the update was successful
+    assert_in_file(
+        os.path.join(cached_yyy_path, "test_file"), "This is a new file"
+    )
+
+    # Reset the cached clone by only one commit and repeat the above. This time
+    # the update should work without user confirmation, as there will be no
+    # conflict (only 'test_file' needs to be updated, which is not dirty).
+    os.chdir(cached_yyy_path)
+    run(["git", "reset", "--hard", "HEAD~"])
+    shutil.rmtree(rel_config_dir_path)  # So 'alr build' re-generates the files.
+    os.chdir(xxx_path)
+    run_alr("build")
+    os.chdir(cached_yyy_path)
+    p = run(["git", "status", "--porcelain"])
+    assert_match(rf".* M {gpr_rel_path_pattern}", p.stdout.decode())
+    os.chdir(xxx_path)
+    p = run_alr("update")
+    assert_not_substring("will discard local uncommitted changes", p.out)
+    assert_in_file(
+        os.path.join(cached_yyy_path, "test_file"), "This is a new file"
+    )
+
+    # Reset by one commit and repeat the process again, but write to 'test_file'
+    # so that it is dirty and there is a conflict. Since this time the change is
+    # not in one of Alire's auto-generated subdirectories, the prompt should be
+    # different.
+    #
+    # This also checks that conflicts involving untracked files are treated the
+    # same as those with tracked files.
+    os.chdir(cached_yyy_path)
+    run(["git", "reset", "--hard", "HEAD~"])
+    shutil.rmtree(rel_config_dir_path)
+    os.chdir(xxx_path)
+    run_alr("build")
+    os.chdir(cached_yyy_path)
+    with open("test_file", "w") as f:
+        f.write("This file is now dirty.\n")
+    p = run(["git", "status", "--porcelain"])
+    assert_match(rf".* M {gpr_rel_path_pattern}", p.stdout.decode())
+    assert_match(r".*\?\? test_file", p.stdout.decode())
+    os.chdir(xxx_path)
+    prompt = (
         ".*Updating the pin 'yyy' will discard local uncommitted changes in "
         f"'{re.escape(cached_yyy_path)}' to the following:"
-        rf".*[\r\n]+  {gpr_rel_path_pattern}"
-        r".*[\r\n]+These changes affect only Alire's automatically generated "
-        r"files, which are safe to overwrite\.[\r\n]+Do you want to proceed\?"
-    ),
-    p.out
-)
+        rf".*[\r\n]+  {gpr_rel_path_pattern}.*[\r\n]+  test_file"
+        r".*[\r\n]+These changes include files which were not automatically "
+        r"generated by Alire\.[\r\n]+Are you sure you want to proceed\?[\r\n]+"
+    )
+    # The default response should be 'No', so 'alr -n update' will fail.
+    p = run_alr("update", complain_on_error=False)
+    assert_match(prompt + "Using default: No", p.out)
+    # Supplying '--force' should change the default to 'Yes'.
+    p = run_alr("-f", "update")
+    assert_match(prompt + "Using default: Yes", p.out)
+    assert_in_file(
+        os.path.join(cached_yyy_path, "test_file"), "This is a new file"
+    )
 
-# Check that the update was successful
-assert_in_file(os.path.join(cached_yyy_path, "test_file"), "This is a new file")
-
-# Reset the cached clone by only one commit and repeat the above. This time the
-# update should work without user confirmation, as there will be no conflict
-# (only 'test_file' needs to be updated, which is not dirty).
-os.chdir(cached_yyy_path)
-run(["git", "reset", "--hard", "HEAD~"])
-shutil.rmtree("config") # So 'alr build' auto-generates the same files as above.
-os.chdir(xxx_path)
-run_alr("build")
-os.chdir(cached_yyy_path)
-p = run(["git", "status", "--porcelain"])
-assert_match(rf".* M {gpr_rel_path_pattern}", p.stdout.decode())
-os.chdir(xxx_path)
-p = run_alr("update")
-assert_not_substring("will discard local uncommitted changes", p.out)
-assert_in_file(os.path.join(cached_yyy_path, "test_file"), "This is a new file")
-
-# Reset by one commit and repeat the process again, but write to 'test_file' so
-# that it is dirty and there is a conflict. Since this time the change is not in
-# one of Alire's auto-generated subdirectories, the prompt should be different.
-#
-# This also checks that conflicts involving untracked files are treated the same
-# as those with tracked files.
-os.chdir(cached_yyy_path)
-run(["git", "reset", "--hard", "HEAD~"])
-shutil.rmtree("config")
-os.chdir(xxx_path)
-run_alr("build")
-os.chdir(cached_yyy_path)
-with open("test_file", "w") as f:
-    f.write("This file is now dirty.\n")
-p = run(["git", "status", "--porcelain"])
-assert_match(rf".* M {gpr_rel_path_pattern}", p.stdout.decode())
-assert_match(r".*\?\? test_file", p.stdout.decode())
-os.chdir(xxx_path)
-prompt = (
-    ".*Updating the pin 'yyy' will discard local uncommitted changes in "
-    f"'{re.escape(cached_yyy_path)}' to the following:"
-    rf".*[\r\n]+  {gpr_rel_path_pattern}.*[\r\n]+  test_file"
-    r".*[\r\n]+These changes include files which were not automatically "
-    r"generated by Alire\.[\r\n]+Are you sure you want to proceed\?[\r\n]+"
-)
-# The default response should be 'No', so 'alr -n update' will fail.
-p = run_alr("update", complain_on_error=False)
-assert_match(prompt + "Using default: No", p.out)
-# Supplying '--force' should change the default to 'Yes'.
-p = run_alr("-f", "update")
-assert_match(prompt + "Using default: Yes", p.out)
-assert_in_file(os.path.join(cached_yyy_path, "test_file"), "This is a new file")
+    # Clean up for the next iteration
+    os.chdir("..")
+    git_blast("xxx")
+    git_blast("yyy")
 
 
 print('SUCCESS')
