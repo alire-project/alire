@@ -9,4 +9,4 @@ alr = '*'
 alr = { path = '../..' }
 
 [build-profiles]
-alr = 'validation'
+"*" = 'validation'
