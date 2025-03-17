@@ -25,7 +25,12 @@ package Alr.Commands.Test is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[test_names]...");
+   is ("[args]...");
+
+   overriding
+   function Switch_Parsing
+     (Cmd : Command) return CLIC.Subcommand.Switch_Parsing_Kind
+   is (CLIC.Subcommand.Before_Double_Dash);
 
 private
 
