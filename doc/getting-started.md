@@ -318,7 +318,7 @@ projects. It needs to be configured in a `[test]` section of the Alire manifest,
 by specifying either `runner = 'alire'` or a custom runner with
 `command = [...]`.
 Any arguments passed to the `alr test` command are passed as-is to the runner
-command (or the builtin runner, which uses them for test filtering).
+command (or the built-in runner, which uses them for test filtering).
 
 It is recommended to provide tests for a library in a `tests` or `testsuite`
 subfolder of the root crate; if your test suite is an Alire crate, it can then
@@ -334,7 +334,7 @@ mycrate = { path = '..' }
 
 ### Built-in runner
 
-The builtin Alire test runner provides a simple way to run `.adb` files as
+The built-in Alire test runner provides a simple way to run `.adb` files as
 separate tests. It requires setting up a subcrate, with a GPR file that defines
 its executables in a specific way:
 
