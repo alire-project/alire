@@ -1,7 +1,6 @@
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 with Ada.Finalization;
 
-with Alire.Selftest;
 with Alire.Utils;
 
 package body Alr.Commands.Dev is
@@ -81,10 +80,6 @@ package body Alr.Commands.Dev is
          Raise_From_Finalization;
       end if;
 
-      if Cmd.Self_Test then
-         Alire.Selftest.Run;
-      end if;
-
       if Cmd.UTF_8_Test then
          Print_UTF_8_Sequence;
       end if;
@@ -137,11 +132,6 @@ package body Alr.Commands.Dev is
                      Cmd.Raise_Final'Access,
                      "", "--raise-finalization",
                      "Raise an exception from a finalization procedure");
-
-      Define_Switch (Config,
-                     Cmd.Self_Test'Access,
-                     "", "--test",
-                     "Run self-tests");
 
       Define_Switch (Config,
                      Cmd.UTF_8_Test'Access,
