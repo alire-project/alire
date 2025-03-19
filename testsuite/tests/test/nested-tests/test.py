@@ -41,12 +41,8 @@ end Xxx_Tests.Failing_Test;
 """)
 
 p = run_alr("test", complain_on_error=False)
-assert_substring("""\
-[ FAIL ] nested/failing_test
-*** Test output ***
-
-raised PROGRAM_ERROR : xxx_tests-failing_test.adb""",
-    p.out
-)
+# We check piecemeal as exact output varies between OSes (macOS in particular)
+assert_substring("[ FAIL ] nested/failing_test", p.out)
+assert_substring("raised PROGRAM_ERROR : xxx_tests-failing_test.adb", p.out)
 
 print("SUCCESS")
