@@ -8,6 +8,7 @@ may change.
 - alr: removed remote testing in `alr test` command.
 - alr: added new behavior to `alr test` and a built-in test runner.
 - manifest: added `[test]` section.
+- alr: setting a builtin without `--builtin` will emit a new warning.
 
 ### We are here
 

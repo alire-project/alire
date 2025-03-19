@@ -6,6 +6,16 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### New `--builtin` switch for `alr settings`
+
+PR [#1912](https://github.com/alire-project/alire/pull/1912)
+
+A new `--builtin` switch has been added to the `alr settings` command to avoid unintended silent errors. This switch can only be used with `--set` or `--get` operations and ensures that the setting being operated on is a built-in setting.
+
+When `--builtin` is used with a non-built-in setting, an error is raised.
+Conversely, when operating on a built-in setting without using `--builtin`, a
+warning is printed suggesting the use of `--builtin`.
+
 ### New test command
 
 PR [#1874](https://github.com/alire-project/alire/pull/1874)
