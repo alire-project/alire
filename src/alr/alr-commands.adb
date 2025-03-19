@@ -34,7 +34,6 @@ with Alr.Commands.Edit;
 with Alr.Commands.Exec;
 with Alr.Commands.Get;
 with Alr.Commands.Index;
-with Alr.Commands.Index_Test;
 with Alr.Commands.Init;
 with Alr.Commands.Install;
 with Alr.Commands.Pin;
@@ -787,7 +786,6 @@ begin
 
    Sub_Cmd.Register ("Testing", new Action.Command);
    Sub_Cmd.Register ("Testing", new Dev.Command);
-   Sub_Cmd.Register ("Testing", new Index_Test.Command);
    Sub_Cmd.Register ("Testing", new Test.Command);
 
    -- Help topics --
