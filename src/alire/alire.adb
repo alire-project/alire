@@ -163,10 +163,16 @@ package body Alire is
    -- Assert --
    ------------
 
-   procedure Assert (Condition : Boolean; Or_Else : String) is
+   procedure Assert (Condition : Boolean;
+                     Or_Else   : String;
+                     Unchecked : Boolean := False) is
    begin
       if not Condition then
-         Raise_Checked_Error (Msg => Or_Else);
+         if Unchecked then
+            raise Program_Error with Errors.Set (Or_Else);
+         else
+            Raise_Checked_Error (Msg => Or_Else);
+         end if;
       end if;
    end Assert;
 

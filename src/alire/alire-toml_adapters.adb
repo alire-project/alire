@@ -160,11 +160,12 @@ package body Alire.TOML_Adapters is
       is
          pragma Unreferenced (Key);
       begin
-         if L.Kind = TOML_Table and then R.Kind = L.Kind then
+         if L.Kind = TOML_Table and then R.Kind = TOML_Table then
             return TOML.Merge (L, R, Merge_Internal'Access);
          else
-            Raise_Checked_Error
-              ("Ill-shaped TOML information cannot be merged");
+            raise Program_Error with
+              ("Ill-shaped TOML information cannot be merged: "
+               & "left is " & L.Kind'Image & ", right is " & R.Kind'Image);
          end if;
       end Merge_Internal;
    begin

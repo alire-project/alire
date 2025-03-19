@@ -26,7 +26,12 @@ package body Alire.Properties.Tests is
 
       Res.Set ("directory", Create_String (S.Directory));
       Res.Set ("jobs", Create_Integer (Any_Integer (S.Jobs)));
-      return Res;
+
+      --  To emit an array of tables, we must return an array of 1 element
+
+      return Arr : constant TOML_Value := Create_Array do
+         Arr.Append (Res);
+      end return;
    end To_TOML;
 
    ---------------

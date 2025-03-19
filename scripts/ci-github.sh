@@ -78,7 +78,8 @@ alr settings --global
 echo ............................
 
 echo ALR SEARCH:
-# List releases for the record
+# List releases for the record, ensuring no cached interference
+alr index --reset-community
 alr -q -d search --list --external
 echo ............................
 
