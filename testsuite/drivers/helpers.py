@@ -279,6 +279,14 @@ def md5sum(file):
     return file_hash.hexdigest()
 
 
+def append_to_file(filename : str, lines : []) -> None:
+    """
+    Append the given lines to a file
+    """
+    with open(filename, "at") as file:
+        file.write("\n".join(lines))
+
+
 def prepend_to_file(filename : str, lines : []) -> None:
     """
     Prepend the given lines to a file

@@ -1,7 +1,7 @@
 description = "Sample crate"
 name = "crate2a"
 version = "2.0.0"
-licenses = []
+licenses = "MIT"
 maintainers = ["any@bo.dy"]
 maintainers-logins = ["someone"]
 
