@@ -53,6 +53,19 @@ def test_builtin_behavior(key, use_builtin, expected_message):
       # If expected_message is empty, check that there's no warning
       assert_not_substring(WARNING_PREFIX, p.out)
 
+   # Test with --unset
+   unset_args = ['settings', '--global']
+   if use_builtin:
+      unset_args.append('--builtin')
+   unset_args.extend(['--unset', key])
+
+   p = run_alr(*unset_args, complain_on_error=not is_error_case, quiet=False)
+   if expected_message:
+      assert_substring(expected_message, p.out)
+   else:
+      # If expected_message is empty, check that there's no warning
+      assert_not_substring(WARNING_PREFIX, p.out)
+
 
 # Using --builtin with a non-builtin setting (should fail)
 test_builtin_behavior(

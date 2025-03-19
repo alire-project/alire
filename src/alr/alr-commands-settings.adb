@@ -62,9 +62,10 @@ package body Alr.Commands.Settings is
            ("--show-origin only valid with --list");
       end if;
 
-      if Cmd.Builtin and then not (Cmd.Get or else Cmd.Set) then
+      if Cmd.Builtin and then not (Cmd.Get or else Cmd.Set or else Cmd.Unset)
+      then
          Reportaise_Wrong_Arguments
-           ("--builtin only valid with --get or --set");
+           ("--builtin only valid with --get, --set or --unset");
       end if;
 
       if Cmd.Builtins_Doc then
@@ -165,6 +166,8 @@ package body Alr.Commands.Settings is
                Reportaise_Wrong_Arguments ("Invalid setting key '" &
                  Key & "'");
             end if;
+
+            Check_Builtin (Key);
 
             if not CLIC.Config.Edit.Unset
               (Alire.Settings.Edit.Filepath (Lvl), Key)

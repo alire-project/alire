@@ -32,7 +32,7 @@ package Alr.Commands.Settings is
      ("[--list] [--show-origin] [key_regex] |" &
         " --get [--builtin] <key> |" &
         " --set [--builtin] <key> <value> |" &
-        " --unset <key>");
+        " --unset [--builtin] <key>");
 
 private
 
