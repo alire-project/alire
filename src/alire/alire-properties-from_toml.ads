@@ -88,13 +88,8 @@ package Alire.Properties.From_TOML is
    type Cardinalities is
      (Unique,
       --  Must be a single value
-      Multiple_Deprecated,
-      --  We accept either, but with warning if found as array (licenses
-      --  property). Still, the array should have length 1 (this must be
-      --  enforced by the property loader). We must not use this one for
-      --  new properties.
       Multiple
-      --  We accept either, but we will always export an array
+      --  We accept either table or array , but we will always export an array
      );
 
    Cardinality : constant array (Property_Keys) of Cardinalities :=
@@ -110,7 +105,7 @@ package Alire.Properties.From_TOML is
                     GPR_Externals      => Unique,
                     GPR_Set_Externals  => Unique,
                     Hint               => Unique,
-                    Licenses           => Multiple_Deprecated,
+                    Licenses           => Unique,
                     Long_Description   => Unique,
                     Maintainers        => Multiple,
                     Maintainers_Logins => Multiple,

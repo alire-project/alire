@@ -1195,7 +1195,7 @@ package body Alire.Releases is
          begin
             if Root.Has (Toml_Key) then
                case Alire.Properties.From_TOML.Cardinality (Prop) is
-                  when Unique | Multiple_Deprecated =>
+                  when Unique =>
                      Assert
                        (Root.Get (Toml_Key).Kind in
                             TOML.Atom_Value_Kind

@@ -1,10 +1,11 @@
 Log of breaking changes in index or alr. Future versions are as of today and
 may change.
 
-### alr 3.0.0 + index 1.4.0
+### alr 3.0.0 + index 1.5.0
 
 - alr: removed `ALR_CONFIG` environment variable.
 - alr: removed `alr config` command.
+- manifest: array of licenses is no longer supported (SPDX expressions allow multiple licenses).
 
 ### We are here
 
