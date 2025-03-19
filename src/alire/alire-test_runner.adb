@@ -12,6 +12,8 @@ use Alire.Utils;
 
 with CLIC.TTY;
 
+with Den.Walk;
+
 package body Alire.Test_Runner is
 
    protected Driver is
@@ -254,11 +256,14 @@ package body Alire.Test_Runner is
       -- Append --
       ------------
 
-      procedure Append (Dir_Entry : Adirs.Directory_Entry_Type) is
+      procedure Append (This         : Den.Walk.Item;
+                        Unused_Enter : in out Boolean;
+                        Unused_Stop  : in out Boolean)
+      is
          --  Helper function to append all .adb files in a folder
          --  to the `Test_List` vector
 
-         Name : constant String := Adirs.Simple_Name (Dir_Entry);
+         Name : constant String := Adirs.Simple_Name (This.Path);
       begin
          if Name'Length > 4
            and then Name (Name'Last - 3 .. Name'Last) = ".adb"
@@ -269,8 +274,12 @@ package body Alire.Test_Runner is
             Test_List.Append (Name (Name'First .. Name'Last - 4));
          end if;
       end Append;
+
    begin
-      Adirs.Search (Path / "src", "", Process => Append'Access);
+      Den.Walk.Find
+        (This    => Path / "src",
+         Action  => Append'Access);
+
       Create_Gpr_List (Root, Test_List);
 
       Trace.Info ("Building tests");
