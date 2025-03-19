@@ -1,5 +1,4 @@
 with Ada.Containers;
-with Ada.Strings.Unbounded;
 
 with Alire.Directories;
 with Alire.OS_Lib;
@@ -55,6 +54,7 @@ package body Alr.Commands.Test is
 
    overriding
    procedure Execute (Cmd : in out Command; Args : AAA.Strings.Vector) is
+      use type GNAT.Strings.String_Access;
       use type Ada.Containers.Count_Type;
       use Alire.Properties.Tests;
 
@@ -72,6 +72,29 @@ package body Alr.Commands.Test is
          Execute_Legacy (Cmd.Root);
       end if;
 
+      --  id selection logic
+      if Cmd.By_Id /= null and then Cmd.By_Id.all /= "" then
+         declare
+            Found : Natural := 0;
+         begin
+            for I in All_Settings.First_Index .. All_Settings.Last_Index loop
+               if Settings (All_Settings.Element (I)).Id = Cmd.By_Id.all then
+                  Found := I;
+               end if;
+            end loop;
+
+            if Found = 0 then
+               Reportaise_Command_Failed
+                 ("Could not find test runner with id '"
+                  & Cmd.By_Id.all
+                  & "'");
+            else
+               --  swap to first position and remove the rest
+               All_Settings.Swap (All_Settings.First_Index, Found);
+               All_Settings.Set_Length (1);
+            end if;
+         end;
+      end if;
       if not Args.Is_Empty
         and then (Cmd.Jobs >= 0 or else All_Settings.Length > 1)
       then
@@ -96,11 +119,10 @@ package body Alr.Commands.Test is
       begin
          for Test_Setting of All_Settings loop
             if Alire.Directories.Is_Directory
-              (+Settings (Test_Setting).Directory)
+              (Settings (Test_Setting).Directory)
             then
                declare
                   use Alire.Directories;
-                  use all type Ada.Strings.Unbounded.Unbounded_String;
 
                   function Get_Args return AAA.Strings.Vector
                   is (if All_Settings.Length = 1 then Args
@@ -109,8 +131,7 @@ package body Alr.Commands.Test is
 
                   S : constant Settings := Settings (Test_Setting);
 
-                  Dir      : constant Alire.Relative_Path :=
-                               To_String (S.Directory);
+                  Dir      : constant Alire.Relative_Path := S.Directory;
                   Failures : Integer;
 
                   Guard : Alire.Directories.Guard (Enter (Dir))
@@ -151,7 +172,7 @@ package body Alr.Commands.Test is
                Trace.Error ("while running" & (Settings (Test_Setting).Image));
                Reportaise_Command_Failed
                  ("directory '"
-                  & (+Settings (Test_Setting).Directory)
+                  & (Settings (Test_Setting).Directory)
                   & "' does not exist.");
             end if;
          end loop;
@@ -200,6 +221,13 @@ package body Alr.Commands.Test is
          & " if 0",
          Default  => -1,
          Argument => "N");
+      Define_Switch
+        (Config,
+         Cmd.By_Id'Access,
+         "",
+         "--id=",
+         "Select a specific test runner by id",
+         Argument => "<id>");
    end Setup_Switches;
 
 end Alr.Commands.Test;
