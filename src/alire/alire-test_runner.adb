@@ -173,9 +173,17 @@ package body Alire.Test_Runner is
       ----------------
 
       procedure Spawn_Test (Test_Name : String) is
-         Simple_Name : constant String := Adirs.Simple_Name (Test_Name);
-         Exe_Name : constant String := Simple_Name & Alire.OS_Lib.Exe_Suffix;
-         Filename : constant String :=
+         Simple_Name  : constant String := Adirs.Simple_Name (Test_Name);
+         --  Contains package name, e.g. crate_tests-my_test
+
+         Print_Name   : constant String := Strip_Prefix (Simple_Name,
+                                                         Root_Prefix);
+         --  Just the test name, e.g. my_test
+
+         Exe_Name     : constant String := Simple_Name
+                                           & Alire.OS_Lib.Exe_Suffix;
+
+         Out_Filename : constant String :=
            Root.Working_Folder / ("output_" & Simple_Name & ".tmp");
 
          Args : constant Argument_List := (1 .. 0 => <>);
@@ -185,14 +193,18 @@ package body Alire.Test_Runner is
            Non_Blocking_Spawn
              (Root.Path / "bin" / Exe_Name,
               Args,
-              Filename,
+              Out_Filename,
               Err_To_Out => True);
          if Pid = Invalid_Pid then
             Driver.Fail
               (Test_Name & " (failed to start!)", AAA.Strings.Empty_Vector);
          else
-            Running_Tests.Insert (Pid, Strip_Prefix (Test_Name, Root_Prefix));
-            Output_Files.Insert (Pid, Filename);
+            Running_Tests.Insert
+              (Pid,
+               (if Parent (Test_Name) /= "."
+                then Parent (Test_Name) / Print_Name
+                else Print_Name));
+            Output_Files.Insert (Pid, Out_Filename);
          end if;
       end Spawn_Test;
 
