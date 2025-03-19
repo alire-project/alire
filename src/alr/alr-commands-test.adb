@@ -12,6 +12,8 @@ with CLIC.Subcommand;
 
 package body Alr.Commands.Test is
 
+   package Dirs renames Alire.Directories;
+
    --------------------
    -- Execute_Legacy --
    --------------------
@@ -19,6 +21,9 @@ package body Alr.Commands.Test is
    procedure Execute_Legacy (Root : in out Alire.Roots.Root) is
       Success : Integer := 0;
       Output  : AAA.Strings.Vector;
+
+      Guard : Dirs.Guard (Dirs.Enter (Root.Path))
+      with Unreferenced;
    begin
       if Root.Release.On_Platform_Actions
            (Root.Environment,
@@ -57,6 +62,7 @@ package body Alr.Commands.Test is
       use type GNAT.Strings.String_Access;
       use type Ada.Containers.Count_Type;
       use Alire.Properties.Tests;
+      use Dirs;
 
       All_Settings : Alire.Properties.Vector;
    begin
@@ -95,6 +101,7 @@ package body Alr.Commands.Test is
             end if;
          end;
       end if;
+
       if not Args.Is_Empty
         and then (Cmd.Jobs >= 0 or else All_Settings.Length > 1)
       then
@@ -113,39 +120,32 @@ package body Alr.Commands.Test is
             & """--"" in the command line.");
       end if;
 
-      declare
-         package Dirs renames Alire.Directories;
-         CD : Dirs.Guard (Dirs.Enter (Cmd.Root.Path)) with Unreferenced;
-      begin
-         for Test_Setting of All_Settings loop
-            if Alire.Directories.Is_Directory
-              (Settings (Test_Setting).Directory)
-            then
-               declare
-                  use Alire.Directories;
+      for Test_Setting of All_Settings loop
+         if Dirs.Is_Directory
+              (Cmd.Root.Path / Settings (Test_Setting).Directory)
+         then
+            declare
+               function Get_Args return AAA.Strings.Vector
+               is (if All_Settings.Length = 1 then Args
+                   else AAA.Strings.Empty_Vector);
+               --  Only forward arguments if the runner is the only one.
 
-                  function Get_Args return AAA.Strings.Vector
-                  is (if All_Settings.Length = 1 then Args
-                      else AAA.Strings.Empty_Vector);
-                  --  Only forward arguments if the runner is the only one.
+               S        : constant Settings := Settings (Test_Setting);
+               Failures : Integer;
 
-                  S : constant Settings := Settings (Test_Setting);
+               Guard : Dirs.Guard (Enter (Cmd.Root.Path / S.Directory))
+               with Unreferenced;
+            begin
+               Cmd.Optional_Root.Discard;
 
-                  Dir      : constant Alire.Relative_Path := S.Directory;
-                  Failures : Integer;
+               if All_Settings.Length > 1 then
+                  Alire.Put_Info ("running test with" & S.Image);
+               end if;
 
-                  Guard : Alire.Directories.Guard (Enter (Dir))
-                    with Unreferenced;
-               begin
-                  Cmd.Optional_Root.Discard;
-
-                  if All_Settings.Length > 1 then
-                     Alire.Put_Info ("running test with" & S.Image);
-                  end if;
-
-                  case S.Runner.Kind is
+               case S.Runner.Kind is
                   when Alire_Runner =>
                      Cmd.Requires_Workspace;
+                     Trace.Always (Dirs.Current);
 
                      Failures :=
                        Alire.Test_Runner.Run
@@ -160,23 +160,22 @@ package body Alr.Commands.Test is
                           S.Runner.Command.Tail.Append (Get_Args),
                           Dim_Output => False);
 
-                  end case;
+               end case;
 
-                  if Failures /= 0 then
-                     Reportaise_Command_Failed
-                       (if S.Runner.Kind = Alire_Runner then ""
-                        else "test failure");
-                  end if;
-               end;
-            else
-               Trace.Error ("while running" & (Settings (Test_Setting).Image));
-               Reportaise_Command_Failed
-                 ("directory '"
-                  & (Settings (Test_Setting).Directory)
-                  & "' does not exist.");
-            end if;
-         end loop;
-      end;
+               if Failures /= 0 then
+                  Reportaise_Command_Failed
+                    (if S.Runner.Kind = Alire_Runner then ""
+                     else "test failure");
+               end if;
+            end;
+         else
+            Trace.Error ("while running" & (Settings (Test_Setting).Image));
+            Reportaise_Command_Failed
+              ("directory '"
+               & (Cmd.Root.Path / Settings (Test_Setting).Directory)
+               & "' does not exist.");
+         end if;
+      end loop;
 
       Alire.Put_Success ("Successful test run");
    end Execute;
@@ -221,6 +220,7 @@ package body Alr.Commands.Test is
          & " if 0",
          Default  => -1,
          Argument => "N");
+
       Define_Switch
         (Config,
          Cmd.By_Id'Access,
