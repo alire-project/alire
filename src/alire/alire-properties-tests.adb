@@ -40,6 +40,8 @@ package body Alire.Properties.Tests is
       use TOML;
 
       Raw : TOML_Value;
+      Id_Set : AAA.Strings.Set;
+      --  keep track of encountered ids to forbid duplicates
    begin
       if From.Unwrap.Kind /= TOML_Table then
          From.Checked_Error
@@ -52,6 +54,8 @@ package body Alire.Properties.Tests is
          --  Can't happen, unless the dispatch to us itself was erroneous
 
       end if;
+
+      Id_Set.Insert (""); --  so that the empty string is rejected as an id
 
       return Props : Conditional.Properties do
          declare
@@ -127,6 +131,17 @@ package body Alire.Properties.Tests is
                end if;
                Res.Jobs := Natural (Val.As_Integer);
             end if;
+
+            if Local.Pop (TOML_Keys.Test_Id, Val) then
+               if Val.Kind /= TOML_String
+                  or else Id_Set.Contains (Val.As_String)
+               then
+                  Local.Checked_Error ("id must be a non-empty unique string");
+               end if;
+               Id_Set.Insert (Val.As_String);
+               Res.Id := Val.As_Unbounded_String;
+            end if;
+
             Local.Report_Extra_Keys;
 
             Props := Props and Res;

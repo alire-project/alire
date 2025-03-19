@@ -449,6 +449,8 @@ static, i.e. they cannot depend on the context.
     # OR
     command = ["<command>", "<argument>", ...]
 
+    # optional keys
+    id = <string>
     directory = <relative path>
     jobs = <number>
     ```
@@ -465,7 +467,10 @@ static, i.e. they cannot depend on the context.
 
     The `[test]` section also accepts an array of test runners (with
     `[[test]]`), although you lose the ability to pass extra arguments to the
-    test command with `alr test`.
+    test command with `alr test`. You can assign a unique `id` to a test runner
+    and then select it with `alr test --id=<id>`, which allows you to pass
+    command line arguments to this runner only. The `<id>` must be a unique,
+    non-empty string.
 
  - `auto-gpr-with`: optional Boolean value that specifies if the project (gpr) files
    of a crate can be automatically depended upon ('withed') directly by the root
