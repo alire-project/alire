@@ -202,7 +202,8 @@ package body Alire.Test_Runner is
             Running_Tests.Insert
               (Pid,
                (if Parent (Test_Name) /= "."
-                then Parent (Test_Name) / Print_Name
+                then OS_Lib.To_Portable (Parent (Test_Name) / Print_Name)
+                --  Use always '/' to have consistent output of the testsuite
                 else Print_Name));
             Output_Files.Insert (Pid, Out_Filename);
          end if;
@@ -282,8 +283,9 @@ package body Alire.Test_Runner is
          --  to the `Test_List` vector
 
          Name : constant String :=
-                  Strip_Prefix (This.Path,
-                                Prefix => Root.Path / "src");
+                  Strip_Prefix
+                    (This.Path,
+                     Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator);
       begin
          if Name'Length > 4
            and then Name (Name'Last - 3 .. Name'Last) = ".adb"
@@ -291,8 +293,7 @@ package body Alire.Test_Runner is
                      or else (for some F of Filter
                               => Ada.Strings.Fixed.Index (Name, F) /= 0))
          then
-            Test_List.Append (Name (Name'First + 1 .. Name'Last - 4));
-            --  +1 removes initial '/'
+            Test_List.Append (Name (Name'First .. Name'Last - 4));
          end if;
       end Append;
 
