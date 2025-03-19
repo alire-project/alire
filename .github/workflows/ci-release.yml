@@ -56,7 +56,7 @@ jobs:
           - os: ubuntu-22.04        # x64, oldest supported so releases can run on older distros
             id: x86_64-linux
 
-          - os: ubuntu-24.04-arm    # new ARM runners
+          - os: ubuntu-22.04-arm    # new ARM runners
             id: aarch64-linux
 
           - os: windows-latest
@@ -70,23 +70,33 @@ jobs:
         submodules: true
 
     # Install GNAT, we only need a system compiler for Ubuntu ARM until we have
-    # Alire-indexed releases for it.
-
-    - name: Install Alire toolchain
-      if: matrix.platform.id != 'aarch64-linux'
-      uses: alire-project/alr-install@v2
-      with:
-        crates: gnat_native gprbuild
-        prefix: alire_prefix
+    # Alire for ARM64/Linux (on Ubuntu 22.04) release.
 
     - name: Install system toolchain (Ubuntu ARM)
       if: matrix.platform.id == 'aarch64-linux'
       run: |
         sudo apt-get install -y gnat gprbuild
         echo ALIRE_TESTSUITE_DISABLE_DOCKER=true >> $GITHUB_ENV
-        echo USE_EXTERNAL=use_external >> $GITHUB_ENV
-      # GNAT 10 has a bug that fails in the testsuite. Also, we need to disable
-      # Docker tests on Ubuntu ARM.
+        # We need to disable Docker tests on Ubuntu ARM.
+
+    - name: Bootstrap Alire (Ubuntu ARM)
+      if: matrix.platform.id == 'aarch64-linux'
+      uses: alire-project/setup-alire@v5
+      with:
+        branch: "master" # build from source
+
+    - name: Remove system GNAT (Ubuntu ARM)
+      if: matrix.platform.id == 'aarch64-linux'
+      run: |
+        sudo apt-get remove -y gnat-10 gprbuild
+        rm -rf ~/.local/share/alire/toolchains/
+      shell: bash
+
+    - name: Install Alire toolchain
+      uses: alire-project/alr-install@v2
+      with:
+        crates: gnat_native gprbuild
+        prefix: alire_prefix
 
     - name: Check toolchain architecture
       uses: mosteo-actions/gnat-toolchain-arch-checker@v1
@@ -106,11 +116,6 @@ jobs:
         INDEX: ""
 
     # Ascertain whether alr can run without the toolchain that built it
-
-    - name: Remove system GNAT (Ubuntu ARM)
-      if: matrix.platform.id == 'aarch64-linux'
-      run: sudo apt-get remove -y gnat-13 gprbuild
-      shell: bash
 
     - name: Check standalone alr
       uses: mosteo-actions/alr-standalone-checker@v1
@@ -224,7 +229,7 @@ jobs:
           - os: ubuntu-22.04
             id: x86_64-linux
 
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-22.04-arm
             id: aarch64-linux
 
           - os: windows-latest
@@ -502,7 +507,7 @@ jobs:
           - os: ubuntu-22.04
             id: x86_64-linux
 
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-22.04-arm
             id: aarch64-linux
 
           - os: windows-latest
