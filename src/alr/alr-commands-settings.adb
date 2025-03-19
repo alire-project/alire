@@ -1,4 +1,3 @@
-with Alire.Settings;
 with Alire.Settings.Edit;
 with Alire.Root;
 
@@ -20,6 +19,25 @@ package body Alr.Commands.Settings is
       Lvl : constant Alire.Settings.Level := (if Cmd.Global
                                             then Alire.Settings.Global
                                             else Alire.Settings.Local);
+
+      -------------------
+      -- Check_Builtin --
+      -------------------
+
+      procedure Check_Builtin (Key : String) is
+      begin
+         --  Check if the setting is a builtin when --builtin is given
+         if Cmd.Builtin and then not Alire.Settings.Is_Builtin (Key) then
+            Reportaise_Wrong_Arguments
+              ("'" & Key & "' is not a built-in setting");
+         end if;
+
+         --  Check if it is not a builtin when --builtin is not given
+         if not Cmd.Builtin and then Alire.Settings.Is_Builtin (Key) then
+            Trace.Warning ("'" & Key & "' is a built-in setting. "
+                           & "Use --builtin to avoid this warning");
+         end if;
+      end Check_Builtin;
    begin
       Cmd.Forbids_Structured_Output;
 
@@ -42,6 +60,11 @@ package body Alr.Commands.Settings is
       if Cmd.Show_Origin and then not Cmd.List then
          Reportaise_Wrong_Arguments
            ("--show-origin only valid with --list");
+      end if;
+
+      if Cmd.Builtin and then not (Cmd.Get or else Cmd.Set) then
+         Reportaise_Wrong_Arguments
+           ("--builtin only valid with --get or --set");
       end if;
 
       if Cmd.Builtins_Doc then
@@ -76,22 +99,28 @@ package body Alr.Commands.Settings is
 
       elsif Cmd.Get then
          if Args.Count /= 1 then
-            Reportaise_Wrong_Arguments ("Unset expects one argument");
+            Reportaise_Wrong_Arguments ("Get expects one argument");
          end if;
 
-         if not CLIC.Config.Is_Valid_Config_Key (Args.First_Element) then
-            Reportaise_Wrong_Arguments ("Invalid setting key '" &
-                                          Args.First_Element & "'");
-         end if;
+         declare
+            Key : constant String := Args.First_Element;
+         begin
+            if not CLIC.Config.Is_Valid_Config_Key (Key) then
+               Reportaise_Wrong_Arguments ("Invalid setting key '" &
+                                          Key & "'");
+            end if;
 
-         if Alire.Settings.DB.Defined (Args.First_Element) then
-            Trace.Always
-              (Alire.Settings.DB.Get_As_String (Args.First_Element));
-         else
-            Reportaise_Command_Failed ("Setting key '" &
-                                         Args.First_Element &
+            Check_Builtin (Key);
+
+            if Alire.Settings.DB.Defined (Key) then
+               Trace.Always
+                 (Alire.Settings.DB.Get_As_String (Key));
+            else
+               Reportaise_Command_Failed ("Setting key '" &
+                                         Key &
                                          "' is not defined");
-         end if;
+            end if;
+         end;
       elsif Cmd.Set then
          if Args.Count /= 2 then
             Reportaise_Wrong_Arguments ("Set expects two arguments");
@@ -106,6 +135,8 @@ package body Alr.Commands.Settings is
                Reportaise_Wrong_Arguments ("Invalid setting key '" &
                  Key & "'");
             end if;
+
+            Check_Builtin (Key);
 
             --  Check explicitly for booleans to store the proper TOML type
             --  regardless of the capitalization used by the user.
@@ -229,8 +260,13 @@ package body Alr.Commands.Settings is
         (Config      => Config,
          Output      => Cmd.Builtins_Doc'Access,
          Long_Switch => "--builtins-doc",
-         Help        =>
-           "Print Markdown list of built-in settings");
+         Help        => "Print Markdown list of built-in settings");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Builtin'Access,
+         Long_Switch => "--builtin",
+         Help        => "Operate on built-in settings only");
 
    end Setup_Switches;
 
