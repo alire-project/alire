@@ -5,6 +5,9 @@ may change.
 
 - alr: removed `ALR_CONFIG` environment variable.
 - alr: removed `alr config` command.
+- alr: removed remote testing in `alr test` command.
+- alr: added new behavior to `alr test` and a built-in test runner.
+- manifest: added `[test]` section.
 - manifest: array of licenses is no longer supported (SPDX expressions allow multiple licenses).
 
 ### We are here

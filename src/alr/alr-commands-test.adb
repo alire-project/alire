@@ -72,10 +72,22 @@ package body Alr.Commands.Test is
          Execute_Legacy (Cmd.Root);
       end if;
 
-      if not Args.Is_Empty and then All_Settings.Length > 1 then
+      if not Args.Is_Empty
+        and then (Cmd.Jobs >= 0 or else All_Settings.Length > 1)
+      then
          Trace.Warning
            ("arguments cannot be forwarded to test runners when several "
             & "exist.");
+      end if;
+
+      if All_Settings.Length = 1
+        and then Settings (All_Settings.First_Element).Runner.Kind = External
+        and then Cmd.Jobs >= 0
+      then
+         Trace.Warning
+           ("the --jobs flag is not forwarded to external commands. If you "
+            & "intended to pass it to an external test runner, put it after "
+            & """--"" in the command line.");
       end if;
 
       for Test_Setting of All_Settings loop
@@ -102,7 +114,7 @@ package body Alr.Commands.Test is
                Cmd.Optional_Root.Discard;
 
                if All_Settings.Length > 1 then
-                  Trace.Info ("running test with" & S.Image);
+                  Alire.Put_Info ("running test with" & S.Image);
                end if;
 
                case S.Runner.Kind is
@@ -113,7 +125,7 @@ package body Alr.Commands.Test is
                        Alire.Test_Runner.Run
                          (Cmd.Root,
                           Get_Args,
-                          (if Cmd.Jobs = -1 then S.Jobs else Cmd.Jobs));
+                          (if Cmd.Jobs < 0 then S.Jobs else Cmd.Jobs));
 
                   when External =>
                      Failures :=
@@ -138,6 +150,8 @@ package body Alr.Commands.Test is
                & "' does not exist.");
          end if;
       end loop;
+
+      Alire.Put_Success ("Successful test run");
    end Execute;
 
    ----------------------
@@ -147,8 +161,7 @@ package body Alr.Commands.Test is
    overriding
    function Long_Description (Cmd : Command) return AAA.Strings.Vector
    is (AAA.Strings.Empty_Vector.Append
-         ("Run the test runner defined in the manifest, "
-          & "or the builtin test runner")
+         ("Run the test runner as defined in the manifest.")
          .Append ("")
          .Append
             ("The builtin test runner takes an extra --jobs parameter, "

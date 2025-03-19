@@ -370,6 +370,7 @@ package body Alr.Commands.Init is
          Put_New_Line;
          Put_Line ("[build-profiles]");
          Put_Line (Lower_Name & " = 'validation'");
+         Put_Line (Test_Lower & " = 'validation'");
          TIO.Close (File);
 
          if not Create (+Full_Name (Test_Directory / (+Test_Lower & ".gpr"))) then
@@ -394,6 +395,16 @@ package body Alr.Commands.Init is
          Put_Line ("      for Switches (""Ada"") use (""-Es""); --  Symbolic traceback");
          Put_Line ("   end Binder;");
          Put_Line ("end " & Test_Upper & ";");
+         TIO.Close (File);
+
+         if not Create (+Full_Name (Test_Directory / ".gitignore")) then
+            Trace.Warning ("Could not create .gitignore for test crate");
+            return;
+         end if;
+         Put_Line ("/obj/");
+         Put_Line ("/bin/");
+         Put_Line ("/alire/");
+         Put_Line ("/config/");
          TIO.Close (File);
 
          Test_Srcs.Make_Dir;

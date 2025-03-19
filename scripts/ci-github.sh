@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# Parameters (optional):
+# skip_build   : skip alr build
+# skip_test    : skip testsuites
+# use_external : use the system external compiler for the Ada testsuite
+
 trap 'echo "ERROR at line ${LINENO} (code: $?)" >&2' ERR
 trap 'echo "Interrupted" >&2 ; exit 1' INT
 
@@ -35,8 +40,8 @@ if [ "$(get_OS)" == "macos" ]; then
     ALR_LINKER_ARGS="-static-libgcc"
 fi
 
-# Build alr if no argument is "build=false"
-if [[ " $* " == *" build=false "* ]]; then
+# Build alr if "skip_build" is not passed"
+if [[ " $* " == *" skip_build "* ]]; then
     echo "Skipping alr build, explicitly disabled via arguments"
 else
     export ALIRE_OS=$(get_OS)
@@ -78,8 +83,8 @@ alr index --reset-community
 alr -q -d search --list --external
 echo ............................
 
-# Exit without testing if some argument is "test=false"
-if [[ " $* " == *" test=false "* ]]; then
+# Exit without testing if some argument is "skip_test"
+if [[ " $* " == *" skip_test "* ]]; then
     echo "SKIPPING testsuite, explicitly disabled via arguments"
     exit 0
 fi
@@ -114,7 +119,26 @@ echo Check Finalize exception handling :
 $run_python ../scripts/python/check_finalize_exceptions.py ../src
 echo ............................
 
-echo Running test suite now:
-$run_python ./run.py --show-time-info -E || { echo Test suite failures, unstable build!; exit 1; }
+echo Running Python test suite now:
+$run_python ./run.py --show-time-info -E || { echo Python test suite failures, unstable build!; exit 1; }
 cd ..
 echo ............................
+
+# Run Ada testsuite last as re-building alr in validation mode is
+# time-consuming and we want to catch any issues with the Python testsuite
+# first. Also, as we want to keep the already built alr for the artifacts and
+# possible releases, we preserve the current alr and restore it afterwards.
+# This also allows Windows to generate a new executable (otherwise it cannot
+# overwrite the running binary).
+
+# if use_external is passed, we select the system external compiler
+
+if [[ " $* " == *" use_external "* ]]; then
+    echo "Selecting external compiler"
+    alr toolchain --select gnat_external gprbuild
+fi
+
+mkdir bak && cp bin/alr* bak
+echo Running Ada test suite now:
+bak/alr test || { echo Ada test suite failures, unstable build!; exit 1; }
+rm -rf bin/alr* && mv bak/alr* bin
