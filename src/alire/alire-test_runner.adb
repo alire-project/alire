@@ -79,6 +79,19 @@ package body Alire.Test_Runner is
       is (Failed);
    end Driver;
 
+   ------------------
+   -- Strip_Prefix --
+   ------------------
+
+   function Strip_Prefix (Src, Prefix : String) return String is
+   begin
+      if AAA.Strings.Has_Prefix (Src, Prefix) then
+         return Src (Src'First + Prefix'Length .. Src'Last);
+      else
+         return Src;
+      end if;
+   end Strip_Prefix;
+
    ---------------------
    -- Create_Gpr_List --
    ---------------------
@@ -115,7 +128,8 @@ package body Alire.Test_Runner is
          else
             Lines.Append_To_Last_Line (",");
          end if;
-         Lines.Append_To_Last_Line ("""" & Name & ".adb""");
+         Lines.Append_To_Last_Line
+           ("""" & Adirs.Simple_Name (Name) & ".adb""");
       end loop;
 
       Lines.Append_Line (Indent & ");");
@@ -138,39 +152,31 @@ package body Alire.Test_Runner is
       function Cmp (A, B : Process_Id) return Boolean
       is (Pid_To_Integer (A) < Pid_To_Integer (B));
 
-      package Map is new
+      package PID_Name_Maps is new
         Ada.Containers.Indefinite_Ordered_Maps
           (Process_Id,
            String,
            "<" => Cmp);
 
-      Running_Tests : Map.Map := Map.Empty_Map;
-      Output_Files  : Map.Map := Map.Empty_Map;
+      Running_Tests : PID_Name_Maps.Map;
+      --  Contains simple names without extension with prefix from src, e.g.:
+      --  crate_tests-some_test
+      --  nested/crate_tests-some_other_test
+
+      Output_Files  : PID_Name_Maps.Map;
 
       Root_Prefix : constant String :=
         AAA.Strings.To_Lower_Case (Root.Name.As_String) & "-";
-
-      ------------------
-      -- Strip_Prefix --
-      ------------------
-
-      function Strip_Prefix (Src, Prefix : String) return String is
-      begin
-         if AAA.Strings.Has_Prefix (Src, Prefix) then
-            return Src (Src'First + Prefix'Length .. Src'Last);
-         else
-            return Src;
-         end if;
-      end Strip_Prefix;
 
       ----------------
       -- Spawn_Test --
       ----------------
 
       procedure Spawn_Test (Test_Name : String) is
-         Exe_Name : constant String := Test_Name & Alire.OS_Lib.Exe_Suffix;
+         Simple_Name : constant String := Adirs.Simple_Name (Test_Name);
+         Exe_Name : constant String := Simple_Name & Alire.OS_Lib.Exe_Suffix;
          Filename : constant String :=
-           Root.Working_Folder / ("output_" & Test_Name & ".tmp");
+           Root.Working_Folder / ("output_" & Simple_Name & ".tmp");
 
          Args : constant Argument_List := (1 .. 0 => <>);
          Pid  : Process_Id;
@@ -260,10 +266,12 @@ package body Alire.Test_Runner is
                         Unused_Enter : in out Boolean;
                         Unused_Stop  : in out Boolean)
       is
-         --  Helper function to append all .adb files in a folder
+         --  Helper function to append all .adb files in a tree
          --  to the `Test_List` vector
 
-         Name : constant String := Adirs.Simple_Name (This.Path);
+         Name : constant String :=
+                  Strip_Prefix (This.Path,
+                                Prefix => Root.Path / "src");
       begin
          if Name'Length > 4
            and then Name (Name'Last - 3 .. Name'Last) = ".adb"
@@ -271,7 +279,8 @@ package body Alire.Test_Runner is
                      or else (for some F of Filter
                               => Ada.Strings.Fixed.Index (Name, F) /= 0))
          then
-            Test_List.Append (Name (Name'First .. Name'Last - 4));
+            Test_List.Append (Name (Name'First + 1 .. Name'Last - 4));
+            --  +1 removes initial '/'
          end if;
       end Append;
 
