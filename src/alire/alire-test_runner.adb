@@ -111,9 +111,10 @@ package body Alire.Test_Runner is
    ---------------------
 
    procedure Create_Gpr_List
-     (Root : Alire.Roots.Root; List : Portable_Path_Vector)
-     --  Create a gpr file containing a list of the test files
-     --  (named `Test_Files`).
+     (Root : Alire.Roots.Root;
+      List : Portable_Path_Vector)
+      --  Create a gpr file containing a list of the test files
+      --  (named `Test_Files`).
 
    is
       File_Path : constant Alire.Absolute_Path :=
@@ -127,7 +128,7 @@ package body Alire.Test_Runner is
       Indent : constant String := "   ";
 
       Root_Name : constant String :=
-                    AAA.Strings.To_Mixed_Case (Root.Name.As_String);
+        AAA.Strings.To_Mixed_Case (Root.Name.As_String);
    begin
       Touch (File_Path, True);
 
@@ -177,22 +178,21 @@ package body Alire.Test_Runner is
       --  crate_tests-some_test
       --  nested/crate_tests-some_other_test
 
-      Output_Files  : PID_Name_Maps.Map;
+      Output_Files : PID_Name_Maps.Map;
 
       ----------------
       -- Spawn_Test --
       ----------------
 
       procedure Spawn_Test (Test_Name : String) is
-         Simple_Name  : constant String := Adirs.Simple_Name (Test_Name);
+         Simple_Name : constant String := Adirs.Simple_Name (Test_Name);
          --  Contains package name, e.g. crate_tests-my_test
 
-         Print_Name   : constant String := Strip_Prefix (Simple_Name,
-                                                         Root_Prefix (Root));
+         Print_Name : constant String :=
+           Strip_Prefix (Simple_Name, Root_Prefix (Root));
          --  Just the test name, e.g. my_test
 
-         Exe_Name     : constant String := Simple_Name
-                                           & Alire.OS_Lib.Exe_Suffix;
+         Exe_Name : constant String := Simple_Name & Alire.OS_Lib.Exe_Suffix;
 
          Out_Filename : constant String :=
            Root.Working_Folder / ("output_" & Simple_Name & ".tmp");
@@ -286,39 +286,35 @@ package body Alire.Test_Runner is
       -- Append --
       ------------
 
-      procedure Append (This         : Den.Walk.Item;
-                        Unused_Enter : in out Boolean;
-                        Unused_Stop  : in out Boolean)
+      procedure Append
+        (This         : Den.Walk.Item;
+         Unused_Enter : in out Boolean;
+         Unused_Stop  : in out Boolean)
       is
          --  Helper function to append all .adb files in a tree
          --  to the `Test_List` vector
 
          Name : constant String :=
-                  Strip_Prefix
-                    (This.Path,
-                     Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator);
+           Strip_Prefix
+             (This.Path, Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator);
 
          Filtering_Name : constant String :=
-                            AAA.Strings.Replace
-                              (Text  => Name,
-                               Match => Root_Prefix (Root),
-                               Subst => "");
+           AAA.Strings.Replace
+             (Text => Name, Match => Root_Prefix (Root), Subst => "");
       begin
          if Name'Length > 4
            and then Name (Name'Last - 3 .. Name'Last) = ".adb"
            and then (Filter.Is_Empty
-                     or else
-                       (for some F of Filter
-                          => Ada.Strings.Fixed.Index (Filtering_Name, F) /= 0))
+                     or else (for some F of Filter
+                              => Ada.Strings.Fixed.Index (Filtering_Name, F)
+                              /= 0))
          then
             Test_List.Append (Name (Name'First .. Name'Last - 4));
          end if;
       end Append;
 
    begin
-      Den.Walk.Find
-        (This    => Path / "src",
-         Action  => Append'Access);
+      Den.Walk.Find (This => Path / "src", Action => Append'Access);
 
       Create_Gpr_List (Root, Test_List);
 
