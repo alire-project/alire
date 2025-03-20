@@ -101,9 +101,10 @@ package body Alire.Test_Runner is
       end if;
    end Strip_Prefix;
 
-   subtype Portable_Path_Vector is AAA.Strings.Vector with
-     Predicate => (for all Path of Portable_Path_Vector =>
-                     VFS.Is_Portable (Path));
+   subtype Portable_Path_Vector is AAA.Strings.Vector;
+   --  Crashes on older GNATs, but for reference:
+   --  with Predicate => (for all Path of Portable_Path_Vector =>
+   --                       VFS.Is_Portable (Path));
 
    ---------------------
    -- Create_Gpr_List --
