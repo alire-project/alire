@@ -9,6 +9,7 @@ may change.
 - alr: added new behavior to `alr test` and a built-in test runner.
 - manifest: added `[test]` section.
 - manifest: array of licenses is no longer supported (SPDX expressions allow multiple licenses).
+- alr: setting a builtin without `--builtin` will emit a new warning.
 
 ### We are here
 
