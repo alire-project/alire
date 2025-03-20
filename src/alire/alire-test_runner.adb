@@ -118,8 +118,7 @@ package body Alire.Test_Runner is
 
    is
       File_Path : constant Alire.Absolute_Path :=
-        Root.Path
-        / Alire.Paths.Default_Config_Folder
+        Root.Path / Alire.Paths.Default_Config_Folder
         / (Root.Name.As_String & "_list_config.gpr");
       File      : Text_Files.File := Text_Files.Create (File_Path);
       Lines     : access AAA.Strings.Vector renames File.Lines;
@@ -156,7 +155,9 @@ package body Alire.Test_Runner is
    -------------------
 
    procedure Run_All_Tests
-     (Root : Alire.Roots.Root; Test_List : AAA.Strings.Vector; Jobs : Positive)
+     (Root      : Alire.Roots.Root;
+      Test_List : Portable_Path_Vector;
+      Jobs      : Positive)
    is
       use GNAT.OS_Lib;
 
@@ -184,13 +185,22 @@ package body Alire.Test_Runner is
       -- Spawn_Test --
       ----------------
 
-      procedure Spawn_Test (Test_Name : String) is
-         Simple_Name : constant String := Adirs.Simple_Name (Test_Name);
+      procedure Spawn_Test (Test_Name : OS_Lib.Portable_Path_Like) is
+         Simple_Name : constant String :=
+           VFS.Simple_Name (Portable_Path (Test_Name));
          --  Contains package name, e.g. crate_tests-my_test
 
-         Print_Name : constant String :=
+         Simple_Print_Name : constant String :=
            Strip_Prefix (Simple_Name, Root_Prefix (Root));
          --  Just the test name, e.g. my_test
+
+         Full_Print_Name : constant OS_Lib.Portable_Path_Like :=
+           (if Parent (To_Native (Test_Name)) /= "."
+            then
+              OS_Lib.To_Portable
+                (Parent (To_Native (Test_Name)) / Simple_Print_Name)
+            else Simple_Print_Name);
+         --  Full portable name without package prefix, e.g. nested/my_test
 
          Exe_Name : constant String := Simple_Name & Alire.OS_Lib.Exe_Suffix;
 
@@ -210,12 +220,7 @@ package body Alire.Test_Runner is
             Driver.Fail
               (Test_Name & " (failed to start!)", AAA.Strings.Empty_Vector);
          else
-            Running_Tests.Insert
-              (Pid,
-               (if Parent (Test_Name) /= "."
-                then OS_Lib.To_Portable (Parent (Test_Name) / Print_Name)
-                --  Use always '/' to have consistent output of the testsuite
-                else Print_Name));
+            Running_Tests.Insert (Pid, Full_Print_Name);
             Output_Files.Insert (Pid, Out_Filename);
          end if;
       end Spawn_Test;
@@ -280,7 +285,7 @@ package body Alire.Test_Runner is
         (if Jobs = 0 then Positive (System.Multiprocessors.Number_Of_CPUs)
          else Jobs);
       Path      : constant Alire.Absolute_Path := Root.Path;
-      Test_List : AAA.Strings.Vector;
+      Test_List : Portable_Path_Vector;
 
       ------------
       -- Append --
@@ -294,11 +299,13 @@ package body Alire.Test_Runner is
          --  Helper function to append all .adb files in a tree
          --  to the `Test_List` vector
 
-         Name : constant String :=
-           Strip_Prefix
-             (This.Path, Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator);
+         Name : constant OS_Lib.Portable_Path_Like :=
+           OS_Lib.To_Portable
+             (Strip_Prefix
+                (This.Path,
+                 Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator));
 
-         Filtering_Name : constant String :=
+         Filtering_Name : constant OS_Lib.Portable_Path_Like :=
            AAA.Strings.Replace
              (Text => Name, Match => Root_Prefix (Root), Subst => "");
       begin

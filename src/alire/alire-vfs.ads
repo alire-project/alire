@@ -20,6 +20,10 @@ package Alire.VFS is
    --  If Path seen from From is relative, convert to portable, else return
    --  as-is
 
+   function Parent (Path : Portable_Path) return Portable_Path;
+   --  Like Ada.Directories.Containing_Directory. Will return "." for simple
+   --  names.
+
    function Simple_Name (Path : Portable_Path) return String;
    --  Like Ada.Directories.Simple name but for portable paths no matter the OS
 
@@ -95,7 +99,16 @@ private
    function Is_Portable (Path : Any_Path) return Boolean
    is ((for all Char of Path => Char /= '\')
        and then
-       not Check_Absolute_Path (Path));
+         not Check_Absolute_Path (Path));
+
+   ------------
+   -- Parent --
+   ------------
+
+   function Parent (Path : Portable_Path) return Portable_Path
+   is (To_Portable
+        (Directories.Adirs.Containing_Directory
+          (To_Native (Path))));
 
    -----------------
    -- Simple_Name --
