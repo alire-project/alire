@@ -8,13 +8,15 @@ with Alire.Directories; use Alire.Directories;
 with Alire.OS_Lib;
 with Alire.Paths;
 with Alire.Utils.Text_Files;
-use Alire.Utils;
+with Alire.VFS;
 
 with CLIC.TTY;
 
 with Den.Walk;
 
 package body Alire.Test_Runner is
+
+   use Alire.Utils;
 
    protected Driver is
       --  Protected driver for synchronising stats and output
@@ -79,6 +81,13 @@ package body Alire.Test_Runner is
       is (Failed);
    end Driver;
 
+   -----------------
+   -- Root_Prefix --
+   -----------------
+   --  The root package file name with separating dash
+   function Root_Prefix (This : Roots.Root) return String
+   is (AAA.Strings.To_Lower_Case (This.Name.As_String) & "-");
+
    ------------------
    -- Strip_Prefix --
    ------------------
@@ -92,12 +101,16 @@ package body Alire.Test_Runner is
       end if;
    end Strip_Prefix;
 
+   subtype Portable_Path_Vector is AAA.Strings.Vector with
+     Predicate => (for all Path of Portable_Path_Vector =>
+                     VFS.Is_Portable (Path));
+
    ---------------------
    -- Create_Gpr_List --
    ---------------------
 
    procedure Create_Gpr_List
-     (Root : Alire.Roots.Root; List : AAA.Strings.Vector)
+     (Root : Alire.Roots.Root; List : Portable_Path_Vector)
      --  Create a gpr file containing a list of the test files
      --  (named `Test_Files`).
 
@@ -113,7 +126,7 @@ package body Alire.Test_Runner is
       Indent : constant String := "   ";
 
       Root_Name : constant String :=
-        AAA.Strings.To_Mixed_Case (Root.Name.As_String);
+                    AAA.Strings.To_Mixed_Case (Root.Name.As_String);
    begin
       Touch (File_Path, True);
 
@@ -129,7 +142,7 @@ package body Alire.Test_Runner is
             Lines.Append_To_Last_Line (",");
          end if;
          Lines.Append_To_Last_Line
-           ("""" & Adirs.Simple_Name (Name) & ".adb""");
+           ("""" & VFS.Simple_Name (Portable_Path (Name)) & ".adb""");
       end loop;
 
       Lines.Append_Line (Indent & ");");
@@ -165,9 +178,6 @@ package body Alire.Test_Runner is
 
       Output_Files  : PID_Name_Maps.Map;
 
-      Root_Prefix : constant String :=
-        AAA.Strings.To_Lower_Case (Root.Name.As_String) & "-";
-
       ----------------
       -- Spawn_Test --
       ----------------
@@ -177,7 +187,7 @@ package body Alire.Test_Runner is
          --  Contains package name, e.g. crate_tests-my_test
 
          Print_Name   : constant String := Strip_Prefix (Simple_Name,
-                                                         Root_Prefix);
+                                                         Root_Prefix (Root));
          --  Just the test name, e.g. my_test
 
          Exe_Name     : constant String := Simple_Name
@@ -286,12 +296,19 @@ package body Alire.Test_Runner is
                   Strip_Prefix
                     (This.Path,
                      Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator);
+
+         Filtering_Name : constant String :=
+                            AAA.Strings.Replace
+                              (Text  => Name,
+                               Match => Root_Prefix (Root),
+                               Subst => "");
       begin
          if Name'Length > 4
            and then Name (Name'Last - 3 .. Name'Last) = ".adb"
            and then (Filter.Is_Empty
-                     or else (for some F of Filter
-                              => Ada.Strings.Fixed.Index (Name, F) /= 0))
+                     or else
+                       (for some F of Filter
+                          => Ada.Strings.Fixed.Index (Filtering_Name, F) /= 0))
          then
             Test_List.Append (Name (Name'First .. Name'Last - 4));
          end if;
