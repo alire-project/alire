@@ -1,5 +1,5 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Strings.Fixed;
+with Ada.Containers.Indefinite_Vectors;
 with Ada.Text_IO;
 with GNAT.OS_Lib;
 with System.Multiprocessors;
@@ -8,11 +8,15 @@ with Alire.Directories; use Alire.Directories;
 with Alire.OS_Lib;
 with Alire.Paths;
 with Alire.Utils.Text_Files;
-use Alire.Utils;
+with Alire.VFS;
 
 with CLIC.TTY;
 
+with Den.Walk;
+
 package body Alire.Test_Runner is
+
+   use Alire.Utils;
 
    protected Driver is
       --  Protected driver for synchronising stats and output
@@ -77,19 +81,74 @@ package body Alire.Test_Runner is
       is (Failed);
    end Driver;
 
+   -----------------
+   -- Root_Prefix --
+   -----------------
+   --  The root package file name with separating dash
+   function Root_Prefix (This : Roots.Root) return String
+   is (AAA.Strings.To_Lower_Case (This.Name.As_String) & "-");
+
+   ------------------
+   -- Strip_Prefix --
+   ------------------
+
+   function Strip_Prefix (Src, Prefix : String) return String is
+   begin
+      if AAA.Strings.Has_Prefix (Src, Prefix) then
+         return Src (Src'First + Prefix'Length .. Src'Last);
+      else
+         return Src;
+      end if;
+   end Strip_Prefix;
+
+   ------------------
+   -- Strip_Suffix --
+   ------------------
+
+   function Strip_Suffix (Src, Suffix : String) return String is
+   begin
+      if AAA.Strings.Has_Suffix (Src, Suffix) then
+         return Src (Src'First .. Src'Last - Suffix'Length);
+      else
+         return Src;
+      end if;
+   end Strip_Suffix;
+
+   ------------------
+   -- Display_Name --
+   ------------------
+
+   function Display_Name
+     (Name : Portable_Path; Root_Prefix : String) return String
+   is
+      Simple      : constant String :=
+        Strip_Suffix
+          (Strip_Prefix (VFS.Simple_Name (Name), Root_Prefix), ".adb");
+      Parent_Name : constant Portable_Path := VFS.Parent (Name);
+   begin
+      if Parent_Name = "." then
+         return Simple;
+      else
+         return String (Parent_Name) & "/" & Simple;
+      end if;
+   end Display_Name;
+
+   package Portable_Path_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Positive, Portable_Path);
+   subtype Portable_Path_Vector is Portable_Path_Vectors.Vector;
+
    ---------------------
    -- Create_Gpr_List --
    ---------------------
 
-   procedure Create_Gpr_List
-     (Root : Alire.Roots.Root; List : AAA.Strings.Vector)
+   procedure Create_Gpr_List (Root : Roots.Root; List : Portable_Path_Vector)
      --  Create a gpr file containing a list of the test files
      --  (named `Test_Files`).
 
    is
-      File_Path : constant Alire.Absolute_Path :=
+      File_Path : constant Absolute_Path :=
         Root.Path
-        / Alire.Paths.Default_Config_Folder
+        / Paths.Default_Config_Folder
         / (Root.Name.As_String & "_list_config.gpr");
       File      : Text_Files.File := Text_Files.Create (File_Path);
       Lines     : access AAA.Strings.Vector renames File.Lines;
@@ -113,7 +172,7 @@ package body Alire.Test_Runner is
          else
             Lines.Append_To_Last_Line (",");
          end if;
-         Lines.Append_To_Last_Line ("""" & Name & ".adb""");
+         Lines.Append_To_Last_Line ("""" & VFS.Simple_Name (Name) & """");
       end loop;
 
       Lines.Append_Line (Indent & ");");
@@ -125,7 +184,7 @@ package body Alire.Test_Runner is
    -------------------
 
    procedure Run_All_Tests
-     (Root : Alire.Roots.Root; Test_List : AAA.Strings.Vector; Jobs : Positive)
+     (Root : Roots.Root; Test_List : Portable_Path_Vector; Jobs : Positive)
    is
       use GNAT.OS_Lib;
 
@@ -136,39 +195,38 @@ package body Alire.Test_Runner is
       function Cmp (A, B : Process_Id) return Boolean
       is (Pid_To_Integer (A) < Pid_To_Integer (B));
 
-      package Map is new
+      package PID_Name_Maps is new
         Ada.Containers.Indefinite_Ordered_Maps
           (Process_Id,
            String,
            "<" => Cmp);
 
-      Running_Tests : Map.Map := Map.Empty_Map;
-      Output_Files  : Map.Map := Map.Empty_Map;
+      Running_Tests : PID_Name_Maps.Map;
+      --  Contains simple names without extension with prefix from src, e.g.:
+      --  crate_tests-some_test
+      --  nested/crate_tests-some_other_test
 
-      Root_Prefix : constant String :=
-        AAA.Strings.To_Lower_Case (Root.Name.As_String) & "-";
+      Output_Files : PID_Name_Maps.Map;
 
-      ------------------
-      -- Strip_Prefix --
-      ------------------
-
-      function Strip_Prefix (Src, Prefix : String) return String is
-      begin
-         if AAA.Strings.Has_Prefix (Src, Prefix) then
-            return Src (Src'First + Prefix'Length .. Src'Last);
-         else
-            return Src;
-         end if;
-      end Strip_Prefix;
+      Crate_Prefix : constant String := Root_Prefix (Root);
 
       ----------------
       -- Spawn_Test --
       ----------------
 
-      procedure Spawn_Test (Test_Name : String) is
-         Exe_Name : constant String := Test_Name & Alire.OS_Lib.Exe_Suffix;
-         Filename : constant String :=
-           Root.Working_Folder / ("output_" & Test_Name & ".tmp");
+      procedure Spawn_Test (Test_Name : Portable_Path) is
+         Simple_Name : constant String :=
+           Strip_Suffix (VFS.Simple_Name (Test_Name), ".adb");
+         --  Contains package name, e.g. crate_tests-my_test
+
+         Full_Print_Name : constant String :=
+           Display_Name (Test_Name, Crate_Prefix);
+         --  Full portable name without package prefix, e.g. nested/my_test
+
+         Exe_Name : constant String := Simple_Name & OS_Lib.Exe_Suffix;
+
+         Out_Filename : constant String :=
+           Root.Working_Folder / ("output_" & Simple_Name & ".tmp");
 
          Args : constant Argument_List := (1 .. 0 => <>);
          Pid  : Process_Id;
@@ -177,28 +235,29 @@ package body Alire.Test_Runner is
            Non_Blocking_Spawn
              (Root.Path / "bin" / Exe_Name,
               Args,
-              Filename,
+              Out_Filename,
               Err_To_Out => True);
          if Pid = Invalid_Pid then
             Driver.Fail
-              (Test_Name & " (failed to start!)", AAA.Strings.Empty_Vector);
+              (String (Test_Name) & " (failed to start!)",
+               AAA.Strings.Empty_Vector);
          else
-            Running_Tests.Insert (Pid, Strip_Prefix (Test_Name, Root_Prefix));
-            Output_Files.Insert (Pid, Filename);
+            Running_Tests.Insert (Pid, Full_Print_Name);
+            Output_Files.Insert (Pid, Out_Filename);
          end if;
       end Spawn_Test;
 
       Pid     : Process_Id;
       Success : Boolean;
 
-      Remaining : AAA.Strings.Vector := Test_List;
+      Remaining : Portable_Path_Vector := Test_List;
 
    begin
 
       --  start the first `Jobs` tests
       for I in 1 .. Natural'Min (Jobs, Natural (Test_List.Length)) loop
-         Spawn_Test (Remaining.First_Element);
-         Remaining := Remaining.Tail;
+         Spawn_Test (Remaining.Last_Element);
+         Remaining.Delete_Last;
       end loop;
 
       loop
@@ -214,7 +273,7 @@ package body Alire.Test_Runner is
             Driver.Pass (Running_Tests (Pid));
          else
             declare
-               use Alire.Utils.Text_Files;
+               use Utils.Text_Files;
                Output : File := Load (Output_Files (Pid), False);
             begin
                Driver.Fail (Running_Tests (Pid), Output.Lines.all);
@@ -227,8 +286,8 @@ package body Alire.Test_Runner is
 
          if not Remaining.Is_Empty then
             --  start up a new test
-            Spawn_Test (Remaining.First_Element);
-            Remaining := Remaining.Tail;
+            Spawn_Test (Portable_Path (Remaining.Last_Element));
+            Remaining.Delete_Last;
          end if;
       end loop;
    end Run_All_Tests;
@@ -238,7 +297,7 @@ package body Alire.Test_Runner is
    ---------
 
    function Run
-     (Root   : in out Alire.Roots.Root;
+     (Root   : in out Roots.Root;
       Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
       Jobs   : Natural := 0) return Integer
    is
@@ -247,34 +306,63 @@ package body Alire.Test_Runner is
       Job_Count : constant Positive :=
         (if Jobs = 0 then Positive (System.Multiprocessors.Number_Of_CPUs)
          else Jobs);
-      Path      : constant Alire.Absolute_Path := Root.Path;
-      Test_List : AAA.Strings.Vector;
+      Path      : constant Absolute_Path := Root.Path;
+
+      Crate_Prefix : constant String := Root_Prefix (Root);
+
+      Test_List : Portable_Path_Vector;
+
+      --------------------
+      -- Matches_Filter --
+      --------------------
+
+      function Matches_Filter (Name : Portable_Path) return Boolean is
+      begin
+         if Filter.Is_Empty then
+            return True;
+         end if;
+         declare
+            Filtering_Name : constant String :=
+              Display_Name (Name, Crate_Prefix);
+         begin
+            return
+              (for some F of Filter
+               => AAA.Strings.Contains (Filtering_Name, F));
+         end;
+      end Matches_Filter;
 
       ------------
       -- Append --
       ------------
 
-      procedure Append (Dir_Entry : Adirs.Directory_Entry_Type) is
-         --  Helper function to append all .adb files in a folder
+      procedure Append
+        (This         : Den.Walk.Item;
+         Unused_Enter : in out Boolean;
+         Unused_Stop  : in out Boolean)
+      is
+         --  Helper function to append all .adb files in a tree
          --  to the `Test_List` vector
 
-         Name : constant String := Adirs.Simple_Name (Dir_Entry);
+         Name : constant Portable_Path :=
+           VFS.To_Portable
+             (Strip_Prefix
+                (This.Path,
+                 Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator));
       begin
-         if Name'Length > 4
-           and then Name (Name'Last - 3 .. Name'Last) = ".adb"
-           and then (Filter.Is_Empty
-                     or else (for some F of Filter
-                              => Ada.Strings.Fixed.Index (Name, F) /= 0))
+         if AAA.Strings.Has_Suffix (String (Name), ".adb")
+           and then Matches_Filter (Name)
          then
-            Test_List.Append (Name (Name'First .. Name'Last - 4));
+            Test_List.Append (Name);
          end if;
       end Append;
+
    begin
-      Adirs.Search (Path / "src", "", Process => Append'Access);
+      Den.Walk.Find (This => Path / "src", Action => Append'Access);
+
       Create_Gpr_List (Root, Test_List);
 
       Trace.Info ("Building tests");
-      if Alire.Roots.Build (Root, AAA.Strings.Empty_Vector) then
+      if Roots.Build (Root, AAA.Strings.Empty_Vector) then
          Trace.Info ("Running" & Test_List.Length'Image & " tests");
          Run_All_Tests (Root, Test_List, Job_Count);
 

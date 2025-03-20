@@ -381,7 +381,7 @@ package body Alr.Commands.Init is
          Put_Line ("with ""config/" & Test_Lower & "_list_config.gpr"";");
          Put_New_Line;
          Put_Line ("project " & Test_Upper & " is");
-         Put_Line ("   for Source_Dirs use (""src/"", ""common/"", ""config/"");");
+         Put_Line ("   for Source_Dirs use (""src/**"", ""common/"", ""config/"");");
          Put_Line ("   for Object_Dir use ""obj/"" & " & Test_Upper & "_Config.Build_Profile;");
          Put_Line ("   for Create_Missing_Dirs use ""True"";");
          Put_Line ("   for Exec_Dir use ""bin"";");
