@@ -11,6 +11,7 @@ with Alire.Formatting;
 with Alire.Origins.Deployers.System;
 with Alire.Paths;
 with Alire.Properties.Bool;
+with Alire.Properties.From_TOML;
 with Alire.Properties.Scenarios;
 with Alire.TOML_Load;
 with Alire.Utils.Tables;
@@ -1164,9 +1165,10 @@ package body Alire.Releases is
                      Format : Manifest.Sources)
                      return TOML.TOML_Value
    is
-      package APL renames Alire.Properties.Labeled;
-      use all type Alire.Properties.Labeled.Cardinalities;
+      use all type Alire.Properties.From_TOML.Cardinalities;
       use TOML_Adapters;
+      function Tomlify is
+        new Tomify_Enum (Alire.Properties.From_TOML.Property_Keys);
       Root : constant TOML.TOML_Value := R.Properties.To_TOML;
    begin
 
@@ -1187,20 +1189,29 @@ package body Alire.Releases is
       end if;
 
       --  Ensure atoms are atoms and arrays are arrays
-      for Label in APL.Cardinality'Range loop
-         if Root.Has (APL.Key (Label)) then
-            case APL.Cardinality (Label) is
-               when Unique   =>
-                  pragma Assert
-                    (Root.Get
-                       (APL.Key (Label)).Kind in TOML.Atom_Value_Kind);
-               when Multiple =>
-                  Root.Set
-                    (APL.Key (Label),
-                     TOML_Adapters.To_Array
-                       (Root.Get (APL.Key (Label))));
-            end case;
-         end if;
+      for Prop in Alire.Properties.From_TOML.Cardinality'Range loop
+         declare
+            Toml_Key : constant String := Tomlify (Prop).As_String;
+         begin
+            if Root.Has (Toml_Key) then
+               case Alire.Properties.From_TOML.Cardinality (Prop) is
+                  when Unique =>
+                     Assert
+                       (Root.Get (Toml_Key).Kind in
+                            TOML.Atom_Value_Kind
+                          | TOML.TOML_Table,
+                        "Expected unique value/table for key '" & Toml_Key
+                        & "' but is: " & Root.Get (Toml_Key).Kind'Image,
+                        Unchecked => True);
+                     --  Unchecked as it shouldn't happen if manifest reading
+                     --  did its checks as intended.
+                  when Multiple =>
+                     Root.Set
+                       (Toml_Key,
+                        TOML_Adapters.To_Array (Root.Get (Toml_Key)));
+               end case;
+            end if;
+         end;
       end loop;
 
       --  Origin

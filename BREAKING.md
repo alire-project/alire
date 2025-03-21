@@ -1,10 +1,15 @@
 Log of breaking changes in index or alr. Future versions are as of today and
 may change.
 
-### alr 3.0.0 + index 1.4.0
+### alr 3.0.0 + index 1.5.0
 
 - alr: removed `ALR_CONFIG` environment variable.
 - alr: removed `alr config` command.
+- alr: removed remote testing in `alr test` command.
+- alr: added new behavior to `alr test` and a built-in test runner.
+- manifest: added `[test]` section.
+- manifest: array of licenses is no longer supported (SPDX expressions allow multiple licenses).
+- alr: setting a builtin without `--builtin` will emit a new warning.
 
 ### We are here
 

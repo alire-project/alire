@@ -21,13 +21,13 @@ run_alr("test") # Ending with success is enough
 os.chdir("..")
 init_local_crate("zzz")
 add_action("test", ["touch", "success.txt"])
-run_alr("index-test")
+run_alr("test")
 assert_file_exists("success.txt")
 
 # Likewise from a subdirectory
 os.remove("success.txt")
 os.chdir("src")
-run_alr("index-test")
+run_alr("test")
 assert_file_exists(os.path.join("..", "success.txt"))
 
 

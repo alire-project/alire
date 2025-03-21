@@ -30,9 +30,9 @@ package Alr.Commands.Settings is
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String is
      ("[--list] [--show-origin] [key_regex] |" &
-        " --get <key> |" &
-        " --set <key> <value> |" &
-        " --unset <key>");
+        " --get [--builtin] <key> |" &
+        " --set [--builtin] <key> <value> |" &
+        " --unset [--builtin] <key>");
 
 private
 
@@ -44,6 +44,7 @@ private
       Unset        : aliased Boolean := False;
       Global       : aliased Boolean := False;
       Builtins_Doc : aliased Boolean := False;
+      Builtin      : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Settings;

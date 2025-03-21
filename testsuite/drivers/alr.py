@@ -412,7 +412,7 @@ def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
         run_alr("pin", "--unpin", crate)
 
 
-def alr_pin(crate, version="", path="", url="", commit="", branch="",
+def alr_pin(crate, version="", path="", url="", commit="", branch="", subdir="",
             manual=True, update=True, force=False):
     """
     Pin a crate, either manually or using the command-line interface. Use only
@@ -430,12 +430,15 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
             pin_line = f'{crate} = {{ version = "{version}" }}'
         elif path != "":
             pin_line = f"{crate} = {{ path = '{path}' }}"  # literal so \ works
-        elif url != "" and commit != "":
-            pin_line = f"{crate} = {{ url = '{url}', commit = '{commit}' }}"
-        elif url != "" and branch != "":
-            pin_line = f"{crate} = {{ url = '{url}', branch = '{branch}' }}"
         elif url != "":
-            pin_line = f"{crate} = {{ url = '{url}' }}"
+            if branch != "":
+                rev_part = f", branch = '{branch}'"
+            elif commit != "":
+                rev_part = f", commit = '{commit}'"
+            else:
+                rev_part = ""
+            subdir_part = f", subdir = '{subdir}'" if subdir != "" else ""
+            pin_line = f"{crate} = {{ url = '{url}'{rev_part}{subdir_part} }}"
         else:
             raise ValueError("Specify either version, path or url")
 
@@ -468,6 +471,9 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
                 args += ["--commit", f"{commit}"]
             elif branch != "":
                 args += ["--branch", f"{branch}"]
+
+            if subdir != "":
+                args += ["--subdir", f"{subdir}"]
 
         return run_alr("pin", *args, force=force)
 

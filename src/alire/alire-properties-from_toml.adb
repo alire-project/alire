@@ -48,6 +48,17 @@ package body Alire.Properties.From_TOML is
                      exit Process_Property;
                   end if;
 
+                  --  Check cardinality of the property; by default the parser
+                  --  allows arrays of tables so we must explicitly diagnose
+                  --  tables that should be unique.
+
+                  if Val.Kind = TOML_Array and then Cardinality (Prop) = Unique
+                  then
+                     From.Checked_Error
+                       ("Property '" & Key
+                        & "' cannot be an array, it must be a single value");
+                  end if;
+
                   --  If the property is an array of tables (e.g. actions),
                   --  reconstruct items as a single table to redispatch.
                   --  This ensures that properties that can have dynamic

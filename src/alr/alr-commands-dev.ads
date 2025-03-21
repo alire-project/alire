@@ -37,7 +37,6 @@ private
       Error        : aliased Boolean := False; -- Create a recoverable error
       Raise_Except : aliased Boolean := False;
       Raise_Final  : aliased Boolean := False;
-      Self_Test    : aliased Boolean := False;
       UTF_8_Test   : aliased Boolean := False; -- Produce some UTF-8 output
    end record;
 

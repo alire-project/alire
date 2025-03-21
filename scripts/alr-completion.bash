@@ -5,13 +5,26 @@ if ! builtin type -P alr &>/dev/null; then
     return
 fi
 
+# Detect if --builtin is supported, by checking the version output by alr
+# --version. Any version older than 2.2.0 will not support --builtin.
+builtin=""
+alr_version=$(alr --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+if [[ -n "$alr_version" ]]; then
+    # Check if version is at least 2.2.0
+    major=$(echo "$alr_version" | cut -d. -f1)
+    minor=$(echo "$alr_version" | cut -d. -f2)
+    if [[ $major -gt 2 ]] || [[ $major -eq 2 && $minor -ge 2 ]]; then
+        builtin="--builtin"
+    fi
+fi
+
 # Disable index auto-update to avoid interference with commands below
 if alr settings --global | grep -q index.auto_update= ; then
     update_period=$(alr settings --global | grep index.auto_update= | cut -f2 -d=)
 else
     update_period=unset
 fi
-alr settings --global --set index.auto_update 0
+alr settings --global --set $builtin index.auto_update 0
 
 # Commands/Topics: all line-first words not starting with capital letter, after # COMMANDS
 _alr_commands=$(alr | grep COMMANDS -A 99 | awk '{print $1}' | grep -v '[[:upper:]]' | xargs)
@@ -91,5 +104,5 @@ complete -F _alr_completion alr
 
 # Re-enable index auto-update to avoid interference with commands below
 if [ "$update_period" != "unset" ]; then
-    alr settings --global --set index.auto_update $update_period
+    alr settings --global --set $builtin index.auto_update $update_period
 fi
