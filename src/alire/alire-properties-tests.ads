@@ -39,9 +39,11 @@ is
 
    function Runner (S : Settings) return Runner_Type;
 
-   function Directory (S : Settings) return Unbounded_Relative_Path;
+   function Directory (S : Settings) return Relative_Path;
 
    function Jobs (S : Settings) return Natural;
+
+   function Id (S : Settings) return String;
 
    function Default return Settings;
 
@@ -51,16 +53,19 @@ private
       Runner    : Runner_Type;
       Directory : Unbounded_Relative_Path;
       Jobs      : Natural;
+      Id        : UString;
    end record;
 
    overriding
    function Image (S : Settings) return String
-   is (" test runner: "
+   is (" test runner"
+       & (if Id (S) = "" then "" else ("'" & Id (S) & "'"))
+       & ": "
        & (case S.Runner.Kind is
             when Alire_Runner => "alire",
-            when External => S.Runner.Command.Flatten)
+            when External => "`" & S.Runner.Command.Flatten & "`")
        & ", directory: "
-       & UStrings.To_String (S.Directory)
+       & Directory (S)
        & (if S.Runner.Kind = Alire_Runner then (", jobs:" & S.Jobs'Image)
           else ""));
 
@@ -73,22 +78,28 @@ private
               when External => S.Runner.Command.Flatten)
        & New_Line
        & "directory: "
-       & Alire.Utils.YAML.YAML_Stringify (UStrings.To_String (S.Directory))
+       & Alire.Utils.YAML.YAML_Stringify (Directory (S))
        & New_Line
        & "jobs:"
-       & S.Jobs'Image);
+       & S.Jobs'Image
+       & New_Line
+       & "id: "
+       & Alire.Utils.YAML.YAML_Stringify (Id (S)));
 
    function Runner (S : Settings) return Runner_Type
    is (S.Runner);
 
-   function Directory (S : Settings) return Unbounded_Relative_Path
-   is (S.Directory);
+   function Directory (S : Settings) return Relative_Path
+   is (+S.Directory);
 
    function Jobs (S : Settings) return Natural
    is (S.Jobs);
 
+   function Id (S : Settings) return String
+   is (+S.Id);
+
    function Default return Settings
    is (Properties.Property
-       with (Kind => Alire_Runner), +Alire.Paths.Default_Tests_Folder, 0);
+       with (Kind => Alire_Runner), +Alire.Paths.Default_Tests_Folder, 0, +"");
 
 end Alire.Properties.Tests;

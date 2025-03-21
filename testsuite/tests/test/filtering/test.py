@@ -37,4 +37,7 @@ assert p.out.count("PASS") == 2
 p = run_alr("test", "anything")
 assert p.out.count("PASS") == 0
 
+p = run_alr("test", "xxx")
+assert p.out.count("PASS") == 0 # No match on common prefix
+
 print('SUCCESS')

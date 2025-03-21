@@ -25,12 +25,18 @@ package Alr.Commands.Test is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[test_names]...");
+   is ("[args]...");
+
+   overriding
+   function Switch_Parsing
+     (Cmd : Command) return CLIC.Subcommand.Switch_Parsing_Kind
+   is (CLIC.Subcommand.Before_Double_Dash);
 
 private
 
    type Command is new Commands.Command with record
       Jobs : aliased Integer := 0;
+      By_Id : aliased GNAT.Strings.String_Access;
    end record;
 
 end Alr.Commands.Test;

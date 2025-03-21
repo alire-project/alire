@@ -238,8 +238,11 @@ package Alire with Preelaborate is
    --  Does nothing for successful outcomes. Raises Checked_Error with the
    --  corresponding message set in Alire.Errors otherwise.
 
-   procedure Assert (Condition : Boolean; Or_Else : String);
-   --  Calls Raise_Checked_Error (Or_Else) when Condition is false
+   procedure Assert (Condition : Boolean;
+                     Or_Else   : String;
+                     Unchecked : Boolean := False);
+   --  Calls Raise_Checked_Error or raises Program_Error when Condition is
+   --  false, depending on Unchecked.
 
    procedure Raise_Checked_Error (Msg : String) with No_Return;
    --  For errors where we do not return an Outcome_Failure, we log an error

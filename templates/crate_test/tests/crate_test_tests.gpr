@@ -2,7 +2,7 @@ with "config/@_NAME_@_tests_config.gpr";
 with "config/@_NAME_@_tests_list_config.gpr";
 
 project @_CAPITALIZE:NAME_@_Tests is
-   for Source_Dirs use ("src/", "common/", "config/");
+   for Source_Dirs use ("src/**", "common/", "config/");
    for Object_Dir use "obj/" & @_CAPITALIZE:NAME_@_Tests_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
    for Exec_Dir use "bin";

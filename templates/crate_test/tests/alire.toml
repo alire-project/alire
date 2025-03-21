@@ -9,4 +9,5 @@ version = "0.0.0-test"
 @_NAME_@ = { path = ".." }
 
 [build-profiles]
-@_NAME_@ = "validation"
+@_NAME_@       = "validation"
+@_NAME_@_tests = "validation"
