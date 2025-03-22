@@ -59,7 +59,7 @@ private
    overriding
    function Image (S : Settings) return String
    is (" test runner"
-       & (if Id (S) = "" then "" else ("'" & Id (S) & "'"))
+       & (if Id (S) = "" then "" else (" '" & Id (S) & "'"))
        & ": "
        & (case S.Runner.Kind is
             when Alire_Runner => "alire",
