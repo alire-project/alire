@@ -69,3 +69,6 @@
 [submodule "deps/yeison"]
 	path = deps/yeison
 	url = https://github.com/mosteo/yeison
+[submodule "deps/templates-parser"]
+	path = deps/templates-parser
+	url = https://github.com/alire-project/templates-parser

@@ -31,21 +31,24 @@ semantic_versioning = "^3.0"
 simple_logging = "^2.0"
 si_units = "~0.2.2"
 stopwatch = "~0.1"
+templates_parser = "^24" # Latests pre-Ada 2022 version
 toml_slicer = "~0.1"
 uri_ada = "^2.0"
 spdx = "~0.2"
 
-# For some reason static-pic is causing problems in CLIC
 [gpr-set-externals]
-CLIC_LIBRARY_TYPE="static"
+CLIC_LIBRARY_TYPE="static"  # Has problems with "static-pic" for some reason
 
-# Building alr requires the explicit setting of this variable
+# Building alr requires the explicit setting of these variables
+# ALIRE_OS required by alr
+# GNATCOLL_OS required by gnatcoll
+# PRJ_TARGET required by templates_parser
 [gpr-set-externals."case(os)"]
-freebsd = { ALIRE_OS = "freebsd" }
-openbsd = { ALIRE_OS = "openbsd" }
-linux   = { ALIRE_OS = "linux" }
-macos   = { ALIRE_OS = "macos" }
-windows = { ALIRE_OS = "windows" }
+freebsd = { ALIRE_OS = "freebsd", GNATCOLL_OS = "unix",    PRJ_TARGET = "FreeBSD" }
+openbsd = { ALIRE_OS = "openbsd", GNATCOLL_OS = "unix",    PRJ_TARGET = "UNIX" }
+linux   = { ALIRE_OS = "linux",   GNATCOLL_OS = "unix",    PRJ_TARGET = "Linux" }
+macos   = { ALIRE_OS = "macos",   GNATCOLL_OS = "osx",     PRJ_TARGET = "macOS" }
+windows = { ALIRE_OS = "windows", GNATCOLL_OS = "windows", PRJ_TARGET = "Windows" }
 "..."   = { ALIRE_OS = "unknown" } # Will cause the build to fail
 
 # Some dependencies require precise versions during the development cycle:
@@ -83,7 +86,8 @@ commit = "60729edf31816aca0036b13b2794c39a9bd0172e"
 
 [pins.gnatcoll]
 url    = "https://github.com/alire-project/gnatcoll-core.git"
-commit = "4e663b87a028252e7e074f054f8f453661397166"
+commit = "40cb993cc0bdd84bd7c4d5ff0438380751497c16"
+
 [pins.lml]
 url    = "https://github.com/mosteo/lml_ada.git"
 commit = "3d79edaff98bc4985014c641327ceb22d655df6b"
@@ -112,6 +116,11 @@ commit = "9329d2591b82440ccc859a53f1380ac07ea4194d"
 url    = "https://github.com/mosteo/stopwatch"
 commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9"
 
+[pins.templates_parser]
+# We pin templates parser to avoid a spurious dependency on gnat>=14
+url    = "https://github.com/alire-project/templates-parser"
+commit = "441acdc3769469e348680d4afd1928022a4da36b"
+
 [pins.toml_slicer]
 url    = "https://github.com/mosteo/toml_slicer"
 commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
@@ -132,6 +141,15 @@ command = ["pwsh", "scripts/version-patcher.ps1"]
 [actions.'case(os)'.'...']
 type = "pre-build"
 command = ["scripts/version-patcher.sh"]
+
+# Before building, on Linux only, we regenerate resources. This is not needed
+# on other platforms as this is only to ensure that in the rare case of
+# template modification, the developer on Linux has not to regenerate manually
+# every time. For builds on GitHub, embedded templates should be up to date.
+[[actions]]
+[actions.'case(os)'.linux]
+type = "pre-build"
+command = ["support/embedder/embedder.sh"]
 
 [test]
 runner = "alire"
