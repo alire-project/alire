@@ -14,7 +14,7 @@ with R.Crate_Lib_Src_Name_Ads;
 with R.Crate_Test_Tests_Alire_Toml;
 with R.Crate_Test_Tests_Common_Name_Tests_Ads;
 with R.Crate_Test_Tests_Crate_Test_Tests_Gpr;
-with R.Crate_Test_Tests_Src_Name_Testsxexample_Test_Adb;
+with R.Crate_Test_Tests_Src_Name_Testsxassertions_Enabled_Adb;
 
 private with Alire.TOML_Adapters;
 
@@ -73,11 +73,11 @@ package Alire.Templates.Builtins is
 
    --  Files to initialize a test crate within a regular crate
    Crate_Test : constant Tree := New_Tree
-     .Append (".gitignore",                          +R.Crate_Common_Gitignore_Hidden.Content)
-     .Append ("alire.toml",                          +R.Crate_Test_Tests_Alire_Toml.Content)
-     .Append ("@_NAME_@_tests.gpr",                  +R.Crate_Test_Tests_Crate_Test_Tests_Gpr.Content)
-     .Append ("common/@_NAME_@_tests.ads",           +R.Crate_Test_Tests_Common_Name_Tests_Ads.Content)
-     .Append ("src/@_NAME_@_tests-example_test.adb", +R.Crate_Test_Tests_Src_Name_Testsxexample_Test_Adb.Content)
+     .Append (".gitignore",                                +R.Crate_Common_Gitignore_Hidden.Content)
+     .Append ("alire.toml",                                +R.Crate_Test_Tests_Alire_Toml.Content)
+     .Append ("@_NAME_@_tests.gpr",                        +R.Crate_Test_Tests_Crate_Test_Tests_Gpr.Content)
+     .Append ("common/@_NAME_@_tests.ads",                 +R.Crate_Test_Tests_Common_Name_Tests_Ads.Content)
+     .Append ("src/@_NAME_@_tests-assertions_enabled.adb", +R.Crate_Test_Tests_Src_Name_Testsxassertions_Enabled_Adb.Content)
    ;
 
 private

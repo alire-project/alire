@@ -27,7 +27,7 @@ end Xxx_Tests.Nested_Test;
 # Run `alr test` and check that two PASS lines exist with the proper test names
 
 p = run_alr("test")
-assert_substring("[ PASS ] example_test", p.out)
+assert_substring("[ PASS ] assertions_enabled", p.out)
 assert_substring("[ PASS ] nested/nested_test", p.out)
 
 # Create a third failing test to check its failure and output are reported

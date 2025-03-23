@@ -17,7 +17,7 @@ end Xxx_Tests.{cap};
 """)
 
 init_local_crate("xxx", with_test=True)
-os.remove("./tests/src/xxx_tests-example_test.adb")
+os.remove("./tests/src/xxx_tests-assertions_enabled.adb")
 
 for test in ["yes1", "yes2", "yes3", "no1", "no2"]:
    make_test(test)
