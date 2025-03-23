@@ -12,7 +12,8 @@ private
 
    --  Remember to update Alire.Index branch if needed too
 
-   Current_Str : constant String := "2.2.0-dev";
+   Current_Str : constant String := "3.0.0-dev";
+   --  3.0.0:     new built-in test runner
    --  2.1.0:     new solver and other internal largish refactorings, bugfixes
    --  2.0.2:     quarterly bugfix maintenance release
    --  2.0.1:     fix `alr install` and minor fixes

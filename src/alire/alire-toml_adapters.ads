@@ -9,6 +9,9 @@ with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.TOML_Adapters with Preelaborate is
 
+   function Escape (S : String) return String;
+   --  Returns an unquoted string escaped for use in a doubly-quoted string
+
    function Create_Table (Key   : String;
                           Value : TOML.TOML_Value)
                           return TOML.TOML_Value with

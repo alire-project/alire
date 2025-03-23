@@ -1,8 +1,10 @@
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 
 with AAA.Strings; use AAA.Strings;
 
 with Alire.Directories;
+
+with LML;
 
 package body Alire.Utils.Text_Files is
 
@@ -55,12 +57,16 @@ package body Alire.Utils.Text_Files is
                                                    This.Backup,
                                                    This.Backup_Dir);
       begin
-         Open (File, Out_File, Replacer.Editable_Name);
+         Create (File, Out_File, Replacer.Editable_Name);
          for Line of This.Lines loop
-            Put_Line (File, Line);
+            Put_Line (File, LML.Decode (Line));
          end loop;
          Close (File);
          Replacer.Replace;
+      exception
+         when E : others =>
+            Log_Exception (E);
+            raise;
       end;
 
    exception
@@ -124,7 +130,7 @@ package body Alire.Utils.Text_Files is
       do
          Open (F, In_File, From);
          while not End_Of_File (F) loop
-            This.Orig.Append (Get_Line (F));
+            This.Orig.Append (LML.Encode (Get_Line (F)));
          end loop;
          Close (F);
 
