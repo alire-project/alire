@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### Style checks disabled by default in all build profiles
 
-PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
+PR [#1919](https://github.com/alire-project/alire/pull/1919)
 
 Style checks are now disabled by default in all build profiles (release, validation, and development). Previously, style checks were enabled by default in the validation and development profiles. This change intends to avoid unwanted compiler errors related to style issues.
 
