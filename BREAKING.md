@@ -10,6 +10,7 @@ may change.
 - manifest: added `[test]` section.
 - manifest: array of licenses is no longer supported (SPDX expressions allow multiple licenses).
 - alr: setting a builtin without `--builtin` will emit a new warning.
+- alr: style checks are now disabled by default in all build profiles.
 
 ### We are here
 
