@@ -7,4 +7,4 @@ begin
          return; -- properly raised
    end;
    raise Program_Error with "Assertion did not raise";
-end @_CAPITALIZE:NAME_@_Tests.Example_Test;
+end @_CAPITALIZE:NAME_@_Tests.Assertions_Enabled;

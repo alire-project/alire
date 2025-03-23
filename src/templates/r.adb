@@ -72,7 +72,7 @@ package body r is
             ("crate_test/tests/src/name_tests-assertions_enabled."
              & "adb",
              r.crate_test_tests_src_name_testsxassertions_enabled_adb.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 23, 13, 47, 37, 0.0));
+             GNAT.Calendar.Time_Of (2025, 03, 23, 14, 58, 35, 0.0));
       end if;
    end Init;
 
