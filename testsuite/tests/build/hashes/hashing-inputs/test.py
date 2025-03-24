@@ -45,10 +45,7 @@ assert_eq(
     'external:TEST_UNDECLARED=used_by_another_crate\n' # modified GPR external
     'profile:libhello=VALIDATION\n'          # build profile
     'switches:libhello=-O3,-fdata-sections,-ffunction-sections,-g,-gnatVa,'
-    '-gnatW8,-gnata,-gnatn,-gnato,-gnatw.X,-gnatwa,-gnatwe,-gnaty-d,-gnaty3,'
-    '-gnatyA,-gnatyB,-gnatyI,-gnatyO,-gnatyS,-gnatya,-gnatyb,-gnatyc,-gnatye,'
-    '-gnatyf,-gnatyh,-gnatyi,-gnatyk,-gnatyl,-gnatym,-gnatyn,-gnatyp,-gnatyr,'
-    '-gnatyt,-gnatyu,-gnatyx\n'
+    '-gnatW8,-gnata,-gnatn,-gnato,-gnatw.X,-gnatwa,-gnatwe\n'
     f'version:gnat_external={external_compiler_version()}\n',
                                              # compiler version
     hash_input("libhello"))
@@ -68,10 +65,7 @@ assert_eq(
     'external:LIBRARY_TYPE=default\n'
     'profile:hello=VALIDATION\n'
     'switches:hello=-O3,-fdata-sections,-ffunction-sections,-g,-gnatVa,'
-    '-gnatW8,-gnata,-gnatn,-gnato,-gnatw.X,-gnatwa,-gnatwe,-gnaty-d,-gnaty3,'
-    '-gnatyA,-gnatyB,-gnatyI,-gnatyO,-gnatyS,-gnatya,-gnatyb,-gnatyc,-gnatye,'
-    '-gnatyf,-gnatyh,-gnatyi,-gnatyk,-gnatyl,-gnatym,-gnatyn,-gnatyp,-gnatyr,'
-    '-gnatyt,-gnatyu,-gnatyx\n'
+    '-gnatW8,-gnata,-gnatn,-gnato,-gnatw.X,-gnatwa,-gnatwe\n'
     f'version:gnat_external={external_compiler_version()}\n',
     hash_input("hello"))
 
@@ -84,10 +78,7 @@ assert_eq(
     'external:XXX_LIBRARY_TYPE=default\n'
     'profile:xxx=VALIDATION\n'
     'switches:xxx=-O3,-fdata-sections,-ffunction-sections,-g,-gnatVa,'
-    '-gnatW8,-gnata,-gnatn,-gnato,-gnatw.X,-gnatwa,-gnatwe,-gnaty-d,-gnaty3,'
-    '-gnatyA,-gnatyB,-gnatyI,-gnatyO,-gnatyS,-gnatya,-gnatyb,-gnatyc,-gnatye,'
-    '-gnatyf,-gnatyh,-gnatyi,-gnatyk,-gnatyl,-gnatym,-gnatyn,-gnatyp,-gnatyr,'
-    '-gnatyt,-gnatyu,-gnatyx\n',
+    '-gnatW8,-gnata,-gnatn,-gnato,-gnatw.X,-gnatwa,-gnatwe\n',
     content_of(os.path.join("alire", "build_hash_inputs"))
 )
 

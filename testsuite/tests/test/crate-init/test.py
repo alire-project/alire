@@ -9,7 +9,7 @@ from drivers.asserts import assert_match
 init_local_crate(with_test=True)
 
 p = run_alr("test")
-assert_match(".*\[ PASS \] example_test.*", p.out)
+assert_match(".*\[ PASS \] assertions_enabled.*", p.out)
 # default test after init always fails
 
 print('SUCCESS')

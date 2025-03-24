@@ -439,7 +439,7 @@ static, i.e. they cannot depend on the context.
    ```
 
  -  `test`: optional section that configures the behavior of `alr test`.
-    The test section accepts dynamic expressions, making it possible to use 
+    The test section accepts dynamic expressions, making it possible to use
     different test runners on different platforms. The general syntax for this
     section is:
 
@@ -718,10 +718,16 @@ static, i.e. they cannot depend on the context.
    [build-switches]
    release.runtime_checks = "Everything"
    ```
-   To disable style checks for all profiles:
+   Note that style checks are disabled by default in all profiles. To enable style checks for all profiles:
    ```toml
    [build-switches]
-   "*".style_checks = "No"
+   "*".style_checks = "Yes"
+   ```
+
+   Or, to enable style checks only in, e.g., the validation profile:
+   ```toml
+   [build-switches]
+   validation.style_checks = "Yes"
    ```
 
     All switch categories also accept a custom list of switches, for instance:
