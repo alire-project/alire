@@ -135,20 +135,27 @@ package body Alr.Commands.Test is
 
                Guard : Dirs.Guard (Enter (Cmd.Root.Path / S.Directory))
                with Unreferenced;
-            begin
-               Cmd.Optional_Root.Discard;
 
+               Test_Root : Alire.Roots.Optional.Root
+                 := Alire.Roots.Optional.Detect_Root
+                   (Cmd.Root.Path / S.Directory);
+            begin
                if All_Settings.Length > 1 then
                   Alire.Put_Info ("running test with" & S.Image);
                end if;
 
                case S.Runner.Kind is
                   when Alire_Runner =>
-                     Cmd.Requires_Workspace;
+                     if not Test_Root.Is_Valid then
+                        Alire.Raise_Checked_Error
+                          ("cannot detect a proper crate in test directory '"
+                           & S.Directory
+                           & "' (error: " & Test_Root.Message & ")");
+                     end if;
 
                      Failures :=
                        Alire.Test_Runner.Run
-                         (Cmd.Root,
+                         (Test_Root.Value,
                           Get_Args,
                           (if Cmd.Jobs < 0 then S.Jobs else Cmd.Jobs));
 
