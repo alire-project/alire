@@ -102,8 +102,8 @@ package body Alr.Commands.Test is
          end;
       end if;
 
-      if not Args.Is_Empty
-        and then (Cmd.Jobs >= 0 or else All_Settings.Length > 1)
+      if All_Settings.Length > 1
+        and then not (Args.Is_Empty and then Cmd.Jobs = -1)
       then
          Trace.Warning
            ("arguments cannot be forwarded to test runners when several "
@@ -145,7 +145,6 @@ package body Alr.Commands.Test is
                case S.Runner.Kind is
                   when Alire_Runner =>
                      Cmd.Requires_Workspace;
-                     Trace.Always (Dirs.Current);
 
                      Failures :=
                        Alire.Test_Runner.Run
@@ -218,6 +217,7 @@ package body Alr.Commands.Test is
          "--jobs=",
          "Run up to N tests in parallel, or as many as there are processors"
          & " if 0",
+         Initial  => -1,
          Default  => -1,
          Argument => "N");
 
