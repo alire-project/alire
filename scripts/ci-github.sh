@@ -140,5 +140,5 @@ fi
 
 mkdir bak && cp bin/alr* bak
 echo Running Ada test suite now:
-bak/alr -vv -d test || { echo Ada test suite failures, unstable build!; exit 1; }
+bak/alr test || { echo Ada test suite failures, unstable build!; exit 1; }
 rm -rf bin/alr* && mv bak/alr* bin
