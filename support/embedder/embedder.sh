@@ -42,7 +42,7 @@ generated=$base/src/templates
 
 # Build awsres from AWS only if awsres is not yet available here or in path
 
-if [ ! -f awsres ] && ! command -v awsres &> /dev/null; then
+if [ ! -f awsres ]; then
 
     echo "Building awsres from AWS..."
 
@@ -50,6 +50,7 @@ if [ ! -f awsres ] && ! command -v awsres &> /dev/null; then
     tmp=$(mktemp -d)
     pushd "$tmp"
 
+    unset GNATCOLL_ALIRE_PREFIX
     alr get --build aws^24
     find . -name awsres -exec cp {} "$workdir" \;
 
@@ -60,7 +61,7 @@ fi
 
 # Actually generate the embedded resources
 
-export PATH+=":$PWD"
+export PATH="$PWD:$PATH"
 
 # Clean up old resources
 rm -rf $generated
