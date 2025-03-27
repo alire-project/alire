@@ -196,10 +196,9 @@ package body Alire.User_Pins is
          --  Successful checkout
 
          if not Adirs.Exists (Adirs.Containing_Directory (Destination)) then
-            Adirs.Create_Path (Adirs.Containing_Directory (Destination));
+            Directories.Create_Tree (Adirs.Containing_Directory (Destination));
          end if;
-         Adirs.Rename (Temp.Filename, Destination);
-         Temp.Keep;
+         Directories.Rename (Temp.Filename, Destination);
       end Checkout;
 
       ------------
