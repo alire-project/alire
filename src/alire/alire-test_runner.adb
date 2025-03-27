@@ -285,7 +285,6 @@ package body Alire.Test_Runner is
          if CLIC.TTY.Is_TTY then
             --  print completion percentage to indicate progress
             Put_Progress;
-            delay 0.5;
          end if;
 
          --  wait for one test to finish
