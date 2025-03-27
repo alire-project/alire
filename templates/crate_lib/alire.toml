@@ -7,7 +7,7 @@ maintainers = ["@_USERNAME_@ <@_EMAIL_@>"]
 @@IF@@ @_LOGIN_@ /= ""
 maintainers-logins = ["@_LOGIN_@"]
 @@END_IF@@
-licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
+licenses = "@_LICENSES_@"
 website = "@_WEBSITE_@"
 tags = [@_TAGS_@]
 @@IF@@ @_WITH_TEST_@
