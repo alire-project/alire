@@ -268,7 +268,7 @@ package body Alire.Test_Runner is
            (if Len = 0 then 0 else (Completed * 100 + Len / 2) / Len);
       begin
          Ada.Text_IO.Put
-           ("[" & Head (Percentage'Image, 5) & "% ]" & ASCII.CR);
+           ("[" & Tail (Percentage'Image, 4) & "% ]" & ASCII.CR);
          Ada.Text_IO.Flush;
          Completed := Completed + 1;
       end Put_Progress;
