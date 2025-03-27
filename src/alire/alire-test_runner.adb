@@ -1,5 +1,6 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
+with Ada.Strings.Fixed;
 with Ada.Text_IO;
 with GNAT.OS_Lib;
 with System.Multiprocessors;
@@ -251,6 +252,26 @@ package body Alire.Test_Runner is
       Success : Boolean;
 
       Remaining : Portable_Path_Vector := Test_List;
+      Completed : Long_Integer := 0; -- Tests already completed
+
+      ------------------
+      -- Put_Progress --
+      ------------------
+
+      procedure Put_Progress is
+         --  convenience function to print a percentage box when running
+         --  in a terminal
+         use Ada.Strings.Fixed;
+         Len        : constant Long_Integer := Long_Integer (Test_List.Length);
+         --  rounding division
+         Percentage : constant Long_Integer :=
+           (if Len = 0 then 0 else (Completed * 100 + Len / 2) / Len);
+      begin
+         Ada.Text_IO.Put
+           ("[" & Tail (Percentage'Image, 4) & "% ]" & ASCII.CR);
+         Ada.Text_IO.Flush;
+         Completed := Completed + 1;
+      end Put_Progress;
 
    begin
 
@@ -261,6 +282,12 @@ package body Alire.Test_Runner is
       end loop;
 
       loop
+         if CLIC.TTY.Is_TTY then
+            --  print completion percentage to indicate progress
+            Put_Progress;
+            delay 0.5;
+         end if;
+
          --  wait for one test to finish
          Wait_Process (Pid, Success);
 
@@ -286,7 +313,7 @@ package body Alire.Test_Runner is
 
          if not Remaining.Is_Empty then
             --  start up a new test
-            Spawn_Test (Portable_Path (Remaining.Last_Element));
+            Spawn_Test (Remaining.Last_Element);
             Remaining.Delete_Last;
          end if;
       end loop;
