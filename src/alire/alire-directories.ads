@@ -75,6 +75,9 @@ package Alire.Directories is
    function Find_Relative_Path_To (Path : Any_Path) return Any_Path;
    --  Same as Find_Relative_Path (Parent => Current, Child => Path)
 
+   function Exists (Path : Any_Path) return Boolean;
+   --  Path designates something, be it file, dir or symbolic link
+
    function Is_Directory (Path : Any_Path) return Boolean;
    --  Returns false for non-existing paths too
 

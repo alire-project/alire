@@ -12,6 +12,8 @@ with GNAT.IO;
 
 with Interfaces.C_Streams;
 
+with r;
+
 with Simple_Logging.Filtering;
 
 package body Alire_Early_Elaboration is
@@ -266,4 +268,6 @@ begin
 
    TTY_Detection;
    Early_Switch_Detection;
+
+   r.Init; -- Register all embedded resources
 end Alire_Early_Elaboration;

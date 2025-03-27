@@ -6,6 +6,28 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Style checks disabled by default in all build profiles
+
+PR [#1919](https://github.com/alire-project/alire/pull/1919)
+
+Style checks are now disabled by default in all build profiles (release, validation, and development). Previously, style checks were enabled by default in the validation and development profiles. This change intends to avoid unwanted compiler errors related to style issues.
+
+To enable former style checks, you can use the `build-switches` table in your manifest:
+
+```toml
+[build-switches]
+"*".style_checks = "Yes"  # Enable for all profiles
+```
+
+Or for a specific profile:
+
+```toml
+[build-switches]
+validation.style_checks = "Yes"  # Enable only for validation profile
+```
+
+Alternatively, `gnatformat` is available in the community index to easily apply the default GNAT style.
+
 ### New `--builtin` switch for `alr settings`
 
 PR [#1912](https://github.com/alire-project/alire/pull/1912)
