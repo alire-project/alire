@@ -208,8 +208,9 @@ package body Alire.User_Pins is
 
          --  Successful checkout
 
-         Adirs.Rename (Temp.Filename, Destination);
-         Temp.Keep;
+         Directories.Rename (Temp.Filename, 
+                             Destination,
+                             Copy_Delete => False);
       end Checkout;
 
       ------------
