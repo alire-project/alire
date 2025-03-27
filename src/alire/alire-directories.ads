@@ -100,8 +100,13 @@ package Alire.Directories is
    --  the top-level only contains "doinstall", "README" and so on that
    --  are unusable and would be confusing in a binary prefix.
 
-   procedure Rename (Source, Destination : Any_Path);
-   --  Renames files/directories
+   procedure Rename (Source,
+                     Destination : Any_Path;
+                     Copy_Delete : Boolean := True);
+   --  Renames files/directories. If Copy_Delete, use copy and delete (should
+   --  work across filesystems when move not supported). Since we create
+   --  temporary files possibly on user-designated locations, at least in
+   --  these cases we should be wary of using a direct rename without copying.
 
    procedure Touch (File : File_Path; Create_Tree : Boolean := False)
      with Pre => Create_Tree or else Is_Directory (Parent (File));

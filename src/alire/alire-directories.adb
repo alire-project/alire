@@ -374,17 +374,34 @@ package body Alire.Directories is
    -- Rename --
    ------------
 
-   procedure Rename (Source, Destination : Any_Path) is
+   procedure Rename (Source,
+                     Destination : Any_Path;
+                     Copy_Delete : Boolean := True) is
    begin
-      Trace.Debug ("Renaming " & Source & " (" & Den.Kind (Source)'Image & ") "
-                   & "into " & Destination & " ...");
-      Merge_Contents
-        (Src                   => Source,
-         Dst                   => Destination,
-         Skip_Top_Level_Files  => False,
-         Fail_On_Existing_File => True,
-         Remove_From_Source    => False,
-         Silent                => True);
+      Trace.Debug ("Renaming " & Source & " (" & Kind (Source)'Image & ") "
+                   & "into " & Destination
+                   & " using copy/delete=" & Copy_Delete'Image);
+
+      if Exists (Destination) then
+         raise Program_Error with
+         Errors.Set ("Cannot rename " & Source
+                     & " into existing destination " & Destination);
+      end if;
+
+      if Copy_Delete then
+         Merge_Contents
+           (Src                   => Source,
+            Dst                   => Destination,
+            Skip_Top_Level_Files  => False,
+            Fail_On_Existing_File => True,
+            Remove_From_Source    => False,
+            Silent                => True);
+
+         Delete_Tree (Source);
+      else
+         Adirs.Rename (Source, Destination);
+      end if;
+
       Trace.Debug ("Renaming completed");
    end Rename;
 
@@ -754,6 +771,8 @@ package body Alire.Directories is
             end;
 
          end if;
+      else
+         Trace.Debug ("Not deleting non-existing temporary: " & This.Filename);
       end if;
 
       --  Remove temp dir if empty to keep things tidy, and avoid modifying
