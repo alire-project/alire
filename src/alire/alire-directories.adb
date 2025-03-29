@@ -224,29 +224,50 @@ package body Alire.Directories is
    ----------------------
 
    procedure Ensure_Deletable (Path : Any_Path) is
-      use Ada.Directories;
+
+      ---------------------------
+      -- Ensure_Deletable_Item --
+      ---------------------------
+
+      procedure Ensure_Deletable_Item
+        (Path : Any_Path; Unused : in out Boolean)
+      is
+         use all type Den.Kinds;
+      begin
+         case Den.Kind (Path) is
+            when Nothing =>
+               raise Program_Error
+                 with "cannot change attributes of non-existing file: " & Path;
+            when Directory =>
+               Trace.Debug ("Forcing writability of dir " & Path);
+               OS_Lib.Subprocess.Checked_Spawn
+                 ("attrib",
+                  AAA.Strings.Empty_Vector
+                  .Append ("-R") -- Remove read-only
+                  .Append ("/D") -- On dirs
+                  .Append (Path & "\*"));
+            when File | Softlink | Special =>
+               Trace.Debug ("Forcing writability of file " & Path);
+               OS_Lib.Subprocess.Checked_Spawn
+                 ("attrib",
+                  AAA.Strings.Empty_Vector
+                  .Append ("-R") -- Remove read-only
+                  .Append (Path));
+         end case;
+      end Ensure_Deletable_Item;
+
    begin
-      if Platforms.Current.Operating_System in Platforms.Windows
-        and then Exists (Path)
+      if Platforms.Current.Operating_System not in Platforms.Windows
+        or else not Exists (Path)
       then
-         if Kind (Path) = Directory then
-            Trace.Debug ("Forcing writability of dir " & Path);
-            OS_Lib.Subprocess.Checked_Spawn
-              ("attrib",
-               AAA.Strings.Empty_Vector
-               .Append ("-R") -- Remove read-only
-               .Append ("/D") -- On dirs
-               .Append ("/S") -- Recursively
-               .Append (Path & "\*"));
-         elsif Kind (Path) = Ordinary_File then
-            Trace.Debug ("Forcing writability of dir " & Path);
-            OS_Lib.Subprocess.Checked_Spawn
-              ("attrib",
-               AAA.Strings.Empty_Vector
-               .Append ("-R") -- Remove read-only
-               .Append (Path));
-         end if;
+         return;
       end if;
+
+      --  Do our own recursion as attrib's one is broken for looping softlinks
+      Traverse_Tree
+        (Start   => Path,
+         Doing   => Ensure_Deletable_Item'Access,
+         Recurse => True);
    end Ensure_Deletable;
 
    ------------------
