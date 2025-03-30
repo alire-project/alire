@@ -152,6 +152,7 @@ package body Alire.Directories is
       use GNATCOLL.VFS;
    begin
       Make_Dir (Create (+Path));
+      Trace.Debug ("Created tree: " & Path);
    end Create_Tree;
 
    ------------------------
@@ -223,29 +224,50 @@ package body Alire.Directories is
    ----------------------
 
    procedure Ensure_Deletable (Path : Any_Path) is
-      use Ada.Directories;
+
+      ---------------------------
+      -- Ensure_Deletable_Item --
+      ---------------------------
+
+      procedure Ensure_Deletable_Item
+        (Path : Any_Path; Unused : in out Boolean)
+      is
+         use all type Den.Kinds;
+      begin
+         case Den.Kind (Path) is
+            when Nothing =>
+               raise Program_Error
+                 with "cannot change attributes of non-existing file: " & Path;
+            when Directory =>
+               Trace.Debug ("Forcing writability of dir " & Path);
+               OS_Lib.Subprocess.Checked_Spawn
+                 ("attrib",
+                  AAA.Strings.Empty_Vector
+                  .Append ("-R") -- Remove read-only
+                  .Append ("/D") -- On dirs
+                  .Append (Path & "\*"));
+            when File | Softlink | Special =>
+               Trace.Debug ("Forcing writability of file " & Path);
+               OS_Lib.Subprocess.Checked_Spawn
+                 ("attrib",
+                  AAA.Strings.Empty_Vector
+                  .Append ("-R") -- Remove read-only
+                  .Append (Path));
+         end case;
+      end Ensure_Deletable_Item;
+
    begin
-      if Platforms.Current.Operating_System in Platforms.Windows
-        and then Exists (Path)
+      if Platforms.Current.Operating_System not in Platforms.Windows
+        or else not Exists (Path)
       then
-         if Kind (Path) = Directory then
-            Trace.Debug ("Forcing writability of dir " & Path);
-            OS_Lib.Subprocess.Checked_Spawn
-              ("attrib",
-               AAA.Strings.Empty_Vector
-               .Append ("-R") -- Remove read-only
-               .Append ("/D") -- On dirs
-               .Append ("/S") -- Recursively
-               .Append (Path & "\*"));
-         elsif Kind (Path) = Ordinary_File then
-            Trace.Debug ("Forcing writability of dir " & Path);
-            OS_Lib.Subprocess.Checked_Spawn
-              ("attrib",
-               AAA.Strings.Empty_Vector
-               .Append ("-R") -- Remove read-only
-               .Append (Path));
-         end if;
+         return;
       end if;
+
+      --  Do our own recursion as attrib's one is broken for looping softlinks
+      Traverse_Tree
+        (Start   => Path,
+         Doing   => Ensure_Deletable_Item'Access,
+         Recurse => True);
    end Ensure_Deletable;
 
    ------------------
@@ -369,6 +391,41 @@ package body Alire.Directories is
          raise;
    end Force_Delete;
 
+   ------------
+   -- Rename --
+   ------------
+
+   procedure Rename (Source,
+                     Destination : Any_Path;
+                     Copy_Delete : Boolean := True) is
+   begin
+      Trace.Debug ("Renaming " & Source & " (" & Kind (Source)'Image & ") "
+                   & "into " & Destination
+                   & " using copy/delete=" & Copy_Delete'Image);
+
+      if Exists (Destination) then
+         raise Program_Error with
+         Errors.Set ("Cannot rename " & Source
+                     & " into existing destination " & Destination);
+      end if;
+
+      if Copy_Delete then
+         Merge_Contents
+           (Src                   => Source,
+            Dst                   => Destination,
+            Skip_Top_Level_Files  => False,
+            Fail_On_Existing_File => True,
+            Remove_From_Source    => False,
+            Silent                => True);
+
+         Delete_Tree (Source);
+      else
+         Adirs.Rename (Source, Destination);
+      end if;
+
+      Trace.Debug ("Renaming completed");
+   end Rename;
+
    ----------------------
    -- Find_Files_Under --
    ----------------------
@@ -475,6 +532,13 @@ package body Alire.Directories is
 
    function Exists (Path : Any_Path) return Boolean
    is (Den.Exists (Den.Scrub (Path)));
+
+   ----------
+   -- Kind --
+   ----------
+
+   function Kind (Path : Any_Path) return Den.Kinds
+   is (Den.Kind (Den.Scrub (Path)));
 
    ------------------
    -- Is_Directory --
@@ -728,6 +792,8 @@ package body Alire.Directories is
             end;
 
          end if;
+      else
+         Trace.Debug ("Not deleting non-existing temporary: " & This.Filename);
       end if;
 
       --  Remove temp dir if empty to keep things tidy, and avoid modifying
@@ -761,8 +827,21 @@ package body Alire.Directories is
    procedure Merge_Contents (Src, Dst              : Any_Path;
                              Skip_Top_Level_Files  : Boolean;
                              Fail_On_Existing_File : Boolean;
-                             Remove_From_Source    : Boolean)
+                             Remove_From_Source    : Boolean;
+                             Silent                : Boolean := True)
    is
+
+      ---------------
+      -- Merge_Log --
+      ---------------
+
+      procedure Merge_Log (S : String) is
+      begin
+         if Silent then
+            return;
+         end if;
+         Trace.Debug (S);
+      end Merge_Log;
 
       Base   : constant Absolute_Path := Den.Filesystem.Absolute (Src);
       Target : constant Absolute_Path := Den.Filesystem.Absolute (Dst);
@@ -801,7 +880,7 @@ package body Alire.Directories is
 
          if Den.Kind (Item) = Directory then
             if not Is_Directory (Dst) then
-               Trace.Debug ("   Merge: Creating destination dir " & Dst);
+               Merge_Log ("   Merge: Creating destination dir " & Dst);
                Create_Tree (Dst);
             end if;
 
@@ -812,9 +891,9 @@ package body Alire.Directories is
 
          --  Copy file into place
 
-         Trace.Debug ("   Merge: copying "
-                     & Den.Filesystem.Absolute (Item)
-                     & " into " & Dst);
+         Merge_Log ("   Merge: copying "
+                    & Den.Filesystem.Absolute (Item)
+                    & " into " & Dst);
 
          if Den.Exists (Dst) then
             if Fail_On_Existing_File then
@@ -825,8 +904,8 @@ package body Alire.Directories is
                Raise_Checked_Error ("Cannot overwrite " & TTY.URL (Dst)
                                     & " as it is not a regular file");
             else
-               Trace.Debug ("   Merge: Deleting in preparation to replace: "
-                            & Dst);
+               Merge_Log
+                 ("   Merge: Deleting in preparation to replace: " & Dst);
                Adirs.Delete_File (Dst);
             end if;
          end if;
@@ -837,6 +916,9 @@ package body Alire.Directories is
       end Merge;
 
    begin
+      Trace.Debug ("Merging "  & Src & " (" & Kind (Src)'Image
+                   & ") into " & Dst & " (" & Kind (Dst)'Image & ")");
+
       Traverse_Tree (Start   => Src,
                      Doing   => Merge'Access,
                      Recurse => True);
