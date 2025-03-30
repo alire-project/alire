@@ -10,7 +10,6 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Platforms.Folders;
-with Alire.VFS;
 with Alire.Utils;
 
 with Den.Filesystem;
@@ -26,6 +25,8 @@ with Interfaces;
 with SI_Units.Binary;
 
 package body Alire.Directories is
+
+   use all type Den.Kinds;
 
    -------------------
    -- Temp_Registry --
@@ -108,7 +109,6 @@ package body Alire.Directories is
    procedure Copy (Src_Folder, Dst_Parent_Folder : String;
                    Excluding                     : String := "")
    is
-      use all type Den.Kinds;
    begin
       for Simple_Item of Den.Iterators.Iterate (Src_Folder) loop
          declare
@@ -189,7 +189,6 @@ package body Alire.Directories is
    function Detect_Root_Path (Starting_At : Absolute_Path := Current)
                               return String
    is
-      use Ada.Directories;
 
       ---------------------------
       -- Find_Candidate_Folder --
@@ -202,14 +201,14 @@ package body Alire.Directories is
          Trace.Debug ("Looking for alire metadata at: " & Path);
          if
            Exists (Path / Paths.Crate_File_Name) and then
-           Kind (Path / Paths.Crate_File_Name) = Ordinary_File
+           Kind (Path / Paths.Crate_File_Name) = File
          then
             return Path;
          else
-            return Find_Candidate_Folder (Containing_Directory (Path));
+            return Find_Candidate_Folder (Adirs.Containing_Directory (Path));
          end if;
       exception
-         when Use_Error =>
+         when Adirs.Use_Error =>
             Trace.Debug
               ("Root directory reached without finding alire metadata");
             return ""; -- There's no containing folder (hence we're at root)
@@ -232,7 +231,6 @@ package body Alire.Directories is
       procedure Ensure_Deletable_Item
         (Path : Any_Path; Unused : in out Boolean)
       is
-         use all type Den.Kinds;
       begin
          case Den.Kind (Path) is
             when Nothing =>
@@ -275,47 +273,22 @@ package body Alire.Directories is
    ------------------
 
    procedure Force_Delete (Path : Absolute_Path) is
-      use Ada.Directories;
-      use GNATCOLL.VFS;
+
+      ------------------
+      -- Delete_Links --
+      ------------------
 
       procedure Delete_Links is
+
          procedure Delete_Links (Path : Absolute_Path) is
-            Contents : File_Array_Access :=
-                         VFS.New_Virtual_File (Path).Read_Dir;
          begin
-            for Item of Contents.all loop
-               if Item.Is_Symbolic_Link then
-                  --  Delete it here and now before normalization, as after
-                  --  normalization links are resolved and the original link
-                  --  name is lost.
-                  declare
-                     Deleted : Boolean := False;
-                     Target  : constant Virtual_File :=
-                                 VFS.New_Virtual_File (+Item.Full_Name);
-                  begin
-                     Target.Normalize_Path (Resolve_Symlinks => True);
-                     Item.Delete (Deleted);
-                     if Deleted then
-                        Trace.Debug ("Deleted softlink: "
-                                     & Item.Display_Full_Name
-                                     & " --> "
-                                     & Target.Display_Full_Name);
-                     else
-                        --  Not deleting a link is unsafe, as it may point
-                        --  outside the target tree. Fail in this case.
-                        Raise_Checked_Error
-                          ("Failed to delete softlink: "
-                           & Item.Display_Full_Name);
-                     end if;
-                  end;
-               elsif Item.Is_Directory
-                 and then Item.Display_Base_Name not in "." | ".."
-               then
-                  Delete_Links (+Item.Full_Name);
+            for Item of Den.Iterators.Iterate (Path) loop
+               if Den.Kind (Path / Item) = Softlink then
+                  Den.Filesystem.Unlink (Path / Item);
+               elsif Den.Kind (Path / Item) = Directory then
+                  Delete_Links (Path / Item);
                end if;
             end loop;
-
-            Unchecked_Free (Contents);
          end Delete_Links;
 
       begin
@@ -367,9 +340,9 @@ package body Alire.Directories is
       end if;
 
       if Exists (Path) then
-         if Kind (Path) = Ordinary_File then
+         if Kind (Path) = File then
             Trace.Debug ("Deleting file " & Path & "...");
-            Delete_File (Path);
+            Adirs.Delete_File (Path);
          elsif Kind (Path) = Directory then
             Trace.Debug ("Deleting folder " & Path & "...");
             Ensure_Deletable (Path);
@@ -377,7 +350,7 @@ package body Alire.Directories is
             --  By first deleting any softlinks, we ensure that the remaining
             --  tree is safe to delete, that no malicious link is followed
             --  outside the target tree, and that broken/recursive links
-            --  confuse the tree removal procedure.
+            --  do not confuse the tree removal procedure.
             Adirs.Delete_Tree (Path);
          else
             Raise_Checked_Error ("Cannot delete special file:" & Path);
@@ -435,7 +408,6 @@ package body Alire.Directories is
                               Max_Depth : Natural := Natural'Last)
                               return AAA.Strings.Vector
    is
-      use all type Den.Kinds;
       Found : AAA.Strings.Vector;
 
       -----------
@@ -507,7 +479,6 @@ package body Alire.Directories is
 
    overriding
    procedure Finalize (This : in out Guard) is
-      use Ada.Directories;
       use Ada.Strings.Unbounded;
       procedure Free is
         new Ada.Unchecked_Deallocation (Absolute_Path, Destination);
@@ -515,7 +486,7 @@ package body Alire.Directories is
    begin
       if This.Enter /= null
            and then
-         Current_Directory /= To_String (This.Original)
+         Adirs.Current_Directory /= To_String (This.Original)
       then
          Log ("Going back to folder: " & To_String (This.Original), Debug);
          Ada.Directories.Set_Directory (To_String (This.Original));
@@ -532,13 +503,6 @@ package body Alire.Directories is
 
    function Exists (Path : Any_Path) return Boolean
    is (Den.Exists (Den.Scrub (Path)));
-
-   ----------
-   -- Kind --
-   ----------
-
-   function Kind (Path : Any_Path) return Den.Kinds
-   is (Den.Kind (Den.Scrub (Path)));
 
    ------------------
    -- Is_Directory --
@@ -753,7 +717,6 @@ package body Alire.Directories is
 
    overriding
    procedure Finalize (This : in out Temp_File) is
-      use Ada.Directories;
    begin
       if This.Keep then
          return;
@@ -773,9 +736,9 @@ package body Alire.Directories is
       Ensure_Deletable (This.Filename);
 
       if Exists (This.Filename) then
-         if Kind (This.Filename) = Ordinary_File then
+         if Den.Kind (This.Filename) = File then
             Trace.Debug ("Deleting temporary file " & This.Filename & "...");
-            Delete_File (This.Filename);
+            Adirs.Delete_File (This.Filename);
          elsif Kind (This.Filename) = Directory then
             Trace.Debug ("Deleting temporary folder " & This.Filename & "...");
 
@@ -809,7 +772,7 @@ package body Alire.Directories is
             AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
          end if;
       exception
-         when Use_Error =>
+         when Adirs.Use_Error =>
             --  May be raised by Adirs.Containing_Directory
             Trace.Debug ("Failed to identify location of temp file: "
                          & This.Filename);
@@ -854,7 +817,6 @@ package body Alire.Directories is
         (Item : Any_Path;
          Stop : in out Boolean)
       is
-         use all type Den.Kinds;
          Src : constant Absolute_Path := Den.Filesystem.Absolute (Item);
          Rel_Path : constant Relative_Path :=
                       Find_Relative_Path (Base, Src);
@@ -945,8 +907,6 @@ package body Alire.Directories is
                             Recurse : Boolean := False;
                             Spinner : Boolean := False)
    is
-      use Ada.Directories;
-
       Progress : Simple_Logging.Ongoing :=
                    Simple_Logging.Activity (Text  => "Exploring " & Start,
                                             Level => (if Spinner
@@ -961,7 +921,6 @@ package body Alire.Directories is
                          Enter : in out Boolean;
                          Stop  : in out Boolean)
       is
-         use all type Den.Kinds;
          Path : constant Any_Path := This.Path;
       begin
          Enter := True;
@@ -979,7 +938,7 @@ package body Alire.Directories is
 
          if Enter and then Recurse and then Den.Kind (Path) = Directory then
             if Spinner then
-               Progress.Step ("Exploring .../" & Simple_Name (Path));
+               Progress.Step ("Exploring .../" & Adirs.Simple_Name (Path));
             end if;
          elsif not Enter and then Den.Kind (Path) = Directory then
             Trace.Debug ("Skipping dir: " & Full_Name (Path));
@@ -1002,8 +961,7 @@ package body Alire.Directories is
 
    function Tree_Size (Path : Any_Path) return Ada.Directories.File_Size is
 
-      use Ada.Directories;
-      Result : File_Size := 0;
+      Result : Adirs.File_Size := 0;
 
       ----------------
       -- Accumulate --
@@ -1012,10 +970,11 @@ package body Alire.Directories is
       procedure Accumulate (Item : Any_Path;
                             Stop : in out Boolean)
       is
+         use type Ada.Directories.File_Size;
       begin
          Stop := False;
-         if Kind (Item) = Ordinary_File then
-            Result := Result + Size (Item);
+         if Kind (Item) = File then
+            Result := Result + Adirs.Size (Item);
          end if;
       end Accumulate;
 
@@ -1024,8 +983,8 @@ package body Alire.Directories is
          return 0;
       end if;
 
-      case Ada.Directories.Kind (Path) is
-         when Ordinary_File =>
+      case Den.Kind (Path) is
+         when File =>
             return Ada.Directories.Size (Path);
 
          when Directory =>

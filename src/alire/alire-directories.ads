@@ -7,8 +7,6 @@ with Alire.OS_Lib;
 
 private with Ada.Finalization;
 
-with Den;
-
 with GNAT.OS_Lib;
 
 package Alire.Directories is
@@ -79,8 +77,6 @@ package Alire.Directories is
 
    function Exists (Path : Any_Path) return Boolean;
    --  Path designates something, be it file, dir or symbolic link
-
-   function Kind (Path : Any_Path) return Den.Kinds;
 
    function Is_Directory (Path : Any_Path) return Boolean;
    --  Returns false for non-existing paths too
