@@ -72,9 +72,10 @@ commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 [pins.clic]
 url    = "https://github.com/alire-project/clic"
 commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
+
 [pins.den]
 url    = "https://github.com/mosteo/den"
-commit = "377d1d906f83262b81b45c7989de8cd5b4aba67f"
+commit = "7732f9247f7436cd264a10a7e2a8a16c47a0fb57"
 
 [pins.dirty_booleans]
 url    = "https://github.com/mosteo/dirty_booleans"
