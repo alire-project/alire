@@ -387,6 +387,13 @@ package body Alire.Test_Runner is
 
       Create_Gpr_List (Root, Test_List);
 
+      --  Ensure a void solution on first test run
+      if not Root.Has_Lockfile then
+         Root.Update (Silent   => True,
+                      Interact => False,
+                      Allowed  => Roots.Allow_All_Crates);
+      end if;
+
       Trace.Info ("Building tests");
       if Roots.Build (Root, AAA.Strings.Empty_Vector) then
          Trace.Info ("Running" & Test_List.Length'Image & " tests");
