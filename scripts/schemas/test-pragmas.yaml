@@ -1,0 +1,43 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+
+description: >
+  Top-level map keyed by pragma name.
+  Produced by LML.Input.Pragmas.From_Pragmas.
+
+  Only the positional two-argument pragma form is supported:
+
+    pragma <PragmaName> (<Key>, <Value>);
+
+  Named-argument syntax (=>), compound expressions, and nested
+  structures are silently discarded by the parser.
+
+properties:
+  Alire_Test:
+    description: Keys and values from pragma Alire_Test (...) occurrences.
+    type: object
+    properties:
+      Name:
+        description: Human-readable test name.
+        type: string
+        examples:
+          - "A test"
+      Should_Fail:
+        description: Whether the test is expected to fail.
+        type: boolean
+        examples:
+          - true
+      Timeout:
+        description: Maximum duration for the test, in seconds.
+        type: number
+        examples:
+          - 11.1
+    additionalProperties: false
+
+additionalProperties: false
+
+examples:
+  - Alire_Test:
+      Name: "A test"
+      Should_Fail: true
+      Timeout: 11.1
