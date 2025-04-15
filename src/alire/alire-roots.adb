@@ -1599,7 +1599,7 @@ package body Alire.Roots is
          else
             Put_Info ("Migrating lockfile from "
                       & TTY.URL (Old_Path) & " to " & TTY.URL (Path));
-            Adirs.Rename (Old_Path, Path);
+            Directories.Rename (Old_Path, Path);
          end if;
       end if;
 

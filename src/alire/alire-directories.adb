@@ -391,7 +391,7 @@ package body Alire.Directories is
             Remove_From_Source    => False,
             Silent                => True);
 
-         Delete_Tree (Source);
+         Delete_Tree (Den.Filesystem.Absolute (Source));
       else
          Adirs.Rename (Source, Destination);
       end if;
@@ -881,9 +881,13 @@ package body Alire.Directories is
       Trace.Debug ("Merging "  & Src & " (" & Kind (Src)'Image
                    & ") into " & Dst & " (" & Kind (Dst)'Image & ")");
 
-      Traverse_Tree (Start   => Src,
-                     Doing   => Merge'Access,
-                     Recurse => True);
+      if Kind (Src) = File then
+         Den.Filesystem.Copy (Src, Dst);
+      else
+         Traverse_Tree (Start   => Src,
+                        Doing   => Merge'Access,
+                        Recurse => True);
+      end if;
 
       --  This is space-inefficient since we use 2x the actual size, but this
       --  is the only way we have unless we want to go into platform-dependent

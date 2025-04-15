@@ -475,8 +475,8 @@ package body Alire.Roots.Editable is
             Directories.Delete_Tree (Destination);
          end if;
 
-         Adirs.Rename (Old_Name => Temp_Pin.Filename,
-                       New_Name => Destination);
+         Directories.Rename (Source      => Temp_Pin.Filename,
+                             Destination => Destination);
 
          --  Finally add the new pin to the manifest
 

@@ -287,9 +287,9 @@ package body Alire.Releases is
                     (Directories.Full_Name (Upstream_File));
                end if;
                --  And rename the original manifest into upstream
-               Ada.Directories.Rename
-                 (Old_Name => Paths.Crate_File_Name,
-                  New_Name => Upstream_File);
+               Directories.Rename
+                 (Source      => Paths.Crate_File_Name,
+                  Destination => Upstream_File);
             end;
          end if;
       end Backup_Upstream_Manifest;
