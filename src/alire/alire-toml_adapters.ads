@@ -78,6 +78,10 @@ package Alire.TOML_Adapters with Preelaborate is
    function Contains (Queue : Key_Queue; Key : String) return Boolean;
    --  Says if one of the keys in the wrapped table is Key
 
+   function Contains_Expression (Queue : Key_Queue) return Boolean;
+   --  Says if one of the keys in the wrapped table is for a conditional
+   --  expression ("case()" is the only possibility at this time).
+
    function Pop (Queue : Key_Queue) return TOML.TOML_Value;
    --  Return a value discarding its key; if no values left No_TOML_Value is
    --  returned.
@@ -209,6 +213,14 @@ private
    is (Queue.Unwrap.Kind in TOML.TOML_Table
        and then
          (for some Table_Key of Queue.Unwrap.Keys => Key = Table_Key));
+
+   -------------------------
+   -- Contains_Expression --
+   -------------------------
+
+   function Contains_Expression (Queue : Key_Queue) return Boolean
+   is (for some Key of Queue.Unwrap.Keys =>
+          AAA.Strings.Has_Prefix (+Key, "case("));
 
    ------------
    -- Unwrap --
