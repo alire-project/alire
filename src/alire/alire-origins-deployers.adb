@@ -139,8 +139,7 @@ package body Alire.Origins.Deployers is
          Trace.Debug ("Renaming into place " & TTY.URL (Temp_Dir.Filename)
                       & " as " & TTY.URL (Folder));
          Directories.Rename (Source      => Temp_Dir.Filename,
-                             Destination => Folder,
-                             Copy_Delete => False);
+                             Destination => Folder);
       end if;
 
       --  Add an info file for monorepos to make explicit where a release is

@@ -369,34 +369,46 @@ package body Alire.Directories is
    ------------
 
    procedure Rename (Source,
-                     Destination : Any_Path;
-                     Copy_Delete : Boolean := True) is
+                     Destination : Any_Path)
+   is
+      type Modes is (Move, Copy);
    begin
-      Trace.Debug ("Renaming " & Source & " (" & Kind (Source)'Image & ") "
-                   & "into " & Destination
-                   & " using copy/delete=" & Copy_Delete'Image);
-
       if Exists (Destination) then
-         raise Program_Error with
-         Errors.Set ("Cannot rename " & Source
-                     & " into existing destination " & Destination);
+         Raise_Checked_Error
+            ("Cannot rename " & Source
+             & " into existing destination " & Destination);
       end if;
 
-      if Copy_Delete then
-         Merge_Contents
-           (Src                   => Source,
-            Dst                   => Destination,
-            Skip_Top_Level_Files  => False,
-            Fail_On_Existing_File => True,
-            Remove_From_Source    => False,
-            Silent                => True);
+      for Mode in Modes loop
+         Trace.Debug ("Renaming " & Source & " (" & Kind (Source)'Image & ") "
+               & "into " & Destination
+               & " using mode=" & Mode'Image);
 
-         Delete_Tree (Den.Filesystem.Absolute (Source));
-      else
-         Adirs.Rename (Source, Destination);
-      end if;
+         if Mode = Copy then
+            Merge_Contents
+              (Src                   => Source,
+               Dst                   => Destination,
+               Skip_Top_Level_Files  => False,
+               Fail_On_Existing_File => True,
+               Remove_From_Source    => False,
+               Silent                => True);
 
-      Trace.Debug ("Renaming completed");
+            Delete_Tree (Den.Filesystem.Absolute (Source));
+         else
+            begin
+               Adirs.Rename (Source, Destination);
+               exit;
+            exception
+               when E : Adirs.Use_Error =>
+                  Log_Exception (E);
+                  Trace.Debug ("Could not rename, falling back to copy/del");
+                  --  Ensure no remainder of the move attempt (?)
+                  Delete_Tree (Destination);
+            end;
+         end if;
+      end loop;
+
+      Trace.Debug ("Renaming successful");
    end Rename;
 
    ----------------------

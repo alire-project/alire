@@ -97,12 +97,11 @@ package Alire.Directories is
    --  are unusable and would be confusing in a binary prefix.
 
    procedure Rename (Source,
-                     Destination : Any_Path;
-                     Copy_Delete : Boolean := True);
-   --  Renames files/directories. If Copy_Delete, use copy and delete (should
-   --  work across filesystems when move not supported). Since we create
-   --  temporary files possibly on user-designated locations, at least in
-   --  these cases we should be wary of using a direct rename without copying.
+                     Destination : Any_Path);
+   --  Renames files/directories. Will try first with a plain rename, and
+   --  fallback to copy/delete if rename fails. As we sometimes create
+   --  temporary files in user-supplied locations, depending on the underlying
+   --  move system call, these might fail across filesystems.
 
    procedure Touch (File : File_Path; Create_Tree : Boolean := False)
      with Pre => Create_Tree or else Is_Directory (Parent (File));
