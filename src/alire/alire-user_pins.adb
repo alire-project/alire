@@ -164,7 +164,7 @@ package body Alire.User_Pins is
 
          --  Ensure the temporary pin location is in the same directory as the
          --  final one, so a plain rename should always succeed.
-         Temp : Directories.Temp_File :=
+         Temp : constant Directories.Temp_File :=
                   Directories.With_Name
                     (Adirs.Containing_Directory (Destination)
                      / Directories.Temp_Name);
@@ -206,10 +206,10 @@ package body Alire.User_Pins is
                & " failed, re-run with -vv -d for details");
          end if;
 
-         --  Successful checkout
+         --  Successful checkout, rename into final destination
 
-         Adirs.Rename (Temp.Filename, Destination);
-         Temp.Keep;
+         Directories.Rename (Temp.Filename,
+                             Destination);
       end Checkout;
 
       ------------
