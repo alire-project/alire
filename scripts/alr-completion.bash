@@ -31,8 +31,11 @@ _alr_initialize_completion() {
         return
     fi
 
+    # Detect ANSI availability
+    ansi=$(if tput setaf 1 &>/dev/null; then echo true; else echo false; fi)
+
     # Save cursor position and notify user that initialization is happening
-    echo -n -e "\033[s\033[1;33mInitializing alr completion...\033[0m" >&2
+    $ansi && echo -n -e "\033[s\033[1;33mInitializing alr completion...\033[0m" >&2
 
     # Disable index auto-update to avoid interference with commands below
     if alr settings --global | grep -q index.auto_update= ; then
@@ -60,7 +63,7 @@ _alr_initialize_completion() {
     _alr_initialized=true
 
     # Restore cursor position (clearing the initialization message)
-    echo -n -e "\033[u\033[K" >&2
+    $ansi && echo -n -e "\033[u\033[K" >&2
 }
 
 # Command-aware long switches
