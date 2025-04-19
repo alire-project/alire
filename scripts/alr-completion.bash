@@ -31,6 +31,9 @@ _alr_initialize_completion() {
         return
     fi
 
+    # Notify user that initialization is happening
+    echo -n -e "\033[1;33mInitializing alr completion...\033[0m" >&2
+
     # Disable index auto-update to avoid interference with commands below
     if alr settings --global | grep -q index.auto_update= ; then
         update_period=$(alr settings --global | grep index.auto_update= | cut -f2 -d=)
@@ -55,6 +58,9 @@ _alr_initialize_completion() {
 
     # Mark as initialized
     _alr_initialized=true
+
+    # Notify user that initialization is done
+    echo -n -e " \033[1;32m done.\033[0m" >&2
 }
 
 # Command-aware long switches
