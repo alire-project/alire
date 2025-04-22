@@ -7,7 +7,8 @@ package Alire.VCSs.Hg is
        (for all Char of Hg_Commit => Char in Utils.Hexadecimal_Character);
 
    function Is_Valid_Commit (S : String) return Boolean
-   is (S in Hg_Commit);
+   is (S'Length = Hg_Commit'Length and then
+         (for all Char of S => Char in Utils.Hexadecimal_Character));
 
    type VCS (<>) is new VCSs.VCS with private;
 
