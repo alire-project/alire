@@ -8,6 +8,7 @@ with Alire.Origins.Deployers;
 with Alire.Releases.Containers;
 with Alire.Solver;
 with Alire.Toolchains;
+with Alire.Utils;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
 with Alire.Warnings;
@@ -364,6 +365,11 @@ package body Alr.Commands.Toolchain is
       if Cmd.Local and then not (Cmd.S_Select or else Cmd.Disable) then
          Reportaise_Wrong_Arguments
            ("--local requires --select or --disable-assistant");
+      end if;
+
+      if Cmd.S_Select and then Alire.Utils.Has_Duplicates (Args) then
+         Reportaise_Wrong_Arguments
+           ("Release arguments contain duplicates");
       end if;
 
       --  Dispatch to subcommands

@@ -12,6 +12,12 @@ from drivers.asserts import assert_eq, assert_match
 p = run_alr("index")
 print(p.out)
 
+# Validation duplicated release arguments
+p = run_alr("toolchain", "--select", "gnat_native", "gnat_native",
+            complain_on_error=False)
+assert p.status != 0, "Call should have failed"
+assert_match(".*Release arguments contain duplicates", p.out)
+
 # Activate the default compiler
 p = run_alr("toolchain", "--select")
 

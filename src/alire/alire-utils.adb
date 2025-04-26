@@ -268,4 +268,21 @@ package body Alire.Utils is
       Last_Chance_Handler (E);
    end Finalize_Exception;
 
+   --------------------
+   -- Has_Duplicates --
+   --------------------
+
+   function Has_Duplicates (V : AAA.Strings.Vector) return Boolean is
+      Seen : AAA.Strings.Set := AAA.Strings.Empty_Set;
+   begin
+      for Elt of V loop
+         if Seen.Contains (Elt) then
+            return True;
+         else
+            Seen.Insert (Elt);
+         end if;
+      end loop;
+      return False;
+   end Has_Duplicates;
+
 end Alire.Utils;
