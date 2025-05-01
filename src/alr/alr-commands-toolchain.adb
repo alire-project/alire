@@ -352,7 +352,6 @@ package body Alr.Commands.Toolchain is
       --  We do not want tools that are later in the command-line to be taken
       --  into account prematurely for compatibility of origins. We store here
       --  crates still to be dealt with.
-
    begin
 
       --  Validation
@@ -367,10 +366,18 @@ package body Alr.Commands.Toolchain is
            ("--local requires --select or --disable-assistant");
       end if;
 
-      if Cmd.S_Select and then Alire.Utils.Has_Duplicates (Args) then
-         Reportaise_Wrong_Arguments
-           ("Release arguments contain duplicates");
-      end if;
+      declare
+         function As_Crate (S : String) return String is
+            (Alire.Dependencies.From_String (S).Crate.As_String);
+      begin
+         if Cmd.S_Select
+           and then
+            Alire.Utils.Has_Duplicates (Args, As_Crate'Access)
+         then
+            Reportaise_Wrong_Arguments
+              ("Release arguments contain duplicated crates");
+         end if;
+      end;
 
       --  Dispatch to subcommands
 

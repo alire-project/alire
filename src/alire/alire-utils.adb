@@ -272,15 +272,22 @@ package body Alire.Utils is
    -- Has_Duplicates --
    --------------------
 
-   function Has_Duplicates (V : AAA.Strings.Vector) return Boolean is
+   function Has_Duplicates
+     (V         : AAA.Strings.Vector;
+      Transform : access function (S : String) return String)
+      return Boolean is
       Seen : AAA.Strings.Set := AAA.Strings.Empty_Set;
    begin
       for Elt of V loop
-         if Seen.Contains (Elt) then
-            return True;
-         else
-            Seen.Insert (Elt);
-         end if;
+         declare
+            Transformed : constant String := Transform.all (Elt);
+         begin
+            if Seen.Contains (Transformed) then
+               return True;
+            else
+               Seen.Insert (Transformed);
+            end if;
+         end;
       end loop;
       return False;
    end Has_Duplicates;

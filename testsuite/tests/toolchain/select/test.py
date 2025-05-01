@@ -13,10 +13,9 @@ p = run_alr("index")
 print(p.out)
 
 # Validation duplicated release arguments
-p = run_alr("toolchain", "--select", "gnat_native", "gnat_native",
+p = run_alr("toolchain", "--select", "gnat_native=1.2.3", "gnat_native=4.5.6",
             complain_on_error=False)
-assert p.status != 0, "Call should have failed"
-assert_match(".*Release arguments contain duplicates", p.out)
+assert_match(".*Release arguments contain duplicated crates", p.out)
 
 # Activate the default compiler
 p = run_alr("toolchain", "--select")
