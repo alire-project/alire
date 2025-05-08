@@ -107,7 +107,7 @@ package Alire.Utils with Preelaborate is
 
    function Has_Duplicates
      (V         : AAA.Strings.Vector;
-      Transform : access function (S : String) return String)
+      Transform : access function (S : String) return String := null)
       return Boolean;
 
 private
