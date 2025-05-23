@@ -147,11 +147,25 @@ package body Alire.Test_Runner is
      --  (named `Test_Files`).
 
    is
+
+      --------------------
+      -- Load_Or_Create --
+      --------------------
+
+      function Load_Or_Create (Path : Any_Path) return Text_Files.File is
+         --  Load the file at the specified path, or create an empty file.
+      begin
+         if not Exists (Path) then
+            Touch (Path, True);
+         end if;
+         return Text_Files.Load (Path, Backup => False);
+      end Load_Or_Create;
+
       File_Path : constant Absolute_Path :=
         Root.Path
         / Paths.Default_Config_Folder
         / (Root.Name.As_String & "_list_config.gpr");
-      File      : Text_Files.File := Text_Files.Create (File_Path);
+      File      : Text_Files.File := Load_Or_Create (File_Path);
       Lines     : access AAA.Strings.Vector renames File.Lines;
       First     : Boolean := True;
 
@@ -160,7 +174,9 @@ package body Alire.Test_Runner is
       Root_Name : constant String :=
         AAA.Strings.To_Mixed_Case (Root.Name.As_String);
    begin
-      Touch (File_Path, True);
+      Lines.Clear;
+      --  The File object keeps track of the previous content,
+      --  and avoids overwriting if it's identical.
 
       Lines.Append_Line ("abstract project " & Root_Name & "_List_Config is");
       Lines.Append_Line (Indent & "Test_Files := (");
@@ -267,8 +283,7 @@ package body Alire.Test_Runner is
          Percentage : constant Long_Integer :=
            (if Len = 0 then 0 else (Completed * 100 + Len / 2) / Len);
       begin
-         Ada.Text_IO.Put
-           ("[" & Tail (Percentage'Image, 4) & "% ]" & ASCII.CR);
+         Ada.Text_IO.Put ("[" & Tail (Percentage'Image, 4) & "% ]" & ASCII.CR);
          Ada.Text_IO.Flush;
          Completed := Completed + 1;
       end Put_Progress;
@@ -330,7 +345,8 @@ package body Alire.Test_Runner is
       use all type AAA.Strings.Vector;
 
       Job_Count : constant Positive :=
-        (if Jobs = 0 then Positive (System.Multiprocessors.Number_Of_CPUs)
+        (if Jobs = 0
+         then Positive (System.Multiprocessors.Number_Of_CPUs)
          else Jobs);
       Path      : constant Absolute_Path := Root.Path;
 
@@ -389,9 +405,10 @@ package body Alire.Test_Runner is
 
       --  Ensure a void solution on first test run
       if not Root.Has_Lockfile then
-         Root.Update (Silent   => True,
-                      Interact => False,
-                      Allowed  => Roots.Allow_All_Crates);
+         Root.Update
+           (Silent   => True,
+            Interact => False,
+            Allowed  => Roots.Allow_All_Crates);
       end if;
 
       Trace.Info ("Building tests");
