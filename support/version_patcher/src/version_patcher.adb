@@ -12,7 +12,6 @@ with GNAT.OS_Lib;
 
 procedure Version_Patcher is
 
-
    ------------------
    -- Replace_Info --
    ------------------
@@ -32,11 +31,11 @@ procedure Version_Patcher is
 
       type Hit_Kind is (
          Replaced,
-         -- A hit was recorded and a replacement is needed
+         --  A hit was recorded and a replacement is needed
          Identical,
-         -- A hit was recorded but no replacement is necessary
+         --  A hit was recorded but no replacement is necessary
          None
-         -- No hit recorded
+         --  No hit recorded
       );
       Hit : Hit_Kind := None;
    begin
