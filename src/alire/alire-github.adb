@@ -23,6 +23,8 @@ package body Alire.GitHub is
 
    Repos       : constant String := "repos";
    Pulls       : constant String := "pulls";
+   Releases    : constant String := "releases";
+   Latest      : constant String := "latest";
 
    -------------------
    -- Community_API --
@@ -32,6 +34,13 @@ package body Alire.GitHub is
    is (Repos
        / Index.Community_Organization
        / Index.Community_Repo_Name);
+
+   --------------------
+   -- Alire_Repo_API --
+   --------------------
+
+   function Alire_Repo_API return String
+   is (Repos / Index.Community_Organization / "alire");
 
    -----------------
    -- JSON_Escape --
@@ -451,5 +460,13 @@ package body Alire.GitHub is
       --  TODO: do we need to additionally request a review, or simply by
       --  removing the draft status we'll get a notification?
    end Request_Review;
+
+   function Get_Latest_Alire_Release return String is
+      Response : constant GNATCOLL.JSON.JSON_Value :=
+        API_Call (Alire_Repo_API / Releases / Latest);
+      --  public endpoint
+   begin
+      return Response.Get ("tag_name");
+   end Get_Latest_Alire_Release;
 
 end Alire.GitHub;

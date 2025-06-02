@@ -95,4 +95,7 @@ package Alire.GitHub is
      return Boolean;
    --  Check that a user exists in GitHub
 
+   function Get_Latest_Alire_Release return String;
+   --  Get the tag name for the latest Alire GitHub release
+
 end Alire.GitHub;
