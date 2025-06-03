@@ -68,9 +68,15 @@ package body Alr.Commands.Self_Update is
             V        : constant Semver.Version :=
               Semver.Parse (Tag_Name (Tag_Name'First + 1 .. Tag_Name'Last));
          begin
-            if V < Alire.Version.Current then
+            if Alire.Version.Current.Pre_Release = "dev" then
+               Trace.Info
+                 ("Detected nightly version. Use --force="
+                  & Semver.Image (V)
+                  & " to update to the latest stable release.");
+               return (Kind => Nightly);
+            elsif V < Alire.Version.Current then
                Trace.Warning
-                 ("you are currently on a nightly release (v"
+                 ("you are currently on a pre-release (v"
                   & Semver.Image (Alire.Version.Current)
                   & ")");
                Trace.Warning
