@@ -461,6 +461,10 @@ package body Alire.GitHub is
       --  removing the draft status we'll get a notification?
    end Request_Review;
 
+   ------------------------------
+   -- Get_Latest_Alire_Release --
+   ------------------------------
+
    function Get_Latest_Alire_Release return String is
       Response : constant GNATCOLL.JSON.JSON_Value :=
         API_Call (Alire_Repo_API / Releases / Latest);
