@@ -1,3 +1,5 @@
+with Ada.Exceptions;
+
 with Alire.GitHub;
 with Alire.OS_Lib.Download;
 with Alire.OS_Lib.Subprocess;
@@ -170,11 +172,9 @@ package body Alr.Commands.Self_Update is
       use Alire.OS_Lib.Operators;
 
       Dest_Bin   : constant Any_Path := Dest_Base / Alr_Bin;
-      Backup_Bin : constant Any_Path := Dest_Base / ("alr.old" & Exe);
+      Backup_Bin : constant Any_Path :=
+        Dest_Base / (Dirs.Temp_Name (Length => 16) & Exe);
    begin
-      if Dirs.Is_File (Backup_Bin) then
-         Dirs.Adirs.Delete_File (Backup_Bin);
-      end if;
       if Dirs.Is_File (Dest_Bin) then
          Dirs.Adirs.Rename (Dest_Bin, Backup_Bin);
       end if;
@@ -183,10 +183,13 @@ package body Alr.Commands.Self_Update is
          Dirs.Adirs.Copy_File (Extract_Bin, Dest_Bin);
       exception
          --  if operation failed and a backup was made, restore previous
-         when others =>
+         when E : others =>
             if Dirs.Is_File (Backup_Bin) then
                Dirs.Adirs.Rename (Backup_Bin, Dest_Bin);
             end if;
+            Reportaise_Command_Failed
+              ("could not copy extracted file to destination: "
+               & Ada.Exceptions.Exception_Message (E));
       end;
 
       case Plat.Current.Operating_System is
