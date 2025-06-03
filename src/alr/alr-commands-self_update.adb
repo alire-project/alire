@@ -11,8 +11,9 @@ with Semantic_Versioning;
 package body Alr.Commands.Self_Update is
 
    subtype Any_Path is Alire.Any_Path;
-   package Semver renames Semantic_Versioning;
    package Dirs renames Alire.Directories;
+   package Plat renames Alire.Platforms;
+   package Semver renames Semantic_Versioning;
    use all type Semver.Version;
    use all type GNAT_String;
 
@@ -160,6 +161,62 @@ package body Alr.Commands.Self_Update is
       end if;
    end Dest_Path_Validate;
 
+   -----------------
+   -- Install_Alr --
+   -----------------
+
+   procedure Install_Alr (Dest_Base, Tmp_Dir, Extract_Bin : Any_Path) is
+      use AAA.Strings;
+      use Alire.OS_Lib.Operators;
+
+      Dest_Bin   : constant Any_Path := Dest_Base / Alr_Bin;
+      Backup_Bin : constant Any_Path := Dest_Base / ("alr.old" & Exe);
+   begin
+      if Dirs.Is_File (Backup_Bin) then
+         Dirs.Adirs.Delete_File (Backup_Bin);
+      end if;
+      if Dirs.Is_File (Dest_Bin) then
+         Dirs.Adirs.Rename (Dest_Bin, Backup_Bin);
+      end if;
+
+      begin
+         Dirs.Adirs.Copy_File (Extract_Bin, Dest_Bin);
+      exception
+         --  if operation failed and a backup was made, restore previous
+         when others =>
+            if Dirs.Is_File (Backup_Bin) then
+               Dirs.Adirs.Rename (Backup_Bin, Dest_Bin);
+            end if;
+      end;
+
+      case Plat.Current.Operating_System is
+         when Plat.FreeBSD | Plat.OpenBSD | Plat.Linux =>
+            Alire.OS_Lib.Subprocess.Checked_Spawn
+              ("chmod", Empty_Vector & "+x" & Dest_Bin);
+
+         when Plat.MacOS =>
+            Alire.OS_Lib.Subprocess.Checked_Spawn
+              ("xattr",
+               Empty_Vector & "-d" & "com.apple.quarantine" & Dest_Bin);
+            Alire.OS_Lib.Subprocess.Checked_Spawn
+              ("chmod", Empty_Vector & "+x" & Dest_Bin);
+
+         when others =>
+            null;
+      end case;
+
+      --  delete the downloaded files
+      Dirs.Delete_Tree (Tmp_Dir);
+
+      if Dirs.Is_File (Backup_Bin) then
+         if Plat.Current.On_Windows then
+            Reportaise_Command_Failed ("todo: delete old file on windows");
+         else
+            Dirs.Adirs.Delete_File (Backup_Bin);
+         end if;
+      end if;
+   end Install_Alr;
+
    -------------
    -- Execute --
    -------------
@@ -184,7 +241,6 @@ package body Alr.Commands.Self_Update is
          use AAA.Strings;
          use Alire.OS_Lib.Operators;
 
-         package Plat renames Alire.Platforms;
          package UI renames CLIC.User_Input;
          use all type UI.Answer_Kind;
 
@@ -195,6 +251,7 @@ package body Alr.Commands.Self_Update is
            Base_Url & Tag_String (T) & "/" & Archive;
 
          Dest_Base : constant Any_Path := Dest_Path_Validate (Dest_Path);
+         Dest_Bin  : constant Any_Path := Dest_Base / Alr_Bin;
 
          Tmp_Dir     : constant Any_Path :=
            Plat.Folders.Temp / Dirs.Temp_Name (16);
@@ -203,7 +260,7 @@ package body Alr.Commands.Self_Update is
          Extract_Bin : constant Any_Path := Extract_Dir / "bin" / Alr_Bin;
 
          Query_Text : constant String :=
-           (if Dirs.Is_File (Dest_Base / Alr_Bin)
+           (if Dirs.Is_File (Dest_Bin)
             then
               ("Overwrite the `"
                & Alr_Bin
@@ -241,22 +298,6 @@ package body Alr.Commands.Self_Update is
          Alire.OS_Lib.Subprocess.Checked_Spawn
            ("unzip", Empty_Vector & "-q" & Full_Path & "-d" & Extract_Dir);
 
-         case Plat.Current.Operating_System is
-            when Plat.FreeBSD | Plat.OpenBSD | Plat.Linux =>
-               Alire.OS_Lib.Subprocess.Checked_Spawn
-                 ("chmod", Empty_Vector & "+x" & Extract_Bin);
-
-            when Plat.MacOS =>
-               Alire.OS_Lib.Subprocess.Checked_Spawn
-                 ("xattr",
-                  Empty_Vector & "-d" & "com.apple.quarantine" & Extract_Bin);
-               Alire.OS_Lib.Subprocess.Checked_Spawn
-                 ("chmod", Empty_Vector & "+x" & Extract_Bin);
-
-            when others =>
-               null;
-         end case;
-
          Proceed :=
            UI.Query
              (Query_Text,
@@ -264,21 +305,7 @@ package body Alr.Commands.Self_Update is
               UI.Yes);
 
          if Proceed = UI.Yes then
-            if Dirs.Is_File (Dest_Base / Alr_Bin) then
-               Dirs.Adirs.Rename
-                 (Dest_Base / Alr_Bin, Dest_Base / ("alr.old" & Exe));
-            end if;
-
-            Dirs.Adirs.Copy_File (Extract_Bin, Dest_Base);
-
-            --  delete the downloaded files
-            Dirs.Delete_Tree (Tmp_Dir);
-
-            if Plat.Current.On_Windows then
-               Reportaise_Command_Failed ("todo: delete old file on windows");
-            else
-               Dirs.Adirs.Delete_File (Dest_Base / ("alr.old" & Exe));
-            end if;
+            Install_Alr (Dest_Base, Tmp_Dir, Extract_Bin);
          end if;
       end;
    end Execute;
