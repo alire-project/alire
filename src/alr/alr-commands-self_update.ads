@@ -1,5 +1,5 @@
 package Alr.Commands.Self_Update is
-   use all type AAA.Strings.Vector;
+   use type AAA.Strings.Vector;
 
    type Command is new Commands.Command with private;
 

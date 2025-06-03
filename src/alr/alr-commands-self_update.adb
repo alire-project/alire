@@ -24,6 +24,10 @@ package body Alr.Commands.Self_Update is
    Exe      : constant String := Alire.OS_Lib.Exe_Suffix;
    Alr_Bin  : constant String := "alr" & Exe;
 
+   Abort_With_Success : exception;
+   --  used to exit from the command without erroring (when the installed
+   --  version is already the latest, for instance)
+
    type Tag_Kind is (Latest, Specific_Version, Nightly);
    type Tag (Kind : Tag_Kind := Latest) is record
       case Kind is
@@ -86,11 +90,12 @@ package body Alr.Commands.Self_Update is
                  ("upgrading to latest will downgrade Alire to v"
                   & Semver.Image (V));
             elsif V = Alire.Version.Current then
-               Trace.Error
-                 ("you are already using the latest version of Alire");
-               Reportaise_Command_Failed
-                 ("to reinstall the current version, use --force="
+               Trace.Info
+                 ("You are already using the latest version of Alire!");
+               Trace.Info
+                 ("To reinstall the current version, use --force="
                   & Semver.Image (V));
+               raise Abort_With_Success;
             end if;
             return (Latest, V);
          end;
@@ -260,7 +265,6 @@ package body Alr.Commands.Self_Update is
            Plat.Folders.Temp / Dirs.Temp_Name (16);
          Full_Path   : constant Any_Path := Tmp_Dir / Archive;
          Extract_Dir : constant Any_Path := Tmp_Dir / (Archive & ".extracted");
-         Extract_Bin : constant Any_Path := Extract_Dir / "bin" / Alr_Bin;
 
          Query_Text : constant String :=
            (if Dirs.Is_File (Dest_Bin)
@@ -308,9 +312,12 @@ package body Alr.Commands.Self_Update is
               UI.Yes);
 
          if Proceed = UI.Yes then
-            Install_Alr (Dest_Base, Tmp_Dir, Extract_Bin);
+            Install_Alr (Dest_Base, Tmp_Dir, Extract_Dir / "bin" / Alr_Bin);
          end if;
       end;
+   exception
+      when Abort_With_Success =>
+         null;
    end Execute;
 
    --------------------
