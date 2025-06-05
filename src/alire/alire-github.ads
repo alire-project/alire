@@ -95,4 +95,15 @@ package Alire.GitHub is
      return Boolean;
    --  Check that a user exists in GitHub
 
+   function Get_Latest_Alire_Release return String;
+   --  Get the tag name for the latest Alire GitHub release
+
+   function Check_Alire_Binary_Release (Tag, Archive : String) return Outcome;
+   --  Check that a prebuilt archive exists given a tag name and an archive
+   --  name, for ex:
+   --  Check_Alire_Binary ("v2.1.0", "alr-2.1.0-bin-aarch64-linux.zip")
+   --
+   --  In case of error, the resulting Outcome will contain an error message
+   --  specifying whether the release or the specific archive was not found.
+
 end Alire.GitHub;
