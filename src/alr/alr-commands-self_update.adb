@@ -209,7 +209,7 @@ package body Alr.Commands.Self_Update is
             Alire.OS_Lib.Subprocess.Checked_Spawn
               ("chmod", Empty_Vector & "+x" & Dest_Bin);
 
-         when others =>
+         when Plat.Windows | Plat.OS_Unknown =>
             null;
       end case;
 
@@ -235,7 +235,6 @@ package body Alr.Commands.Self_Update is
         (if Cmd.Location /= null and then Cmd.Location.all /= ""
          then Cmd.Location.all
          else Alire.OS_Lib.Subprocess.Locate_In_Path ("alr"));
-
    begin
       Alire.Utils.Tools.Check_Tool (Alire.Utils.Tools.Curl);
       Alire.Utils.Tools.Check_Tool (Alire.Utils.Tools.Unzip);
@@ -276,28 +275,24 @@ package body Alr.Commands.Self_Update is
                & " with the downloaded binary?")
             else ("Write `" & Alr_Bin & "` to " & Dest_Path & "?"));
 
+         Release_Status  : constant Alire.Outcome :=
+           Alire.GitHub.Check_Alire_Binary_Release (Tag_String (T), Archive);
          Download_Result : Alire.Outcome;
          Proceed         : UI.Answer_Kind;
       begin
+         if not Release_Status.Success then
+            Reportaise_Command_Failed (Release_Status.Message);
+         end if;
+
          Dirs.Adirs.Create_Directory (Tmp_Dir);
 
          Download_Result :=
            Alire.OS_Lib.Download.File (Download_Url, Archive, Tmp_Dir);
 
          if not Download_Result.Success then
-            Trace.Error ("could not download Alire binary for this platform.");
-            if T.Kind = Specific_Version then
-               Trace.Error
-                 ("check that the requested version exists ("
-                  & Semver.Image (T.V)
-                  & ")");
-            else
-               Trace.Error
-                 ("check that a prebuilt binary exists for your platform");
-            end if;
-
+            Trace.Error ("could not download Alire binary for this platform");
             Reportaise_Command_Failed
-              ("and that you are connected to the internet");
+              ("check that you are connected to the internet");
          end if;
 
          Trace.Info ("Successfully downloaded " & Archive);

@@ -473,4 +473,38 @@ package body Alire.GitHub is
       return Response.Get ("tag_name");
    end Get_Latest_Alire_Release;
 
+   function Check_Alire_Binary_Release (Tag, Archive : String) return Outcome
+   is
+      Response : constant Minirest.Response :=
+        API_Call (Alire_Repo_API / Releases / "tags" / Tag);
+   begin
+      if Response.Succeeded then
+         declare
+            use GNATCOLL.JSON;
+
+            Data   : constant JSON_Value :=
+              GNATCOLL.JSON.Read (Response.Content.Flatten (""));
+            Assets : constant JSON_Array := Data.Get ("assets");
+            Len    : constant Natural := Length (Assets);
+         begin
+            if (for some I in 1 .. Len
+                => Get (Assets, I).Get ("name") = Archive)
+            then
+               return Outcome_Success;
+            else
+               return
+                 Outcome_Failure
+                   ("could not find artifact '"
+                    & Archive
+                    & "' in release "
+                    & Tag,
+                    Report => False);
+            end if;
+         end;
+      else
+         return
+           Outcome_Failure ("could not find release " & Tag, Report => False);
+      end if;
+   end Check_Alire_Binary_Release;
+
 end Alire.GitHub;
