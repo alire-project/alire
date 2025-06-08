@@ -184,7 +184,7 @@ package body Alr.Commands is
                      Long_Switch => "--format?",
                      Argument    => "FORMAT",
                      Help        =>
-                       "Use structured output for tables (JSON, TOML)");
+                       "Use structured output for tables (JSON, TOML, YAML)");
 
       Define_Switch (Config,
                      No_Color'Access,
