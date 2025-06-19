@@ -76,7 +76,7 @@ jobs:
     - name: Check out
       uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: recursive
 
     # Use a stock alr to make the latest toolchain available
 

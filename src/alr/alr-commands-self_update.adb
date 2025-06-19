@@ -8,6 +8,7 @@ with Alire.Platforms.Folders;
 with Alire.Utils.Tools;
 
 with CLIC.User_Input;
+with Resources;
 with Semantic_Versioning;
 
 package body Alr.Commands.Self_Update is
@@ -103,7 +104,7 @@ package body Alr.Commands.Self_Update is
    exception
       when Semver.Malformed_Input =>
          Reportaise_Command_Failed
-           ("Specified invalid Alire version: " & Cmd.Force_Version.all);
+           ("specified invalid Alire version: " & Cmd.Force_Version.all);
    end Get_Version_Tag;
 
    ----------------
@@ -231,10 +232,12 @@ package body Alr.Commands.Self_Update is
 
    overriding
    procedure Execute (Cmd : in out Command; Args : AAA.Strings.Vector) is
+      package Find_Exec is new Resources ("alr");
+
       Dest_Path : constant String :=
         (if Cmd.Location /= null and then Cmd.Location.all /= ""
          then Cmd.Location.all
-         else Alire.OS_Lib.Subprocess.Locate_In_Path ("alr"));
+         else Find_Exec.Executable_Path);
    begin
       Alire.Utils.Tools.Check_Tool (Alire.Utils.Tools.Curl);
       Alire.Utils.Tools.Check_Tool (Alire.Utils.Tools.Unzip);

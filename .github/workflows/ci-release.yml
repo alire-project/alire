@@ -67,7 +67,7 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: recursive
 
     # Install GNAT, we only need a system compiler for Ubuntu ARM until we have
     # Alire for ARM64/Linux (on Ubuntu 22.04) release.
