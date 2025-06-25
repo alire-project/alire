@@ -212,15 +212,8 @@ package body Alr.Commands.Self_Update is
             null;
       end case;
 
-      --  delete the downloaded files
-      Dirs.Delete_Tree (Tmp_Dir);
-
       if Dirs.Is_File (Backup_Bin) then
-         if Plat.Current.On_Windows then
-            Reportaise_Command_Failed ("todo: delete old file on windows");
-         else
             Dirs.Adirs.Delete_File (Backup_Bin);
-         end if;
       end if;
    end Install_Alr;
 
@@ -230,12 +223,16 @@ package body Alr.Commands.Self_Update is
 
    overriding
    procedure Execute (Cmd : in out Command; Args : AAA.Strings.Vector) is
+      use Alire.OS_Lib.Operators;
       package Find_Exec is new Resources ("alr");
 
+      Exe_Path  : constant String := Find_Exec.Executable_Path;
       Dest_Path : constant String :=
         (if Cmd.Location /= null and then Cmd.Location.all /= ""
          then Cmd.Location.all
-         else Find_Exec.Executable_Path);
+         else Exe_Path);
+
+      Tmp_Dir : constant Any_Path := Plat.Folders.Temp / Dirs.Temp_Name (16);
    begin
       Alire.Utils.Tools.Check_Tool (Alire.Utils.Tools.Curl);
       Alire.Utils.Tools.Check_Tool (Alire.Utils.Tools.Unzip);
@@ -247,7 +244,6 @@ package body Alr.Commands.Self_Update is
 
       declare
          use AAA.Strings;
-         use Alire.OS_Lib.Operators;
 
          package UI renames CLIC.User_Input;
          use all type UI.Answer_Kind;
@@ -261,8 +257,6 @@ package body Alr.Commands.Self_Update is
          Dest_Base : constant Any_Path := Dest_Path_Validate (Dest_Path);
          Dest_Bin  : constant Any_Path := Dest_Base / Alr_Bin;
 
-         Tmp_Dir     : constant Any_Path :=
-           Plat.Folders.Temp / Dirs.Temp_Name (16);
          Full_Path   : constant Any_Path := Tmp_Dir / Archive;
          Extract_Dir : constant Any_Path := Tmp_Dir / (Archive & ".extracted");
 
@@ -311,6 +305,9 @@ package body Alr.Commands.Self_Update is
             Install_Alr (Dest_Base, Tmp_Dir, Extract_Dir / "bin" / Alr_Bin);
             Alire.Put_Success ("updated alr [" & Tag_String (T) & "]");
          end if;
+
+         --  delete the downloaded files
+         Dirs.Delete_Tree (Tmp_Dir);
       end;
    exception
       when Abort_With_Success =>
