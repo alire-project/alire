@@ -88,11 +88,10 @@ package body Alr.Commands.Self_Update is
                   & Semver.Image (Alire.Version.Current)
                   & ")");
                Trace.Warning
-                 ("upgrading to latest will downgrade Alire to v"
+                 ("upgrading to latest will downgrade alr to v"
                   & Semver.Image (V));
             elsif V = Alire.Version.Current then
-               Trace.Info
-                 ("You are already using the latest version of Alire!");
+               Trace.Info ("You are already using the latest version of alr!");
                Trace.Info
                  ("To reinstall the current version, use --force="
                   & Semver.Image (V));
@@ -104,7 +103,7 @@ package body Alr.Commands.Self_Update is
    exception
       when Semver.Malformed_Input =>
          Reportaise_Command_Failed
-           ("specified invalid Alire version: " & Cmd.Force_Version.all);
+           ("specified invalid alr version: " & Cmd.Force_Version.all);
    end Get_Version_Tag;
 
    ----------------
@@ -130,13 +129,12 @@ package body Alr.Commands.Self_Update is
    ----------------------
 
    function Get_Archive_Name (T : Tag) return String is
-      package Platform renames Alire.Platforms.Current;
       use AAA.Strings;
 
       Arch : constant String :=
-        To_Lower_Case (Platform.Host_Architecture'Image);
+        To_Lower_Case (Plat.Current.Host_Architecture'Image);
       Os   : constant String :=
-        To_Lower_Case (Platform.Operating_System'Image);
+        To_Lower_Case (Plat.Current.Operating_System'Image);
    begin
       return "alr-" & Version_String (T) & "-bin-" & Arch & "-" & Os & ".zip";
    end Get_Archive_Name;
@@ -179,7 +177,7 @@ package body Alr.Commands.Self_Update is
 
       Dest_Bin   : constant Any_Path := Dest_Base / Alr_Bin;
       Backup_Bin : constant Any_Path :=
-        Dest_Base / (Dirs.Temp_Name (Length => 16) & Exe);
+        Dest_Base / (Dirs.Temp_Name (Length => 16));
    begin
       if Dirs.Is_File (Dest_Bin) then
          Dirs.Adirs.Rename (Dest_Bin, Backup_Bin);
@@ -293,7 +291,7 @@ package body Alr.Commands.Self_Update is
            Alire.OS_Lib.Download.File (Download_Url, Archive, Tmp_Dir);
 
          if not Download_Result.Success then
-            Trace.Error ("could not download Alire binary for this platform");
+            Trace.Error ("could not download alr for this platform");
             Reportaise_Command_Failed
               ("check that you are connected to the internet");
          end if;
@@ -334,7 +332,7 @@ package body Alr.Commands.Self_Update is
          Cmd.Location'Access,
          "",
          "--location=",
-         "Specify where to install (and overwrite) the alire binary"
+         "Specify where to install (and overwrite) the alr binary"
          & " [default: the current path of alr, if found]",
          Argument => "<path/to/alr>");
 
@@ -343,14 +341,14 @@ package body Alr.Commands.Self_Update is
          Cmd.Nightly'Access,
          "",
          "--nightly",
-         "Download and install the most recent nightly version of Alire");
+         "Download and install the most recent nightly version of alr");
 
       Define_Switch
         (Config,
          Cmd.Force_Version'Access,
          "",
          "--force=",
-         "Force downloading a specific version of Alire",
+         "Force downloading a specific version of alr",
          Argument => "<version>");
    end Setup_Switches;
 
