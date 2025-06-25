@@ -309,6 +309,7 @@ package body Alr.Commands.Self_Update is
 
          if Proceed = UI.Yes then
             Install_Alr (Dest_Base, Tmp_Dir, Extract_Dir / "bin" / Alr_Bin);
+            Alire.Put_Success ("updated alr [" & Tag_String (T) & "]");
          end if;
       end;
    exception
