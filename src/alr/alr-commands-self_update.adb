@@ -1,6 +1,8 @@
 with Ada.Exceptions;
 
+with Alire_Early_Elaboration;
 with Alire.GitHub;
+with Alire.Meta;
 with Alire.OS_Lib.Download;
 with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
@@ -8,6 +10,7 @@ with Alire.Platforms.Folders;
 with Alire.Utils.Tools;
 
 with CLIC.User_Input;
+with Den.FS;
 with Resources;
 with Semantic_Versioning;
 
@@ -17,6 +20,7 @@ package body Alr.Commands.Self_Update is
    package Dirs renames Alire.Directories;
    package Plat renames Alire.Platforms;
    package Semver renames Semantic_Versioning;
+   package UI renames CLIC.User_Input;
    use all type Semver.Version;
    use all type GNAT_String;
 
@@ -24,6 +28,9 @@ package body Alr.Commands.Self_Update is
      "https://github.com/alire-project/alire/releases/download/";
    Exe      : constant String := Alire.OS_Lib.Exe_Suffix;
    Alr_Bin  : constant String := "alr" & Exe;
+
+   Magic_Arg_Windows : constant String :=
+     "__magic_arg_windows__" & Alire.Meta.Working_Tree.Commit;
 
    Abort_With_Success : exception;
    --  used to exit from the command without erroring (when the installed
@@ -213,9 +220,165 @@ package body Alr.Commands.Self_Update is
       end case;
 
       if Dirs.Is_File (Backup_Bin) then
-            Dirs.Adirs.Delete_File (Backup_Bin);
+         Dirs.Adirs.Delete_File (Backup_Bin);
       end if;
    end Install_Alr;
+
+   -------------------------------
+   -- Windows_Copy_And_Relaunch --
+   -------------------------------
+
+   procedure Windows_Copy_And_Relaunch
+     (Cmd : Command; Dest_Base, Exe_Path : Any_Path)
+   with Pre => Plat.Current.On_Windows
+   is
+      --  Windows hack explanation:
+      --  When we detect that the self update will overwrite the currently
+      --  running binary, we do a little trick: we copy it to the temp folder
+      --  and relaunch it with proper arguments. It will then be able to
+      --  overwrite the old binary.
+      --
+      --  To detect that we do this step only once, we add a special argument
+      --  to the command invocation ('Magic_Arg_Windows'), which contains a
+      --  hash of the build commit (for sanity checking).
+
+      use AAA.Strings;
+      use Alire.OS_Lib.Operators;
+
+      package AEE renames Alire_Early_Elaboration;
+
+      Copied_Bin    : constant Any_Path :=
+        Plat.Folders.Temp / (Dirs.Temp_Name (Length => 16) & Exe);
+      Relaunch_Args : Vector :=
+        Empty_Vector
+        & "/C"
+        & "start"
+        & "Alire Self-updater"
+        & String'("""" & Copied_Bin & """");
+      --  the `start` command in cmd.exe will launch a detached process, in a
+      --  separate console. see the exception section of `Execute` to see
+      --  the
+   begin
+      if (for some C of Copied_Bin => C = '"')
+        or else (for some C of Dest_Base => C = '"')
+        or else (Cmd.Force_Version /= null
+                 and then Cmd.Force_Version.all /= ""
+                 and then (for some C of Cmd.Force_Version.all => C = '"'))
+      then
+         --  check the strings that we use in the command line to prevent shell
+         --  injections. paths cannot contain '"' characters, and neither can
+         --  valid semver version strings, so this should be okay.
+         Reportaise_Command_Failed
+           ("'""' character in cmd.exe interpolated string");
+      end if;
+
+      Dirs.Adirs.Copy_File (Exe_Path, Copied_Bin);
+
+      --  global flags
+      if AEE.Switch_D then
+         Relaunch_Args.Append ("-d");
+      end if;
+      if AEE.Switch_VV then
+         Relaunch_Args.Append ("-vv");
+      elsif AEE.Switch_V then
+         Relaunch_Args.Append ("-v");
+      elsif AEE.Switch_Q then
+         Relaunch_Args.Append ("-q");
+      end if;
+      if UI.Not_Interactive then
+         Relaunch_Args.Append ("-n");
+      end if;
+
+      --  self-update flags
+      Relaunch_Args.Append (Cmd.Name);
+      Relaunch_Args.Append (String'("""--location=" & Dest_Base & """"));
+      if Cmd.Nightly then
+         Relaunch_Args.Append ("--nightly");
+      elsif Cmd.Force_Version /= null and then Cmd.Force_Version.all /= "" then
+         Relaunch_Args.Append
+           (String'("""--force=" & Cmd.Force_Version.all & """"));
+      end if;
+
+      Relaunch_Args.Append (Magic_Arg_Windows);
+      Alire.OS_Lib.Subprocess.Checked_Spawn ("cmd.exe", Relaunch_Args);
+      OS_Lib.Bailout; --  quickly exit after `start` launched the second alr
+   end Windows_Copy_And_Relaunch;
+
+   --------------------------
+   -- Windows_Post_Cleanup --
+   --------------------------
+
+   procedure Windows_Post_Cleanup (Exe_Path : Any_Path)
+   with Pre => Plat.Current.On_Windows
+   is
+      --  When cleaning up the secondary windows invocation, we do some
+      --  convoluted stuff. We spawn a `cmd.exe`, which will use the
+      --  `start` command to start a secondary CMD process without blocking the
+      --  current one. We wait 1 second for the alr process to terminate (using
+      --  `ping`), and only then are we able to delete it with `del`.
+      --
+      --  Finally, we call `pause` to make the window remain on screen until
+      --  the user interacts (unless the process is non interactive)
+      --
+      --  The path interpolation in the secondary CMD command should be safe,
+      --  as it is controlled by us when spawning the secondary process. To
+      --  prevent shell injections, we still check it only contains characters
+      --  we allow.
+
+      use AAA.Strings;
+
+      Exe_Name : constant String := Dirs.Adirs.Simple_Name (Exe_Path);
+   begin
+      if not (for all C of Exe_Name
+              => C in 'a' .. 'z'
+                 or else C in 'A' .. 'Z'
+                 or else C in '0' .. '9'
+                 or else C = '.'
+                 or else C = '-')
+      then
+         raise Program_Error;
+      end if;
+
+      Dirs.Adirs.Set_Directory (Dirs.Parent (Exe_Path));
+      Alire.OS_Lib.Subprocess.Checked_Spawn
+        ("cmd.exe",
+         Empty_Vector
+         & "/C"
+         & "start"
+         & "delayed del"
+         & "/B"
+         & "cmd.exe"
+         & "/C"
+         & String'
+             ("ping -n 2 127.0.0.1 > nul & "
+              & "del "
+              & Exe_Name
+              & (if UI.Not_Interactive then "" else " & pause")));
+   end Windows_Post_Cleanup;
+
+   --------------------------------
+   -- Windows_Pause_On_Exception --
+   --------------------------------
+
+   procedure Windows_Pause_On_Exception is
+      --  spawn an asynchronous pause 1s after the end of the process to leave
+      --  time for exception handlers to display messages.
+      use AAA.Strings;
+      Res : Integer;
+      pragma Unreferenced (Res);
+   begin
+      Res :=
+        Alire.OS_Lib.Subprocess.Unchecked_Spawn
+          ("cmd.exe",
+           Empty_Vector
+           & "/C"
+           & "start"
+           & "delayed pause"
+           & "/B"
+           & "cmd.exe"
+           & "/C"
+           & "ping -n 2 127.0.0.1 > nul & pause");
+   end Windows_Pause_On_Exception;
 
    -------------
    -- Execute --
@@ -224,28 +387,32 @@ package body Alr.Commands.Self_Update is
    overriding
    procedure Execute (Cmd : in out Command; Args : AAA.Strings.Vector) is
       use Alire.OS_Lib.Operators;
+      use AAA.Strings;
+
       package Find_Exec is new Resources ("alr");
 
-      Exe_Path  : constant String := Find_Exec.Executable_Path;
-      Dest_Path : constant String :=
+      Exe_Path   : constant String := Find_Exec.Executable_Path;
+      Dest_Input : constant String :=
         (if Cmd.Location /= null and then Cmd.Location.all /= ""
          then Cmd.Location.all
          else Exe_Path);
 
-      Tmp_Dir : constant Any_Path := Plat.Folders.Temp / Dirs.Temp_Name (16);
+      Dest_Base : constant Any_Path := Dest_Path_Validate (Dest_Input);
+      Dest_Bin  : constant Any_Path := Dest_Base / Alr_Bin;
    begin
+      Cmd.Forbids_Structured_Output;
+
+      if Plat.Current.On_Windows
+        and then (Args.Is_Empty or else Args.Last_Element /= Magic_Arg_Windows)
+        and then Den.FS.Pseudocanonical (Dest_Bin) = Den.Canonical (Exe_Path)
+      then
+         Windows_Copy_And_Relaunch (Cmd, Dest_Base, Exe_Path);
+      end if;
+
       Alire.Utils.Tools.Check_Tool (Alire.Utils.Tools.Curl);
       Alire.Utils.Tools.Check_Tool (Alire.Utils.Tools.Unzip);
 
-      if Dest_Path = "" then
-         Reportaise_Command_Failed
-           ("could not locate `" & Alr_Bin & "` in $PATH");
-      end if;
-
       declare
-         use AAA.Strings;
-
-         package UI renames CLIC.User_Input;
          use all type UI.Answer_Kind;
 
          T : constant Tag := Get_Version_Tag (Cmd);
@@ -254,9 +421,8 @@ package body Alr.Commands.Self_Update is
          Download_Url : constant String :=
            Base_Url & Tag_String (T) & "/" & Archive;
 
-         Dest_Base : constant Any_Path := Dest_Path_Validate (Dest_Path);
-         Dest_Bin  : constant Any_Path := Dest_Base / Alr_Bin;
-
+         Tmp_Dir     : constant Any_Path :=
+           Plat.Folders.Temp / Dirs.Temp_Name (16);
          Full_Path   : constant Any_Path := Tmp_Dir / Archive;
          Extract_Dir : constant Any_Path := Tmp_Dir / (Archive & ".extracted");
 
@@ -266,9 +432,9 @@ package body Alr.Commands.Self_Update is
               ("Overwrite the `"
                & Alr_Bin
                & "` binary at "
-               & Dest_Path
+               & Dest_Input
                & " with the downloaded binary?")
-            else ("Write `" & Alr_Bin & "` to " & Dest_Path & "?"));
+            else ("Write `" & Alr_Bin & "` to " & Dest_Input & "?"));
 
          Release_Status  : constant Alire.Outcome :=
            Alire.GitHub.Check_Alire_Binary_Release (Tag_String (T), Archive);
@@ -308,10 +474,27 @@ package body Alr.Commands.Self_Update is
 
          --  delete the downloaded files
          Dirs.Delete_Tree (Tmp_Dir);
+
+         if Plat.Current.On_Windows
+           and then not Args.Is_Empty
+           and then Args.Last_Element = Magic_Arg_Windows
+         then
+            Windows_Post_Cleanup (Exe_Path);
+         end if;
       end;
    exception
       when Abort_With_Success =>
          null;
+      when others =>
+         if Plat.Current.On_Windows
+           and then not Args.Is_Empty
+           and then Args.Last_Element = Magic_Arg_Windows
+         then
+            --  pause (asynchronously) to give the user time to read error
+            --  messages
+            Windows_Pause_On_Exception;
+         end if;
+         raise;
    end Execute;
 
    --------------------
