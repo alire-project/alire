@@ -178,7 +178,7 @@ package body Alr.Commands.Self_Update is
    -- Install_Alr --
    -----------------
 
-   procedure Install_Alr (Dest_Base, Tmp_Dir, Extract_Bin : Any_Path) is
+   procedure Install_Alr (Dest_Base, Extract_Bin : Any_Path) is
       use AAA.Strings;
       use Alire.OS_Lib.Operators;
 
@@ -468,7 +468,7 @@ package body Alr.Commands.Self_Update is
               UI.Yes);
 
          if Proceed = UI.Yes then
-            Install_Alr (Dest_Base, Tmp_Dir, Extract_Dir / "bin" / Alr_Bin);
+            Install_Alr (Dest_Base, Extract_Dir / "bin" / Alr_Bin);
             Alire.Put_Success ("updated alr [" & Tag_String (T) & "]");
          end if;
 
