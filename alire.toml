@@ -35,6 +35,7 @@ templates_parser = "^24" # Latests pre-Ada 2022 version
 toml_slicer = "~0.1"
 uri_ada = "^2.0"
 spdx = "~0.2"
+resources = "~0.1"
 
 [gpr-set-externals]
 CLIC_LIBRARY_TYPE="static"  # Has problems with "static-pic" for some reason
@@ -130,6 +131,10 @@ commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
 url    = "https://github.com/mosteo/yeison"
 subdir = "yeison_12"
 commit = "20033cf90a3eb2eff69d9ff9d0820291aed79b57"
+
+[pins.resources]
+url    = "https://github.com/alire-project/resources"
+commit = "d3a83f35d7c0b586119fc19a568289cf21c87aa0"
 
 # To disable version updating, export ALR_VERSION_DONT_PATCH with any value
 

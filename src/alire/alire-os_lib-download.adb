@@ -31,6 +31,7 @@ package body Alire.OS_Lib.Download is
          Empty_Vector &
            URL &
            "--location" &  -- allow for redirects at the remote host
+           "--fail" &      --  fail fast with no output on HTTP errors
            (if Log_Level < Trace.Info
             then Empty_Vector & "--silent"
             else Empty_Vector & "--progress-bar") &
