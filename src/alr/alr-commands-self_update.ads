@@ -22,7 +22,7 @@ package Alr.Commands.Self_Update is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--location=<path/to/alr>] [--nightly] [--force=<version>]");
+   is ("[--location=<path/to/alr>] [--nightly] [--release=<version>]");
 
    overriding
    procedure Setup_Switches
@@ -32,9 +32,9 @@ package Alr.Commands.Self_Update is
 private
 
    type Command is new Commands.Command with record
-      Nightly       : aliased Boolean := False;
-      Location      : aliased GNAT_String;
-      Force_Version : aliased GNAT_String;
+      Nightly  : aliased Boolean := False;
+      Location : aliased GNAT_String;
+      Release  : aliased GNAT_String;
    end record;
 
 end Alr.Commands.Self_Update;

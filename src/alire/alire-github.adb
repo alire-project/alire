@@ -473,6 +473,10 @@ package body Alire.GitHub is
       return Response.Get ("tag_name");
    end Get_Latest_Alire_Release;
 
+   --------------------------------
+   -- Check_Alire_Binary_Release --
+   --------------------------------
+
    function Check_Alire_Binary_Release (Tag, Archive : String) return Outcome
    is
       Response : constant Minirest.Response :=

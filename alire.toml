@@ -27,15 +27,15 @@ gnatcoll = "^21"
 lml = "~0.1"
 minirest = "~0.3"
 optional = "~0.1.1"
+resources = "~0.1"
 semantic_versioning = "^3.0"
 simple_logging = "^2.0"
 si_units = "~0.2.2"
+spdx = "~0.2"
 stopwatch = "~0.1"
 templates_parser = "^24" # Latests pre-Ada 2022 version
 toml_slicer = "~0.1"
 uri_ada = "^2.0"
-spdx = "~0.2"
-resources = "~0.1"
 
 [gpr-set-externals]
 CLIC_LIBRARY_TYPE="static"  # Has problems with "static-pic" for some reason
@@ -102,6 +102,10 @@ commit = "9a9c660f9c6f27f5ef75417e7fac7061dff14d78"
 url    = "https://github.com/mosteo/optional.git"
 commit = "7b8132a09a6c3c467409ab15d34fac605b1e5711"
 
+[pins.resources]
+url    = "https://github.com/alire-project/resources"
+commit = "d3a83f35d7c0b586119fc19a568289cf21c87aa0"
+
 [pins.semantic_versioning]
 url    = "https://github.com/alire-project/semantic_versioning"
 commit = "4861e32bd8a2f0df038d3ecc9a72b6381e7a34cc"
@@ -131,10 +135,6 @@ commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
 url    = "https://github.com/mosteo/yeison"
 subdir = "yeison_12"
 commit = "20033cf90a3eb2eff69d9ff9d0820291aed79b57"
-
-[pins.resources]
-url    = "https://github.com/alire-project/resources"
-commit = "d3a83f35d7c0b586119fc19a568289cf21c87aa0"
 
 # To disable version updating, export ALR_VERSION_DONT_PATCH with any value
 

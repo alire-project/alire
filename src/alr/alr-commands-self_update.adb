@@ -1,4 +1,5 @@
 with Ada.Exceptions;
+with Ada.Text_IO;
 
 with Alire_Early_Elaboration;
 with Alire.GitHub;
@@ -52,16 +53,17 @@ package body Alr.Commands.Self_Update is
    ---------------------
 
    function Get_Version_Tag (Cmd : Command) return Tag is
+      First_Self_Updatable_Alr : constant Semver.Version :=
+        Semver.New_Version (3, 0, 0);
    begin
       if Cmd.Nightly then
          return (Kind => Nightly);
-      elsif Cmd.Force_Version /= null and then Cmd.Force_Version.all /= "" then
+      elsif Cmd.Release /= null and then Cmd.Release.all /= "" then
          declare
-            V     : constant Semver.Version :=
-              Semver.Parse (Cmd.Force_Version.all);
+            V     : constant Semver.Version := Semver.Parse (Cmd.Release.all);
             V_Img : constant String := Semver.Image (V);
          begin
-            if V_Img /= Cmd.Force_Version.all then
+            if V_Img /= Cmd.Release.all then
                Trace.Info ("version string parsed as '" & V_Img & "'");
             end if;
             if V < Alire.Version.Current then
@@ -71,8 +73,10 @@ package body Alr.Commands.Self_Update is
                   & " (current: "
                   & Semver.Image (Alire.Version.Current)
                   & ")");
-               Trace.Warning
-                 ("previous versions may not have the `self-update` command");
+               if V < First_Self_Updatable_Alr then
+                  Trace.Warning
+                    ("this version will not have the `self-update` command");
+               end if;
             end if;
             return (Specific_Version, V);
          end;
@@ -83,15 +87,15 @@ package body Alr.Commands.Self_Update is
             V        : constant Semver.Version :=
               Semver.Parse (Tag_Name (Tag_Name'First + 1 .. Tag_Name'Last));
          begin
-            if Alire.Version.Current.Pre_Release = "dev" then
+            if Alire.Version.Current.Pre_Release /= "" then
                Trace.Info
-                 ("Detected nightly version. Use --force="
+                 ("Detected nightly version. Use --release="
                   & Semver.Image (V)
                   & " to update to the latest stable release.");
                return (Kind => Nightly);
             elsif V < Alire.Version.Current then
                Trace.Warning
-                 ("you are currently on a pre-release (v"
+                 ("you are currently on a preview version (v"
                   & Semver.Image (Alire.Version.Current)
                   & ")");
                Trace.Warning
@@ -100,7 +104,7 @@ package body Alr.Commands.Self_Update is
             elsif V = Alire.Version.Current then
                Trace.Info ("You are already using the latest version of alr!");
                Trace.Info
-                 ("To reinstall the current version, use --force="
+                 ("To reinstall the current version, use --release="
                   & Semver.Image (V));
                raise Abort_With_Success;
             end if;
@@ -110,7 +114,7 @@ package body Alr.Commands.Self_Update is
    exception
       when Semver.Malformed_Input =>
          Reportaise_Command_Failed
-           ("specified invalid alr version: " & Cmd.Force_Version.all);
+           ("specified invalid alr version: " & Cmd.Release.all);
    end Get_Version_Tag;
 
    ----------------
@@ -178,8 +182,7 @@ package body Alr.Commands.Self_Update is
    -- Install_Alr --
    -----------------
 
-   procedure Install_Alr (Dest_Base, Extract_Bin : Any_Path) is
-      use AAA.Strings;
+   procedure Install_Alr (Dest_Base, Extracted_Bin : Any_Path) is
       use Alire.OS_Lib.Operators;
 
       Dest_Bin   : constant Any_Path := Dest_Base / Alr_Bin;
@@ -187,11 +190,18 @@ package body Alr.Commands.Self_Update is
         Dest_Base / (Dirs.Temp_Name (Length => 16));
    begin
       if Dirs.Is_File (Dest_Bin) then
-         Dirs.Adirs.Rename (Dest_Bin, Backup_Bin);
+         begin
+            Dirs.Adirs.Rename (Dest_Bin, Backup_Bin);
+         exception
+            when E : others =>
+               Reportaise_Command_Failed
+                 ("could not back up existing binary: "
+                  & Ada.Exceptions.Exception_Message (E));
+         end;
       end if;
 
       begin
-         Dirs.Adirs.Copy_File (Extract_Bin, Dest_Bin);
+         Dirs.Adirs.Copy_File (Extracted_Bin, Dest_Bin);
       exception
          --  if operation failed and a backup was made, restore previous
          when E : others =>
@@ -203,21 +213,7 @@ package body Alr.Commands.Self_Update is
                & Ada.Exceptions.Exception_Message (E));
       end;
 
-      case Plat.Current.Operating_System is
-         when Plat.FreeBSD | Plat.OpenBSD | Plat.Linux =>
-            Alire.OS_Lib.Subprocess.Checked_Spawn
-              ("chmod", Empty_Vector & "+x" & Dest_Bin);
-
-         when Plat.MacOS =>
-            Alire.OS_Lib.Subprocess.Checked_Spawn
-              ("xattr",
-               Empty_Vector & "-d" & "com.apple.quarantine" & Dest_Bin);
-            Alire.OS_Lib.Subprocess.Checked_Spawn
-              ("chmod", Empty_Vector & "+x" & Dest_Bin);
-
-         when Plat.Windows | Plat.OS_Unknown =>
-            null;
-      end case;
+      Alire.OS_Lib.Download.Mark_Executable (Dest_Bin);
 
       if Dirs.Is_File (Backup_Bin) then
          Dirs.Adirs.Delete_File (Backup_Bin);
@@ -236,7 +232,9 @@ package body Alr.Commands.Self_Update is
       --  When we detect that the self update will overwrite the currently
       --  running binary, we do a little trick: we copy it to the temp folder
       --  and relaunch it with proper arguments. It will then be able to
-      --  overwrite the old binary.
+      --  overwrite the old binary. This way, there will be no possible file
+      --  conflicts, and we will always keep a usable `alr.exe` in the intended
+      --  location.
       --
       --  To detect that we do this step only once, we add a special argument
       --  to the command invocation ('Magic_Arg_Windows'), which contains a
@@ -256,14 +254,14 @@ package body Alr.Commands.Self_Update is
         & "Alire Self-updater"
         & String'("""" & Copied_Bin & """");
       --  the `start` command in cmd.exe will launch a detached process, in a
-      --  separate console. see the exception section of `Execute` to see
-      --  the
+      --  separate console. In the exception section of `Execute`, we pause the
+      --  console on exception, to avoid the console flashing away on error.
    begin
       if (for some C of Copied_Bin => C = '"')
         or else (for some C of Dest_Base => C = '"')
-        or else (Cmd.Force_Version /= null
-                 and then Cmd.Force_Version.all /= ""
-                 and then (for some C of Cmd.Force_Version.all => C = '"'))
+        or else (Cmd.Release /= null
+                 and then Cmd.Release.all /= ""
+                 and then (for some C of Cmd.Release.all => C = '"'))
       then
          --  check the strings that we use in the command line to prevent shell
          --  injections. paths cannot contain '"' characters, and neither can
@@ -294,9 +292,9 @@ package body Alr.Commands.Self_Update is
       Relaunch_Args.Append (String'("""--location=" & Dest_Base & """"));
       if Cmd.Nightly then
          Relaunch_Args.Append ("--nightly");
-      elsif Cmd.Force_Version /= null and then Cmd.Force_Version.all /= "" then
+      elsif Cmd.Release /= null and then Cmd.Release.all /= "" then
          Relaunch_Args.Append
-           (String'("""--force=" & Cmd.Force_Version.all & """"));
+           (String'("""--release=" & Cmd.Release.all & """"));
       end if;
 
       Relaunch_Args.Append (Magic_Arg_Windows);
@@ -361,23 +359,22 @@ package body Alr.Commands.Self_Update is
    --------------------------------
 
    procedure Windows_Pause_On_Exception is
-      --  spawn an asynchronous pause 1s after the end of the process to leave
-      --  time for exception handlers to display messages.
-      use AAA.Strings;
-      Res : Integer;
-      pragma Unreferenced (Res);
+      --  spawn an asynchronous pause after a delay to leave time for the
+      --  exception handlers to display error messages
+      task type Pause_Task;
+      task body Pause_Task is
+      begin
+         delay 1.0;
+         if not UI.Not_Interactive then
+            Trace.Info ("Press enter to continue...");
+            Trace.Never (Ada.Text_IO.Get_Line);
+         end if;
+      end Pause_Task;
+      type Pause_Task_Access is access all Pause_Task;
+      Detach : constant Pause_Task_Access := new Pause_Task;
+      pragma Unreferenced (Detach);
    begin
-      Res :=
-        Alire.OS_Lib.Subprocess.Unchecked_Spawn
-          ("cmd.exe",
-           Empty_Vector
-           & "/C"
-           & "start"
-           & "delayed pause"
-           & "/B"
-           & "cmd.exe"
-           & "/C"
-           & "ping -n 2 127.0.0.1 > nul & pause");
+      null;
    end Windows_Pause_On_Exception;
 
    -------------
@@ -526,10 +523,10 @@ package body Alr.Commands.Self_Update is
 
       Define_Switch
         (Config,
-         Cmd.Force_Version'Access,
+         Cmd.Release'Access,
          "",
-         "--force=",
-         "Force downloading a specific version of alr",
+         "--release=",
+         "Download a specific version of alr",
          Argument => "<version>");
    end Setup_Switches;
 
