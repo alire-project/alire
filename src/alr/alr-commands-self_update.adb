@@ -191,34 +191,33 @@ package body Alr.Commands.Self_Update is
         Dest_Base / (Dirs.Temp_Name (Length => 16));
    begin
       if Dirs.Is_File (Dest_Bin) then
-         begin
+         Trace.Detail ("Backing up the `alr` binary");
             Dirs.Adirs.Rename (Dest_Bin, Backup_Bin);
-         exception
-            when E : others =>
-               Reportaise_Command_Failed
-                 ("could not back up existing binary: "
-                  & Ada.Exceptions.Exception_Message (E));
-         end;
       end if;
 
-      begin
          Dirs.Adirs.Copy_File (Extracted_Bin, Dest_Bin);
-      exception
-         --  if operation failed and a backup was made, restore previous
-         when E : others =>
-            if Dirs.Is_File (Backup_Bin) then
-               Dirs.Adirs.Rename (Backup_Bin, Dest_Bin);
-            end if;
-            Reportaise_Command_Failed
-              ("could not copy extracted file to destination: "
-               & Ada.Exceptions.Exception_Message (E));
-      end;
 
       Alire.OS_Lib.Download.Mark_Executable (Dest_Bin);
 
       if Dirs.Is_File (Backup_Bin) then
          Dirs.Adirs.Delete_File (Backup_Bin);
       end if;
+
+   exception
+      when E : others =>
+         if Dirs.Is_File (Backup_Bin) then
+            --  if operation failed and a backup was made, restore previous
+            Trace.Detail ("Restoring backup of `alr` binary");
+            Dirs.Adirs.Rename (Backup_Bin, Dest_Bin);
+         end if;
+
+         Trace.Error
+           ("Could not install downloaded binary: "
+            & Ada.Exceptions.Exception_Message (E));
+         Reportaise_Command_Failed
+           ("Make sure the directory containing the `alr` "
+            & "binary is writable.");
+
    end Install_Alr;
 
    -------------------------------
