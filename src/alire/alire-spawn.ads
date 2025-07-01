@@ -49,4 +49,7 @@ package Alire.Spawn is
    --             --install-name=Release.Milestone.Image \
    --             --link-lib-dir=Prefix/bin
 
+   function Recreate_Global_Options return AAA.Strings.Vector;
+   --  Recreate the global options used in this alr invocation (-v, -n, ...)
+
 end Alire.Spawn;
