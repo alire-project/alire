@@ -54,8 +54,6 @@ package body Alr.Commands.Self_Update is
    ---------------------
 
    function Get_Version_Tag (Cmd : Command) return Tag is
-      First_Self_Updatable_Alr : constant Semver.Version :=
-        Semver.New_Version (3, 0, 0);
    begin
       if Cmd.Nightly then
          return (Kind => Nightly);
@@ -74,7 +72,7 @@ package body Alr.Commands.Self_Update is
                   & " (current: "
                   & Semver.Image (Alire.Version.Current)
                   & ")");
-               if V < First_Self_Updatable_Alr then
+               if V < Alire.Features.Self_Update_Cmd then
                   Trace.Warning
                     ("this version will not have the `self-update` command");
                end if;
@@ -102,6 +100,7 @@ package body Alr.Commands.Self_Update is
                Trace.Warning
                  ("upgrading to latest will downgrade alr to v"
                   & Semver.Image (V));
+               if V < Alire.Features.Self_Update_Cmd then
             elsif V = Alire.Version.Current then
                Trace.Info ("You are already using the latest version of alr!");
                Trace.Info
