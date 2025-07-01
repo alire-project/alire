@@ -243,10 +243,8 @@ package body Alr.Commands.Self_Update is
       use AAA.Strings;
       use Alire.OS_Lib.Operators;
 
-      package AEE renames Alire_Early_Elaboration;
-
       Copied_Bin    : constant Any_Path :=
-        Plat.Folders.Temp / (Dirs.Temp_Name (Length => 16) & Exe);
+        Dirs.Parent (Exe_Path) / (Dirs.Temp_Name (Length => 16) & Exe);
       Relaunch_Args : Vector :=
         Empty_Vector
         & "/C"
@@ -270,22 +268,19 @@ package body Alr.Commands.Self_Update is
            ("'""' character in cmd.exe interpolated string");
       end if;
 
+      begin
       Dirs.Adirs.Copy_File (Exe_Path, Copied_Bin);
+      exception
+         when E : others =>
+            Trace.Error
+              ("Failed to copy and relaunch current executable: "
+               & Ada.Exceptions.Exception_Message (E));
+            Reportaise_Command_Failed
+              ("Update cannot continue. Make sure the directory "
+               & "containing the `alr` executable is writable.");
+      end;
 
-      --  global flags
-      if AEE.Switch_D then
-         Relaunch_Args.Append ("-d");
-      end if;
-      if AEE.Switch_VV then
-         Relaunch_Args.Append ("-vv");
-      elsif AEE.Switch_V then
-         Relaunch_Args.Append ("-v");
-      elsif AEE.Switch_Q then
-         Relaunch_Args.Append ("-q");
-      end if;
-      if UI.Not_Interactive then
-         Relaunch_Args.Append ("-n");
-      end if;
+      Relaunch_Args.Append (Alire.Spawn.Recreate_Global_Options);
 
       --  self-update flags
       Relaunch_Args.Append (Cmd.Name);
