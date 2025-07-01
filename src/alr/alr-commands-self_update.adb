@@ -1,7 +1,8 @@
 with Ada.Exceptions;
 with Ada.Text_IO;
 
-with Alire_Early_Elaboration;
+with Alire.Features;
+with Alire.Spawn;
 with Alire.GitHub;
 with Alire.Meta;
 with Alire.OS_Lib.Download;
@@ -26,10 +27,11 @@ package body Alr.Commands.Self_Update is
    use all type Semver.Version;
    use all type GNAT_String;
 
-   Base_Url : constant String :=
-     "https://github.com/alire-project/alire/releases/download/";
-   Exe      : constant String := Alire.OS_Lib.Exe_Suffix;
-   Alr_Bin  : constant String := "alr" & Exe;
+   Releases_Url : constant String :=
+     "https://github.com/alire-project/alire/releases/";
+   Base_Url     : constant String := Releases_Url & "download/";
+   Exe          : constant String := Alire.OS_Lib.Exe_Suffix;
+   Alr_Bin      : constant String := "alr" & Exe;
 
    Magic_Arg_Windows : constant String :=
      "__magic_arg_windows__" & Alire.Meta.Working_Tree.Commit;
@@ -63,18 +65,18 @@ package body Alr.Commands.Self_Update is
             V_Img : constant String := Semver.Image (V);
          begin
             if V_Img /= Cmd.Release.all then
-               Trace.Info ("version string parsed as '" & V_Img & "'");
+               Trace.Detail ("Version string parsed as '" & V_Img & "'");
             end if;
             if V < Alire.Version.Current then
                Trace.Warning
-                 ("downgrading to version "
+                 ("Downgrading to version "
                   & V_Img
                   & " (current: "
                   & Semver.Image (Alire.Version.Current)
                   & ")");
                if V < Alire.Features.Self_Update_Cmd then
                   Trace.Warning
-                    ("this version will not have the `self-update` command");
+                    ("This version will not have the `self-update` command");
                end if;
             end if;
             return (Specific_Version, V);
@@ -94,13 +96,16 @@ package body Alr.Commands.Self_Update is
                return (Kind => Nightly);
             elsif V < Alire.Version.Current then
                Trace.Warning
-                 ("you are currently on a preview version (v"
+                 ("You are currently on a preview version (v"
                   & Semver.Image (Alire.Version.Current)
                   & ")");
                Trace.Warning
-                 ("upgrading to latest will downgrade alr to v"
+                 ("Upgrading to latest will downgrade alr to v"
                   & Semver.Image (V));
                if V < Alire.Features.Self_Update_Cmd then
+                  Trace.Warning
+                    ("This version will not have the `self-update` command");
+               end if;
             elsif V = Alire.Version.Current then
                Trace.Info ("You are already using the latest version of alr!");
                Trace.Info
@@ -191,10 +196,10 @@ package body Alr.Commands.Self_Update is
    begin
       if Dirs.Is_File (Dest_Bin) then
          Trace.Detail ("Backing up the `alr` binary");
-            Dirs.Adirs.Rename (Dest_Bin, Backup_Bin);
+         Dirs.Adirs.Rename (Dest_Bin, Backup_Bin);
       end if;
 
-         Dirs.Adirs.Copy_File (Extracted_Bin, Dest_Bin);
+      Dirs.Adirs.Copy_File (Extracted_Bin, Dest_Bin);
 
       Alire.OS_Lib.Download.Mark_Executable (Dest_Bin);
 
@@ -268,7 +273,7 @@ package body Alr.Commands.Self_Update is
       end if;
 
       begin
-      Dirs.Adirs.Copy_File (Exe_Path, Copied_Bin);
+         Dirs.Adirs.Copy_File (Exe_Path, Copied_Bin);
       exception
          when E : others =>
             Trace.Error
@@ -440,9 +445,9 @@ package body Alr.Commands.Self_Update is
            Alire.OS_Lib.Download.File (Download_Url, Archive, Tmp_Dir);
 
          if not Download_Result.Success then
-            Trace.Error ("could not download alr for this platform");
+            Trace.Error ("Could not download alr for this platform");
             Reportaise_Command_Failed
-              ("check that you are connected to the internet");
+              ("Check that you are connected to the internet");
          end if;
 
          Trace.Info ("Successfully downloaded " & Archive);
@@ -458,9 +463,15 @@ package body Alr.Commands.Self_Update is
 
          if Proceed = UI.Yes then
             Install_Alr (Dest_Base, Extract_Dir / "bin" / Alr_Bin);
-            Alire.Put_Success ("updated alr [" & Tag_String (T) & "]");
+            Trace.Info ("");
+            Alire.Put_Success ("Updated alr [" & Tag_String (T) & "]");
+            Alire.Put_Info
+              ("Check "
+               & Releases_Url
+               & " to see the changes in this version");
          end if;
 
+         Trace.Detail ("Cleaning up temporaries...");
          --  delete the downloaded files
          Dirs.Delete_Tree (Tmp_Dir);
 
