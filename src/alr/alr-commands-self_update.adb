@@ -12,6 +12,7 @@ with Alire.Utils.Tools;
 
 with CLIC.User_Input;
 with Den.FS;
+with GNAT.OS_Lib;
 with Resources;
 with Semantic_Versioning;
 
@@ -310,10 +311,9 @@ package body Alr.Commands.Self_Update is
    with Pre => Plat.Current.On_Windows
    is
       --  When cleaning up the secondary windows invocation, we do some
-      --  convoluted stuff. We spawn a `cmd.exe`, which will use the
-      --  `start` command to start a secondary CMD process without blocking the
-      --  current one. We wait 1 second for the alr process to terminate (using
-      --  `ping`), and only then are we able to delete it with `del`.
+      --  convoluted stuff. We spawn a detached `cmd.exe`, which will wait 1
+      --  second for the alr process to terminate (using `ping`), and only
+      --  then will be able to delete the executable with `del`.
       --
       --  Finally, we call `pause` to make the window remain on screen until
       --  the user interacts (unless the process is non interactive)
@@ -323,9 +323,19 @@ package body Alr.Commands.Self_Update is
       --  prevent shell injections, we still check it only contains characters
       --  we allow.
 
-      use AAA.Strings;
-
       Exe_Name : constant String := Dirs.Adirs.Simple_Name (Exe_Path);
+
+      C_Arg   : GNAT_String := new String'("/C");
+      Command : GNAT_String :=
+        new String'
+          ("ping -n 2 127.0.0.1 > nul & del "
+           & Exe_Name
+           & (if UI.Not_Interactive then "" else " & pause"));
+
+      Args : constant GNAT.OS_Lib.Argument_List := (C_Arg, Command);
+
+      Pid : GNAT.OS_Lib.Process_Id;
+      pragma Unreferenced (Pid);
    begin
       if not (for all C of Exe_Name
               => C in 'a' .. 'z'
@@ -338,20 +348,9 @@ package body Alr.Commands.Self_Update is
       end if;
 
       Dirs.Adirs.Set_Directory (Dirs.Parent (Exe_Path));
-      Alire.OS_Lib.Subprocess.Checked_Spawn
-        ("cmd.exe",
-         Empty_Vector
-         & "/C"
-         & "start"
-         & "delayed del"
-         & "/B"
-         & "cmd.exe"
-         & "/C"
-         & String'
-             ("ping -n 2 127.0.0.1 > nul & "
-              & "del "
-              & Exe_Name
-              & (if UI.Not_Interactive then "" else " & pause")));
+      Pid := GNAT.OS_Lib.Non_Blocking_Spawn ("cmd.exe", Args);
+      GNAT.OS_Lib.Free (C_Arg);
+      GNAT.OS_Lib.Free (Command);
    end Windows_Post_Cleanup;
 
    --------------------------------
