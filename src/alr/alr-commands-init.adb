@@ -133,7 +133,7 @@ package body Alr.Commands.Init is
 
       if To_Boolean (Image   => Cmd.Github,
                      Switch  => Switch_Github,
-                     Default => False)
+                     Default => Alire.Settings.Builtins.Init_Github_Files.Get)
       then
          Generate_Github_Files;
       end if;
