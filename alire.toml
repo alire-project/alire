@@ -107,7 +107,7 @@ commit = "4861e32bd8a2f0df038d3ecc9a72b6381e7a34cc"
 
 [pins.simple_logging]
 url    = "https://github.com/alire-project/simple_logging"
-commit = "3505dc645f3eef6799a486aae223d37e88cfc4d5"
+commit = "a8561d302beb037887cb9980319039c5f86ad9c8"
 
 [pins.si_units]
 url    = "https://github.com/mosteo/si_units"
