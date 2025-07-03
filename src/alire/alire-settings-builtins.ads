@@ -113,6 +113,15 @@ package Alire.Settings.Builtins is
       Def  => "alire-index",
       Help => "Name of the index repository.");
 
+   --  INIT
+
+   Init_Github_Files : constant Builtin := New_Builtin
+     (Key  => "init.github_files",
+      Def  => False,
+      Help =>
+        "When True, a README and workflows for GitHub will be created by "
+        & "default during `alr init` (equivalent to `alr init --github`)");
+
    --  ORIGINS
 
    Origins_Archive_Download_Cmd : constant Builtin := New_Builtin

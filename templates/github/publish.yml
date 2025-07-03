@@ -1,0 +1,28 @@
+name: Publish
+
+# REQUIRES a secret named ALR_PUBLISH_PAT to be set in the repository
+# containing a token with write access to the repository (for tagging and
+# releasing) and forking permissions (to create a fork of the community index
+# and commit changes to it).
+
+# Running this workflow will open a PR against the community index for the
+# version at the current commit. By default, it also will create a tag and
+# release. Hence, it is recommended to only trigger it when one is certain all
+# tests have succeeded for the version being submitted.
+
+on:
+  workflow_dispatch: # Enables manual triggering of the workflow
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: alire-project/alr-publish@v1
+        with:
+          github_token: ${{ secrets.ALR_PUBLISH_PAT }}
+          skip_build: false
+          create_tag: true
+          create_release: true
+          # Check
+          # https://github.com/alire-project/alr-publish/blob/latest/action.yml
+          # for more options.

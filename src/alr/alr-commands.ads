@@ -171,10 +171,11 @@ private
                         Default : Boolean)
                         return Boolean
      with Post =>
-       (if Image in null or else Image.all = "" or else Image.all = Unset
+       (if Image in null or else Image.all = Unset
         then To_Boolean'Result = Default);
    --  Convert a switch value to a boolean, if explicitly given, or use the
    --  default otherwise. If not a valid boolean or empty, raise Checked_Error
-   --  with an appropriate error message.
+   --  with an appropriate error message. NOTE: If the switch exists (is not
+   --  unset) but has no argument, it's considered TRUE, not default.
 
 end Alr.Commands;
