@@ -6,6 +6,15 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### New `--github` switch for `alr init` command
+
+PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
+
+The `alr init` command now supports a `--github` switch to automatically
+generate GitHub files (README.md, workflows) for new crates. This can be
+controlled with `--github[=true/false]` or by setting the new built-in
+`init.github_files` setting.
+
 ### Style checks disabled by default in all build profiles
 
 PR [#1919](https://github.com/alire-project/alire/pull/1919)
