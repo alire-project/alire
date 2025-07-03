@@ -273,7 +273,7 @@ package body Alire.Settings.Edit is
    is
       Result : Boolean := True;
    begin
-      for Ent of Public_Builtins loop
+      for Ent of All_Builtins loop
          if To_String (Ent.Key) = Key then
 
             --  Verify the type/specific constraints
@@ -378,13 +378,15 @@ package body Alire.Settings.Edit is
    function Builtins_Info return AAA.Strings.Vector is
       Results : AAA.Strings.Vector;
    begin
-      for Ent of Public_Builtins loop
-         Results.Append (String'("- " & TTY.Bold (To_String (Ent.Key))
-                         & " [" & TTY.Emph (Image (Ent.Kind)) & "]"
-                         & "[Default:" & TTY.Terminal (To_String (Ent.Def))
-                         & "]"));
-         Results.Append (To_String (Ent.Help));
-         Results.Append ("");
+      for Ent of All_Builtins loop
+         if Ent.Public then
+            Results.Append (String'("- " & TTY.Bold (To_String (Ent.Key))
+                            & " [" & TTY.Emph (Image (Ent.Kind)) & "]"
+                            & "[Default:" & TTY.Terminal (To_String (Ent.Def))
+                            & "]"));
+            Results.Append (To_String (Ent.Help));
+            Results.Append ("");
+         end if;
       end loop;
       return Results;
    end Builtins_Info;
@@ -396,12 +398,14 @@ package body Alire.Settings.Edit is
    procedure Print_Builtins_Doc is
       use Ada.Text_IO;
    begin
-      for Ent of Public_Builtins loop
-         Put (" - **`" & To_String (Ent.Key) & "`** ");
-         Put ("[" & Image (Ent.Kind) & "]");
-         Put_Line ("[Default:" & To_String (Ent.Def) & "]:");
-         Put_Line ("   " & To_String (Ent.Help));
-         New_Line;
+      for Ent of All_Builtins loop
+         if Ent.Public then
+            Put (" - **`" & To_String (Ent.Key) & "`** ");
+            Put ("[" & Image (Ent.Kind) & "]");
+            Put_Line ("[Default:" & To_String (Ent.Def) & "]:");
+            Put_Line ("   " & To_String (Ent.Help));
+            New_Line;
+         end if;
       end loop;
    end Print_Builtins_Doc;
 

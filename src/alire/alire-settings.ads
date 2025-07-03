@@ -98,6 +98,7 @@ private
       Help        : Ada.Strings.Unbounded.Unbounded_String;
       Check       : CLIC.Config.Check_Import := null;
       Global_Only : Boolean := False;
+      Public      : Boolean := True;
    end record;
 
    --------------
@@ -118,7 +119,6 @@ private
      Ada.Containers.Indefinite_Ordered_Maps (CLIC.Config.Config_Key,
                                              Builtin_Option);
 
-   Public_Builtins : Builtin_Maps.Map;
-   Private_Builtins : Builtin_Maps.Map;
+   All_Builtins : Builtin_Maps.Map;
 
 end Alire.Settings;
