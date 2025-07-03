@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### New `--github` switch for `alr init` command
 
-PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
+PR [#1972](https://github.com/alire-project/alire/pull/1972)
 
 The `alr init` command now supports a `--github` switch to automatically
 generate GitHub files (README.md, workflows) for new crates. This can be
