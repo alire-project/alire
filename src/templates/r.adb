@@ -4,17 +4,20 @@ pragma Warnings (Off);
 
 pragma Style_Checks (Off);
 
+with r.crate_bin_alire_toml;
+with r.crate_bin_name_gpr;
+with r.crate_bin_src_name_adb;
+with r.crate_common_gitignore_hidden;
+with r.crate_lib_alire_toml;
+with r.crate_lib_name_gpr;
+with r.crate_lib_src_name_ads;
 with r.crate_test_tests_alire_toml;
+with r.crate_test_tests_common_name_tests_ads;
 with r.crate_test_tests_crate_test_tests_gpr;
 with r.crate_test_tests_src_name_testsxassertions_enabled_adb;
-with r.crate_test_tests_common_name_tests_ads;
-with r.crate_common_gitignore_hidden;
-with r.crate_bin_name_gpr;
-with r.crate_bin_alire_toml;
-with r.crate_bin_src_name_adb;
-with r.crate_lib_name_gpr;
-with r.crate_lib_alire_toml;
-with r.crate_lib_src_name_ads;
+with r.github_readme_md;
+with r.github_publish_yml;
+with r.github_selftest_yml;
 
 with Alire.Templates;
 with GNAT.Calendar;
@@ -29,50 +32,62 @@ package body r is
       if not Initialized then
          Initialized := True;
          Register
+            ("crate_bin/alire.toml",
+             r.crate_bin_alire_toml.Content'Access,
+             GNAT.Calendar.Time_Of (2025, 04, 29, 05, 06, 37, 0.0));
+         Register
+            ("crate_bin/name.gpr",
+             r.crate_bin_name_gpr.Content'Access,
+             GNAT.Calendar.Time_Of (2025, 04, 29, 05, 06, 37, 0.0));
+         Register
+            ("crate_bin/src/name.adb",
+             r.crate_bin_src_name_adb.Content'Access,
+             GNAT.Calendar.Time_Of (2025, 04, 29, 05, 06, 37, 0.0));
+         Register
+            ("crate_common/gitignore.hidden",
+             r.crate_common_gitignore_hidden.Content'Access,
+             GNAT.Calendar.Time_Of (2025, 04, 29, 05, 06, 37, 0.0));
+         Register
+            ("crate_lib/alire.toml",
+             r.crate_lib_alire_toml.Content'Access,
+             GNAT.Calendar.Time_Of (2025, 04, 29, 05, 06, 37, 0.0));
+         Register
+            ("crate_lib/name.gpr",
+             r.crate_lib_name_gpr.Content'Access,
+             GNAT.Calendar.Time_Of (2025, 04, 29, 05, 06, 37, 0.0));
+         Register
+            ("crate_lib/src/name.ads",
+             r.crate_lib_src_name_ads.Content'Access,
+             GNAT.Calendar.Time_Of (2025, 04, 29, 05, 06, 37, 0.0));
+         Register
             ("crate_test/tests/alire.toml",
              r.crate_test_tests_alire_toml.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 26, 17, 10, 47, 0.0));
+             GNAT.Calendar.Time_Of (2025, 04, 29, 05, 06, 37, 0.0));
+         Register
+            ("crate_test/tests/common/name_tests.ads",
+             r.crate_test_tests_common_name_tests_ads.Content'Access,
+             GNAT.Calendar.Time_Of (2025, 04, 29, 05, 06, 37, 0.0));
          Register
             ("crate_test/tests/crate_test_tests.gpr",
              r.crate_test_tests_crate_test_tests_gpr.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 26, 17, 10, 47, 0.0));
+             GNAT.Calendar.Time_Of (2025, 04, 29, 05, 06, 37, 0.0));
          Register
             ("crate_test/tests/src/name_tests-assertions_enabled."
              & "adb",
              r.crate_test_tests_src_name_testsxassertions_enabled_adb.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 26, 17, 10, 47, 0.0));
+             GNAT.Calendar.Time_Of (2025, 04, 29, 05, 06, 37, 0.0));
          Register
-            ("crate_test/tests/common/name_tests.ads",
-             r.crate_test_tests_common_name_tests_ads.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 26, 17, 10, 47, 0.0));
+            ("github/README.md",
+             r.github_readme_md.Content'Access,
+             GNAT.Calendar.Time_Of (2025, 07, 03, 11, 56, 24, 0.0));
          Register
-            ("crate_common/gitignore.hidden",
-             r.crate_common_gitignore_hidden.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 26, 17, 10, 47, 0.0));
+            ("github/publish.yml",
+             r.github_publish_yml.Content'Access,
+             GNAT.Calendar.Time_Of (2025, 07, 03, 11, 56, 54, 0.0));
          Register
-            ("crate_bin/name.gpr",
-             r.crate_bin_name_gpr.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 26, 17, 10, 47, 0.0));
-         Register
-            ("crate_bin/alire.toml",
-             r.crate_bin_alire_toml.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 26, 17, 56, 20, 0.0));
-         Register
-            ("crate_bin/src/name.adb",
-             r.crate_bin_src_name_adb.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 26, 17, 10, 47, 0.0));
-         Register
-            ("crate_lib/name.gpr",
-             r.crate_lib_name_gpr.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 26, 17, 10, 47, 0.0));
-         Register
-            ("crate_lib/alire.toml",
-             r.crate_lib_alire_toml.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 26, 17, 56, 20, 0.0));
-         Register
-            ("crate_lib/src/name.ads",
-             r.crate_lib_src_name_ads.Content'Access,
-             GNAT.Calendar.Time_Of (2025, 03, 26, 17, 10, 47, 0.0));
+            ("github/selftest.yml",
+             r.github_selftest_yml.Content'Access,
+             GNAT.Calendar.Time_Of (2025, 07, 03, 11, 55, 43, 0.0));
       end if;
    end Init;
 
