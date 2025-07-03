@@ -17,8 +17,8 @@ with R.Crate_Test_Tests_Crate_Test_Tests_Gpr;
 with R.Crate_Test_Tests_Src_Name_Testsxassertions_Enabled_Adb;
 
 with R.Github_Publish_Yml;
-with R.Github_Selftest_Yml;
 with R.Github_Readme_Md;
+with R.Github_Selftest_Yml;
 
 private with Alire.TOML_Adapters;
 

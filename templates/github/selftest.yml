@@ -14,14 +14,14 @@ jobs:
 
       matrix:
         runner:
+          # These are the most recent configurations supported by Alire.
           # Remove or add runners as needed, see available runners at
           # https://docs.github.com/en/actions/how-tos/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
-          - ubuntu-22
-          - ubuntu-latest     # x86_64 Linux
-          - ubuntu-24.04-arm  # ARM64 Linux
-          - macos-13          # Intel macOS
-          - macos-latest      # ARM64 macOS
-          - windows-latest    # x86_64 Windows
+          - ubuntu-latest     # Linux x86_64
+          - ubuntu-24.04-arm  # Linux ARM64
+          - macos-13          # macOS Intel
+          - macos-latest      # macOS ARM64
+          - windows-latest    # Windows x86_64
 
     runs-on: ${{ matrix.runner }}
     steps:

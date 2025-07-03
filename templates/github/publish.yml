@@ -20,7 +20,6 @@ jobs:
       - uses: alire-project/alr-publish@v1
         with:
           github_token: ${{ secrets.ALR_PUBLISH_PAT }}
-          index_name: test-index
           skip_build: false
           create_tag: true
           create_release: true
