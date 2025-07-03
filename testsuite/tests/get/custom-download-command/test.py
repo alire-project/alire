@@ -8,7 +8,7 @@ import shutil
 
 from drivers.alr import crate_dirname, fixtures_path, run_alr, alr_settings_set
 from drivers.asserts import assert_match, assert_substring
-from drivers.helpers import MockCommand
+from drivers.helpers import MockCommand, on_windows
 
 
 # The script for the mock download command. Prints its arguments, then copies
@@ -28,7 +28,8 @@ def set_download_cmd(cmd: str):
 
 
 # Mock `curl` so it always fails, and put the mock download command on `PATH`.
-alr_settings_set("msys2.install_dir", os.path.abspath("does_not_exist"))
+alr_settings_set("msys2.install_dir", os.path.abspath("does_not_exist"),
+                 builtin=on_windows())
 mock_curl = MockCommand("curl", "raise Exception", "cmd_dir")
 mock_download_cmd = MockCommand("command_name", COMMAND_SCRIPT, "cmd_dir")
 with mock_curl, mock_download_cmd:

@@ -123,7 +123,7 @@ package body Alire.Settings is
    ----------------
 
    function Is_Builtin (Key : CLIC.Config.Config_Key) return Boolean
-   is (All_Builtins.Contains (Key));
+   is (Public_Builtins.Contains (Key) or else Private_Builtins.Contains (Key));
 
    ---------------------
    -- Kind_Of_Builtin --
@@ -133,8 +133,8 @@ package body Alire.Settings is
                              return Builtin_Kind
    is
    begin
-      if All_Builtins.Contains (Key) then
-         return All_Builtins (Key).Kind;
+      if Public_Builtins.Contains (Key) then
+         return Public_Builtins (Key).Kind;
       end if;
 
       Raise_Checked_Error ("Kind is only valid for builtin setting key");
@@ -162,7 +162,9 @@ package body Alire.Settings is
                                                   Check       => Check)
       do
          if Public then
-            All_Builtins.Insert (Key, Result);
+            Public_Builtins.Insert (Key, Result);
+         else
+            Private_Builtins.Insert (Key, Result);
          end if;
       end return;
    end New_Builtin;

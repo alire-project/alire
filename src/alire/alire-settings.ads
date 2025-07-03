@@ -118,6 +118,7 @@ private
      Ada.Containers.Indefinite_Ordered_Maps (CLIC.Config.Config_Key,
                                              Builtin_Option);
 
-   All_Builtins : Builtin_Maps.Map;
+   Public_Builtins : Builtin_Maps.Map;
+   Private_Builtins : Builtin_Maps.Map;
 
 end Alire.Settings;
