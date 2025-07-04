@@ -679,7 +679,10 @@ package body Alr.Commands is
         .Append ("crate        " & ASCII.HT & "Newest/oldest version")
         .Append ("crate=version" & ASCII.HT & "Exact version")
         .Append ("crate^version" & ASCII.HT & "Major-compatible version")
-        .Append ("crate~version" & ASCII.HT & "Minor-compatible version");
+        .Append ("crate~version" & ASCII.HT & "Minor-compatible version")
+        .Append ("crate[op]version " & ASCII.HT
+                 & "Newest/oldest in set where [op] can be >, >=, <, <=, /=")
+      ;
    end Crate_Version_Sets;
 
    --------------
