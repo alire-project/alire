@@ -90,7 +90,9 @@ package body Alr.Commands.Self_Update is
          begin
             if Alire.Version.Current.Pre_Release /= "" then
                Trace.Info
-                 ("Detected nightly version. Use --release="
+                 ("Detected nightly version. Use --"
+                  & Switch_Release
+                  & "="
                   & Semver.Image (V)
                   & " to update to the latest stable release.");
                return (Kind => Nightly);
@@ -109,7 +111,9 @@ package body Alr.Commands.Self_Update is
             elsif V = Alire.Version.Current then
                Trace.Info ("You are already using the latest version of alr!");
                Trace.Info
-                 ("To reinstall the current version, use --release="
+                 ("To reinstall the current version, use --"
+                  & Switch_Release
+                  & "="
                   & Semver.Image (V));
                raise Abort_With_Success;
             end if;
@@ -119,7 +123,7 @@ package body Alr.Commands.Self_Update is
    exception
       when Semver.Malformed_Input =>
          Reportaise_Command_Failed
-           ("specified invalid alr version: " & Cmd.Release.all);
+           ("Specified invalid alr version: " & Cmd.Release.all);
    end Get_Version_Tag;
 
    ----------------
@@ -165,7 +169,7 @@ package body Alr.Commands.Self_Update is
          return Path;
       elsif Dirs.Adirs.Simple_Name (Path) /= Alr_Bin then
          Reportaise_Command_Failed
-           ("invalid location: does not point to an existing directory or a "
+           ("Invalid location: does not point to an existing directory or a "
             & "file named `"
             & Alr_Bin
             & "`");
@@ -177,7 +181,7 @@ package body Alr.Commands.Self_Update is
                return Base;
             else
                Reportaise_Command_Failed
-                 ("invalid location: does not point to an existing directory");
+                 ("Invalid location: does not point to an existing directory");
             end if;
          end;
       end if;
@@ -288,12 +292,13 @@ package body Alr.Commands.Self_Update is
 
       --  self-update flags
       Relaunch_Args.Append (Cmd.Name);
-      Relaunch_Args.Append (String'("""--location=" & Dest_Base & """"));
+      Relaunch_Args.Append
+        (String'("""--" & Switch_Location & "=" & Dest_Base & """"));
       if Cmd.Nightly then
-         Relaunch_Args.Append ("--nightly");
+         Relaunch_Args.Append (String'("--" & Switch_Nightly));
       elsif Cmd.Release /= null and then Cmd.Release.all /= "" then
          Relaunch_Args.Append
-           (String'("""--release=" & Cmd.Release.all & """"));
+           (String'("""--" & Switch_Release & "=" & Cmd.Release.all & """"));
       end if;
 
       Relaunch_Args.Append (Magic_Arg_Windows);
@@ -512,7 +517,7 @@ package body Alr.Commands.Self_Update is
         (Config,
          Cmd.Location'Access,
          "",
-         "--location=",
+         "--" & Switch_Location & "=",
          "Specify where to install (and overwrite) the alr binary"
          & " [default: the current path of alr, if found]",
          Argument => "<path/to/alr>");
@@ -521,14 +526,14 @@ package body Alr.Commands.Self_Update is
         (Config,
          Cmd.Nightly'Access,
          "",
-         "--nightly",
+         "--" & Switch_Nightly,
          "Download and install the most recent nightly version of alr");
 
       Define_Switch
         (Config,
          Cmd.Release'Access,
          "",
-         "--release=",
+         "--" & Switch_Release & "=",
          "Download a specific version of alr",
          Argument => "<version>");
    end Setup_Switches;

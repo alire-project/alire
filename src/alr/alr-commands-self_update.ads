@@ -22,7 +22,7 @@ package Alr.Commands.Self_Update is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--location=<path/to/alr>] [--nightly] [--release=<version>]");
+   is ("");
 
    overriding
    procedure Setup_Switches
@@ -30,6 +30,9 @@ package Alr.Commands.Self_Update is
       Config : in out CLIC.Subcommand.Switches_Configuration);
 
 private
+   Switch_Location : constant String := "location";
+   Switch_Nightly  : constant String := "nightly";
+   Switch_Release  : constant String := "release";
 
    type Command is new Commands.Command with record
       Nightly  : aliased Boolean := False;
