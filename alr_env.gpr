@@ -23,6 +23,7 @@ aggregate project Alr_Env is
                          "deps/lml",
                          "deps/minirest",
                          "deps/optional",
+                         "deps/resources",
                          "deps/semantic_versioning",
                          "deps/si_units",
                          "deps/simple_logging",

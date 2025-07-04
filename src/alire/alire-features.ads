@@ -15,6 +15,9 @@ package Alire.Features is
    --  former with a warning during our next major release to ease transition.
    --  Likewise for the -c/--config switch
 
+   Self_Update_Cmd : constant On_Version := +"3.0.0-dev";
+   --  Used to warn when users downgrade alr using the `self-update` command
+
    package Index is
 
       --  Features referring to the index version

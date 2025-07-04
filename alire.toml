@@ -27,14 +27,15 @@ gnatcoll = "^21"
 lml = "~0.1"
 minirest = "~0.3"
 optional = "~0.1.1"
+resources = "~0.1"
 semantic_versioning = "^3.0"
 simple_logging = "^2.0"
 si_units = "~0.2.2"
+spdx = "~0.2"
 stopwatch = "~0.1"
 templates_parser = "^24" # Latests pre-Ada 2022 version
 toml_slicer = "~0.1"
 uri_ada = "^2.0"
-spdx = "~0.2"
 
 [gpr-set-externals]
 CLIC_LIBRARY_TYPE="static"  # Has problems with "static-pic" for some reason
@@ -100,6 +101,10 @@ commit = "9a9c660f9c6f27f5ef75417e7fac7061dff14d78"
 [pins.optional]
 url    = "https://github.com/mosteo/optional.git"
 commit = "7b8132a09a6c3c467409ab15d34fac605b1e5711"
+
+[pins.resources]
+url    = "https://github.com/alire-project/resources"
+commit = "d3a83f35d7c0b586119fc19a568289cf21c87aa0"
 
 [pins.semantic_versioning]
 url    = "https://github.com/alire-project/semantic_versioning"
