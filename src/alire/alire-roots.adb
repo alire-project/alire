@@ -70,6 +70,9 @@ package body Alire.Roots is
 
       if Saved_Profiles then
          This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
+         Trace.Debug ("Using saved build profiles from command line");
+      else
+         Trace.Debug ("Using build profiles from manifests");
       end if;
 
       --  Right after initialization, a Root may lack a solution, which is
@@ -1796,8 +1799,9 @@ package body Alire.Roots is
          --  a non-exhaustive sync of pins, that will anyway detect evident
          --  changes (new/removed pins, changed explicit commits).
 
-         This.Update_Dependencies (Silent   => Silent,
-                                   Interact => Interact);
+         This.Update_Dependencies (Silent    => Silent,
+                                   Interact  => Interact,
+                                   Sync_Only => True);
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
          --  to match the manifest. As any change in dependencies will be
@@ -1913,6 +1917,7 @@ package body Alire.Roots is
      (This        : in out Root;
       Allowed     : Containers.Crate_Name_Sets.Set :=
         Containers.Crate_Name_Sets.Empty_Set;
+      Sync_Only   : Boolean := False;
       Options     : Solver.Query_Options :=
         Solver.Default_Options)
       return Solver.Result
@@ -1925,7 +1930,7 @@ package body Alire.Roots is
 
       --  Identify crates that must be held back
 
-      if not Allowed.Is_Empty then
+      if Sync_Only or else not Allowed.Is_Empty then
          for Release of This.Solution.Releases loop
             if not Allowed.Contains (Release.Name) then
                Trace.Debug ("Forcing release in solution: "
@@ -1958,7 +1963,8 @@ package body Alire.Roots is
       Interact : Boolean; -- Request confirmation from the user
       Options  : Solver.Query_Options := Solver.Default_Options;
       Allowed  : Containers.Crate_Name_Sets.Set :=
-        Alire.Containers.Crate_Name_Sets.Empty_Set)
+        Alire.Containers.Crate_Name_Sets.Empty_Set;
+      Sync_Only : Boolean := False)
    is
       --  Pins may be stored with relative paths so we need to ensure being at
       --  the root of the workspace:
@@ -1989,7 +1995,7 @@ package body Alire.Roots is
 
       declare
          Computed_Update : constant Solver.Result        := This.Compute_Update
-           (Allowed, Options);
+           (Allowed, Sync_Only, Options);
          Diff            : constant Solutions.Diffs.Diff := Old.Changes
            (Computed_Update.Solution);
       begin
