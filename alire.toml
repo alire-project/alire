@@ -56,8 +56,8 @@ url    = "https://github.com/mosteo/aaa"
 commit = "73d99ae1ff2f5210dc41c2ea7afebe600f9e9916"
 
 [pins.ada_toml]
-url    = "https://github.com/pmderodat/ada-toml"
-commit = "e760110ad2b5b776a44dace31b8421532e429fbb"
+url    = "https://github.com/mosteo/ada-toml"
+commit = "33eaab64b9d531e240c3f525ad80a1f3eb8b9633"
 
 [pins.ansiada]
 url    = "https://github.com/mosteo/ansi-ada"
@@ -104,7 +104,7 @@ commit = "4861e32bd8a2f0df038d3ecc9a72b6381e7a34cc"
 
 [pins.simple_logging]
 url    = "https://github.com/alire-project/simple_logging"
-commit = "a8561d302beb037887cb9980319039c5f86ad9c8"
+commit = "f45bf378588dc1d0479cc24eb0eb41dc99f69cb4"
 
 [pins.si_units]
 url    = "https://github.com/mosteo/si_units"
