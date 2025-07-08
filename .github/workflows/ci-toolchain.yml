@@ -144,3 +144,5 @@ jobs:
     - name: Run testsuite # But ensure a new alr is not build
       run: scripts/ci-github.sh build=false
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

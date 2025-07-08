@@ -114,6 +114,7 @@ jobs:
       env:
         BRANCH: ${{ github.base_ref }}
         INDEX: ""
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # Ascertain whether alr can run without the toolchain that built it
 

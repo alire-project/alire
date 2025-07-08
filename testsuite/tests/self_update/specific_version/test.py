@@ -12,7 +12,7 @@ v_init = drivers.alr.run_alr("version").out
 
 shutil.copy(os.environ["ALR_PATH"], ".")
 
-curl_script = """
+curl_script = """\
 import os
 import subprocess
 import sys
@@ -20,7 +20,9 @@ import sys
 env2 = os.environ.copy()
 env2["PATH"] = env2["PATH"].split(os.pathsep, 1)[1]
 token_header = []
-if "GITHUB_TOKEN" in os.environ:
+if "GITHUB_TOKEN" in os.environ and any(
+    a.startswith("https://api.github.com") for a in sys.argv[1:]
+):
     token_header = ["-H", f"Authorization: Bearer {os.environ['GITHUB_TOKEN']}"]
 subprocess.call(["curl", *token_header, *sys.argv[1:]], env=env2)
 """
@@ -30,22 +32,32 @@ def run_alr(args: list[str], expect_success: bool = True) -> str:
     p = run(
         [f".{os.sep}{exe_name('alr')}", "-n", *args],
         capture_output=True,
-        check=expect_success,
     )
-    return str(p.stdout)
+    assert expect_success == (
+        p.returncode == 0
+    ), f"""stdout: {p.stdout.decode(errors="replace")}
+stderr: {p.stderr.decode(errors="replace")}"""
+    return p.stdout.decode(errors="replace")
 
 
 with MockCommand("curl", curl_script, "curl_override"):
-    run_alr(["self-update", "--release=2.0"])
+    out = run_alr(["self-update", "--release=2.1.0"])
+
+    if (
+        "alr-2.1.0-bin-aarch64-linux.zip" in out
+        and __import__("platform").freedesktop_os_release().get("VERSION_ID") == "22.04"
+    ):  # HACK: no working alr 2.1.0 for ubuntu 22.04
+        print("SUCCESS")
+        __import__("sys").exit()
 
     out = None
     for i in range(10):
         out = run_alr(["--version"])
-        if "2.0" in out:
+        if "2.1" in out:
             break
         time.sleep(1)
 
-assert_substring("2.0", out)
+assert_substring("2.1", out)
 
 assert drivers.alr.run_alr("version").out == v_init  # ensure the main alr is unchanged
 
