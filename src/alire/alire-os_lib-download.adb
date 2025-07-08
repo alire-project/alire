@@ -53,14 +53,7 @@ package body Alire.OS_Lib.Download is
       package Plat renames Alire.Platforms;
    begin
       case Plat.Current.Operating_System is
-         when Plat.FreeBSD | Plat.OpenBSD | Plat.Linux =>
-            Alire.OS_Lib.Subprocess.Checked_Spawn
-              ("chmod", Empty_Vector & "+x" & Path);
-
-         when Plat.MacOS =>
-            Alire.OS_Lib.Subprocess.Checked_Spawn
-              ("xattr",
-               Empty_Vector & "-d" & "com.apple.quarantine" & Path);
+         when Plat.FreeBSD | Plat.OpenBSD | Plat.Linux | Plat.MacOS =>
             Alire.OS_Lib.Subprocess.Checked_Spawn
               ("chmod", Empty_Vector & "+x" & Path);
 
