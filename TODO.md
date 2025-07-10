@@ -8,3 +8,4 @@
 freely updatable
 - Test that indirect dependencies are not considered direct for some reason
 - See why fixing a conflict doesnt show "hello" as a new crate in the solution when it was missing in the incomplete solution.
+- Test that `alr with` doesn't touch other dependencies

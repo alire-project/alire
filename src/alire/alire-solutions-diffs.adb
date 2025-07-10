@@ -165,14 +165,16 @@ package body Alire.Solutions.Diffs is
                         & TTY.Warn (To_Lower_Case (Latter.Reason'Image)));
 
          --  From hint to proper release
-         elsif Has_Former and then Former.Is_Hinted and then
-           Gains_State (Solved)
+         elsif Has_Former and then
+           (Former.Is_Hinted or else Former.Is_Missing)
+           and then Gains_State (Solved)
          then
             --  The crate was formerly in the solution, but not as regular
             --  release. Pinning is reported separately, so warn only when
-            --  it was formerly an external.
+            --  it was formerly an external or missing.
             Add_Change (Chg, Icon (Added), TTY.OK ("solved"));
          end if;
+
       end Fulfil_Change;
 
       --------------------------
@@ -364,6 +366,25 @@ package body Alire.Solutions.Diffs is
          end if;
       end Missing_Releases;
 
+      ----------------------
+      -- Any_Other_Change --
+      ----------------------
+
+      procedure Any_Other_Change is
+         use type Dependencies.States.State;
+      begin
+         --  Nothing to do if some change already found
+         if Chg.Icon /= "" or else not Chg.Detail.Is_Empty then
+            return;
+         end if;
+
+         --  There may be subtle changes we are missing in all other checks.
+         --  This ensures that any changed dependency is shown in some way.
+         if Has_Former and then Has_Latter and then Former /= Latter then
+            Add_Change (Chg, Icon (Info), "modified");
+         end if;
+      end Any_Other_Change;
+
    begin
 
       --  Go through possible changes and add each marker
@@ -381,6 +402,8 @@ package body Alire.Solutions.Diffs is
       Up_Or_Downgrade;
 
       Determine_Relevant_Version;
+
+      Any_Other_Change;
 
       Releases_Without_Sources;
       --  This one must go after the rest, as it only appends info if the
