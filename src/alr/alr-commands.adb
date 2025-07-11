@@ -740,8 +740,10 @@ package body Alr.Commands is
                         return Boolean
    is
    begin
-      if Image in null or else Image.all = "" or else Image.all = Unset then
+      if Image in null or else Image.all = Unset then
          return Default;
+      elsif Image.all = "" or else Image.all = "=" then
+         return True;
       elsif Is_Boolean (Image.all) then
          return Boolean'Value (Image.all);
       elsif Image (Image'First) = '=' then

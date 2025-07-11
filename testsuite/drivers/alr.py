@@ -663,16 +663,23 @@ def alr_settings_unset(key: str, local: bool = False):
     else:
         run_alr("settings", "--global", "--unset", key)
 
-def alr_settings_set(key: str, value: str, local: bool = False):
+def alr_settings_set(key: str, value: str, local: bool = False, builtin: bool = True):
     """
     Set a key-value pair with `alr settings`
 
     Sets the value globally unless `local` is `True`.
     """
-    if local:
-        run_alr("settings", "--set", key, value)
-    else:
-        run_alr("settings", "--global", "--set", key, value)
+    args=["settings"]
+    if builtin:
+        args.append("--builtin")
+    if not local:
+        args.append("--global")
+    args.append("--set")
+    args.append(key)
+    args.append(value)
+
+    run_alr(*args)
+
 
 def unselect_compiler():
     """

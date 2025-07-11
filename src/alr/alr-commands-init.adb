@@ -26,6 +26,8 @@ package body Alr.Commands.Init is
 
    type Crate_Kind is (Library, Binary);
 
+   Switch_Github : constant String := "--github";
+
    --------------
    -- Generate --
    --------------
@@ -101,6 +103,18 @@ package body Alr.Commands.Init is
          end if;
       end Generate_Test_Crate;
 
+      ---------------------------
+      -- Generate_Github_Files --
+      ---------------------------
+
+      procedure Generate_Github_Files is
+      begin
+         Templates.Translate_Tree
+           (Directory,
+            Templates.Builtins.Github,
+            Templates.Builtins.Init_Crate_Translation (Info));
+      end Generate_Github_Files;
+
    begin
 
       if Cmd.No_Skel then
@@ -115,6 +129,13 @@ package body Alr.Commands.Init is
          if not Cmd.No_Test then
             Generate_Test_Crate;
          end if;
+      end if;
+
+      if To_Boolean (Image   => Cmd.Github,
+                     Switch  => Switch_Github,
+                     Default => Alire.Settings.Builtins.Init_Github_Files.Get)
+      then
+         Generate_Github_Files;
       end if;
 
       Alire.Put_Success (TTY.Emph (Name.As_String)
@@ -372,12 +393,19 @@ package body Alr.Commands.Init is
          Builtins.User_Email.Is_Empty
          or else Builtins.User_Name.Is_Empty
          or else Builtins.User_Github_Login.Is_Empty;
+
+      Unused : Boolean;
    begin
       Cmd.Forbids_Structured_Output;
 
       if Cmd.Bin and then Cmd.Lib then
          Reportaise_Wrong_Arguments ("Please provide either --bin or --lib");
       end if;
+
+      --  Validate --github (To_Boolean does the checks)
+      Unused := To_Boolean (Image   => Cmd.Github,
+                            Switch  => Switch_Github,
+                            Default => False);
 
       Info.With_Test := not (Cmd.No_Test or else Cmd.No_Skel);
 
@@ -428,6 +456,7 @@ package body Alr.Commands.Init is
               " for the crate:",
             Default    => "",
             Validation => null));
+
       Generate (Cmd, Info);
    end Execute;
 
@@ -483,6 +512,13 @@ package body Alr.Commands.Init is
                      "", "--no-test",
                      "Do not generate a minimal test crate skeleton"
                      & " (implied by --no-skel)");
+
+      Define_Switch (Config,
+                     Cmd.Github'Access,
+                     "", Switch_Github & "?",
+                     Argument => "=BOOL",
+                     Help     =>
+                       "Generate README and workflows for GitHub projects");
    end Setup_Switches;
 
 end Alr.Commands.Init;

@@ -16,6 +16,10 @@ with R.Crate_Test_Tests_Common_Name_Tests_Ads;
 with R.Crate_Test_Tests_Crate_Test_Tests_Gpr;
 with R.Crate_Test_Tests_Src_Name_Testsxassertions_Enabled_Adb;
 
+with R.Github_Publish_Yml;
+with R.Github_Readme_Md;
+with R.Github_Selftest_Yml;
+
 private with Alire.TOML_Adapters;
 
 package Alire.Templates.Builtins is
@@ -78,6 +82,12 @@ package Alire.Templates.Builtins is
      .Append ("@_NAME_@_tests.gpr",                        +R.Crate_Test_Tests_Crate_Test_Tests_Gpr.Content)
      .Append ("common/@_NAME_@_tests.ads",                 +R.Crate_Test_Tests_Common_Name_Tests_Ads.Content)
      .Append ("src/@_NAME_@_tests-assertions_enabled.adb", +R.Crate_Test_Tests_Src_Name_Testsxassertions_Enabled_Adb.Content)
+   ;
+
+   Github : constant Tree := New_Tree
+     .Append (".github/workflows/publish.yml",  +R.Github_Publish_Yml.Content)
+     .Append (".github/workflows/selftest.yml", +R.Github_Selftest_Yml.Content)
+     .Append ("README.md",                      +R.Github_Readme_Md.Content)
    ;
 
 private

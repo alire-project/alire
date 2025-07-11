@@ -379,12 +379,14 @@ package body Alire.Settings.Edit is
       Results : AAA.Strings.Vector;
    begin
       for Ent of All_Builtins loop
-         Results.Append (String'("- " & TTY.Bold (To_String (Ent.Key))
-                         & " [" & TTY.Emph (Image (Ent.Kind)) & "]"
-                         & "[Default:" & TTY.Terminal (To_String (Ent.Def))
-                         & "]"));
-         Results.Append (To_String (Ent.Help));
-         Results.Append ("");
+         if Ent.Public then
+            Results.Append (String'("- " & TTY.Bold (To_String (Ent.Key))
+                            & " [" & TTY.Emph (Image (Ent.Kind)) & "]"
+                            & "[Default:" & TTY.Terminal (To_String (Ent.Def))
+                            & "]"));
+            Results.Append (To_String (Ent.Help));
+            Results.Append ("");
+         end if;
       end loop;
       return Results;
    end Builtins_Info;
@@ -397,11 +399,13 @@ package body Alire.Settings.Edit is
       use Ada.Text_IO;
    begin
       for Ent of All_Builtins loop
-         Put (" - **`" & To_String (Ent.Key) & "`** ");
-         Put ("[" & Image (Ent.Kind) & "]");
-         Put_Line ("[Default:" & To_String (Ent.Def) & "]:");
-         Put_Line ("   " & To_String (Ent.Help));
-         New_Line;
+         if Ent.Public then
+            Put (" - **`" & To_String (Ent.Key) & "`** ");
+            Put ("[" & Image (Ent.Kind) & "]");
+            Put_Line ("[Default:" & To_String (Ent.Def) & "]:");
+            Put_Line ("   " & To_String (Ent.Help));
+            New_Line;
+         end if;
       end loop;
    end Print_Builtins_Doc;
 

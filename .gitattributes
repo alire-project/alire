@@ -11,3 +11,6 @@
 *.pdf -text
 *.png -text
 *.tgz -text
+
+# Mark templates as generated so their diff is hidden by default at GitHub
+src/templates/** linguist-generated=true
