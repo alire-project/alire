@@ -6,10 +6,7 @@ with Ada.Environment_Variables;
 with CLIC.TTY;
 with CLIC.User_Input;
 
-with Alire.Platforms;
 with Alire_Early_Elaboration;
-with Alire.Settings.Builtins;
-with Alire.Settings.Edit;
 with Alire.Errors;
 with Alire.Features;
 with Alire.Formatting;
@@ -18,9 +15,12 @@ with Alire.Index_On_Disk.Updates;
 with Alire.Lockfiles;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
+with Alire.Platforms;
 with Alire.Platforms.Current;
 with Alire.Root;
-with Alire.Solutions;
+with Alire.Settings.Builtins;
+with Alire.Settings.Edit;
+with Alire.Solutions.Diffs;
 with Alire.Toolchains;
 with Alire.Utils.Did_You_Mean;
 with Alire.Utils.Tables;
@@ -113,7 +113,7 @@ package body Alr.Commands is
    -- Put_Error --
    ---------------
 
-   procedure Put_Error (Str : String) is
+   procedure Put_Error (Str : String := "") is
    begin
       Trace.Error (Str);
    end Put_Error;
@@ -467,20 +467,22 @@ package body Alr.Commands is
 
                   if Checked.Solution.Is_Attempted then
                      --  Check deps on disk match those in lockfile
-                     if not Checked.Sync_From_Manifest
-                       (Kind     => Roots.Incremental,
-                        Silent   => False,
-                        Interact => False)
-                     then
-                        --  Could not find an incremental complete solution,
-                        --  so a sync isn't enough. The user must manually
-                        --  fix dependencies in alire.toml or run `alr
-                        --  update`.
-                        if Cmd not in Commands.Sync.Command'Class then
-                           Print_Failed_Sync;
+                     declare
+                        Result : constant Roots.Update_Result
+                          := Checked.Sync_From_Manifest
+                            (Kind     => Roots.Incremental,
+                             Silent   => False,
+                             Interact => False);
+                     begin
+                        if not Result.Success then
+                           --  Could not find an incremental complete solution,
+                           --  so a sync isn't enough. The user must manually
+                           --  fix dependencies in alire.toml or run `alr
+                           --  update`.
+                           Print_Failed_Sync (Result);
                         end if;
-                     end if;
-                     return;
+                        return;
+                     end;
                   else
                      null;
                      --  We have never solved this workspace, so a fresh
@@ -542,7 +544,7 @@ package body Alr.Commands is
                  (Kind     => Roots.From_Scratch,
                   Silent   => False,
                   Interact => False,
-                  Force    => True),
+                  Force    => True).Success,
                "Cannot fail for a full sync",
                Unchecked => True);
             --  As we just created the empty lockfile, we force the sync, which
@@ -907,13 +909,20 @@ package body Alr.Commands is
    -- Print_Failed_Sync --
    -----------------------
 
-   procedure Print_Failed_Sync is
+   procedure Print_Failed_Sync (Result : Alire.Roots.Update_Result) is
+      use Alire;
    begin
-      Put_Error ("Synchronization failed due to conflicting changes.");
-      Put_Error ("Adjust your dependencies in `" & TTY.Terminal ("alire.toml")
-                 & "` and try again or");
-      Put_Error ("run `" & TTY.Terminal ("alr update") & "`"
-                 & " to compute a new solution from scratch.");
+      Put_Warning ("Synchronization failed due to conflicting changes.", Info);
+      Put_Warning ("Adjust your dependencies in `"
+                   & TTY.Terminal ("alire.toml") & "` and try again or", Info);
+      Put_Warning ("run `" & TTY.Terminal ("alr update") & "`"
+                   & " to compute a new solution from scratch.", Info);
+      New_Line;
+      Trace.Info ("Attempted changes are:");
+      Result.Old_Sol.Changes (Result.New_Sol).Print (Level => Info);
+      New_Line;
+
+      Reportaise_Command_Failed ("Synchronization not applied.");
    end Print_Failed_Sync;
 
 begin

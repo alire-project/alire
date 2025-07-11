@@ -1087,7 +1087,7 @@ package body Alire.Test.Runner is
          Assert (Root.Update
                  (Silent   => True,
                   Interact => False,
-                  Allowed  => Roots.Allow_All_Crates),
+                  Allowed  => Roots.Allow_All_Crates).Success,
                  "Cannot fail for a full update",
                  Unchecked => True);
       end if;

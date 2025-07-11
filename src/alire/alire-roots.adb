@@ -755,7 +755,7 @@ package body Alire.Roots is
          if Up_To = Update then
             Assert (Root.Update (Allowed  => Allow_All_Crates,
                                  Silent   => False,
-                                 Interact => False),
+                                 Interact => False).Success,
                     "Cannot fail for a full update",
                     Unchecked => True);
          end if;
@@ -1788,8 +1788,14 @@ package body Alire.Roots is
                                 Silent   : Boolean;
                                 Interact : Boolean;
                                 Force    : Boolean := False)
-                                return Boolean
+                                return Update_Result
    is
+      Result : Update_Result :=
+                 (Success  => True,
+                  Rejected => False,
+                  Old_Sol  => This.Solution,
+                  New_Sol  => This.Solution);
+      --  By default, when no sync is needed, we will return this one
    begin
       if Force
         or else This.Is_Lockfile_Outdated
@@ -1803,17 +1809,18 @@ package body Alire.Roots is
          --  a non-exhaustive sync of pins, that will anyway detect evident
          --  changes (new/removed pins, changed explicit commits).
 
-         if not This.Update_Dependencies (Silent    => Silent,
-                                          Interact  => Interact,
-                                          Sync_Only => Kind = Incremental)
-           --  Don't ask for confirmation as this is an automatic update in
-           --  reaction to a manually edited manifest, and we need the lockfile
-           --  to match the manifest. As any change in dependencies will be
-           --  printed, the user will have to re-edit the manifest if not
-           --  satisfied with the result of the previous edition, or manually
-           --  run `alr update` to discard the old solution.
-         then
-            return False;
+         Result := This.Update_Dependencies (Silent    => Silent,
+                                             Interact  => Interact,
+                                             Sync_Only => Kind = Incremental);
+         --  Don't ask for confirmation as this is an automatic update in
+         --  reaction to a manually edited manifest, and we need the lockfile
+         --  to match the manifest. As any change in dependencies will be
+         --  printed, the user will have to re-edit the manifest if not
+         --  satisfied with the result of the previous edition, or manually
+         --  run `alr update` to discard the old solution.
+
+         if not Result.Success then
+            return Result;
          end if;
 
          This.Sync_Manifest_And_Lockfile_Timestamps;
@@ -1848,7 +1855,7 @@ package body Alire.Roots is
          This.Deploy_Dependencies;
       end if;
 
-      return True;
+      return Result;
    end Sync_From_Manifest;
 
    -------------------------------------------
@@ -1874,8 +1881,9 @@ package body Alire.Roots is
                     Allowed  : Containers.Crate_Name_Sets.Set;
                     Silent   : Boolean;
                     Interact : Boolean)
-                    return Boolean
+                    return Update_Result
    is
+      Result : Update_Result;
    begin
       This.Sync_Pins_From_Manifest (Exhaustive => True,
                                     Allowed    => Allowed);
@@ -1884,13 +1892,14 @@ package body Alire.Roots is
 
       --  And look for updates in dependencies
 
-      if not This.Update_Dependencies
+      Result := This.Update_Dependencies
         (Allowed  => Allowed,
          Silent   => Silent,
-         Interact => Interact and not CLIC.User_Input.Not_Interactive)
-      then
+         Interact => Interact and not CLIC.User_Input.Not_Interactive);
+
+      if not Result.Success then
          Trace.Debug ("Roots.Update: could not find a incremental solution.");
-         return False;
+         return Result;
       end if;
 
       --  And remove post-fetch markers for root and linked dependencies, so
@@ -1922,7 +1931,7 @@ package body Alire.Roots is
       This.Build_Prepare (Saved_Profiles => False,
                           Force_Regen    => True);
 
-      return True;
+      return Result;
    end Update;
 
    --------------------
@@ -1981,7 +1990,7 @@ package body Alire.Roots is
       Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set;
       Sync_Only : Boolean := False)
-      return Boolean
+      return Update_Result
    is
       --  Pins may be stored with relative paths so we need to ensure being at
       --  the root of the workspace:
@@ -2015,6 +2024,11 @@ package body Alire.Roots is
            (Allowed, Sync_Only, Options);
          Diff            : constant Solutions.Diffs.Diff := Old.Changes
            (Computed_Update.Solution);
+         Failed_Update   : Update_Result :=
+                             (Success  => False,
+                              Rejected => False,
+                              Old_Sol  => This.Solution,
+                              New_Sol  => Computed_Update.Solution);
       begin
          --  Early exit when there are no changes
 
@@ -2046,7 +2060,7 @@ package body Alire.Roots is
               and then not Computed_Update.Solution.Is_Complete
             then
                Trace.Debug ("Automatic sync failed");
-               return False;
+               return Failed_Update;
             end if;
 
             --  Show changes and optionally ask user to apply them
@@ -2068,7 +2082,8 @@ package body Alire.Roots is
                            (Diff, Timed_Out => Computed_Update.Timed_Out)
                then
                   Trace.Detail ("Update abandoned.");
-                  return False;
+                  Failed_Update.Rejected := True;
+                  return Failed_Update;
                end if;
             elsif not Silent then
                Trace.Info ("Nothing to update.");
@@ -2080,11 +2095,17 @@ package body Alire.Roots is
          --  detected, as pin evaluation may have temporarily stored
          --  unsolved dependencies which have been re-solved now.
 
-         This.Set (Solution => Computed_Update.Solution);
-         This.Deploy_Dependencies;
+         return Result : constant Update_Result :=
+                           (Success  => True,
+                            Rejected => False,
+                            Old_Sol  => This.Solution,
+                            New_Sol  => Computed_Update.Solution)
+         do
+            This.Set (Solution => Computed_Update.Solution);
+            This.Deploy_Dependencies;
 
-         Trace.Detail ("Update completed");
-         return True;
+            Trace.Detail ("Update completed");
+         end return;
       end;
    end Update_Dependencies;
 
@@ -2143,7 +2164,7 @@ package body Alire.Roots is
       --  and then offer a full one if impossible, without failing.
       Assert (This.Sync_From_Manifest (Kind     => From_Scratch,
                                        Silent   => True,
-                                       Interact => False),
+                                       Interact => False).Success,
               "Cannot fail for a full update",
               Unchecked => True);
    end Commit;

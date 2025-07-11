@@ -379,7 +379,7 @@ package body Alire.Roots.Editable is
 
       Assert (This.Edit.Update (Allow_All_Crates,
                                 Silent   => True,
-                                Interact => False),
+                                Interact => False).Success,
               "Cannot fail for a full update",
               Unchecked => True);
    end Add_Path_Pin;
@@ -511,7 +511,7 @@ package body Alire.Roots.Editable is
 
          Assert (This.Edit.Update (Allow_All_Crates,
                                    Silent   => True,
-                                   Interact => False),
+                                   Interact => False).Success,
                  "Cannot fail for a full update",
                  Unchecked => True);
       end;

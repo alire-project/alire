@@ -140,7 +140,7 @@ private
    procedure Put (S : String)
    renames GNAT.IO.Put;
 
-   procedure Put_Error (Str : String);
+   procedure Put_Error (Str : String := "");
    procedure Set_Global_Switches
      (Config : in out CLIC.Subcommand.Switches_Configuration);
 
@@ -181,6 +181,7 @@ private
    --  with an appropriate error message. NOTE: If the switch exists (is not
    --  unset) but has no argument, it's considered TRUE, not default.
 
-   procedure Print_Failed_Sync;
+   procedure Print_Failed_Sync (Result : Alire.Roots.Update_Result);
+   --  Diagnose failed sync and exit with error
 
 end Alr.Commands;

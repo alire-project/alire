@@ -19,9 +19,6 @@ package body Alr.Commands.Sync is
                                  Force_Regen    => True);
 
          Alire.Put_Success ("Workspace synchronized successfully.");
-
-      else
-         Print_Failed_Sync;
       end if;
    end Execute;
 

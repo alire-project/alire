@@ -203,6 +203,16 @@ package Alire.Roots is
                              return Boolean;
    --  Say if the root release matches the given name
 
+   type Update_Result is record
+      Success  : Boolean := False;
+      Rejected : Boolean := False; -- True when rejected by the user
+      Old_Sol,
+      New_Sol : Solutions.Solution;
+   end record;
+   --  We use this result during syncs/updates to ascertain what happened.
+   --  When not Success, the lockfile remains unchanged and New_Sol will be
+   --  incomplete. When success, the lockfile will have been updated to match.
+
    type Sync_Kinds is (Incremental, From_Scratch);
    --  Whether we want the new solution to preserve previous solved releases or
    --  entirely discard any previous solution.
@@ -212,11 +222,11 @@ package Alire.Roots is
                                 Silent   : Boolean;
                                 Interact : Boolean;
                                 Force    : Boolean := False)
-                                return Boolean with Post =>
-     (not Sync_From_Manifest'Result
+                                return Update_Result with Post =>
+     (not Sync_From_Manifest'Result.Success
       or else not This.Is_Lockfile_Outdated)
      and then
-       (if Kind = From_Scratch then Sync_From_Manifest'Result);
+       (if Kind = From_Scratch then Sync_From_Manifest'Result.Success);
    --  If the lockfile timestamp is outdated w.r.t the manifest, or Force, do
    --  as follows: 1) Pre-deploy any remote pins in the manifest so they are
    --  usable when solving, and apply any local/version pins. 2) Ensure that
@@ -246,8 +256,9 @@ package Alire.Roots is
                     Allowed  : Containers.Crate_Name_Sets.Set;
                     Silent   : Boolean;
                     Interact : Boolean)
-                    return Boolean
-     with Post => (if Allowed.Is_Empty then Update'Result);
+                    return Update_Result
+     with Post => (if Allowed.Is_Empty and then not Interact
+                   then Update'Result.Success);
    --  Full update, explicitly requested. Will fetch/prune pins, update any
    --  updatable crates. Equivalent to `alr update`. Allowed is an optionally
    --  empty set of crates to which the update will be limited. Everything
@@ -265,9 +276,9 @@ package Alire.Roots is
       Allowed   : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set;
       Sync_Only : Boolean := False)
-      return Boolean with Post =>
-     (if not Sync_Only and then Allowed.Is_Empty
-      then Update_Dependencies'Result);
+      return Update_Result with Post =>
+     (if not Sync_Only and then Allowed.Is_Empty and then not Interact
+      then Update_Dependencies'Result.Success);
    --  Resolve and update all or given crates in a root, and regenerate
    --  configuration. When Silent, run as in non-interactive mode as this is
    --  an automatically-triggered update. When Sync_Only, keep releases in

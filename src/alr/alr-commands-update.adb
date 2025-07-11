@@ -1,5 +1,6 @@
 with Alire.Containers;
 with Alire.Errors;
+with Alire.Solutions.Diffs;
 
 with Alr.Commands.Index;
 
@@ -13,6 +14,7 @@ package body Alr.Commands.Update is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
+      use Alire;
 
       -------------------
       -- Parse_Allowed --
@@ -34,6 +36,8 @@ package body Alr.Commands.Update is
             return Alire.Containers.Crate_Name_Sets.Empty_Set;
       end Parse_Allowed;
 
+      Result : Alire.Roots.Update_Result;
+
    begin
       Cmd.Forbids_Structured_Output;
       Cmd.Requires_Workspace (Sync => False);
@@ -46,14 +50,18 @@ package body Alr.Commands.Update is
          Cmd.Auto_Update_Index;
       end if;
 
-      if Cmd.Root.Update (Parse_Allowed,
-                          Silent   => False,
-                          Interact => True)
-      then
+      Result := Cmd.Root.Update (Parse_Allowed,
+                                 Silent   => False,
+                                 Interact => True);
+      if Result.Success then
          Alire.Put_Success ("Update completed successfully.");
-      else
-         Reportaise_Command_Failed
-           ("Partial update could not find an incremental solution.");
+      elsif not Result.Rejected then
+         Put_Warning ("Partial update could not find an incremental solution.",
+                      Info);
+         Trace.Info ("Attempted changes are:");
+         Result.Old_Sol.Changes (Result.New_Sol).Print (Level => Info);
+         New_Line;
+         Reportaise_Command_Failed ("Update not applied.");
       end if;
    end Execute;
 
