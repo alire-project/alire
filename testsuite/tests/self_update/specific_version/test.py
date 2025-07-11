@@ -46,12 +46,14 @@ with MockCommand("curl", curl_script, "curl_override"):
     if (
         "alr-2.1.0-bin-aarch64-linux.zip" in out
         and __import__("platform").freedesktop_os_release().get("VERSION_ID") == "22.04"
-    ):  # HACK: no working alr 2.1.0 for ubuntu 22.04
+    ):  # HACK: no working alr 2.1.0 for ubuntu 22.04 ARM
         print("SUCCESS")
         __import__("sys").exit()
 
     out = None
     for i in range(10):
+        # on windows, the self-update process runs detached,
+        # so we run this in a loop until it's done (or failed)
         out = run_alr(["--version"])
         if "2.1" in out:
             break

@@ -30,6 +30,7 @@ package Alr.Commands.Self_Update is
       Config : in out CLIC.Subcommand.Switches_Configuration);
 
 private
+
    Switch_Location : constant String := "location";
    Switch_Nightly  : constant String := "nightly";
    Switch_Release  : constant String := "release";
