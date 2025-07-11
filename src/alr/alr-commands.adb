@@ -466,25 +466,20 @@ package body Alr.Commands is
                   --  requested, we need to generate a proper solution anyway.
 
                   if Checked.Solution.Is_Attempted then
-                     declare
-                        Old_Sol : constant Alire.Solutions.Solution
-                          := Checked.Solution;
-                     begin
-                        --  Check deps on disk match those in lockfile
-                        Checked.Sync_From_Manifest (Silent   => False,
-                                                    Interact => False);
-                        if Old_Sol.Is_Complete and then
-                          not Checked.Solution.Is_Complete
-                        then
-                           if Cmd not in Commands.Sync.Command'Class then
-                              Print_Failed_Sync;
-                           end if;
-                        elsif not Old_Sol.Is_Complete and then
-                          not Checked.Solution.Is_Complete
-                        then
-                           Put_Warning ("Workspace solution is incomplete.");
+                     --  Check deps on disk match those in lockfile
+                     if not Checked.Sync_From_Manifest
+                       (Kind     => Roots.Incremental,
+                        Silent   => False,
+                        Interact => False)
+                     then
+                        --  Could not find an incremental complete solution,
+                        --  so a sync isn't enough. The user must manually
+                        --  fix dependencies in alire.toml or run `alr
+                        --  update`.
+                        if Cmd not in Commands.Sync.Command'Class then
+                           Print_Failed_Sync;
                         end if;
-                     end;
+                     end if;
                      return;
                   else
                      null;
@@ -542,10 +537,16 @@ package body Alr.Commands is
          --  upcoming) we are done. Otherwise, do a silent sync.
 
          if Sync then
-            Checked.Sync_From_Manifest (Silent   => False,
-                                        Interact => False,
-                                        Force    => True);
-            --  As we just created the empty lockfile, we force the sync
+            Assert
+              (Checked.Sync_From_Manifest
+                 (Kind     => Roots.From_Scratch,
+                  Silent   => False,
+                  Interact => False,
+                  Force    => True),
+               "Cannot fail for a full sync",
+               Unchecked => True);
+            --  As we just created the empty lockfile, we force the sync, which
+            --  must provide a solution no matter how good/complete it is.
          end if;
       end;
    end Requires_Workspace;
@@ -909,8 +910,10 @@ package body Alr.Commands is
    procedure Print_Failed_Sync is
    begin
       Put_Error ("Synchronization failed due to conflicting changes.");
-      Put_Error ("Adjust your dependencies in `alire.toml` and try again or");
-      Put_Error ("run `alr update` to compute a new solution from scratch");
+      Put_Error ("Adjust your dependencies in `" & TTY.Terminal ("alire.toml")
+                 & "` and try again or");
+      Put_Error ("run `" & TTY.Terminal ("alr update") & "`"
+                 & " to compute a new solution from scratch.");
    end Print_Failed_Sync;
 
 begin

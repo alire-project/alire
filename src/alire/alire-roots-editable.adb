@@ -372,9 +372,11 @@ package body Alire.Roots.Editable is
       --  Since link pins can bring in more dependencies, we must also Update.
       --  Changes will be shown afterwards on the call to Confirm_And_Commit.
 
-      This.Edit.Update (Allow_All_Crates,
-                        Silent   => True,
-                        Interact => False);
+      Assert (This.Edit.Update (Allow_All_Crates,
+                                Silent   => True,
+                                Interact => False),
+              "Cannot fail for a full update",
+              Unchecked => True);
    end Add_Path_Pin;
 
    --------------------
@@ -502,9 +504,11 @@ package body Alire.Roots.Editable is
          --  also Update. Changes will be shown afterwards on the call
          --  to Confirm_And_Commit.
 
-         This.Edit.Update (Allow_All_Crates,
-                           Silent   => True,
-                           Interact => False);
+         Assert (This.Edit.Update (Allow_All_Crates,
+                                   Silent   => True,
+                                   Interact => False),
+                 "Cannot fail for a full update",
+                 Unchecked => True);
       end;
    end Add_Remote_Pin;
 

@@ -753,9 +753,11 @@ package body Alire.Roots is
                          else Alire.Solutions.Empty_Invalid_Solution));
 
          if Up_To = Update then
-            Root.Update (Allowed  => Allow_All_Crates,
-                         Silent   => False,
-                         Interact => False);
+            Assert (Root.Update (Allowed  => Allow_All_Crates,
+                                 Silent   => False,
+                                 Interact => False),
+                    "Cannot fail for a full update",
+                    Unchecked => True);
          end if;
 
          return Root;
@@ -1781,10 +1783,12 @@ package body Alire.Roots is
    -- Sync_From_Manifest --
    ------------------------
 
-   procedure Sync_From_Manifest (This     : in out Root;
-                                 Silent   : Boolean;
-                                 Interact : Boolean;
-                                 Force    : Boolean := False)
+   function Sync_From_Manifest (This     : in out Root;
+                                Kind     : Sync_Kinds;
+                                Silent   : Boolean;
+                                Interact : Boolean;
+                                Force    : Boolean := False)
+                                return Boolean
    is
    begin
       if Force
@@ -1799,14 +1803,18 @@ package body Alire.Roots is
          --  a non-exhaustive sync of pins, that will anyway detect evident
          --  changes (new/removed pins, changed explicit commits).
 
-         This.Update_Dependencies (Silent    => Silent,
-                                   Interact  => Interact,
-                                   Sync_Only => True);
-         --  Don't ask for confirmation as this is an automatic update in
-         --  reaction to a manually edited manifest, and we need the lockfile
-         --  to match the manifest. As any change in dependencies will be
-         --  printed, the user will have to re-edit the manifest if not
-         --  satisfied with the result of the previous edition.
+         if not This.Update_Dependencies (Silent    => Silent,
+                                          Interact  => Interact,
+                                          Sync_Only => Kind = Incremental)
+           --  Don't ask for confirmation as this is an automatic update in
+           --  reaction to a manually edited manifest, and we need the lockfile
+           --  to match the manifest. As any change in dependencies will be
+           --  printed, the user will have to re-edit the manifest if not
+           --  satisfied with the result of the previous edition, or manually
+           --  run `alr update` to discard the old solution.
+         then
+            return False;
+         end if;
 
          This.Sync_Manifest_And_Lockfile_Timestamps;
          --  It may happen that the solution didn't change (edition of
@@ -1840,6 +1848,7 @@ package body Alire.Roots is
          This.Deploy_Dependencies;
       end if;
 
+      return True;
    end Sync_From_Manifest;
 
    -------------------------------------------
@@ -1861,10 +1870,11 @@ package body Alire.Roots is
    -- Update --
    ------------
 
-   procedure Update (This     : in out Root;
-                     Allowed  : Containers.Crate_Name_Sets.Set;
-                     Silent   : Boolean;
-                     Interact : Boolean)
+   function Update (This     : in out Root;
+                    Allowed  : Containers.Crate_Name_Sets.Set;
+                    Silent   : Boolean;
+                    Interact : Boolean)
+                    return Boolean
    is
    begin
       This.Sync_Pins_From_Manifest (Exhaustive => True,
@@ -1874,10 +1884,14 @@ package body Alire.Roots is
 
       --  And look for updates in dependencies
 
-      This.Update_Dependencies
+      if not This.Update_Dependencies
         (Allowed  => Allowed,
          Silent   => Silent,
-         Interact => Interact and not CLIC.User_Input.Not_Interactive);
+         Interact => Interact and not CLIC.User_Input.Not_Interactive)
+      then
+         Trace.Debug ("Roots.Update: could not find a incremental solution.");
+         return False;
+      end if;
 
       --  And remove post-fetch markers for root and linked dependencies, so
       --  they're re-run on next build (to mimic deployment, since they're
@@ -1907,6 +1921,8 @@ package body Alire.Roots is
 
       This.Build_Prepare (Saved_Profiles => False,
                           Force_Regen    => True);
+
+      return True;
    end Update;
 
    --------------------
@@ -1957,7 +1973,7 @@ package body Alire.Roots is
    -- Update_Dependencies --
    -------------------------
 
-   procedure Update_Dependencies
+   function Update_Dependencies
      (This     : in out Root;
       Silent   : Boolean; -- Do not output anything
       Interact : Boolean; -- Request confirmation from the user
@@ -1965,6 +1981,7 @@ package body Alire.Roots is
       Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set;
       Sync_Only : Boolean := False)
+      return Boolean
    is
       --  Pins may be stored with relative paths so we need to ensure being at
       --  the root of the workspace:
@@ -2023,6 +2040,15 @@ package body Alire.Roots is
 
          else -- Forced or there are changes
 
+            if not Interact
+              and then (Sync_Only or else not Allowed.Is_Empty)
+              and then Diff.Contains_Changes
+              and then not Computed_Update.Solution.Is_Complete
+            then
+               Trace.Debug ("Automatic sync failed");
+               return False;
+            end if;
+
             --  Show changes and optionally ask user to apply them
 
             if Diff.Contains_Changes then
@@ -2042,7 +2068,7 @@ package body Alire.Roots is
                            (Diff, Timed_Out => Computed_Update.Timed_Out)
                then
                   Trace.Detail ("Update abandoned.");
-                  return;
+                  return False;
                end if;
             elsif not Silent then
                Trace.Info ("Nothing to update.");
@@ -2058,6 +2084,7 @@ package body Alire.Roots is
          This.Deploy_Dependencies;
 
          Trace.Detail ("Update completed");
+         return True;
       end;
    end Update_Dependencies;
 
@@ -2112,8 +2139,13 @@ package body Alire.Roots is
       Commit (+This.Lockfile, Lock_File (Regular_Root));
       This.Lockfile := +"";
 
-      This.Sync_From_Manifest (Silent   => True,
-                               Interact => False);
+      --  TODO: revisit: a `with smth` should try first an incremental solution
+      --  and then offer a full one if impossible, without failing.
+      Assert (This.Sync_From_Manifest (Kind     => From_Scratch,
+                                       Silent   => True,
+                                       Interact => False),
+              "Cannot fail for a full update",
+              Unchecked => True);
    end Commit;
 
    ---------------------

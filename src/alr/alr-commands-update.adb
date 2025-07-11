@@ -46,9 +46,15 @@ package body Alr.Commands.Update is
          Cmd.Auto_Update_Index;
       end if;
 
-      Cmd.Root.Update (Parse_Allowed,
-                       Silent   => False,
-                       Interact => True);
+      if Cmd.Root.Update (Parse_Allowed,
+                          Silent   => False,
+                          Interact => True)
+      then
+         Alire.Put_Success ("Update completed successfully.");
+      else
+         Reportaise_Command_Failed
+           ("Partial update could not find an incremental solution.");
+      end if;
    end Execute;
 
    ----------------------

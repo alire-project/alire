@@ -203,10 +203,20 @@ package Alire.Roots is
                              return Boolean;
    --  Say if the root release matches the given name
 
-   procedure Sync_From_Manifest (This     : in out Root;
-                                 Silent   : Boolean;
-                                 Interact : Boolean;
-                                 Force    : Boolean := False);
+   type Sync_Kinds is (Incremental, From_Scratch);
+   --  Whether we want the new solution to preserve previous solved releases or
+   --  entirely discard any previous solution.
+
+   function Sync_From_Manifest (This     : in out Root;
+                                Kind     : Sync_Kinds;
+                                Silent   : Boolean;
+                                Interact : Boolean;
+                                Force    : Boolean := False)
+                                return Boolean with Post =>
+     (not Sync_From_Manifest'Result
+      or else not This.Is_Lockfile_Outdated)
+     and then
+       (if Kind = From_Scratch then Sync_From_Manifest'Result);
    --  If the lockfile timestamp is outdated w.r.t the manifest, or Force, do
    --  as follows: 1) Pre-deploy any remote pins in the manifest so they are
    --  usable when solving, and apply any local/version pins. 2) Ensure that
@@ -218,8 +228,9 @@ package Alire.Roots is
    --  not Interact, run as if --non-interactive were in effect.
    --
    --  NOTE: this will preserve existing dependencies. If a complete solution
-   --  is not possible without updating dependencies, it will raise a checked
-   --  error. The user should do a manual update in that case.
+   --  is not possible without updating dependencies, it will return false and
+   --  leave the lockfile as it was (outdated). Otherwise it will return True.
+   --  A sync from scratch cannot fail (but the solution might be incomplete).
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;
@@ -231,30 +242,39 @@ package Alire.Roots is
    Allow_All_Crates : Containers.Crate_Name_Sets.Set renames
                         Containers.Crate_Name_Sets.Empty_Set;
 
-   procedure Update (This     : in out Root;
-                     Allowed  : Containers.Crate_Name_Sets.Set;
-                     Silent   : Boolean;
-                     Interact : Boolean);
+   function Update (This     : in out Root;
+                    Allowed  : Containers.Crate_Name_Sets.Set;
+                    Silent   : Boolean;
+                    Interact : Boolean)
+                    return Boolean
+     with Post => (if Allowed.Is_Empty then Update'Result);
    --  Full update, explicitly requested. Will fetch/prune pins, update any
    --  updatable crates. Equivalent to `alr update`. Allowed is an optionally
-   --  empty set of crates to which the update will be limited. Everything is
-   --  updatable if Allowed.Is_Empty.
+   --  empty set of crates to which the update will be limited. Everything
+   --  is updatable if Allowed.Is_Empty. Will return False if no complete
+   --  incremental solution exists.
 
    procedure Deploy_Dependencies (This : in out Root);
    --  Download all dependencies not already on disk from This.Solution
 
-   procedure Update_Dependencies
+   function Update_Dependencies
      (This      : in out Root;
       Silent    : Boolean; -- Do not output anything
       Interact  : Boolean; -- Request confirmation from the user
       Options   : Solver.Query_Options := Solver.Default_Options;
       Allowed   : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set;
-      Sync_Only : Boolean := False);
+      Sync_Only : Boolean := False)
+      return Boolean with Post =>
+     (if not Sync_Only and then Allowed.Is_Empty
+      then Update_Dependencies'Result);
    --  Resolve and update all or given crates in a root, and regenerate
    --  configuration. When Silent, run as in non-interactive mode as this is
-   --  an automatically-triggered update. When Sync_Only, keep releases in the
-   --  existing solution at their current versions.
+   --  an automatically-triggered update. When Sync_Only, keep releases in
+   --  the existing solution at their current versions. Returns False when
+   --  Sync_Only and the old solution was complete but the new one isn't. Will
+   --  always return True when not Sync_Only and Allowed is empty (i.e., and
+   --  update from scratch).
 
    procedure Sync_Pins_From_Manifest
      (This       : in out Root;

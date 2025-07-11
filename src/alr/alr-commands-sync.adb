@@ -12,12 +12,14 @@ package body Alr.Commands.Sync is
    begin
       Cmd.Requires_Workspace (Minimal => True);
 
-      --  Regenerate configuration files from authoritative manifest
-      Cmd.Root.Build_Prepare (Saved_Profiles => False,
-                              Force_Regen    => True);
+      if not Cmd.Root.Is_Lockfile_Outdated then
 
-      if Cmd.Root.Solution.Is_Complete then
+         --  Regenerate configuration files from authoritative manifest
+         Cmd.Root.Build_Prepare (Saved_Profiles => False,
+                                 Force_Regen    => True);
+
          Alire.Put_Success ("Workspace synchronized successfully.");
+
       else
          Print_Failed_Sync;
       end if;
