@@ -76,7 +76,7 @@ jobs:
     - name: Check out
       uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: recursive
 
     # Use a stock alr to make the latest toolchain available
 
@@ -144,3 +144,5 @@ jobs:
     - name: Run testsuite # But ensure a new alr is not build
       run: scripts/ci-github.sh build=false
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

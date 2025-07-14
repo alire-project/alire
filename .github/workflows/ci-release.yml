@@ -67,7 +67,7 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: recursive
 
     # Install GNAT, we only need a system compiler for Ubuntu ARM until we have
     # Alire for ARM64/Linux (on Ubuntu 22.04) release.
@@ -114,6 +114,7 @@ jobs:
       env:
         BRANCH: ${{ github.base_ref }}
         INDEX: ""
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # Ascertain whether alr can run without the toolchain that built it
 

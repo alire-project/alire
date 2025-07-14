@@ -41,6 +41,7 @@ with Alr.Commands.Printenv;
 with Alr.Commands.Publish;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
+with Alr.Commands.Self_Update;
 with Alr.Commands.Settings;
 with Alr.Commands.Show;
 with Alr.Commands.Test;
@@ -766,6 +767,7 @@ begin
    Sub_Cmd.Register ("General", new Config.Command);
    Sub_Cmd.Register ("General", new Install.Command);
    Sub_Cmd.Register ("General", new Toolchain.Command);
+   Sub_Cmd.Register ("General", new Self_Update.Command);
    Sub_Cmd.Register ("General", new Version.Command);
 
    Sub_Cmd.Register ("Index", new Get.Command);

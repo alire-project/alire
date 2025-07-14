@@ -1,5 +1,8 @@
+with Alire.Settings.Edit;
 with Alire_Early_Elaboration;
 with Alire.OS_Lib.Subprocess;
+
+with CLIC.User_Input;
 
 package body Alire.Spawn is
 
@@ -107,5 +110,52 @@ package body Alire.Spawn is
          & Extra_Args
         );
    end Gprinstall;
+
+   -----------------------------
+   -- Recreate_Global_Options --
+   -----------------------------
+
+   function Recreate_Global_Options return AAA.Strings.Vector is
+      use AAA.Strings;
+      package AEE renames Alire_Early_Elaboration;
+      package UI renames CLIC.User_Input;
+
+      Res : Vector := Empty_Vector;
+   begin
+      if AEE.Switch_D then
+         Res.Append ("-d");
+      end if;
+
+      if AEE.Switch_VV then
+         Res.Append ("-vv");
+      elsif AEE.Switch_V then
+         Res.Append ("-v");
+      elsif AEE.Switch_Q then
+         Res.Append ("-q");
+      end if;
+
+      if UI.Not_Interactive then
+         Res.Append ("-n");
+      end if;
+
+      if Alire.Force then
+         Res.Append ("-f");
+      end if;
+
+      if not CLIC.TTY.Color_Enabled then
+         Res.Append ("--no-color");
+      end if;
+
+      if not CLIC.TTY.Is_TTY then
+         Res.Append ("--no-tty");
+      end if;
+
+      if not Alire.Settings.Edit.Is_At_Default_Dir then
+         Res.Append
+           (String'("""--settings=" & Alire.Settings.Edit.Path & """"));
+      end if;
+
+      return Res;
+   end Recreate_Global_Options;
 
 end Alire.Spawn;

@@ -74,6 +74,23 @@ For backwards compatibility, running `alr test` without a `[test]` section in
 the manifest will still run local test actions, but they should be considered
 deprecated. The remote testing capabilities of `alr test` have been removed.
 
+### New self-update helper
+
+The `alr self-update` command will help users update the Alire binary more
+easily. It takes several optional command line flags:
+
+- `--location=<path/to/alr>` to specify where to install the new binary
+- `--release=<version>` to download and install a specific version (provided
+  that Alire builds binaries for this version on your platform) 
+- `--nightly` to install a pre-release version of Alire.
+  
+  **Disclaimer**: nightly versions may have incomplete features, unresolved
+  bugs and may delete features or break compatibility without warning.
+
+On Windows, updating the binary will launch a separate console window to
+perform the update. This is expected behavior, needed because Windows does not
+allow us to overwrite a running binary easily.
+
 ## Release `2.1`
 
 ### New `--format` global switch to produce structured output

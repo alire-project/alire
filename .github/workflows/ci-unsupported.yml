@@ -22,7 +22,7 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: recursive
 
     - name: Install FSF toolchain
       uses: alire-project/alr-install@v2
@@ -40,6 +40,7 @@ jobs:
       env:
         BRANCH: ${{ github.base_ref }}
         ALIRE_DISABLE_DISTRO: true
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload logs (if failed)
       if: failure()
