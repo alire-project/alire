@@ -5,7 +5,6 @@ with Alire.Platforms.Current;
 
 with Alr.Commands.Build;
 with Alr.Files;
-with Alr.OS_Lib;
 with Alire.Utils;
 
 with GNAT.OS_Lib;

@@ -22,8 +22,8 @@ package Alire.Spawn is
    --  Launches a command from a string, according to the conventions used by
    --  commands configurable with `alr settings`.
    --
-   --  Parses a space-separated string and performs ${} pattern replacements
-   --  (on arguments only).
+   --  Parses a shell-style quoted string  and performs ${} pattern
+   --  replacements (on arguments only).
    --
    --  Exec_Check is called with the executable name between parsing Cmd into
    --  arguments and executing the command, e.g. to check that the executable

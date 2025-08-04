@@ -6,6 +6,25 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Support for quoting in custom editors, quoting changes for `alr run`
+
+PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
+
+The `alr edit --set-editor` command now supports double quotes, single quotes,
+and backslash escaping within `editor.cmd` using shell quoting rules.
+
+```shell
+$ alr config --set --global editor.cmd "command with 'quoted arguments'"
+```
+
+`${CRATE_ROOT}` and `${GPR_FILE}` are still replaced directly
+
+Arguments passed using `alr run -a arguments` now use the same quoting format.
+
+```shell
+$ alr run -a "list of 'quoted arguments'"
+```
+
 ### New `--github` switch for `alr init` command
 
 PR [#1972](https://github.com/alire-project/alire/pull/1972)

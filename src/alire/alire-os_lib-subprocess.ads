@@ -7,6 +7,12 @@ package Alire.OS_Lib.Subprocess is
    function Locate_In_Path (Name : String) return String;
    --  Returns full path to Name command or "" if not found
 
+   function Split_Arguments (Arguments : String) return AAA.Strings.Vector;
+   --  Splits a string into arguments using shell-style quoting rules
+   --  (space/tab-separated words, double quotes to group space-separated
+   --  words, backslash `\` to escape quotes, and single quotes to group
+   --  without escaping between the quotes)
+
    procedure Checked_Spawn
      (Command             : String;
       Arguments           : AAA.Strings.Vector;
@@ -42,5 +48,13 @@ package Alire.OS_Lib.Subprocess is
       Understands_Verbose : Boolean := False;
       Dim_Output          : Boolean := True) return Integer;
    --  Doesn't capture output but doesn't fail on error either
+
+   Child_Failed : exception;
+   procedure Spawn_Raw
+     (Command             : String;
+      Arguments           : AAA.Strings.Vector);
+   --  Direct launch, without any shenanigangs on output, for example for
+   --  respawning the canonical version.
+   --  Raises CHILD_FAILED if exit code /= 0.
 
 end Alire.OS_Lib.Subprocess;
