@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### Support for quoting in custom editors, quoting changes for `alr run`
 
-PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
+PR [#1993](https://github.com/alire-project/alire/pull/1993)
 
 The `alr edit --set-editor` command now supports double quotes, single quotes,
 and backslash escaping within `editor.cmd` using shell quoting rules.
