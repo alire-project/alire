@@ -15,3 +15,15 @@ jobs:
 
       - name: Verify pinned dependencies
         run: scripts/verify-pins.sh
+
+  templates:
+    name: Templates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify templates are up to date
+        run: >
+          support/embedder/embedder.sh |
+          grep "No changes in templates, skipping generation"
