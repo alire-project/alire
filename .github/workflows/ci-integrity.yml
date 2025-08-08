@@ -24,6 +24,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Verify templates are up to date
-        run: >
-          support/embedder/embedder.sh |
-          grep "No changes in templates, skipping generation"
+        run: |
+          ( support/embedder/embedder.sh | \
+            grep "No changes in templates, skipping generation" ) || \
+          ( echo "Templates are not up to date, please run 'support/embedder/embedder.sh' to update them."
+            echo "Commit and push the changes to generated files and their hash before opening a PR."
+            exit 1 )
