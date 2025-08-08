@@ -12,4 +12,12 @@ package Alire.Utils.Regex is
    --  is the second matching expression. In case of no match, it will return
    --  an empty string. At least one capture must be attempted in the Regex.
 
+   function Matches (Regex : String; Text : String) return Boolean;
+   --  Wrapper on GNAT.Regpat, just say if Text matches Regex. Remember to use
+   --  anchors (^$) for full string matching, as otherwise a substring match is
+   --  reported as a valid match. See Fully_Matches below.
+
+   function Fully_Matches (Regex : String; Text : String) return Boolean;
+   --  Returns true if Text is matched in full by regex
+
 end Alire.Utils.Regex;

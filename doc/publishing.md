@@ -31,6 +31,10 @@ and finally open a pull-request against the community repository.
 The PAT, once created, is a plain string. You can either export the environment
 variable `GH_TOKEN` set to this string, or provide it when Alire asks for it.
 
+**NOTE**: whenever Alire asks for the token, you need to provide the full
+string that Github shows only during its creation. Do not provide the token
+name instead.
+
 There are two kinds of PATs on GitHub: classic and fine-grained. The latter are
 in beta and not documented here yet. Follow these steps to create a classic PAT:
 
