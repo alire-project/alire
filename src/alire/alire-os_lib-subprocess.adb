@@ -336,6 +336,7 @@ package body Alire.OS_Lib.Subprocess is
    is
       Code : Integer;
    begin
+      Trace.Detail ("Spawning: " & Image (Command, Arguments));
 
       declare
          Full_Path : constant String :=
@@ -346,8 +347,7 @@ package body Alire.OS_Lib.Subprocess is
          if Full_Path = "" then
             Alire.Raise_Checked_Error
               ("Executable not found in PATH when spawning: "
-               --  & TTY.Terminal (Command & " " & Arguments));
-               & TTY.Terminal (Command));
+               & TTY.Terminal (Image (Command, Arguments)));
          end if;
 
          Code := GNAT.OS_Lib.Spawn (Full_Path, Parsed_Arguments.all);

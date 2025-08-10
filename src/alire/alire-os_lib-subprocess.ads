@@ -50,6 +50,9 @@ package Alire.OS_Lib.Subprocess is
    --  Doesn't capture output but doesn't fail on error either
 
    Child_Failed : exception;
+   --  Used to notify that a subprocess launched by Spawn_Raw completed with
+   --  non-zero error
+
    procedure Spawn_Raw
      (Command             : String;
       Arguments           : AAA.Strings.Vector);

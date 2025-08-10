@@ -1,6 +1,3 @@
-with Ada.Exceptions;
-with Alire.OS_Lib.Subprocess;
-
 package body Alr.OS_Lib is
 
    ------------
@@ -41,25 +38,4 @@ package body Alr.OS_Lib is
          return False;
       end if;
    end Is_Older;
-
-   ---------------
-   -- Spawn_Raw --
-   ---------------
-
-   procedure Spawn_Raw (Command   : String;
-                        Arguments : String := "")
-   is
-   begin
-      Trace.Debug ("Spawning " & Command & " " & Arguments);
-
-      begin
-         Alire.OS_Lib.Subprocess.Spawn_Raw
-           (Command,
-            Alire.OS_Lib.Subprocess.Split_Arguments (Arguments));
-      exception
-         when E : Alire.OS_Lib.Subprocess.Child_Failed =>
-            raise Child_Failed with Ada.Exceptions.Exception_Message (E);
-      end;
-   end Spawn_Raw;
-
 end Alr.OS_Lib;

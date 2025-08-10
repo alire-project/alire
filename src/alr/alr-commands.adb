@@ -16,6 +16,7 @@ with Alire.Formatting;
 with Alire.Index_On_Disk.Loading;
 with Alire.Index_On_Disk.Updates;
 with Alire.Lockfiles;
+with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Root;
@@ -641,7 +642,8 @@ package body Alr.Commands is
                OS_Lib.Bailout (1);
             end if;
 
-         when Child_Failed | Command_Failed | Wrong_Command_Arguments =>
+         when Alire.OS_Lib.Subprocess.Child_Failed | Command_Failed
+           | Wrong_Command_Arguments =>
             Trace.Detail ("alr " & Sub_Cmd.What_Command & " unsuccessful");
             if Alire.Log_Level = Debug then
                raise;
