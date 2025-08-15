@@ -27,8 +27,46 @@ alr_with("remote", delete=True, manual=False)
 p = run_alr("pin")
 assert_eq("There are no pins\n", p.out)
 
+# Verify that pinning to a valid reference also succeeds with the --arg=value
+# form
+run_alr("with", "--use=../remote", "--commit=v1")
+p = run_alr("pin")
+assert_match("remote file:alire/cache/pins/remote_.{,8} ../remote#.{,8}",
+             p.out)
+
+# Remove dependency for next test
+alr_with("remote", delete=True, manual=False)
+p = run_alr("pin")
+assert_eq("There are no pins\n", p.out)
+
+# Verify that pinning to a valid reference also succeeds with an explicit URL
+alr_with(url="git+file:../remote", commit="v1", manual=False)
+p = run_alr("pin")
+assert_match(
+    r"remote file:alire/cache/pins/remote_.{,8} git\+file:\.\./remote#.{,8}",
+    p.out
+)
+
+# Remove dependency for next test
+alr_with("remote", delete=True, manual=False)
+p = run_alr("pin")
+assert_eq("There are no pins\n", p.out)
+
 # Verify that pinning to an invalid reference fails
 p = run_alr("with", "--use", "../remote", "--commit", "v2",
+            complain_on_error=False)
+assert_match(".*Requested remote reference v2 not found in repository.*",
+             p.out)
+
+# Verify that pinning to an invalid reference also fails with the
+# --arg=value form
+p = run_alr("with", "--use=../remote", "--commit=v2",
+            complain_on_error=False)
+assert_match(".*Requested remote reference v2 not found in repository.*",
+             p.out)
+
+# Verify that pinning to an invalid reference also fails with an explicit URL
+p = run_alr("with", "--use=git+file:../remote", "--commit=v2",
             complain_on_error=False)
 assert_match(".*Requested remote reference v2 not found in repository.*",
              p.out)
