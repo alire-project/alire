@@ -106,4 +106,8 @@ package Alire.GitHub is
    --  In case of error, the resulting Outcome will contain an error message
    --  specifying whether the release or the specific archive was not found.
 
+   function Is_Possibly_A_Token (S : String) return Boolean;
+   --  Check that S looks like a Personal Access Token. Not exhaustive, just
+   --  protect about obvious non-tokens
+
 end Alire.GitHub;
