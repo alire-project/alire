@@ -66,7 +66,7 @@ git repository at GitHub, named the "community index".
   accordingly. These are never raised directly; rather they are triggered with
   subprograms `Reportaise_Command_Failed` and `Reportaise_Wrong_Arguments`.
   `Child_Failed` is raised by spawning subprograms when the forked process
-  fail.
+  fails. Typically, there is no need to raise this exception directly.
 
 - `Program_Error` is the preferred exception to be triggered for diagnosed
   abnormal situations that should not occur and will result in a bug box and
@@ -74,15 +74,15 @@ git repository at GitHub, named the "community index".
 
 - Other Ada exceptions triggered by the Ada runtime that are not handled on a
   case-by-case basis are OK to be propagated but will also result in a bug box.
-  Hence, erroneous but expected situations should be handled (e.g.
+  Hence, erroneous but expected situations should be handled (e.g., a
   `Constraint_Error` when validating user inputs) and not propagated when it is
   OK to exit with code 0, or re-raised as a `Checked_Error` to terminate
   execution gracefully with non-zero exit code.
 
 - Situations that are dubious and can be considered an error, but that we want
-  to allow if the user is absolutely sure can be reported with
+  to allow if the user is absolutely sure, can be reported with
   `Alire.Recoverable_User_Error`. This will result in a checked error or just a
-  warning depending on if `--force` flag is in effect.
+  warning depending on whether `--force` flag is in effect.
 
 - Use `Alire.Recoverable_Program_Error` for anomalous situations that can
   somehow be detected and recovered from, despite not being the user fault and
@@ -91,3 +91,16 @@ git repository at GitHub, named the "community index".
 
 - Use the `Alire.Unimplemented` exception for temporary missing functionality.
   In general, use of this exception should not make into the master branch.
+
+## Pull-request Checklist
+
+Before submitting a PR, ensure you have met as many as applicable of the tasks
+described in `/.github/PULL_REQUEST_TEMPLATE.md`. Namely, at least:
+
+- Include functional tests for new features or bug fixes. See
+  `/testsuite/README.md` for further information.
+- Include Ada unit tests for critical new subprograms, type definitions, etc.
+  Each unit test is a main procedure in a file in `/testsuite/tests_ada`.
+- Document user-facing changes in `/doc/user-changes.md`.
+- Document breaking changes in `/BREAKING.md`.
+- Document index format changes in `/doc/catalog-format-spec.md`.
