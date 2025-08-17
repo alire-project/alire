@@ -50,4 +50,16 @@ unknowns = "aren't scary"
 p = run_alr("show", quiet=False, complain_on_error=False)
 assert_substring("invalid property: 'unknowns'", p.out)
 
+# Ensure we are not leaking a "hidden" property
+
+os.chdir(start_path)
+del os.environ["ALR_TESTSUITE"]
+init_local_crate("vvv")
+with open(alr_manifest(), "a") as f:
+    f.write("""
+future = "bleak"
+""")
+p = run_alr("show", quiet=False, complain_on_error=False)
+assert_substring("Forbidden property outside of testing: future", p.out)
+
 print("SUCCESS")

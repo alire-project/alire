@@ -1,6 +1,11 @@
+with Ada.Environment_Variables;
+
+with Alire.Environment;
 with Alire.Warnings;
 
 package body Alire.Properties.Future is
+
+   Future_Key : constant String := "future";
 
    ---------------
    -- From_TOML --
@@ -29,6 +34,17 @@ package body Alire.Properties.Future is
          Raw : TOML_Value;
          Key : constant String := From.Pop (Raw);
       begin
+
+         --  We use the "future" key in the testsuite, but it should not be
+         --  allowed during regular use:
+
+         if Key = Future_Key and then
+           not Ada.Environment_Variables.Exists (Alire.Environment.Testsuite)
+         then
+            Raise_Checked_Error ("Forbidden property outside of testing: "
+                                 & Future_Key);
+         end if;
+
          Warnings.Warn_Once
            ("Discarding future property in manifest: " & Key
             & "(" & Raw.Kind'Image & ")");
