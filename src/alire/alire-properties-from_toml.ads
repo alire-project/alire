@@ -7,6 +7,7 @@ with Alire.Properties.Configurations;
 with Alire.Properties.Environment;
 with Alire.Properties.Build_Profiles;
 with Alire.Properties.Build_Switches;
+with Alire.Properties.Future;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.Properties.Scenarios;
@@ -28,6 +29,7 @@ package Alire.Properties.From_TOML is
                           Description,
                           Environment,
                           Executables,
+                          Future, -- Placeholder for unknown future properties
                           GPR_Externals,
                           GPR_Set_Externals,
                           Hint,
@@ -119,6 +121,7 @@ package Alire.Properties.From_TOML is
       Environment    =>
         Properties.Environment.From_TOML'Access,
       Executables    => Labeled.From_TOML'Access,
+      Future         => Properties.Future.From_TOML'Access,
       GPR_Externals |
       GPR_Set_Externals
                      => Scenarios.From_TOML'Access,
@@ -145,10 +148,12 @@ package Alire.Properties.From_TOML is
          Configuration     |
          Environment       |
          Executables       |
+         Future            |
          GPR_Set_Externals |
          Hint              |
-         Project_Files => True,
-         others        => False);
+         Project_Files     |
+         Test              => True,
+         others            => False);
 
    function Loader (From    : TOML_Adapters.Key_Queue;
                     Loaders : Loader_Array;
