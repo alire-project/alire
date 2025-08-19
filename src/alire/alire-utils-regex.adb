@@ -60,4 +60,29 @@ package body Alire.Utils.Regex is
 
       return "";
    end First_Match;
+
+   -------------
+   -- Matches --
+   -------------
+
+   function Matches (Regex : String; Text : String) return Boolean is
+   begin
+      return GNAT.Regpat.Match (Expression => Regex, Data => Text);
+   end Matches;
+
+   -------------------
+   -- Fully_Matches --
+   -------------------
+
+   function Fully_Matches (Regex : String; Text : String) return Boolean is
+   begin
+      if Regex = "" or else Regex (Regex'First) /= '^' then
+         return Fully_Matches ('^' & Regex, Text);
+      elsif Regex = "" or else Regex (Regex'Last) /= '$' then
+         return Fully_Matches (Regex & '$', Text);
+      else
+         return Matches (Regex, Text);
+      end if;
+   end Fully_Matches;
+
 end Alire.Utils.Regex;
