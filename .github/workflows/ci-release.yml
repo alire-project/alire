@@ -50,7 +50,7 @@ jobs:
           - os: macos-13            # x64
             id: x86_64-macos
 
-          - os: macos-latest        # arm64
+          - os: macos-14            # arm64 (macos-latest is now v15 and it breaks things, TODO)
             id: aarch64-macos
 
           - os: ubuntu-22.04        # x64, oldest supported so releases can run on older distros
@@ -75,6 +75,7 @@ jobs:
     - name: Install system toolchain (Ubuntu ARM)
       if: matrix.platform.id == 'aarch64-linux'
       run: |
+        sudo apt-get update
         sudo apt-get install -y gnat gprbuild
         echo ALIRE_TESTSUITE_DISABLE_DOCKER=true >> $GITHUB_ENV
         # We need to disable Docker tests on Ubuntu ARM.
@@ -148,7 +149,7 @@ jobs:
 
   build-macos-universal:
     name: Create macOS universal binary
-    runs-on: macos-latest
+    runs-on: macos-14 # See above about macos-latest
     needs: build
     steps:
 
@@ -221,10 +222,10 @@ jobs:
           - os: macos-13
             id: x86_64-macos
 
-          - os: macos-latest
+          - os: macos-14 # See above about macos-latest
             id: aarch64-macos
 
-          - os: macos-latest
+          - os: macos-14 # See above about macos-latest
             id: universal-macos
 
           - os: ubuntu-22.04
@@ -499,10 +500,10 @@ jobs:
           - os: macos-13
             id: x86_64-macos
 
-          - os: macos-latest
+          - os: macos-14 # See above about macos-latest
             id: aarch64-macos
 
-          - os: macos-latest
+          - os: macos-14 # See above about macos-latest
             id: universal-macos
 
           - os: ubuntu-22.04
