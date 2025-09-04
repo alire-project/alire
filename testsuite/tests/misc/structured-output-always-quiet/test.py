@@ -5,7 +5,7 @@ from drivers.alr import alr_settings_set, init_local_crate, run_alr
 from drivers.asserts import assert_substring, assert_eq, assert_not_substring
 
 
-# Load an an old (but compatible) index with the associated warning enabled.
+# Load an old (but compatible) index with the associated warning enabled.
 alr_settings_set("warning.old_index", "true")
 json_search = run_alr("--format=json", "search", "--list", quiet=False)
 plain_search = run_alr("search", "--list", quiet=False)
