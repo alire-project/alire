@@ -1,0 +1,6 @@
+driver: python-script
+indexes:
+    outdated_index:
+        in_fixtures: false
+    basic_index:
+        in_fixtures: true
