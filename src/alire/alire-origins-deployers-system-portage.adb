@@ -33,7 +33,12 @@ package body Alire.Origins.Deployers.System.Portage is
    begin
       Trace.Info ("Already_Installed: " & This.Base.Package_Name);
 
-      return Line (Line'First .. Line'First + Indicator'Length) = Indicator;
+      if Line'Length >= Indicator'Length then
+         return
+           Line (Line'First .. Line'First + Indicator'Length - 1) = Indicator;
+      end if;
+
+      return False;
    end Already_Installed;
 
    function To_Semantic_Version (Gentoo_Version : String) return String is
