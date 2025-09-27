@@ -203,7 +203,7 @@ package body Alr.Commands.Build is
        .Append (TTY.Bold ("Build profiles"))
        .New_Line
        .Append ("A build profile can be selected with the appropriate switch."
-         & " The profile is applied to the root release only, "
+         & " The profile is applied to the root crate only, "
          & "whereas dependencies are built in release mode. Use "
          & Switch_Profiles & " for more overrides.")
        .New_Line
