@@ -210,10 +210,11 @@ package body Alire.OS_Lib.Subprocess is
             and then CLIC.TTY.Color_Enabled
          then
             --  We cannot use Ada.Text_IO here, as it mandates endlines,
-            --  and the Ada runtime flushes this with and extra '\n' on
+            --  and the Ada runtime flushes this with an extra '\n' on
             --  finalization if this is the last output, creating an extra
             --  empty line in e.g. `alr exec echo whatever`. GNAT.IO is
             --  uncooked so it works as expected.
+            Ada.Text_IO.Flush; -- So we don't mix bufferings
             GNAT.IO.Put (Style (Dim, State));
          end if;
       end Dim;
