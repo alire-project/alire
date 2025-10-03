@@ -8,7 +8,6 @@ added in the non-interactive case.
 
 from drivers.alr import run_alr, init_local_crate
 from drivers.asserts import assert_eq
-# from drivers.asserts import assert_eq, assert_match
 
 # Initialize a crate, enter it, and run an echo through exec. Check the output.
 
