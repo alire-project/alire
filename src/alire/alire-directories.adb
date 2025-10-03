@@ -198,20 +198,22 @@ package body Alire.Directories is
                                       return Any_Path
       is
       begin
+         if Path /= Den.Scrub (Path) then
+            return Find_Candidate_Folder (Den.Scrub (Path));
+         end if;
+
          Trace.Debug ("Looking for alire metadata at: " & Path);
          if
            Exists (Path / Paths.Crate_File_Name) and then
            Kind (Path / Paths.Crate_File_Name) = File
          then
             return Path;
+         elsif Den.Has_Parent (Path) then
+            return Find_Candidate_Folder
+              (Den.Parent (Path));
          else
-            return Find_Candidate_Folder (Adirs.Containing_Directory (Path));
+            return ""; -- No containing folder
          end if;
-      exception
-         when Adirs.Use_Error =>
-            Trace.Debug
-              ("Root directory reached without finding alire metadata");
-            return ""; -- There's no containing folder (hence we're at root)
       end Find_Candidate_Folder;
 
    begin
@@ -514,7 +516,9 @@ package body Alire.Directories is
    ------------
 
    function Exists (Path : Any_Path) return Boolean
-   is (Den.Exists (Den.Scrub (Path)));
+   is (Den.Exists
+       (Den.Scrub
+          (Path)));
 
    ------------------
    -- Is_Directory --
