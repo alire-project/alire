@@ -29,7 +29,6 @@ package Alire.Properties.From_TOML is
                           Description,
                           Environment,
                           Executables,
-                          Future, -- Placeholder for unknown future properties
                           GPR_Externals,
                           GPR_Set_Externals,
                           Hint,
@@ -41,9 +40,17 @@ package Alire.Properties.From_TOML is
                           Notes,
                           Project_Files,
                           Tags,
-                          Test, -- In 3.0
                           Version,
-                          Website);
+                          Website,
+                          --  Reserved for possible future use
+                          Alire_Version,
+                          Future,
+                          Index_Version,
+                          Manifest_Version,
+                          Metadata_Version,
+                          Mirror,
+                          Test -- In 3.0
+                          );
    --  These enum values must match the toml key they represent with '-' => '_'
 
    --  The following array describes which properties are mandatory, depending
@@ -80,6 +87,51 @@ package Alire.Properties.From_TOML is
                     Tags     |
                     Website => True,
                     others  => False);
+
+   --  Cardinalities say if a property must be a single value or an array.
+   --  Since we store properties always as elements in a list, we lose this
+   --  information after load so we use this not only during loading to enforce
+   --  index correctness, but also during exporting to ensure the proper type
+   --  (atom/array) is created.
+
+   type Cardinalities is
+     (Unique,
+      --  Must be a single value
+      Multiple
+      --  We accept either table or array , but we will always export an array
+     );
+
+   Cardinality : constant array (Property_Keys) of Cardinalities :=
+                   (Actions            => Multiple,
+                    Authors            => Multiple,
+                    Auto_GPR_With      => Unique,
+                    Build_Profiles     => Unique,
+                    Build_Switches     => Unique,
+                    Configuration      => Unique,
+                    Description        => Unique,
+                    Environment        => Unique,
+                    Executables        => Multiple,
+                    GPR_Externals      => Unique,
+                    GPR_Set_Externals  => Unique,
+                    Hint               => Unique,
+                    Licenses           => Unique,
+                    Long_Description   => Unique,
+                    Maintainers        => Multiple,
+                    Maintainers_Logins => Multiple,
+                    Name               => Unique,
+                    Notes              => Unique,
+                    Project_Files      => Multiple,
+                    Version            => Unique,
+                    Website            => Unique,
+                    Tags               => Multiple,
+                    --  Reserved for future use
+                    Alire_Version      => Unique,
+                    Future             => Multiple,
+                    Index_Version      => Unique,
+                    Manifest_Version   => Unique,
+                    Metadata_Version   => Unique,
+                    Mirror             => Multiple,
+                    Test               => Multiple);
 
    type Loader_Array is array (Property_Keys range <>) of Property_Loader;
 
@@ -121,7 +173,6 @@ package Alire.Properties.From_TOML is
       Environment    =>
         Properties.Environment.From_TOML'Access,
       Executables    => Labeled.From_TOML'Access,
-      Future         => Properties.Future.From_TOML'Access,
       GPR_Externals |
       GPR_Set_Externals
                      => Scenarios.From_TOML'Access,
@@ -136,7 +187,15 @@ package Alire.Properties.From_TOML is
       Tags               |
       Version            |
       Website        => Labeled.From_TOML'Access,
-      Test           => Tests.From_TOML'Access);
+      Test           => Tests.From_TOML'Access,
+      --  Reserved for future use
+      Alire_Version    |
+      Future           |
+      Index_Version    |
+      Manifest_Version |
+      Metadata_Version |
+      Mirror           => Properties.Future.From_TOML'Access
+     );
    --  This loader applies to a normal release manifest
 
    --  The following array determines which properties accept dynamic
