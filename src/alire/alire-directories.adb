@@ -212,6 +212,8 @@ package body Alire.Directories is
             return Find_Candidate_Folder
               (Den.Parent (Path));
          else
+            Trace.Debug
+              ("Root directory reached without finding alire metadata");
             return ""; -- No containing folder
          end if;
       end Find_Candidate_Folder;
