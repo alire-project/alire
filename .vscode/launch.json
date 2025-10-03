@@ -25,12 +25,17 @@
             "justMyCode": false
         },
         {
-            "name": "(gdb) Launch alr at /tmp/a/xxx",
+            "name": "Alire: debug ./bin/alr at /tmp/a/xxx",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/alr",
-            "args": ["-d", "-vv", "with", "libfoo"],
-            "stopAtEntry": true,
+            "args": [
+                "exec",
+                "--",
+                "echo",
+                "blah"
+            ],
+            "stopAtEntry": false,
             "cwd": "/tmp/a/xxx",
             "environment": [],
             "externalConsole": false,
@@ -42,8 +47,8 @@
                     "ignoreFailures": true
                 },
                 {
-                    "description": "Set Disassembly Flavor to Intel",
-                    "text": "-gdb-set disassembly-flavor intel",
+                    "description": "Disable questions on multiple matches",
+                    "text": "set multiple-symbols cancel",
                     "ignoreFailures": true
                 }
             ]
