@@ -20,7 +20,7 @@ ajunitgen = "^1.0.1"
 ansiada = "^1.1"
 c_strings = "^1.0"
 clic = "~0.3"
-den = "~0.1"
+den = "~0.2"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
 gnatcoll = "^21"
@@ -76,7 +76,7 @@ commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"
-commit = "7732f9247f7436cd264a10a7e2a8a16c47a0fb57"
+commit = "bab6ef56b74b3b348daf402f09f4b04c304bc280"
 
 [pins.dirty_booleans]
 url    = "https://github.com/mosteo/dirty_booleans"
