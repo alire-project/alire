@@ -161,7 +161,8 @@ package Alire.Directories is
    --  currently existing temporaries.
 
    function Temp_Name return String;
-   --  Return a filename such as "alr-PID-sdrv.tmp"
+   --  Return a filename such as "alr-PID-sdrv.tmp". The trailing four letters
+   --  are guaranteed to be unique per run.
 
    --  TEMP_FILE: obtain a temporary name with optional cleanup
 
