@@ -545,7 +545,9 @@ package body Alire.Directories is
    ----------------------
 
    protected Tempfile_Support is
-      procedure Next_Name (Name  : out String);
+      procedure Next_Name (Name  : in out String) with
+        Pre => (for all Char of Name => Char = '?');
+      --  Replaces '?'s with random letters
    private
       Next_Seed  : Interfaces.Unsigned_32 := 0;
       Used_Names : AAA.Strings.Set;
@@ -557,7 +559,7 @@ package body Alire.Directories is
       -- Next_Name --
       ---------------
 
-      procedure Next_Name (Name  : out String) is
+      procedure Next_Name (Name  : in out String) is
          subtype Valid_Character is Character range 'a' .. 'z';
          package Char_Random is new
            Ada.Numerics.Discrete_Random (Valid_Character);
@@ -638,9 +640,27 @@ package body Alire.Directories is
       Result : String :=
          "alr-"
          & Trim (Pid_To_Integer (Current_Process_Id)'Image)
-         & "-????.tmp";
+                 & "-????.tmp";
+      First, Last : Integer range Result'Range;
    begin
-      Tempfile_Support.Next_Name (Result (Result'Last - 7 .. Result'Last - 4));
+      --  Find first and last positions with '?'
+
+      for I in Result'Range loop
+         if Result (I) = '?' then
+            First := I;
+            exit;
+         end if;
+      end loop;
+
+      for I in reverse Result'Range loop
+         if Result (I) = '?' then
+            Last := I;
+            exit;
+         end if;
+      end loop;
+
+      Tempfile_Support.Next_Name (Result (First .. Last));
+
       return Result;
    end Temp_Name;
 
