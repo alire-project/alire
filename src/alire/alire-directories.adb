@@ -1,6 +1,3 @@
-with AAA.Directories;
-
-with Ada.Directories.Hierarchical_File_Names;
 with Ada.Numerics.Discrete_Random;
 with Ada.Real_Time;
 with Ada.Unchecked_Conversion;
@@ -548,7 +545,9 @@ package body Alire.Directories is
    ----------------------
 
    protected Tempfile_Support is
-      procedure Next_Name (Name  : out String);
+      procedure Next_Name (Name  : in out String) with
+        Pre => (for all Char of Name => Char = '?');
+      --  Replaces '?'s with random letters
    private
       Next_Seed  : Interfaces.Unsigned_32 := 0;
       Used_Names : AAA.Strings.Set;
@@ -560,7 +559,7 @@ package body Alire.Directories is
       -- Next_Name --
       ---------------
 
-      procedure Next_Name (Name  : out String) is
+      procedure Next_Name (Name  : in out String) is
          subtype Valid_Character is Character range 'a' .. 'z';
          package Char_Random is new
            Ada.Numerics.Discrete_Random (Valid_Character);
@@ -610,6 +609,10 @@ package body Alire.Directories is
 
          loop
             for I in Name'Range loop
+               if Name (I) /= '?' then
+                  raise Program_Error with
+                    "Placeholder must be '?' character";
+               end if;
                Name (I) := Char_Random.Random (Gen);
             end loop;
 
@@ -617,6 +620,9 @@ package body Alire.Directories is
             --  a temporary name.
 
             exit when not Used_Names.Contains (Name);
+
+            --  Restore '?' if we got an invalid name before reattempting
+            Name := (others => '?');
          end loop;
 
          Used_Names.Insert (Name);
@@ -628,12 +634,33 @@ package body Alire.Directories is
    -- Temp_Name --
    ---------------
 
-   function Temp_Name (Length : Positive := 8) return String is
-      Result : String (1 .. Length + 4);
+   function Temp_Name return String is
+      use AAA.Strings;
+      use GNAT.OS_Lib;
+      Result : String :=
+         "alr-"
+         & Trim (Pid_To_Integer (Current_Process_Id)'Image)
+                 & "-????.tmp";
+      First, Last : Integer range Result'Range;
    begin
-      Result (1 .. 4) := "alr-";
-      Result (Length + 1 .. Result'Last) := ".tmp";
-      Tempfile_Support.Next_Name (Result (5 .. Length));
+      --  Find first and last positions with '?'
+
+      for I in Result'Range loop
+         if Result (I) = '?' then
+            First := I;
+            exit;
+         end if;
+      end loop;
+
+      for I in reverse Result'Range loop
+         if Result (I) = '?' then
+            Last := I;
+            exit;
+         end if;
+      end loop;
+
+      Tempfile_Support.Next_Name (Result (First .. Last));
+
       return Result;
    end Temp_Name;
 
@@ -777,24 +804,8 @@ package body Alire.Directories is
          Trace.Debug ("Not deleting non-existing temporary: " & This.Filename);
       end if;
 
-      --  Remove temp dir if empty to keep things tidy, and avoid modifying
-      --  lots of tests, but only when within <>/alire/tmp
-
-      begin
-         if not Adirs.Hierarchical_File_Names.Is_Root_Directory_Name
-            (Parent (This.Filename))
-           and then
-             Adirs.Simple_Name (Parent (Parent (This.Filename))) =
-               Paths.Working_Folder_Inside_Root
-         then
-            AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
-         end if;
-      exception
-         when Adirs.Use_Error =>
-            --  May be raised by Adirs.Containing_Directory
-            Trace.Debug ("Failed to identify location of temp file: "
-                         & This.Filename);
-      end;
+      --  We used to remove the temp folder here (if within ./alire). As this
+      --  caused race conditions between alr processes, we no longer do it.
 
    exception
       when E : others =>
