@@ -27,7 +27,7 @@ jobs:
       matrix:
         os:
           - macos-13
-          - macos-latest
+          - macos-14 # See ci-release.yml about macos-latest
           - ubuntu-22.04
           - ubuntu-latest
           - windows-latest
@@ -47,11 +47,11 @@ jobs:
             gcc_version: 13
 
           # No builds of gcc-10, -11, -12 that work on arm64
-          - os: macos-latest
+          - os: macos-14 # See ci-release.yml about macos-latest
             gcc_version: 10
-          - os: macos-latest
+          - os: macos-14 # See ci-release.yml about macos-latest
             gcc_version: 11
-          - os: macos-latest
+          - os: macos-14 # See ci-release.yml about macos-latest
             gcc_version: 12
 
           # gcc-10 and -11 do not work on LTS 24.04 anymore
