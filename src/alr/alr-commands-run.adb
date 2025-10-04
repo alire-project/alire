@@ -1,11 +1,11 @@
 with Ada.Containers;
 
 with Alire.OS_Lib;
+with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
 
 with Alr.Commands.Build;
 with Alr.Files;
-with Alr.OS_Lib;
 with Alire.Utils;
 
 with GNAT.OS_Lib;
@@ -220,7 +220,9 @@ package body Alr.Commands.Run is
             else
                Trace.Detail ("Launching " & Target_Exes.First_Element);
                Trace.Detail ("...");
-               OS_Lib.Spawn_Raw (Target_Exes.First_Element, Cmd.Args.all);
+               Alire.OS_Lib.Subprocess.Spawn_Raw
+                 (Target_Exes.First_Element,
+                  Alire.OS_Lib.Subprocess.Split_Arguments (Cmd.Args.all));
             end if;
          end;
       end;
