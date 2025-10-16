@@ -1,0 +1,9 @@
+description = "Echo command-line arguments"
+name = "echo_arguments"
+version = "1.0.0"
+maintainers = ["mr@lazy.com"]
+maintainers-logins = ["mrlazy"]
+
+[origin]
+url = "file:../../../crates/echo_arguments_1.0.tgz"
+hashes = ["sha512:bf19d20f74aa5766aed0fabd2f38983cdcaf5b130142fa476bc4bda0f31ad5b3c916fe0f9e8fe3d5f3efa74a5918799105ebed517ff993589c6e5923e3e587b0"]
