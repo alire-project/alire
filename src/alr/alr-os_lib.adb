@@ -1,5 +1,3 @@
-with Alire.OS_Lib.Subprocess;
-
 package body Alr.OS_Lib is
 
    ------------
@@ -40,36 +38,4 @@ package body Alr.OS_Lib is
          return False;
       end if;
    end Is_Older;
-
-   ---------------
-   -- Spawn_Raw --
-   ---------------
-
-   procedure Spawn_Raw (Command   : String;
-                        Arguments : String := "")
-   is
-      Code : Integer;
-   begin
-      Trace.Debug ("Spawning " & Command & " " & Arguments);
-
-      declare
-         Full_Path : constant String :=
-                       Alire.OS_Lib.Subprocess.Locate_In_Path (Command);
-      begin
-         if Full_Path = "" then
-            Alire.Raise_Checked_Error
-              ("Executable not found in PATH when spawning: "
-               & TTY.Terminal (Command & " " & Arguments));
-         end if;
-
-         Code := GNAT.OS_Lib.Spawn
-           (Full_Path,
-            GNAT.OS_Lib.Argument_String_To_List (Arguments).all);
-      end;
-
-      if Code /= 0 then
-         raise Child_Failed with "Exit code:" & Code'Image;
-      end if;
-   end Spawn_Raw;
-
 end Alr.OS_Lib;

@@ -36,7 +36,8 @@ package body Alire.Spawn is
       Replacements : Alire.Formatting.Replacements;
       Exec_Check   : access procedure (Exec : String) := null)
    is
-      Args          : AAA.Strings.Vector := AAA.Strings.Split (Cmd, ' ');
+      Args          : AAA.Strings.Vector
+         := Alire.OS_Lib.Subprocess.Split_Arguments (Cmd);
       Exec          : constant String := Args.First_Element;
       Replaced_Args : AAA.Strings.Vector;
    begin
