@@ -25,6 +25,8 @@ Arguments passed using `alr run -a arguments` now use the same quoting format.
 $ alr run -a "list of 'quoted arguments'"
 ```
 
+The `origins.archive.download_cmd` setting also uses this quoting format.
+
 ### New `--github` switch for `alr init` command
 
 PR [#1972](https://github.com/alire-project/alire/pull/1972)
