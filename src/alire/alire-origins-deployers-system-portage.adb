@@ -49,13 +49,13 @@ package body Alire.Origins.Deployers.System.Portage is
          if Tmp (C) = L1.Low_Line then
             Tmp (C) := L1.Hyphen;
 
-            Trace.Info ("To_Semantic_Version: " & Tmp);
+            Trace.Debug ("To_Semantic_Version: " & Tmp);
 
             return Tmp;
          end if;
       end loop;
 
-      Trace.Info ("To_Semantic_Version: " & Tmp);
+      Trace.Debug ("To_Semantic_Version: " & Tmp);
 
       return Tmp;
    end To_Semantic_Version;
