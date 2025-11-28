@@ -160,10 +160,10 @@ package Alire.Directories is
    --  For user forced Ctrl-C interruptions, this will attempt to delete any
    --  currently existing temporaries.
 
-   function Temp_Name (Length : Positive := 8) return String
-     with Pre => Length >= 5;
-   --  Return a filename such as "alr-sdrv.tmp". Length refers to the name
-   --  without .tmp. The alr- prefix is fixed.
+   function Temp_Name return String with
+     Post => (for all Char of Temp_Name'Result => Char /= '?');
+   --  Return a filename such as "alr-PID-sdrv.tmp". The trailing four letters
+   --  are guaranteed to be unique per run.
 
    --  TEMP_FILE: obtain a temporary name with optional cleanup
 

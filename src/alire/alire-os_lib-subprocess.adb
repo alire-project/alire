@@ -6,6 +6,7 @@ with AnsiAda; use AnsiAda;
 
 with CLIC.TTY;
 
+with GNAT.IO;
 with GNAT.OS_Lib;
 
 package body Alire.OS_Lib.Subprocess is
@@ -208,7 +209,13 @@ package body Alire.OS_Lib.Subprocess is
             and then CLIC.TTY.Is_TTY
             and then CLIC.TTY.Color_Enabled
          then
-            Ada.Text_IO.Put (Style (Dim, State));
+            --  We cannot use Ada.Text_IO here, as it mandates endlines,
+            --  and the Ada runtime flushes this with an extra '\n' on
+            --  finalization if this is the last output, creating an extra
+            --  empty line in e.g. `alr exec echo whatever`. GNAT.IO is
+            --  uncooked so it works as expected.
+            Ada.Text_IO.Flush; -- So we don't mix bufferings
+            GNAT.IO.Put (Style (Dim, State));
          end if;
       end Dim;
 
