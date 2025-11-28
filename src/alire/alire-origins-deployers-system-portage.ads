@@ -13,6 +13,6 @@ package Alire.Origins.Deployers.System.Portage is
    function Install (This : Deployer) return Outcome;
 
    overriding
-   function Executable_Name (This : Deployer) return String is ("apt");
+   function Executable_Name (This : Deployer) return String is ("emerge");
 
 end Alire.Origins.Deployers.System.Portage;
