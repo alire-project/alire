@@ -41,6 +41,10 @@ package body Alire.Origins.Deployers.System.Portage is
       return False;
    end Already_Installed;
 
+   -------------------------
+   -- To_Semantic_Version --
+   -------------------------
+
    function To_Semantic_Version (Gentoo_Version : String) return String is
       Tmp : String := Gentoo_Version;
    begin
