@@ -31,7 +31,7 @@ package body Alire.Origins.Deployers.System.Portage is
       Indicator : constant String := "[I]";
       Line      : constant String := AAA.Strings.First_Element (Output);
    begin
-      Trace.Info ("Already_Installed: " & This.Base.Package_Name);
+      Trace.Detail ("Already_Installed: " & This.Base.Package_Name);
 
       if Line'Length >= Indicator'Length then
          return
