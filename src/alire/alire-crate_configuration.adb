@@ -487,6 +487,11 @@ package body Alire.Crate_Configuration is
 
             declare
                Version_Str : constant String := Rel.Version.Image;
+
+               --  TODO(ula): not properly escaped for Ada, GPR, nor C. for
+               --  example putting quotes in the description field causes a
+               --  compilation error
+               Description : constant String := Rel.Description;
             begin
                if not Ent.Disabled then
                   Ada.Directories.Create_Path (Conf_Dir);
@@ -495,7 +500,8 @@ package body Alire.Crate_Configuration is
                      This.Generate_Ada_Config
                        (Rel.Name,
                         Conf_Dir / (+Rel.Name & "_config.ads"),
-                        Version_Str);
+                        Version_Str,
+                        Description);
                   end if;
 
                   if Ent.Generate_GPR then
@@ -505,14 +511,16 @@ package body Alire.Crate_Configuration is
                         (if Ent.Auto_GPR_With
                          then Root.Direct_Withs (Rel)
                          else AAA.Strings.Empty_Set),
-                        Version_Str);
+                        Version_Str,
+                        Description);
                   end if;
 
                   if Ent.Generate_C then
                      This.Generate_C_Config
                        (Rel.Name,
                         Conf_Dir / (+Rel.Name & "_config.h"),
-                        Version_Str);
+                        Version_Str,
+                        Description);
                   end if;
                end if;
             end;
@@ -527,10 +535,11 @@ package body Alire.Crate_Configuration is
    -- Generate_Ada_Config --
    -------------------------
 
-   procedure Generate_Ada_Config (This     : Global_Config;
-                                  Crate    : Crate_Name;
-                                  Filepath : Absolute_Path;
-                                  Version  : String)
+   procedure Generate_Ada_Config (This        : Global_Config;
+                                  Crate       : Crate_Name;
+                                  Filepath    : Absolute_Path;
+                                  Version     : String;
+                                  Description : String)
    is
       File : TIO.File_Type;
 
@@ -553,6 +562,8 @@ package body Alire.Crate_Configuration is
                       Version & """;");
       TIO.Put_Line (File, "   Crate_Name : constant String := """ &
                     (+Crate) & """;");
+      TIO.Put_Line (File, "   Crate_Description : constant String := """ &
+                    Description & """;");
 
       for Elt of Host_Info loop
          TIO.New_Line (File);
@@ -642,11 +653,12 @@ package body Alire.Crate_Configuration is
    -- Generate_GPR_Config --
    -------------------------
 
-   procedure Generate_GPR_Config (This     : Global_Config;
-                                  Crate    : Crate_Name;
-                                  Filepath : Absolute_Path;
-                                  Withs    : AAA.Strings.Set;
-                                  Version  : String)
+   procedure Generate_GPR_Config (This        : Global_Config;
+                                  Crate       : Crate_Name;
+                                  Filepath    : Absolute_Path;
+                                  Withs       : AAA.Strings.Set;
+                                  Version     : String;
+                                  Description : String)
    is
       File : TIO.File_Type;
 
@@ -666,6 +678,7 @@ package body Alire.Crate_Configuration is
 
       TIO.Put_Line (File, "   Crate_Version := """ & Version & """;");
       TIO.Put_Line (File, "   Crate_Name := """ & (+Crate) & """;");
+      TIO.Put_Line (File, "   Crate_Description := """ & Description & """;");
 
       for Elt of Host_Info loop
          TIO.New_Line (File);
@@ -720,10 +733,11 @@ package body Alire.Crate_Configuration is
    -- Generate_C_Config --
    -----------------------
 
-   procedure Generate_C_Config (This     : Global_Config;
-                                Crate    : Crate_Name;
-                                Filepath : Absolute_Path;
-                                Version  : String)
+   procedure Generate_C_Config (This        : Global_Config;
+                                Crate       : Crate_Name;
+                                Filepath    : Absolute_Path;
+                                Version     : String;
+                                Description : String)
    is
       File : TIO.File_Type;
 
@@ -740,6 +754,7 @@ package body Alire.Crate_Configuration is
 
       TIO.Put_Line (File, "#define CRATE_VERSION """ & Version & """");
       TIO.Put_Line (File, "#define CRATE_NAME """ & (+Crate) & """");
+      TIO.Put_Line (File, "#define CRATE_DESCRIPTION """ & Description & """");
 
       for Elt of Host_Info loop
          TIO.New_Line (File);
