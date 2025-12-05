@@ -107,7 +107,7 @@ package body Alire.Origins.Deployers.System.Portage is
       --  From the pms.pdf.
    begin
       if Gentoo_Version /= "" then
-         Trace.Info ("Detect: " & This.Base.Package_Name & " - " &
+         Trace.Debug ("Detect: " & This.Base.Package_Name & " - " &
            Gentoo_Version & " - " & To_Semantic_Version (Gentoo_Version) &
            " => " & Semantic_Versioning.Parse
                          (To_Semantic_Version (Gentoo_Version),
@@ -131,7 +131,7 @@ package body Alire.Origins.Deployers.System.Portage is
    overriding
    function Install (This : Deployer) return Outcome is
    begin
-      Trace.Info ("Install: " & This.Base.Package_Name);
+      Trace.Debug ("Install: " & This.Base.Package_Name);
 
       Subprocess.Checked_Spawn
         ("sudo", Empty_Vector &
