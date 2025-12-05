@@ -6,6 +6,10 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Gentoo support
+
+Add Gentoo's Portage support via sudo, if the base package contains a section for gentoo, see libsdl2 for example, emerge will be called if the package is not installed.
+
 ### New `--github` switch for `alr init` command
 
 PR [#1972](https://github.com/alire-project/alire/pull/1972)
@@ -81,9 +85,9 @@ easily. It takes several optional command line flags:
 
 - `--location=<path/to/alr>` to specify where to install the new binary
 - `--release=<version>` to download and install a specific version (provided
-  that Alire builds binaries for this version on your platform) 
+  that Alire builds binaries for this version on your platform)
 - `--nightly` to install a pre-release version of Alire.
-  
+
   **Disclaimer**: nightly versions may have incomplete features, unresolved
   bugs and may delete features or break compatibility without warning.
 

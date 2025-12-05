@@ -44,6 +44,7 @@ package Alire.Platforms with Preelaborate is
                           Suse,
                           Homebrew,
                           Macports,
+                          Gentoo,
                           Distribution_Unknown);
 
    subtype Known_Distributions is
@@ -61,6 +62,7 @@ package Alire.Platforms with Preelaborate is
                              Zypper,
                              Homebrew,
                              Macports,
+                             Portage,
                              Packager_Unknown);
 
    Distro_Manager : constant array (Distributions) of Package_Managers :=
@@ -71,6 +73,7 @@ package Alire.Platforms with Preelaborate is
       Suse            => Zypper,
       Homebrew        => Homebrew,
       Macports        => Macports,
+      Gentoo          => Portage,
       Distribution_Unknown  => Packager_Unknown);
 
    type Toolchains is (System,
