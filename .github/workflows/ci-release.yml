@@ -47,7 +47,7 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - os: macos-13            # x64
+          - os: macos-15-intel      # x64
             id: x86_64-macos
 
           - os: macos-14            # arm64 (macos-latest is now v15 and it breaks things, TODO)
@@ -220,7 +220,7 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - os: macos-13
+          - os: macos-15-intel
             id: x86_64-macos
 
           - os: macos-14 # See above about macos-latest
@@ -498,7 +498,7 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - os: macos-13
+          - os: macos-15-intel
             id: x86_64-macos
 
           - os: macos-14 # See above about macos-latest
