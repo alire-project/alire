@@ -127,7 +127,7 @@ package Alire.Settings.Builtins is
    Origins_Archive_Download_Cmd : constant Builtin := New_Builtin
      (Key         => "origins.archive.download_cmd",
       Kind        => Stn_String,
-      Def         => "curl ${URL} -L -s -o ${DEST}",
+      Def         => "curl ${URL} -sSfL -o ${DEST}",
       Global_Only => True,
       Help        =>
         "The command used to download crates which are published as archives."
