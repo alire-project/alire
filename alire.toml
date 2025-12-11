@@ -1,7 +1,7 @@
 name = "alr"
 description = "Command-line tool from the Alire project"
 
-version = "2.1.0"
+version = "2.1.1-dev"
 
 authors = ["Alejandro R. Mosteo", "Fabien Chouteau", "Pierre-Marie de Rodat"]
 maintainers = ["alejandro@mosteo.com", "chouteau@adacore.com"]
@@ -56,8 +56,8 @@ url    = "https://github.com/mosteo/aaa"
 commit = "73d99ae1ff2f5210dc41c2ea7afebe600f9e9916"
 
 [pins.ada_toml]
-url    = "https://github.com/pmderodat/ada-toml"
-commit = "e760110ad2b5b776a44dace31b8421532e429fbb"
+url    = "https://github.com/mosteo/ada-toml"
+commit = "33eaab64b9d531e240c3f525ad80a1f3eb8b9633"
 
 [pins.ansiada]
 url    = "https://github.com/mosteo/ansi-ada"
@@ -70,9 +70,10 @@ commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 [pins.clic]
 url    = "https://github.com/alire-project/clic"
 commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
+
 [pins.den]
 url    = "https://github.com/mosteo/den"
-commit = "377d1d906f83262b81b45c7989de8cd5b4aba67f"
+commit = "81174c8deafb99859bece2095eaaa657dea3f32b"
 
 [pins.dirty_booleans]
 url    = "https://github.com/mosteo/dirty_booleans"
@@ -103,7 +104,7 @@ commit = "4861e32bd8a2f0df038d3ecc9a72b6381e7a34cc"
 
 [pins.simple_logging]
 url    = "https://github.com/alire-project/simple_logging"
-commit = "3505dc645f3eef6799a486aae223d37e88cfc4d5"
+commit = "f45bf378588dc1d0479cc24eb0eb41dc99f69cb4"
 
 [pins.si_units]
 url    = "https://github.com/mosteo/si_units"
@@ -120,7 +121,7 @@ commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
 [pins.yeison_12]
 url    = "https://github.com/mosteo/yeison"
 subdir = "yeison_12"
-commit = "88b66242f8826fd4847e0ea06c7901b753e03c74"
+commit = "20033cf90a3eb2eff69d9ff9d0820291aed79b57"
 
 # To disable version updating, export ALR_VERSION_DONT_PATCH with any value
 

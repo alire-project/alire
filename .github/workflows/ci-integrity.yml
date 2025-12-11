@@ -1,0 +1,17 @@
+# This workflow verifies that all pinned dependencies match the submodule
+# versions.
+
+name: Integrity Checks
+on:
+  pull_request:
+
+jobs:
+  verify-pins:
+    name: Pins & Submodules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify pinned dependencies
+        run: scripts/verify-pins.sh

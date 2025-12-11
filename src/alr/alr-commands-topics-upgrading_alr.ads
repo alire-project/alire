@@ -19,6 +19,7 @@ package Alr.Commands.Topics.Upgrading_Alr is
    is (AAA.Strings.Empty_Vector
        .Append ("For up-to-date information, please visit:")
        .Append
-         ("https://github.com/alire-project/alire/blob/master/UPGRADING.md"));
+         ("https://github.com/alire-project/alire/"
+          & "blob/master/doc/upgrading.md"));
 
 end Alr.Commands.Topics.Upgrading_Alr;
