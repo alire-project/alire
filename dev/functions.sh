@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "Sourcing functions from dev/functions.sh"
+echo "Begin sourcing functions from dev/functions.sh"
 
 # Alias sudo if already root (e.g., inside docker we may be root and not have sudo)
 [ "$(id -u)" -eq 0 ] && alias sudo=""

@@ -10,6 +10,7 @@ trap 'echo "Interrupted" >&2 ; exit 1' INT
 
 set -o errexit
 set -o nounset
+shopt -s expand_aliases
 
 export PATH+=:${PWD}/bin
 
