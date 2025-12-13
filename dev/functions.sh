@@ -1,5 +1,8 @@
 #!/usr/bin/env
 
+# Alias sudo if already root (e.g., inside docker we may be root and not have sudo)
+[ "$(id -u)" -eq 0 ] && alias sudo=""
+
 function guess_OS() {
     # Returns one of the values needed in ALIRE_OS, using environment variables
 
