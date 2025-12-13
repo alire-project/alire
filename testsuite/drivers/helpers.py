@@ -89,7 +89,16 @@ def distribution():
     if 'ALIRE_TESTSUITE_DISABLE_DISTRO' in os.environ:
         return 'DISTRIBUTION_UNKNOWN'
 
-    known_distro = ["debian", "ubuntu", "msys2", "arch", "rhel", "centos", "fedora"]
+    known_distro = [
+        "arch",
+        "centos",
+        "debian",
+        "fedora",
+        "gentoo",
+        "msys2",
+        "rhel",
+        "ubuntu",
+    ]
 
     if os.path.exists("/etc/os-release"):
 
