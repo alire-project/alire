@@ -41,7 +41,8 @@ package Alire.Origins.Deployers.System is
    --  Actually install the package in the system. Specific implementations
    --  must take care to be conservative about the user installation; e.g., do
    --  not proceed if that would require removal of already installed packages.
-   --  E.g., apt --no-remove option.
+   --  E.g., apt --no-remove option. Alire already asks for confirmation, so
+   --  the system tool should proceed non-interactively.
 
    procedure Dont_Ask_Permission (This : in out Deployer);
    --  This procedure tells the deployer not to ask user permission before
