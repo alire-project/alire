@@ -89,7 +89,7 @@ def distribution():
     if 'ALIRE_TESTSUITE_DISABLE_DISTRO' in os.environ:
         return 'DISTRIBUTION_UNKNOWN'
 
-    # TO DO: extract this list from /src/alire/alire-platforms.ads to ensure consistency.
+    # TODO: extract this list from /src/alire/alire-platforms.ads to ensure consistency.
     known_distro = [
         "arch",
         "centos",
@@ -98,6 +98,7 @@ def distribution():
         "gentoo",
         "msys2",
         "rhel",
+        "suse",
         "ubuntu",
     ]
 
