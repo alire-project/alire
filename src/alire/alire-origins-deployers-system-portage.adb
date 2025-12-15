@@ -136,7 +136,7 @@ package body Alire.Origins.Deployers.System.Portage is
       Subprocess.Checked_Spawn
         ("sudo", Empty_Vector &
            "emerge" &
-           "-av" &
+           "-v" &
            This.Base.Package_Name);
 
       return Outcome_Success;
