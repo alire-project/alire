@@ -64,8 +64,11 @@ package body Alire.Spawn is
    begin
       if Alire.OS_Lib.Subprocess.Locate_In_Path ("gprbuild") = "" then
          Alire.Raise_Checked_Error
-           ("Cannot locate " & TTY.Emph ("gprbuild") & ", please check that " &
-            "you have a GNAT and GPRbuild installation in your environment.");
+           ("Cannot locate "
+            & TTY.Emph ("gprbuild")
+            & ", please check that you have a GNAT and GPRbuild installation"
+            & "in your environment. You may want to install a toolchain with "
+            & TTY.Terminal ("alr toolchain --select"));
       end if;
 
       Command ("gprbuild",
