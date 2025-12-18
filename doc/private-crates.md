@@ -131,7 +131,7 @@ from a URL to a local filesystem location.
 
 The command used to fetch such files is specified by the [settings](settings)
 key `origins.archive.download_cmd`. By default `alr` uses the command
-`curl ${URL} -L -s -o ${DEST}`, which does not attempt any form of
+`curl ${URL} -sSfL -o ${DEST}`, which does not attempt any form of
 authentication, but this can be changed to any equivalent alternative which
 implements a desired authentication scheme. The command should download the file
 to `${DEST}` (the full file path, not a directory), and must not pollute the
@@ -144,7 +144,7 @@ user's home directory and attempt to authenticate with any credentials found
 there (see `man curl` and `man netrc` for more detail). This is achieved by
 invoking
 ```sh
-alr settings --set --global origins.archive.download_cmd 'curl ${URL} -n -L -s -o ${DEST}'
+alr settings --set --global origins.archive.download_cmd 'curl ${URL} -n -sSfL -o ${DEST}'
 ```
 Note that most terminals will perform substitutions on double-quoted strings
 containing `${SOMETHING}`, so it is important to enclose the value in
