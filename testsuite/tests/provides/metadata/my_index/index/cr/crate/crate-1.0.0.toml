@@ -5,7 +5,7 @@ licenses = "MIT"
 maintainers = ["any@bo.dy"]
 maintainers-logins = ["someone"]
 
-provides = ["aliased=1.0"]
+provides = ["aliased_=1.0"]
 
 [origin]
 url = "file:."

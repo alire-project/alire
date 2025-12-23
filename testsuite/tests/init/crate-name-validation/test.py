@@ -27,6 +27,15 @@ assert_that(name='_aaa', fails_with='.*Identifiers must not begin with an unders
 # Non lowercase ASCII alnum
 assert_that(name='aaą', fails_with='.*Identifiers must be lowercase ASCII alphanumerical.*')
 
+# No Ada83 keywords
+assert_that(name='xor', fails_with='.*Identifier cannot be reserved keyword.*')
+
+# No Ada2022 keywords
+assert_that(name='parallel', fails_with='.*Identifier cannot be reserved keyword.*')
+
+# No GPR keywords
+assert_that(name='extends', fails_with='.*Identifier cannot be reserved keyword.*')
+
 # Valid name
 for crate_type in CRATE_TYPES:
     run_alr('init', f"--{crate_type}", f"{VALID_NAME}{crate_type}")
