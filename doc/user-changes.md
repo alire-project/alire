@@ -1209,9 +1209,9 @@ $ alr pin indexed_crate --use /path/to/gpr/containing/folder
 # To pin a previously added dependency.
 ```
 
-### Crate names cannot be ada keywords anymore
+### Crate names cannot be reserved keywords anymore
 
-PR [???](???)
+PR [#2051](https://github.com/alire-project/alire/pull/2051)
 
 It is no longer possible to create a Crate with a reserved keyword as its name.
 The reserved keywords are the same as Ada2022 and the ones defined by GPR.
