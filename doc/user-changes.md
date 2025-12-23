@@ -186,7 +186,7 @@ Dependencies (tree):
 ```
 
 Whenever '...' appears, it means that the preceding release has its
-dependencies al tree lines.
+dependencies already printed somewhere in the preceding tree lines.
 
 The old behavior can be obtained by increasing verbosity with the global `-v`
 switch.
