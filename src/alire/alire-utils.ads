@@ -105,6 +105,11 @@ package Alire.Utils with Preelaborate is
    --         Alire.Utils.Finalize_Exception (E);
    --   end Finalize;
 
+   function Has_Duplicates
+     (V         : AAA.Strings.Vector;
+      Transform : access function (S : String) return String := null)
+      return Boolean;
+
 private
 
    function Quote (S : String) return String

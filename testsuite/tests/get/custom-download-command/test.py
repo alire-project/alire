@@ -37,7 +37,7 @@ with mock_curl, mock_download_cmd:
     assert_match(
         (
             r'.*Command \["curl", "https://some\.host/path/to/archive\.tgz",'
-            r' "-L", "-s", "-o", "[^"]*archive.tgz"\] exited with code 1'
+            r' "-sSfL", "-o", "[^"]*archive.tgz"\] exited with code 1'
         ),
         p.out
     )
@@ -48,7 +48,7 @@ with mock_curl, mock_download_cmd:
     assert_match(
         (
             r'.*Command \["curl", "https://some\.host/path/to/archive\.tgz",'
-            r' "-L", "--progress-bar", "-o", "[^"]*archive.tgz"\] exited with '
+            r' "-fL", "--progress-bar", "-o", "[^"]*archive.tgz"\] exited with '
             r'code 1'
         ),
         p.out
