@@ -26,7 +26,7 @@ with open(aliases_file, "rt") as file:
 
 contents = "".join(contents).replace("\n", "")
 
-assert_eq('aliased = ["crate",]',
+assert_eq('aliased_ = ["crate",]',
           contents)
 # This means that "crate" provides "aliased", so when solving "aliased" we also
 # need to load "crate"
