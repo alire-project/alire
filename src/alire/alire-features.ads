@@ -15,6 +15,10 @@ package Alire.Features is
    --  former with a warning during our next major release to ease transition.
    --  Likewise for the -c/--config switch
 
+   No_Color_Deprecated : constant On_Version := +"3.0";
+   --  Deprecate the --no-color switch in favour of a more versatile
+   --  --color=WHEN option.
+
    Self_Update_Cmd : constant On_Version := +"3.0.0-dev";
    --  Used to warn when users downgrade alr using the `self-update` command
 
