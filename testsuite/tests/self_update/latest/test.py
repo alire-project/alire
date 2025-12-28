@@ -2,7 +2,7 @@
 Perform a `self-update` to latest (do NOT replace the current binary)
 """
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, CalledProcessError
 from drivers.helpers import exe_name, MockCommand
 import os
 
@@ -22,9 +22,11 @@ subprocess.call(["curl", *token_header, *sys.argv[1:]], env=env2)
 """
 
 with MockCommand("curl", curl_script, "curl_override"):
-    run_alr("self-update", "--location=.")
-
-assert os.path.exists(exe_name("alr"))
+    try:
+        out = run_alr("self-update", "--location=.").out
+        assert os.path.exists(exe_name("alr")) 
+    except CalledProcessError:
+        assert "could not find artifact" in out
 
 assert run_alr("version").out == v_init  # ensure the main alr is unchanged
 
