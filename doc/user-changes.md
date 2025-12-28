@@ -15,7 +15,7 @@ This should avoid hitting it on complex dependencies on slower machines.
 
 The new global switch allows specifying `--color=always`, for instance when
 one wants to keep color output in a redirection. The default value is `auto`,
-which as the same behavior a before with the `--no-color` switch.
+which has the same behavior as before without the `--no-color` switch.
 
 Disabling colors in done with the `never` value. It also follows the
 `NO_COLOR` environment variable, like before, but the `always` value has
