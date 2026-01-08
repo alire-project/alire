@@ -11,7 +11,7 @@ for domain in ["badsite.com", "ggithub.com", "github.comm"]:
                 "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
                 "--skip-submit",
                 complain_on_error=False)
-    assert_match(f".*Origin is hosted on unknown site: {domain}.*", p.out)
+    assert_match(f".*Origin host '{domain}' is not a trusted site.*", p.out)
 
 # Try that having credentials doesn't interfere with the previous check and
 # that the domain was recognized properly.
@@ -25,6 +25,6 @@ for domain in ["badsite.com", "ggithub.com", "github.comm"]:
                     "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
                     "--for-private-index",
                     complain_on_error=False)
-        assert_match(f".*Origin is hosted on unknown site: {domain}.*", p.out)
+        assert_match(f".*Origin host '{domain}' is not a trusted site.*", p.out)
 
 print('SUCCESS')

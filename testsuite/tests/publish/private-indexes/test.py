@@ -279,7 +279,7 @@ for force_arg in ([], ["--force"]):
         url="https://trusted.host/some_user/repo-name",
         maint_logins='["github-username"]',
         num_confirms=1,
-        output=[r".*Origin is hosted on unknown site: trusted\.host.*"],
+        output=[r".*Origin host 'trusted\.host' is not a trusted site:"],
         gen_manifest=None,
         expect_success=False
     )
@@ -288,7 +288,7 @@ for force_arg in ([], ["--force"]):
         url="https://trusted.host/some_user/repo-name",
         maint_logins='["github-username"]',
         num_confirms=1,
-        output=[r".*Origin is hosted on unknown site: trusted\.host.*"],
+        output=[r".*Origin host 'trusted\.host' is not a trusted site:"],
         gen_manifest=None,
         expect_success=False
     )
@@ -312,14 +312,28 @@ for force_arg in ([], ["--force"]):
     # because it uses an origin with an untrusted host, which the user has not
     # configured as trusted:
     #
-    # "alr publish [--skip-submit | --for-private-index]" should all fail.
+    # "alr publish [--skip-submit | --for-private-index]" should all fail, with
+    # different suggested solutions dependent on the presence of
+    # --for-private-index.
     for switch in ([], ["--skip-submit"], ["--for-private-index"]):
+        suggestion = (
+            "This can be configured using the 'origins.git.trusted_sites' setting."
+            if switch == ["--for-private-index"]
+            else
+            (
+                "Please open an issue at https://github.com/alire-project/"
+                "alire/issues/new if you think it should be added to the list."
+            )
+        )
         test(
             args=force_arg + ["publish"] + switch,
             url="https://untrusted.host/some_user/repo-name",
             maint_logins='["github-username"]',
             num_confirms=1,
-            output=[r".*Origin is hosted on unknown site: untrusted\.host.*"],
+            output=[
+                r".*Origin host 'untrusted\.host' is not a trusted site:",
+                rf".*{re.escape(suggestion)}",
+            ],
             gen_manifest=None,
             expect_success=False
         )
