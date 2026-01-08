@@ -942,8 +942,19 @@ package body Alire.Publish is
             Put_Success ("Origin is hosted on trusted site: "
                          & URI.Host (URL));
          else
-            Raise_Checked_Error ("Origin is hosted on unknown site: "
-                                 & URI.Host (URL));
+            Raise_Checked_Error
+              ("Origin host '"
+               & URI.Host (URL)
+               & "' is not a trusted site."
+               & New_Line
+               & (if Context.Options.For_Private_Index
+                  then
+                    "This can be configured using the "
+                    & "'origins.git.trusted_sites' setting."
+                  else
+                    "Please open an issue at "
+                    & "https://github.com/alire-project/alire/issues/new if "
+                    & "you think it should be added to the list."));
          end if;
       end if;
 
