@@ -145,7 +145,8 @@ package Alire.Settings.Builtins is
       & " 'alr index --check' and 'alr publish --for-private-index'. If set to"
       & " '...', all origins are trusted. Note that this does not have any"
       & " effect when using 'alr publish' for submissions to the community"
-      & " index (which only permits the default list).");
+      & " index (which only permits the default list, due to vulnerabilities"
+      & " identified in Git's use of SHA1).");
 
    --  SOLVER
 
