@@ -28,9 +28,9 @@ for url in urls:
 # the untrusted host, not because the URLs appear private.
 for url in urls:
     p = run_alr(
-        "publish", "--for-private-index", url, commit,complain_on_error=False
+        "publish", "--for-private-index", url, commit, complain_on_error=False
     )
-    assert_match(r".*Origin is hosted on unknown site: host\.invalid.*", p.out)
+    assert_match(r".*Origin host 'host\.invalid' is not a trusted site:.*", p.out)
 
 
 print("SUCCESS")
