@@ -149,19 +149,24 @@ package body Alr.Commands is
 
    procedure Set_Color_Config (Switch, Value : String) is
       Stripped_Value : constant String :=
-         AAA.Strings.To_Lower_Case (AAA.Strings.Trim (Value, '='));
+        AAA.Strings.To_Lower_Case (AAA.Strings.Trim (Value, '='));
+
+      function Suggest is new
+        Alire.Utils.Did_You_Mean.Enum_Suggestion
+          (Color_Config_Values,
+           Alire.Utils.Did_You_Mean.Lower_Case);
    begin
       if Stripped_Value = "always" then
          Color_Config := Always;
-
       elsif Stripped_Value = "never" then
          Color_Config := Never;
-
       elsif Stripped_Value /= "auto" and then Stripped_Value /= "" then
          Trace.Warning
-           ("Unknown value '" & Stripped_Value & "' passed for "
-            & TTY.Terminal (Switch) & ". Defaulting to 'auto'.");
-
+           ("Unknown argument in "
+            & TTY.Terminal (Switch)
+            & Value
+            & ". Defaulting to 'auto'."
+            & Suggest (Stripped_Value));
       end if;
    end Set_Color_Config;
 
