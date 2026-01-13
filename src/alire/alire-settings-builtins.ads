@@ -160,7 +160,7 @@ package Alire.Settings.Builtins is
    Solver_Timeout : constant Builtin := New_Builtin
      (Key    => "solver.timeout",
       Kind   => Stn_Int,
-      Def    => "5",
+      Def    => "10",
       Help   => "Seconds until solver first timeout (-1 to disable)");
 
    Solver_Grace_Period : constant Builtin := New_Builtin
