@@ -4,7 +4,6 @@ Run a some tests and check the expected structured output
 
 import os
 import json
-import tomllib
 import yaml
 
 from drivers.alr import init_local_crate, run_alr
@@ -49,12 +48,16 @@ p = run_alr("--format=json", "test", complain_on_error=False)
 data = json.loads(p.out)
 structure_tests(data)
 
-p = run_alr("--format=toml", "test", complain_on_error=False)
-data = tomllib.loads(p.out)
-structure_tests(data)
-
 p = run_alr("--format=yaml", "test", complain_on_error=False)
 data = yaml.safe_load(p.out)
 structure_tests(data)
+
+p = run_alr("--format=toml", "test", complain_on_error=False)
+try:
+    import tomllib
+    data = tomllib.loads(p.out)
+    structure_tests(data)
+except ModuleNotFoundError:
+    pass
 
 print("SUCCESS")
