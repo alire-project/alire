@@ -70,7 +70,8 @@ package Alr.Commands is
    --  performing a silent update. If not Sync, only a minimal empty lockfile
    --  is created. If Error, replace the first generic error message with it.
 
-   procedure Forbids_Structured_Output (Cmd : in out Command'Class);
+   procedure Forbids_Structured_Output (Cmd : in out Command'Class;
+                                        Custom_Msg : String := "");
    --  Use this to mark that the output of a command is not (yet) compatible
    --  with global flag --format.
 

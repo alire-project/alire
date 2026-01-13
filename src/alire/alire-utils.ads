@@ -114,6 +114,14 @@ package Alire.Utils with Preelaborate is
       Transform : access function (S : String) return String := null)
       return Boolean;
 
+   function Strip_Prefix (Src, Prefix : String) return String;
+   --  Return the string Src without the given Prefix if it exists.
+   --  Only removes the prefix once.
+
+   function Strip_Suffix (Src, Suffix : String) return String;
+   --  Return the string Src without the given Suffix if it exists.
+   --  Only removes the suffix once.
+
 private
 
    function Quote (S : String) return String

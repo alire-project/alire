@@ -294,4 +294,30 @@ package body Alire.Utils is
       return False;
    end Has_Duplicates;
 
+   ------------------
+   -- Strip_Prefix --
+   ------------------
+
+   function Strip_Prefix (Src, Prefix : String) return String is
+   begin
+      if AAA.Strings.Has_Prefix (Src, Prefix) then
+         return Src (Src'First + Prefix'Length .. Src'Last);
+      else
+         return Src;
+      end if;
+   end Strip_Prefix;
+
+   ------------------
+   -- Strip_Suffix --
+   ------------------
+
+   function Strip_Suffix (Src, Suffix : String) return String is
+   begin
+      if AAA.Strings.Has_Suffix (Src, Suffix) then
+         return Src (Src'First .. Src'Last - Suffix'Length);
+      else
+         return Src;
+      end if;
+   end Strip_Suffix;
+
 end Alire.Utils;
