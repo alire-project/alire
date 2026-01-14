@@ -6,6 +6,11 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Longer default solver timeout
+
+The solver timeout has been increased from 5 seconds to 10 seconds by default.
+This should avoid hitting it on complex dependencies on slower machines.
+
 ### Gentoo support
 
 Add Gentoo's Portage support via sudo, if the base package contains a section for gentoo, see libsdl2 for example, emerge will be called if the package is not installed.
