@@ -185,23 +185,6 @@ package body Alire is
       Err : UString;
       use type UString;
 
-      --  list of Gpr and Ada2022 keywords
-      Keywords : constant array (Positive range <>) of UString :=
-        (
-          +"abort", +"abs", +"abstract", +"accept", +"access", +"aliased",
-          +"all", +"and", +"array", +"begin", +"body", +"case", +"constant",
-          +"declare", +"delay", +"delta", +"digits", +"else", +"elsif", +"end",
-          +"entry", +"exception", +"exit", +"extends", +"external",
-          +"external_as_list", +"for", +"function", +"generic", +"goto",
-          +"interface", +"limited", +"loop", +"mod", +"new", +"not", +"null",
-          +"others", +"out", +"overriding", +"package", +"parallel", +"pragma",
-          +"private", +"procedure", +"project", +"protected", +"raise",
-          +"range", +"record", +"rem", +"renames", +"requeue", +"return",
-          +"reverse", +"select", +"separate", +"some", +"subtype",
-          +"synchronized", +"tagged", +"task", +"terminate", +"then", +"type",
-          +"until", +"use", +"when", +"while", +"with", +"xor"
-        );
-
    begin
       if S'Length < Min_Name_Length then
          Err := +"Identifier too short (Min " & Min_Name_Length'Img & ").";
@@ -211,7 +194,7 @@ package body Alire is
          Err := +"Identifiers must not begin with an underscore.";
       elsif (for some C of S => C not in Crate_Character) then
          Err := +"Identifiers must be lowercase ASCII alphanumerical.";
-      elsif (for some K of Keywords => S = K) then
+      elsif (for some K of Reserved_Keywords => K.all = S) then
          Err := +"Identifier cannot be reserved keyword.";
       end if;
 
