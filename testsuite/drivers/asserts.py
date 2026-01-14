@@ -139,7 +139,7 @@ def match_deploy_dir(crate : str, path_fragment : str):
 
 def assert_substring(target: str, text: str):
     """
-    Check that a string is contained in another string
+    Check that a target string is contained in a given text
     """
     assert target in text, \
         f"Missing expected string '{target}' in text:\n{text}"

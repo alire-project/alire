@@ -5,7 +5,8 @@ package Alire.OS_Lib.Download is
       return Outcome;
    --  Download a single file using `curl`
    --
-   --  Specifically, uses 'curl <URL> --location --silent --output <DEST>'
+   --  Specifically, uses
+   --  'curl <URL> --location --fail --silent --show-error --output <DEST>'
    --  (except that --silent may be replaced by --progress-bar depending on the
    --  log level).
    --

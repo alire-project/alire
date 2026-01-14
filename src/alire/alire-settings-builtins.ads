@@ -127,7 +127,7 @@ package Alire.Settings.Builtins is
    Origins_Archive_Download_Cmd : constant Builtin := New_Builtin
      (Key         => "origins.archive.download_cmd",
       Kind        => Stn_String,
-      Def         => "curl ${URL} -L -s -o ${DEST}",
+      Def         => "curl ${URL} -sSfL -o ${DEST}",
       Global_Only => True,
       Help        =>
         "The command used to download crates which are published as archives."
@@ -145,7 +145,8 @@ package Alire.Settings.Builtins is
       & " 'alr index --check' and 'alr publish --for-private-index'. If set to"
       & " '...', all origins are trusted. Note that this does not have any"
       & " effect when using 'alr publish' for submissions to the community"
-      & " index (which only permits the default list).");
+      & " index (which only permits the default list, due to vulnerabilities"
+      & " identified in Git's use of SHA1).");
 
    --  SOLVER
 
@@ -159,7 +160,7 @@ package Alire.Settings.Builtins is
    Solver_Timeout : constant Builtin := New_Builtin
      (Key    => "solver.timeout",
       Kind   => Stn_Int,
-      Def    => "5",
+      Def    => "10",
       Help   => "Seconds until solver first timeout (-1 to disable)");
 
    Solver_Grace_Period : constant Builtin := New_Builtin

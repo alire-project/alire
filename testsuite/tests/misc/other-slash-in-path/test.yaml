@@ -1,0 +1,6 @@
+driver: python-script
+control:
+    - [SKIP, "skip_unix", "Test is Unix-only"]
+    # Windows won't allow either '\' or '/' in filenames and directory names
+indexes:
+    compiler_only_index: {}

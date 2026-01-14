@@ -5,8 +5,10 @@ with Alire.Errors;
 with Alire.OS_Lib;
 with Alire.Publish;
 with Alire.URI;
+with Alire.Utils.Regex;
 with Alire.Utils.TTY;
 with Alire.Version;
+with Alire.VCSs.Git;
 
 with GNATCOLL.JSON.Utility;
 with GNATCOLL.Strings;
@@ -510,5 +512,28 @@ package body Alire.GitHub is
            Outcome_Failure ("could not find release " & Tag, Report => False);
       end if;
    end Check_Alire_Binary_Release;
+
+   -------------------------
+   -- Is_Possibly_A_Token --
+   -------------------------
+
+   function Is_Possibly_A_Token (S : String) return Boolean
+   is
+   begin
+      --  https://docs.github.com/en/authentication/
+      --  keeping-your-account-and-data-secure/about-authentication-to-github
+      --  ?utm_source=chatgpt.com#githubs-token-formats
+
+      --  Classic PAT, just a 40 hexa string
+      if S in VCSs.Git.Git_Commit then
+         return True;
+      end if;
+
+      --  Newer PATs that start with gh?_ or github_pat_. Probably not all of
+      --  those can work, this would require further digging.
+      return Utils.Regex.Fully_Matches
+        (Regex => "(github_pat|gh[pours])_[a-f0-9]+",
+         Text  => S);
+   end Is_Possibly_A_Token;
 
 end Alire.GitHub;

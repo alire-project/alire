@@ -87,9 +87,20 @@ def on_windows():
 def distribution():
 
     if 'ALIRE_TESTSUITE_DISABLE_DISTRO' in os.environ:
-        return 'DISTRO_UNKNOWN'
+        return 'DISTRIBUTION_UNKNOWN'
 
-    known_distro = ["debian", "ubuntu", "msys2", "arch", "rhel", "centos", "fedora"]
+    # TODO: extract this list from /src/alire/alire-platforms.ads to ensure consistency.
+    known_distro = [
+        "arch",
+        "centos",
+        "debian",
+        "fedora",
+        "gentoo",
+        "msys2",
+        "rhel",
+        "suse",
+        "ubuntu",
+    ]
 
     if os.path.exists("/etc/os-release"):
 
@@ -103,7 +114,7 @@ def distribution():
                         if split[0].lower() == key and val in known_distro:
                             return val
 
-        return 'DISTRO_UNKNOWN'
+        return 'DISTRIBUTION_UNKNOWN'
 
     elif on_macos():
         if shutil.which('brew'):
@@ -111,12 +122,12 @@ def distribution():
         elif shutil.which('port'):
             return 'MACPORTS'
         else:
-            return 'DISTRO_UNKNOWN'
+            return 'DISTRIBUTION_UNKNOWN'
 
     elif on_windows():
         return 'MSYS2'
     else:
-        return 'DISTRO_UNKNOWN'
+        return 'DISTRIBUTION_UNKNOWN'
 
 
 def path_separator():

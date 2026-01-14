@@ -231,7 +231,7 @@ package body Alire.Errors is
       Msg : UString;
       use UStrings;
    begin
-      --  Remove duplicates that may have creeped in when generating the final
+      --  Remove duplicates that may have crept in when generating the final
       --  stack:
 
       for I in Error_Stack.First_Index .. Error_Stack.Last_Index loop

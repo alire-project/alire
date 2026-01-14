@@ -27,6 +27,30 @@ $ alr run -a "list of 'quoted arguments'"
 
 The `origins.archive.download_cmd` setting also uses this quoting format.
 
+### Longer default solver timeout
+
+The solver timeout has been increased from 5 seconds to 10 seconds by default.
+This should avoid hitting it on complex dependencies on slower machines.
+
+### Replace `--no-color` with a new `--color[=WHEN]` switch
+
+The new global switch allows specifying `--color=always`, for instance when
+one wants to keep color output in a redirection. The default value is `auto`,
+which has the same behavior as before without the `--no-color` switch.
+
+Disabling colors is done with the `never` value. It also follows the
+`NO_COLOR` environment variable, like before, but the `always` value has
+priority.
+
+The `--no-color` switch will still work, but is deprecated and will be removed
+in the next version.
+
+### Gentoo support
+
+Add Gentoo's Portage support via sudo, if the base package contains a section
+for gentoo, see libsdl2 for example, emerge will be called if the package is
+not installed.
+
 ### New `--github` switch for `alr init` command
 
 PR [#1972](https://github.com/alire-project/alire/pull/1972)
@@ -102,9 +126,9 @@ easily. It takes several optional command line flags:
 
 - `--location=<path/to/alr>` to specify where to install the new binary
 - `--release=<version>` to download and install a specific version (provided
-  that Alire builds binaries for this version on your platform) 
+  that Alire builds binaries for this version on your platform)
 - `--nightly` to install a pre-release version of Alire.
-  
+
   **Disclaimer**: nightly versions may have incomplete features, unresolved
   bugs and may delete features or break compatibility without warning.
 

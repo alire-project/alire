@@ -24,6 +24,7 @@ with Alire.Solutions;
 with Alire.Toolchains;
 with Alire.Utils.Did_You_Mean;
 with Alire.Utils.Tables;
+with Alire.Utils.User_Input;
 
 with Alr.Commands.Action;
 with Alr.Commands.Build;
@@ -85,6 +86,9 @@ package body Alr.Commands is
    No_Color : aliased Boolean := False;
    --  Force-disable color output
 
+   type Color_Config_Values is (Always, Auto, Never);
+   Color_Config : aliased Color_Config_Values := Auto;
+
    No_TTY : aliased Boolean := False;
    --  Used to disable control characters in output
 
@@ -140,6 +144,33 @@ package body Alr.Commands is
                          .Append ("gnatcov"));
    end Set_Builtin_Aliases;
 
+   ----------------------
+   -- Set_Color_Config --
+   ----------------------
+
+   procedure Set_Color_Config (Switch, Value : String) is
+      Stripped_Value : constant String :=
+        AAA.Strings.To_Lower_Case (AAA.Strings.Trim (Value, '='));
+
+      function Suggest is new
+        Alire.Utils.Did_You_Mean.Enum_Suggestion
+          (Color_Config_Values,
+           Alire.Utils.Did_You_Mean.Lower_Case);
+   begin
+      if Stripped_Value = "always" then
+         Color_Config := Always;
+      elsif Stripped_Value = "never" then
+         Color_Config := Never;
+      elsif Stripped_Value /= "auto" and then Stripped_Value /= "" then
+         Trace.Warning
+           ("Unknown argument in "
+            & TTY.Terminal (Switch)
+            & Value
+            & ". Defaulting to 'auto'."
+            & Suggest (Stripped_Value));
+      end if;
+   end Set_Color_Config;
+
    -------------------------
    -- Set_Global_Switches --
    -------------------------
@@ -186,14 +217,24 @@ package body Alr.Commands is
                      Long_Switch => "--format?",
                      Argument    => "FORMAT",
                      Help        =>
-                       "Use structured output for tables (JSON, TOML, YAML)");
+                       "Use structured output for tables (JSON, TOML, YAML)."
+                       & " Implies -n and -q.");
+
+      if Alire.Version.Current < Features.No_Color_Deprecated then
+         Define_Switch (Config,
+                        No_Color'Access,
+                        Long_Switch => "--no-color",
+                        Help        => TTY.Error ("Deprecated")
+                        & ". See --color switch.");
+      end if;
 
       Define_Switch (Config,
-                     No_Color'Access,
-                     Long_Switch => "--no-color",
-                     Help        => "Disables colors in output."
-                       & " Default when NO_COLOR is defined in the"
-                       & " environment.");
+                     Set_Color_Config'Access,
+                     Long_Switch => "--color?",
+                     Help        => "Use colors in output"
+                       & " (always, auto, never). Default is never with"
+                       & " NO_COLOR.",
+                     Argument => "=WHEN");
 
       Define_Switch (Config,
                      No_TTY'Access,
@@ -219,6 +260,7 @@ package body Alr.Commands is
       Define_Switch (Config,
                      Log_Detail'Access,
                      "-v",
+                     "--verbose",
                      Help => "Be more verbose (use twice for extra detail)");
 
       Define_Switch (Config,
@@ -516,24 +558,30 @@ package body Alr.Commands is
               Alire.Utils.Did_You_Mean.Upper_Case);
 
       begin
-         if Structured_Format.all /= "unset" then
-            Alire.Utils.Tables.Structured_Output := True;
-         else
+         --  Do nothing if there is no `--format` argument (or in the unlikely
+         --  event `--formatunset` is passed)
+         if Structured_Format.all = "unset" then
             return;
          end if;
 
-         if Format_Str /= "" and then not Is_Valid (Format_Str) then
+         --  Enable structured output
+         Alire.Utils.Tables.Structured_Output := True;
+
+         --  Set the output format, defaulting to JSON if unspecified.
+         if Format_Str = "" then
+            Alire.Utils.Tables.Structured_Output_Format := JSON;
+         elsif Is_Valid (Format_Str) then
+            Alire.Utils.Tables.Structured_Output_Format
+              := Alire.Utils.Tables.Formats'Value (Format_Str);
+         else
             Reportaise_Wrong_Arguments
               ("Unknown argument in --format" & Structured_Format.all
                & "." & Suggest (Format_Str));
          end if;
 
-         if Format_Str /= "" then
-            Alire.Utils.Tables.Structured_Output_Format
-              := Alire.Utils.Tables.Formats'Value (Format_Str);
-         else
-            Alire.Utils.Tables.Structured_Output_Format := JSON;
-         end if;
+         --  Disable any additional messages/prompts which can render the
+         --  output unparsable
+         Alire.Utils.User_Input.Enable_Silent_Running;
       end Set_Structured_Output;
 
       use all type Alire.Platforms.Operating_Systems;
@@ -556,14 +604,32 @@ package body Alr.Commands is
       --  Use CLIC.TTY selection/detection of TTY
       Trace.Is_TTY := CLIC.TTY.Is_TTY;
 
-      if Alire.Platforms.Current.Operating_System /= Alire.Platforms.Windows
-        and then not No_Color
-        and then not No_TTY
-        and then Ada.Environment_Variables.Value ("TERM", "dumb") /= "dumb"
-        and then Ada.Environment_Variables.Value ("NO_COLOR", "") = ""
+      --  Forward the `--no-color` switch to the `Color_Config` value
+      if No_Color and then Color_Config = Auto then
+         Color_Config := Never;
+      end if;
+
+      if Color_Config = Always or else (
+          Alire.Platforms.Current.Operating_System /= Alire.Platforms.Windows
+           and then Color_Config /= Never
+           and then not No_TTY
+           and then Ada.Environment_Variables.Value ("TERM", "dumb") /= "dumb"
+           and then Ada.Environment_Variables.Value ("NO_COLOR", "") = ""
+         )
       then
-         CLIC.TTY.Enable_Color (Force => False);
+         CLIC.TTY.Enable_Color (Force => Color_Config = Always);
          --  This may still not enable color if TTY is detected to be incapable
+
+         if No_Color then
+            Trace.Warning
+              ("Deprecated option "
+               & TTY.Terminal ("--no-color")
+               & " passed along "
+               & TTY.Terminal ("--color=always")
+               & ". Only "
+               & TTY.Terminal ("--color")
+               & " will be followed.");
+         end if;
 
          Simple_Logging.ASCII_Only := False;
          --  Also use a fancier busy spinner

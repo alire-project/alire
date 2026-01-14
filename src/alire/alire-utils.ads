@@ -8,6 +8,10 @@ package Alire.Utils with Preelaborate is
    subtype Hexadecimal_Character is Character with
      Static_Predicate => Hexadecimal_Character in '0' .. '9' | 'a' .. 'f';
 
+   subtype Hexadecimal_String is String with
+     Predicate => (for all Char of Hexadecimal_String =>
+                     Char in Hexadecimal_Character);
+
    function Command_Line_Contains (Prefix : String) return Boolean;
    --  Say if any of the command-line arguments begins with Prefix. This is
    --  needed for string arguments, that even when not supplied are initialized

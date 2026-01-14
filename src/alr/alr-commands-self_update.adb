@@ -195,8 +195,7 @@ package body Alr.Commands.Self_Update is
       use Alire.OS_Lib.Operators;
 
       Dest_Bin   : constant Any_Path := Dest_Base / Alr_Bin;
-      Backup_Bin : constant Any_Path :=
-        Dest_Base / (Dirs.Temp_Name (Length => 16));
+      Backup_Bin : constant Any_Path := Dest_Base / Dirs.Temp_Name;
    begin
       if Dirs.Is_File (Dest_Bin) then
          Trace.Detail ("Backing up the `alr` binary");
@@ -252,7 +251,7 @@ package body Alr.Commands.Self_Update is
       use Alire.OS_Lib.Operators;
 
       Copied_Bin    : constant Any_Path :=
-        Dirs.Parent (Exe_Path) / (Dirs.Temp_Name (Length => 16) & Exe);
+        Dirs.Parent (Exe_Path) / (Dirs.Temp_Name & Exe);
       Relaunch_Args : Vector :=
         Empty_Vector
         & "/C"
@@ -421,7 +420,7 @@ package body Alr.Commands.Self_Update is
            Base_Url & Tag_String (T) & "/" & Archive;
 
          Tmp_Dir     : constant Any_Path :=
-           Plat.Folders.Temp / Dirs.Temp_Name (16);
+           Plat.Folders.Temp / Dirs.Temp_Name;
          Full_Path   : constant Any_Path := Tmp_Dir / Archive;
          Extract_Dir : constant Any_Path := Tmp_Dir / (Archive & ".extracted");
 

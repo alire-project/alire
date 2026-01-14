@@ -20,11 +20,12 @@ jobs:
       fail-fast: false
       matrix:
         tag: # Those are our ghcr.io/alire-project/docker/gnat:tag machines
+            - arch-rolling             # Test Arch compiler (closest to FSF?)
             - centos-stream-fsf-latest # Test unsupported package manager
             - debian-stable            # Test current stable Debian compiler
             - fedora-latest            # Test current Fedora compiler
+            - gentoo-rolling           # Test Gentoo compiler
             - ubuntu-lts               # Test current LTS Ubuntu compiler
-            - arch-rolling             # Test Arch compiler (closest to FSF?)
 
     steps:
     - name: Check out repository
@@ -47,7 +48,11 @@ jobs:
       with:
         image: ghcr.io/alire-project/docker/gnat:${{matrix.tag}}
         command: scripts/ci-github.sh use_external # Use external compiler already installed
-        params: -v${PWD}:/alire -w /alire
+        params: >
+          -v${PWD}:/alire
+          -w /alire
+          -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+        # Token required for self-update tests to not hit GH API rate limits
 
     - name: Upload logs (if failed)
       if: failure()
