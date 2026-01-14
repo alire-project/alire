@@ -11,6 +11,19 @@ stay on top of `alr` new features.
 The solver timeout has been increased from 5 seconds to 10 seconds by default.
 This should avoid hitting it on complex dependencies on slower machines.
 
+### Replace `--no-color` with a new `--color[=WHEN]` switch
+
+The new global switch allows specifying `--color=always`, for instance when
+one wants to keep color output in a redirection. The default value is `auto`,
+which has the same behavior as before without the `--no-color` switch.
+
+Disabling colors is done with the `never` value. It also follows the
+`NO_COLOR` environment variable, like before, but the `always` value has
+priority.
+
+The `--no-color` switch will still work, but is deprecated and will be removed
+in the next version.
+
 ### Gentoo support
 
 Add Gentoo's Portage support via sudo, if the base package contains a section for gentoo, see libsdl2 for example, emerge will be called if the package is not installed.
