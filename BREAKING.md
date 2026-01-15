@@ -11,6 +11,7 @@ may change.
 - manifest: array of licenses is no longer supported (SPDX expressions allow multiple licenses).
 - alr: setting a builtin without `--builtin` will emit a new warning.
 - alr: style checks are now disabled by default in all build profiles.
+- alr: quoting follows shell rules for `editor.cmd` and `alr run -a`
 
 ### We are here
 

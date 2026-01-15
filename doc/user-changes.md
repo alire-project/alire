@@ -6,6 +6,27 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Support for quoting in custom editors, quoting changes for `alr run`
+
+PR [#1993](https://github.com/alire-project/alire/pull/1993)
+
+The `alr edit --set-editor` command now supports double quotes, single quotes,
+and backslash escaping within `editor.cmd` using shell quoting rules.
+
+```shell
+$ alr config --set --global editor.cmd "command with 'quoted arguments'"
+```
+
+`${CRATE_ROOT}` and `${GPR_FILE}` are still replaced directly
+
+Arguments passed using `alr run -a arguments` now use the same quoting format.
+
+```shell
+$ alr run -a "list of 'quoted arguments'"
+```
+
+The `origins.archive.download_cmd` setting also uses this quoting format.
+
 ### Longer default solver timeout
 
 The solver timeout has been increased from 5 seconds to 10 seconds by default.
@@ -26,7 +47,9 @@ in the next version.
 
 ### Gentoo support
 
-Add Gentoo's Portage support via sudo, if the base package contains a section for gentoo, see libsdl2 for example, emerge will be called if the package is not installed.
+Add Gentoo's Portage support via sudo, if the base package contains a section
+for gentoo, see libsdl2 for example, emerge will be called if the package is
+not installed.
 
 ### New `--github` switch for `alr init` command
 
