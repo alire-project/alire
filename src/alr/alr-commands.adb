@@ -352,9 +352,14 @@ package body Alr.Commands is
    -- Forbids_Structured_Output --
    -------------------------------
 
-   procedure Forbids_Structured_Output (Cmd : in out Command'Class) is
+   procedure Forbids_Structured_Output (Cmd : in out Command'Class;
+                                        Custom_Msg : String := "")
+   is
    begin
       if Alire.Formatting.Structured_Output then
+         if Custom_Msg /= "" then
+            Trace.Error (Custom_Msg);
+         end if;
          Reportaise_Wrong_Arguments
            ("Command " & TTY.Terminal (Cmd.Name) & " does not support the "
             & TTY.Terminal ("--format") & " switch");
