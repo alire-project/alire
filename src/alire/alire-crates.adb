@@ -20,7 +20,8 @@ package body Alire.Crates is
       .Append ("Identifiers for crates and indexes must use "
         & "lowercase alphanumeric characters from the latin "
         & "alphabet. Underscores can also be used, except as"
-        & " the first character.")
+        & " the first character. Ada and GPR keywords are "
+        & "also not allowed")
       .New_Line
       .Append ("Length must be of" & Alire.Min_Name_Length'Img
                & " to" & Alire.Max_Name_Length'Img
