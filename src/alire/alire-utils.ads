@@ -122,9 +122,35 @@ package Alire.Utils with Preelaborate is
    --  Return the string Src without the given Suffix if it exists.
    --  Only removes the suffix once.
 
+   function Left_Pad
+     (Src : String; Length : Natural; Char : Character := ' ') return String;
+   --  Pad the string Src to the left with Char so that the resulting string
+   --  is at least Length characters.
+   --  Unlike Ada.Strings.Fixed.Tail, it does not truncate.
+
+   function Right_Pad
+     (Src : String; Length : Natural; Char : Character := ' ') return String;
+   --  Pad the string Src to the right with Char so that the resulting string
+   --  is at least Length characters.
+   --  Unlike Ada.Strings.Fixed.Head, it does not truncate.
+
+   function Format_Duration (D : Duration) return String;
+   --  Format (small) durations in a human readable way:
+   --  under one minute: <seconds>s<milliseconds>
+   --  under one hour:   <minutes>m<seconds>
+   --  above:            <hours>h<minutes>
+
 private
 
    function Quote (S : String) return String
    is ("""" & S & """");
+
+   function Left_Pad
+     (Src : String; Length : Natural; Char : Character := ' ') return String
+   is ((1 .. Length - Natural'Min (Src'Length, Length) => Char) & Src);
+
+   function Right_Pad
+     (Src : String; Length : Natural; Char : Character := ' ') return String
+   is (Src & (1 .. Length - Natural'Min (Src'Length, Length) => Char));
 
 end Alire.Utils;

@@ -31,7 +31,13 @@ def structure_tests(data):
     assert sorted(list(data.keys())) == ["summary", "tests"]
 
     assert sorted(list(data["tests"].keys())) == ["failing_test", "passing_test"]
+    print(data["tests"]["passing_test"])
+    assert sorted(list(data["tests"]["passing_test"].keys())) == [
+        "duration",
+        "status",
+    ]
     assert sorted(list(data["tests"]["failing_test"].keys())) == [
+        "duration",
         "output",
         "reason",
         "status",

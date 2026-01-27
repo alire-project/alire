@@ -1,3 +1,4 @@
+with Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Fixed;
@@ -27,9 +28,12 @@ package body Alire.Test_Runner is
 
       procedure Init;
       --  Initialize the driver
-      procedure Pass (Test_Name : String);
+      procedure Pass (Test_Name : String; Start_Time : Ada.Calendar.Time);
       --  Report a passing test with a message
-      procedure Fail (Test_Name, Reason : String; Output : AAA.Strings.Vector);
+      procedure Fail
+        (Test_Name, Reason : String;
+         Start_Time        : Ada.Calendar.Time;
+         Output            : AAA.Strings.Vector);
       --  Report a failing test with a message and its output
       function Total_Count return Natural;
       --  Get the total number of tests that have been run
@@ -75,11 +79,39 @@ package body Alire.Test_Runner is
          end if;
       end Init;
 
+      --------------------
+      -- Duration_Since --
+      --------------------
+
+      function Duration_Since (Start_Time : Ada.Calendar.Time) return Duration
+      is (Ada.Calendar."-" (Ada.Calendar.Clock, Start_Time));
+
+      ---------------------
+      -- Format_Elapsed --
+      ---------------------
+
+      function Format_Elapsed (Start_Time : Ada.Calendar.Time) return String
+      is (Utils.Left_Pad
+            (Utils.Format_Duration (Duration_Since (Start_Time)), 6));
+      --  pad to 6 characters to align common case of two digits seconds.
+      --  will not be aligned anymore if the duration is >=1000 hours
+      --  (feels like an acceptable tradeoff :P)
+
+      ------------------------
+      -- LML_Scalar_Elapsed --
+      ------------------------
+
+      function LML_Scalar_Elapsed
+        (Start_Time : Ada.Calendar.Time) return LML.Scalar
+      is (LML.Scalars.New_Real
+            (LML.Yeison.Reals.New_Real
+               (Long_Long_Float (Duration_Since (Start_Time)))));
+
       ----------
       -- Pass --
       ----------
 
-      procedure Pass (Test_Name : String) is
+      procedure Pass (Test_Name : String; Start_Time : Ada.Calendar.Time) is
       begin
          Passed := Passed + 1;
 
@@ -88,9 +120,17 @@ package body Alire.Test_Runner is
             Builder.Begin_Map;
             Builder.Insert (+TOML_Keys.Test_Report_Status);
             Builder.Append (LML.Scalars.New_Text ("pass"));
+            Builder.Insert (+TOML_Keys.Test_Report_Duration);
+            Builder.Append (LML_Scalar_Elapsed (Start_Time));
             Builder.End_Map;
          else
-            Trace.Always ("[ " & CLIC.TTY.OK ("PASS") & " ] " & Test_Name);
+            Trace.Always
+              ("[ "
+               & CLIC.TTY.OK ("PASS")
+               & " ] "
+               & CLIC.TTY.Dim (Format_Elapsed (Start_Time))
+               & " "
+               & Test_Name);
          end if;
       end Pass;
 
@@ -98,12 +138,14 @@ package body Alire.Test_Runner is
       -- Fail --
       ----------
 
-      procedure Fail (Test_Name, Reason : String; Output : AAA.Strings.Vector)
-      is
+      procedure Fail
+        (Test_Name, Reason : String;
+         Start_Time        : Ada.Calendar.Time;
+         Output            : AAA.Strings.Vector) is
       begin
          Failed := Failed + 1;
          if Structured_Output then
-            Builder.Insert (LML.Decode (Test_Name));
+            Builder.Insert (+Test_Name);
             Builder.Begin_Map;
             Builder.Insert (+TOML_Keys.Test_Report_Status);
             Builder.Append (LML.Scalars.New_Text ("fail"));
@@ -111,12 +153,16 @@ package body Alire.Test_Runner is
             Builder.Append (LML.Scalars.New_Text (+Reason));
             Builder.Insert (+TOML_Keys.Test_Report_Output);
             Builder.Append (LML.Scalars.New_Text (+Output.Flatten (New_Line)));
+            Builder.Insert (+TOML_Keys.Test_Report_Duration);
+            Builder.Append (LML_Scalar_Elapsed (Start_Time));
             Builder.End_Map;
          else
             Trace.Always
               ("[ "
                & CLIC.TTY.Error ("FAIL")
                & " ] "
+               & CLIC.TTY.Dim (Format_Elapsed (Start_Time))
+               & " "
                & Test_Name
                & " ("
                & Reason
@@ -290,18 +336,34 @@ package body Alire.Test_Runner is
       function Cmp (A, B : Process_Id) return Boolean
       is (Pid_To_Integer (A) < Pid_To_Integer (B));
 
-      package PID_Name_Maps is new
+      type Test_Info (N, M : Positive) is record
+         Name        : String (1 .. N);
+         --  Contains simple names without extension with prefix from src,
+         --  e.g.: crate_tests-some_test, nested/crate_tests-some_other_test
+         Output_File : String (1 .. M);
+         --  Output file for the test, will be loaded and printed if the test
+         --  fails
+         Start_Time  : Ada.Calendar.Time;
+      end record;
+
+      ------------
+      -- Create --
+      ------------
+
+      function Create (Name, Output_File : String) return Test_Info
+      is (N           => Name'Length,
+          M           => Output_File'Length,
+          Name        => Name,
+          Output_File => Output_File,
+          Start_Time  => Ada.Calendar.Clock);
+
+      package PID_Test_Maps is new
         Ada.Containers.Indefinite_Ordered_Maps
           (Process_Id,
-           String,
+           Test_Info,
            "<" => Cmp);
 
-      Running_Tests : PID_Name_Maps.Map;
-      --  Contains simple names without extension with prefix from src, e.g.:
-      --  crate_tests-some_test
-      --  nested/crate_tests-some_other_test
-
-      Output_Files : PID_Name_Maps.Map;
+      Running_Tests : PID_Test_Maps.Map;
 
       Crate_Prefix : constant String := Root_Prefix (Root);
 
@@ -338,10 +400,12 @@ package body Alire.Test_Runner is
             Driver.Fail
               (String (Test_Name),
                "failed to start",
+               Ada.Calendar.Clock,
                AAA.Strings.Empty_Vector);
          else
-            Running_Tests.Insert (Pid, Full_Print_Name);
-            Output_Files.Insert (Pid, Out_Filename);
+            Running_Tests.Insert
+              (Pid,
+               Create (Name => Full_Print_Name, Output_File => Out_Filename));
          end if;
       end Spawn_Test;
 
@@ -397,23 +461,22 @@ package body Alire.Test_Runner is
             exit;
          end if;
 
-         if Success then
-            Driver.Pass (Running_Tests (Pid));
-         else
-            declare
-               use Utils.Text_Files;
-               Output : File := Load (Output_Files (Pid), False);
-            begin
+         declare
+            Test : constant Test_Info := Running_Tests (Pid);
+         begin
+            if Success then
+               Driver.Pass (Test.Name, Test.Start_Time);
+            else
                Driver.Fail
-                 (Running_Tests (Pid),
+                 (Test.Name,
                   "non-zero return code",
-                  Output.Lines.all);
-            end;
-         end if;
+                  Test.Start_Time,
+                  Utils.Text_Files.Lines (Test.Output_File));
+            end if;
 
-         Delete_File (Output_Files (Pid), Success);
-         Running_Tests.Delete (Pid);
-         Output_Files.Delete (Pid);
+            Delete_File (Test.Output_File, Success);
+            Running_Tests.Delete (Pid);
+         end;
 
          if not Remaining.Is_Empty then
             --  start up a new test
@@ -503,9 +566,8 @@ package body Alire.Test_Runner is
       end if;
 
       if Tables.Structured_Output then
+         --  disable gprbuild output when doing structured formatting
          Alire_Early_Elaboration.Switch_Q := True;
-      --  disable gprbuild output when doing structured formatting
-
       end if;
 
       if Roots.Build (Root, AAA.Strings.Empty_Vector) then
