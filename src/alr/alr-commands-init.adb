@@ -190,6 +190,15 @@ package body Alr.Commands.Init is
          when others =>
             Reportaise_Wrong_Arguments ("'init' takes at most one argument");
       end case;
+
+      --  check if project name is already in use in dir
+      if Dirs.Exists (Dirs."/" (To_String (Info.Name), "alire.toml")) then
+         Reportaise_Wrong_Arguments
+           ("Project "
+            & To_String (Info.Name)
+            & "/alire.toml"
+            & " already exists");
+      end if;
    end Query_Crate_Name;
 
    ------------------------
