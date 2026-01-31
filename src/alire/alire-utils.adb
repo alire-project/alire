@@ -328,26 +328,26 @@ package body Alire.Utils is
       I, F : Long_Integer;
 
       --  account for rounding up
-      SECONDS_MAX : constant := 59.9995;
-      MINUTES_MAX : constant := 3599.5;
+      Seconds_Max : constant := 59.9995;
+      Minutes_Max : constant := 3599.5;
    begin
       if D < 0.0 then
          return "-" & Format_Duration (-D);
-      elsif D < SECONDS_MAX then
+      elsif D < Seconds_Max then
          I := Long_Integer (D * 1000.0);
          F := I mod 1000;
          I := I / 1000;
          return Trim (I'Image) & "s" & Left_Pad (Trim (F'Image), 3, '0');
       else
          I :=
-           (if D < MINUTES_MAX
+           (if D < Minutes_Max
             then Long_Integer (D)
             else Long_Integer (D / 60.0));
          F := I mod 60;
          I := I / 60;
          return
            Trim (I'Image)
-           & (if D < MINUTES_MAX then "m" else "h")
+           & (if D < Minutes_Max then "m" else "h")
            & Left_Pad (Trim (F'Image), 2, '0');
       end if;
    end Format_Duration;
