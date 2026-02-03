@@ -6,7 +6,7 @@ and the name printed keeps the prefix inside "src".
 from os import makedirs
 
 from drivers.alr import init_local_crate, run_alr
-from drivers.asserts import assert_substring
+from drivers.asserts import assert_substring, assert_match
 from drivers.helpers import mkcd
 
 # Initialize a local crate with a test
@@ -27,8 +27,8 @@ end Xxx_Tests.Nested_Test;
 # Run `alr test` and check that two PASS lines exist with the proper test names
 
 p = run_alr("test")
-assert_substring("[ PASS ] assertions_enabled", p.out)
-assert_substring("[ PASS ] nested/nested_test", p.out)
+assert_match(".*\[ PASS \] *\d+[smh]\d+ assertions_enabled.*", p.out)
+assert_match(".*\[ PASS \] *\d+[smh]\d+ nested/nested_test.*", p.out)
 
 # Create a third failing test to check its failure and output are reported
 
@@ -40,9 +40,9 @@ begin
 end Xxx_Tests.Failing_Test;
 """)
 
-p = run_alr("test", complain_on_error=False)
+p = run_alr("test", complain_on_error=False, quiet=False)
 # We check piecemeal as exact output varies between OSes (macOS in particular)
-assert_substring("[ FAIL ] nested/failing_test", p.out)
+assert_match(".*\[ FAIL \] *\d+[smh]\d+ nested/failing_test.*", p.out)
 assert_substring("raised PROGRAM_ERROR : xxx_tests-failing_test.adb", p.out)
 
 print("SUCCESS")

@@ -294,4 +294,62 @@ package body Alire.Utils is
       return False;
    end Has_Duplicates;
 
+   ------------------
+   -- Strip_Prefix --
+   ------------------
+
+   function Strip_Prefix (Src, Prefix : String) return String is
+   begin
+      if AAA.Strings.Has_Prefix (Src, Prefix) then
+         return Src (Src'First + Prefix'Length .. Src'Last);
+      else
+         return Src;
+      end if;
+   end Strip_Prefix;
+
+   ------------------
+   -- Strip_Suffix --
+   ------------------
+
+   function Strip_Suffix (Src, Suffix : String) return String is
+   begin
+      if AAA.Strings.Has_Suffix (Src, Suffix) then
+         return Src (Src'First .. Src'Last - Suffix'Length);
+      else
+         return Src;
+      end if;
+   end Strip_Suffix;
+
+   ---------------------
+   -- Format_Duration --
+   ---------------------
+
+   function Format_Duration (D : Duration) return String is
+      I, F : Long_Integer;
+
+      --  account for rounding up
+      Seconds_Max : constant := 59.9995;
+      Minutes_Max : constant := 3599.5;
+   begin
+      if D < 0.0 then
+         return "-" & Format_Duration (-D);
+      elsif D < Seconds_Max then
+         I := Long_Integer (D * 1000.0);
+         F := I mod 1000;
+         I := I / 1000;
+         return Trim (I'Image) & "s" & Left_Pad (Trim (F'Image), 3, '0');
+      else
+         I :=
+           (if D < Minutes_Max
+            then Long_Integer (D)
+            else Long_Integer (D / 60.0));
+         F := I mod 60;
+         I := I / 60;
+         return
+           Trim (I'Image)
+           & (if D < Minutes_Max then "m" else "h")
+           & Left_Pad (Trim (F'Image), 2, '0');
+      end if;
+   end Format_Duration;
+
 end Alire.Utils;

@@ -66,7 +66,6 @@ package body Alr.Commands.Test is
 
       All_Settings : Alire.Properties.Vector;
    begin
-      Cmd.Forbids_Structured_Output;
       Cmd.Requires_Workspace;
 
       All_Settings :=
@@ -126,7 +125,8 @@ package body Alr.Commands.Test is
          then
             declare
                function Get_Args return AAA.Strings.Vector
-               is (if All_Settings.Length = 1 then Args
+               is (if All_Settings.Length = 1
+                   then Args
                    else AAA.Strings.Empty_Vector);
                --  Only forward arguments if the runner is the only one.
 
@@ -136,8 +136,8 @@ package body Alr.Commands.Test is
                Guard : Dirs.Guard (Enter (Cmd.Root.Path / S.Directory))
                with Unreferenced;
 
-               Test_Root : Alire.Roots.Optional.Root
-                 := Alire.Roots.Optional.Detect_Root
+               Test_Root : Alire.Roots.Optional.Root :=
+                 Alire.Roots.Optional.Detect_Root
                    (Cmd.Root.Path / S.Directory);
             begin
                if All_Settings.Length > 1 then
@@ -150,7 +150,9 @@ package body Alr.Commands.Test is
                         Alire.Raise_Checked_Error
                           ("cannot detect a proper crate in test directory '"
                            & S.Directory
-                           & "' (error: " & Test_Root.Message & ")");
+                           & "' (error: "
+                           & Test_Root.Message
+                           & ")");
                      end if;
 
                      Failures :=
@@ -159,7 +161,9 @@ package body Alr.Commands.Test is
                           Get_Args,
                           (if Cmd.Jobs < 0 then S.Jobs else Cmd.Jobs));
 
-                  when External =>
+                  when External     =>
+                     Cmd.Forbids_Structured_Output
+                       ("Cannot output structured output for external runner");
                      Failures :=
                        Alire.OS_Lib.Subprocess.Unchecked_Spawn
                          (S.Runner.Command.First_Element,
@@ -170,7 +174,8 @@ package body Alr.Commands.Test is
 
                if Failures /= 0 then
                   Reportaise_Command_Failed
-                    (if S.Runner.Kind = Alire_Runner then ""
+                    (if S.Runner.Kind = Alire_Runner
+                     then ""
                      else "test failure");
                end if;
             end;

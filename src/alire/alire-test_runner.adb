@@ -1,69 +1,179 @@
+with Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Fixed;
 with Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 with System.Multiprocessors;
 
+with Alire_Early_Elaboration;
 with Alire.Directories; use Alire.Directories;
 with Alire.OS_Lib;
 with Alire.Paths;
+with Alire.TOML_Keys;
+with Alire.Utils.Tables;
 with Alire.Utils.Text_Files;
 with Alire.VFS;
 
 with CLIC.TTY;
-
 with Den.Walk;
+with LML.Output.Factory;
 
 package body Alire.Test_Runner is
-
    use Alire.Utils;
 
-   protected Driver is
-      --  Protected driver for synchronising stats and output
+   package Driver is
+      --  Driver for synchronising stats and output
 
-      procedure Pass (Msg : String);
+      procedure Init;
+      --  Initialize the driver
+      procedure Pass (Test_Name : String; Start_Time : Ada.Calendar.Time);
       --  Report a passing test with a message
-
-      procedure Fail (Msg : String; Output : AAA.Strings.Vector);
+      procedure Fail
+        (Test_Name, Reason : String;
+         Start_Time        : Ada.Calendar.Time;
+         Output            : AAA.Strings.Vector);
       --  Report a failing test with a message and its output
-
       function Total_Count return Natural;
       --  Get the total number of tests that have been run
-
       function Fail_Count return Natural;
       --  Get the number of failed tests
+      procedure Report;
+      --  Print a report of tests and finalize the driver
+
    private
+      subtype Builder_Type is LML.Output.Builder'Class;
+      type Builder_Access is access Builder_Type;
+
+      function Get_Builder (F : Tables.Formats) return Builder_Type
+      renames LML.Output.Factory.Get;
+      procedure Free_Builder is new
+        Ada.Unchecked_Deallocation (Builder_Type, Builder_Access);
+
+      function "+" (S : String) return LML.Text renames LML.Decode;
+
+      Structured_Output        : Boolean renames Tables.Structured_Output;
+      Structured_Output_Format : Tables.Formats renames
+        Tables.Structured_Output_Format;
+
       Passed : Natural := 0;
       Failed : Natural := 0;
+
+      Builder : Builder_Access := null;
    end Driver;
 
-   protected body Driver is
+   package body Driver is
+      ----------
+      -- Init --
+      ----------
+
+      procedure Init is
+      begin
+         if Structured_Output then
+            Builder :=
+              new Builder_Type'(Get_Builder (Structured_Output_Format));
+            Builder.Begin_Map;
+            Builder.Insert (+TOML_Keys.Test_Report_Cases);
+            Builder.Begin_Map;
+         end if;
+      end Init;
+
+      --------------------
+      -- Duration_Since --
+      --------------------
+
+      function Duration_Since (Start_Time : Ada.Calendar.Time) return Duration
+      is (Ada.Calendar."-" (Ada.Calendar.Clock, Start_Time));
+
+      ---------------------
+      -- Format_Elapsed --
+      ---------------------
+
+      function Format_Elapsed (Start_Time : Ada.Calendar.Time) return String
+      is (Utils.Left_Pad
+            (Utils.Format_Duration (Duration_Since (Start_Time)), 6));
+      --  pad to 6 characters to align common case of two digits seconds.
+      --  will not be aligned anymore if the duration is >=1000 hours
+      --  (feels like an acceptable tradeoff :P)
+
+      ------------------------
+      -- LML_Scalar_Elapsed --
+      ------------------------
+
+      function LML_Scalar_Elapsed
+        (Start_Time : Ada.Calendar.Time) return LML.Scalar
+      is (LML.Scalars.New_Real
+            (LML.Yeison.Reals.New_Real
+               (Long_Long_Float (Duration_Since (Start_Time)))));
 
       ----------
       -- Pass --
       ----------
 
-      procedure Pass (Msg : String) is
+      procedure Pass (Test_Name : String; Start_Time : Ada.Calendar.Time) is
       begin
          Passed := Passed + 1;
-         Trace.Always ("[ " & CLIC.TTY.OK ("PASS") & " ] " & Msg);
+
+         if Structured_Output then
+            Builder.Insert (+Test_Name);
+            Builder.Begin_Map;
+            Builder.Insert (+TOML_Keys.Test_Report_Status);
+            Builder.Append (LML.Scalars.New_Text ("pass"));
+            Builder.Insert (+TOML_Keys.Test_Report_Duration);
+            Builder.Append (LML_Scalar_Elapsed (Start_Time));
+            Builder.End_Map;
+         else
+            Trace.Always
+              ("[ "
+               & CLIC.TTY.OK ("PASS")
+               & " ] "
+               & CLIC.TTY.Dim (Format_Elapsed (Start_Time))
+               & " "
+               & Test_Name);
+         end if;
       end Pass;
 
       ----------
       -- Fail --
       ----------
 
-      procedure Fail (Msg : String; Output : AAA.Strings.Vector) is
+      procedure Fail
+        (Test_Name, Reason : String;
+         Start_Time        : Ada.Calendar.Time;
+         Output            : AAA.Strings.Vector) is
       begin
          Failed := Failed + 1;
-         Trace.Always ("[ " & CLIC.TTY.Error ("FAIL") & " ] " & Msg);
-         if not Output.Is_Empty then
-            Trace.Always ("*** Test output ***");
-            for L of Output loop
-               Trace.Always (CLIC.TTY.Dim (L));
-            end loop;
-            Trace.Always ("*** End Test output ***");
+         if Structured_Output then
+            Builder.Insert (+Test_Name);
+            Builder.Begin_Map;
+            Builder.Insert (+TOML_Keys.Test_Report_Status);
+            Builder.Append (LML.Scalars.New_Text ("fail"));
+            Builder.Insert (+TOML_Keys.Test_Report_Reason);
+            Builder.Append (LML.Scalars.New_Text (+Reason));
+            Builder.Insert (+TOML_Keys.Test_Report_Output);
+            Builder.Append (LML.Scalars.New_Text (+Output.Flatten (New_Line)));
+            Builder.Insert (+TOML_Keys.Test_Report_Duration);
+            Builder.Append (LML_Scalar_Elapsed (Start_Time));
+            Builder.End_Map;
+         else
+            Trace.Always
+              ("[ "
+               & CLIC.TTY.Error ("FAIL")
+               & " ] "
+               & CLIC.TTY.Dim (Format_Elapsed (Start_Time))
+               & " "
+               & Test_Name
+               & " ("
+               & Reason
+               & ")");
+            if not Output.Is_Empty then
+               Trace.Info ("*** Test output ***");
+               for L of Output loop
+                  Trace.Info (CLIC.TTY.Dim (L));
+               end loop;
+               Trace.Info ("*** End Test output ***");
+            end if;
          end if;
       end Fail;
 
@@ -80,6 +190,47 @@ package body Alire.Test_Runner is
 
       function Fail_Count return Natural
       is (Failed);
+
+      ------------
+      -- Report --
+      ------------
+
+      procedure Report is
+      begin
+         if Structured_Output then
+            --  finalize report according to format
+            Builder.End_Map;
+            Builder.Insert (+TOML_Keys.Test_Report_Summary);
+            Builder.Begin_Map;
+            Builder.Insert (+TOML_Keys.Test_Report_Total);
+            Builder.Append
+              (LML.Scalars.New_Int (Long_Long_Integer (Driver.Total_Count)));
+            Builder.Insert (+TOML_Keys.Test_Report_Failures);
+            Builder.Append
+              (LML.Scalars.New_Int (Long_Long_Integer (Driver.Fail_Count)));
+            Builder.End_Map;
+            Builder.End_Map;
+
+            if CLIC.TTY.Is_TTY and then not Alire_Early_Elaboration.Switch_Q
+            then
+               --  clear line to avoid messing up
+               --  progress display (on stderr)
+               Ada.Text_IO.Put
+                 (Ada.Text_IO.Standard_Error, (1 .. 8 => ' ', 9 => ASCII.CR));
+               Ada.Text_IO.Flush (Ada.Text_IO.Standard_Error);
+            end if;
+            Trace.Always (LML.Encode (Builder.To_Text));
+
+            Free_Builder (Builder);
+         else
+            --  put a summary of test runs
+            Trace.Always ("Total:" & Driver.Total_Count'Image & " tests");
+            Ada.Text_IO.Flush;
+            if Driver.Fail_Count /= 0 then
+               Trace.Error ("failed" & Driver.Fail_Count'Image & " tests");
+            end if;
+         end if;
+      end Report;
    end Driver;
 
    -----------------
@@ -90,32 +241,6 @@ package body Alire.Test_Runner is
    is (AAA.Strings.To_Lower_Case (This.Name.As_String) & "-");
 
    ------------------
-   -- Strip_Prefix --
-   ------------------
-
-   function Strip_Prefix (Src, Prefix : String) return String is
-   begin
-      if AAA.Strings.Has_Prefix (Src, Prefix) then
-         return Src (Src'First + Prefix'Length .. Src'Last);
-      else
-         return Src;
-      end if;
-   end Strip_Prefix;
-
-   ------------------
-   -- Strip_Suffix --
-   ------------------
-
-   function Strip_Suffix (Src, Suffix : String) return String is
-   begin
-      if AAA.Strings.Has_Suffix (Src, Suffix) then
-         return Src (Src'First .. Src'Last - Suffix'Length);
-      else
-         return Src;
-      end if;
-   end Strip_Suffix;
-
-   ------------------
    -- Display_Name --
    ------------------
 
@@ -123,8 +248,8 @@ package body Alire.Test_Runner is
      (Name : Portable_Path; Root_Prefix : String) return String
    is
       Simple      : constant String :=
-        Strip_Suffix
-          (Strip_Prefix (VFS.Simple_Name (Name), Root_Prefix), ".adb");
+        Utils.Strip_Suffix
+          (Utils.Strip_Prefix (VFS.Simple_Name (Name), Root_Prefix), ".adb");
       Parent_Name : constant Portable_Path := VFS.Parent (Name);
    begin
       if Parent_Name = "." then
@@ -145,7 +270,6 @@ package body Alire.Test_Runner is
    procedure Create_Gpr_List (Root : Roots.Root; List : Portable_Path_Vector)
      --  Create a gpr file containing a list of the test files
      --  (named `Test_Files`).
-
    is
 
       --------------------
@@ -212,18 +336,34 @@ package body Alire.Test_Runner is
       function Cmp (A, B : Process_Id) return Boolean
       is (Pid_To_Integer (A) < Pid_To_Integer (B));
 
-      package PID_Name_Maps is new
+      type Test_Info (N, M : Positive) is record
+         Name        : String (1 .. N);
+         --  Contains simple names without extension with prefix from src,
+         --  e.g.: crate_tests-some_test, nested/crate_tests-some_other_test
+         Output_File : String (1 .. M);
+         --  Output file for the test, will be loaded and printed if the test
+         --  fails
+         Start_Time  : Ada.Calendar.Time;
+      end record;
+
+      ------------
+      -- Create --
+      ------------
+
+      function Create (Name, Output_File : String) return Test_Info
+      is (N           => Name'Length,
+          M           => Output_File'Length,
+          Name        => Name,
+          Output_File => Output_File,
+          Start_Time  => Ada.Calendar.Clock);
+
+      package PID_Test_Maps is new
         Ada.Containers.Indefinite_Ordered_Maps
           (Process_Id,
-           String,
+           Test_Info,
            "<" => Cmp);
 
-      Running_Tests : PID_Name_Maps.Map;
-      --  Contains simple names without extension with prefix from src, e.g.:
-      --  crate_tests-some_test
-      --  nested/crate_tests-some_other_test
-
-      Output_Files : PID_Name_Maps.Map;
+      Running_Tests : PID_Test_Maps.Map;
 
       Crate_Prefix : constant String := Root_Prefix (Root);
 
@@ -233,7 +373,7 @@ package body Alire.Test_Runner is
 
       procedure Spawn_Test (Test_Name : Portable_Path) is
          Simple_Name : constant String :=
-           Strip_Suffix (VFS.Simple_Name (Test_Name), ".adb");
+           Utils.Strip_Suffix (VFS.Simple_Name (Test_Name), ".adb");
          --  Contains package name, e.g. crate_tests-my_test
 
          Full_Print_Name : constant String :=
@@ -243,7 +383,9 @@ package body Alire.Test_Runner is
          Exe_Name : constant String := Simple_Name & OS_Lib.Exe_Suffix;
 
          Out_Filename : constant String :=
-           Root.Working_Folder / ("output_" & Simple_Name & ".tmp");
+           Root.Working_Folder
+           / Paths.Temp_Folder_Inside_Working_Folder
+           / ("output_" & Simple_Name & ".tmp");
 
          Args : constant Argument_List := (1 .. 0 => <>);
          Pid  : Process_Id;
@@ -256,11 +398,14 @@ package body Alire.Test_Runner is
               Err_To_Out => True);
          if Pid = Invalid_Pid then
             Driver.Fail
-              (String (Test_Name) & " (failed to start!)",
+              (String (Test_Name),
+               "failed to start",
+               Ada.Calendar.Clock,
                AAA.Strings.Empty_Vector);
          else
-            Running_Tests.Insert (Pid, Full_Print_Name);
-            Output_Files.Insert (Pid, Out_Filename);
+            Running_Tests.Insert
+              (Pid,
+               Create (Name => Full_Print_Name, Output_File => Out_Filename));
          end if;
       end Spawn_Test;
 
@@ -296,9 +441,15 @@ package body Alire.Test_Runner is
          Remaining.Delete_Last;
       end loop;
 
+      Driver.Init;
+
       loop
-         if CLIC.TTY.Is_TTY then
+         if CLIC.TTY.Is_TTY and then not Alire_Early_Elaboration.Switch_Q then
             --  print completion percentage to indicate progress
+            --
+            --  we still do this in structured output mode, but we clear up
+            --  the line when printing the result.
+            --  this is disabled anyway when the alr output is redirected.
             Put_Progress;
          end if;
 
@@ -310,20 +461,22 @@ package body Alire.Test_Runner is
             exit;
          end if;
 
-         if Success then
-            Driver.Pass (Running_Tests (Pid));
-         else
-            declare
-               use Utils.Text_Files;
-               Output : File := Load (Output_Files (Pid), False);
-            begin
-               Driver.Fail (Running_Tests (Pid), Output.Lines.all);
-            end;
-         end if;
+         declare
+            Test : constant Test_Info := Running_Tests (Pid);
+         begin
+            if Success then
+               Driver.Pass (Test.Name, Test.Start_Time);
+            else
+               Driver.Fail
+                 (Test.Name,
+                  "non-zero return code",
+                  Test.Start_Time,
+                  Utils.Text_Files.Lines (Test.Output_File));
+            end if;
 
-         Delete_File (Output_Files (Pid), Success);
-         Running_Tests.Delete (Pid);
-         Output_Files.Delete (Pid);
+            Delete_File (Test.Output_File, Success);
+            Running_Tests.Delete (Pid);
+         end;
 
          if not Remaining.Is_Empty then
             --  start up a new test
@@ -350,7 +503,8 @@ package body Alire.Test_Runner is
          else Jobs);
       Path      : constant Absolute_Path := Root.Path;
 
-      Crate_Prefix : constant String := Root_Prefix (Root);
+      Crate_Prefix      : constant String := Root_Prefix (Root);
+      Original_Switch_Q : constant Boolean := Alire_Early_Elaboration.Switch_Q;
 
       Test_List : Portable_Path_Vector;
 
@@ -368,8 +522,8 @@ package body Alire.Test_Runner is
               Display_Name (Name, Crate_Prefix);
          begin
             return
-              (for some F of Filter
-               => AAA.Strings.Contains (Filtering_Name, F));
+              (for some F of Filter =>
+                 AAA.Strings.Contains (Filtering_Name, F));
          end;
       end Matches_Filter;
 
@@ -387,7 +541,7 @@ package body Alire.Test_Runner is
 
          Name : constant Portable_Path :=
            VFS.To_Portable
-             (Strip_Prefix
+             (Utils.Strip_Prefix
                 (This.Path,
                  Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator));
       begin
@@ -411,16 +565,19 @@ package body Alire.Test_Runner is
             Allowed  => Roots.Allow_All_Crates);
       end if;
 
-      Trace.Info ("Building tests");
+      if Tables.Structured_Output then
+         --  disable gprbuild output when doing structured formatting
+         Alire_Early_Elaboration.Switch_Q := True;
+      end if;
+
       if Roots.Build (Root, AAA.Strings.Empty_Vector) then
-         Trace.Info ("Running" & Test_List.Length'Image & " tests");
+         Alire_Early_Elaboration.Switch_Q := Original_Switch_Q;
+         --  restore original value of `-q` switch
+
+         Put_Info ("Running" & Test_List.Length'Image & " tests");
          Run_All_Tests (Root, Test_List, Job_Count);
 
-         Trace.Always ("Total:" & Driver.Total_Count'Image & " tests");
-         Ada.Text_IO.Flush;
-         if Driver.Fail_Count /= 0 then
-            Trace.Error ("failed" & Driver.Fail_Count'Image & " tests");
-         end if;
+         Driver.Report;
          return Driver.Fail_Count;
       else
          Trace.Error ("failed to build tests");
