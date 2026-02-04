@@ -53,6 +53,37 @@ package body Alr.Commands.Test is
       end if;
    end Execute_Legacy;
 
+   --------------------------
+   -- Find_Root_With_Tests --
+   --------------------------
+
+   function Find_Root_With_Tests
+     (Cmd : in out Command) return Alire.Roots.Optional.Root
+   is
+      use Alire;
+
+      Res : Roots.Optional.Root := Cmd.Optional_Root;
+   begin
+      while Res.Is_Valid
+        and then
+          Res.Value.Release.On_Platform_Properties
+            (Res.Value.Environment, Properties.Tests.Settings'Tag)
+            .Is_Empty
+      loop
+         Res := Roots.Optional.Search_Root (Dirs.Parent (Res.Value.Path));
+      end loop;
+      return Res;
+   exception
+      when E : Dirs.Adirs.Use_Error =>
+         pragma Unreferenced (E);
+         --  return failure if there is no parent directory left to search
+         return
+           Roots.Optional.Outcome_Failure
+             (Res.Value.Path & " has no parent directory",
+              Roots.Optional.Outside,
+              Report => False);
+   end Find_Root_With_Tests;
+
    -------------
    -- Execute --
    -------------
@@ -68,6 +99,19 @@ package body Alr.Commands.Test is
    begin
       Cmd.Requires_Workspace;
 
+      if Cmd.Legacy then
+         Execute_Legacy (Cmd.Root);
+         return;
+      end if;
+
+      declare
+         Test_Root : Alire.Roots.Optional.Root := Cmd.Find_Root_With_Tests;
+      begin
+         if Test_Root.Is_Valid then
+            Cmd.Set (Test_Root.Value);
+         end if;
+      end;
+
       All_Settings :=
         Cmd.Root.Release.On_Platform_Properties
           (Cmd.Root.Environment, Settings'Tag);
@@ -75,6 +119,7 @@ package body Alr.Commands.Test is
       if All_Settings.Is_Empty then
          Trace.Warning ("no test runner defined, running legacy actions");
          Execute_Legacy (Cmd.Root);
+         return;
       end if;
 
       --  id selection logic
@@ -240,6 +285,15 @@ package body Alr.Commands.Test is
          "--id=",
          "Select a specific test runner by id",
          Argument => "<id>");
+
+      Define_Switch
+        (Config,
+         Cmd.Legacy'Access,
+         "",
+         "--legacy",
+         CLIC.TTY.Error ("Deprecated")
+         & ". Force executing the legacy test actions",
+         Value => True);
    end Setup_Switches;
 
 end Alr.Commands.Test;
