@@ -18,6 +18,30 @@ with Simple_Logging.Filtering;
 
 package body Alire_Early_Elaboration is
 
+   Real_Starting_Dir : constant Alire.Absolute_Path :=
+     Ada.Directories.Current_Directory;
+
+   Effective_Starting_Dir : access Alire.Absolute_Path :=
+     new Alire.Absolute_Path'(Ada.Directories.Current_Directory);
+
+   ----------------------
+   -- Get_Starting_Dir --
+   ----------------------
+
+   function Get_Starting_Dir return Alire.Absolute_Path is
+   begin
+      return Real_Starting_Dir;
+   end Get_Starting_Dir;
+
+   -----------------------
+   -- Get_Effective_Dir --
+   -----------------------
+
+   function Get_Effective_Dir return Alire.Absolute_Path is
+   begin
+      return Effective_Starting_Dir.all;
+   end Get_Effective_Dir;
+
    -----------------
    -- Early_Error --
    -----------------
@@ -106,6 +130,28 @@ package body Alire_Early_Elaboration is
             end if;
          end Set_Config_Path;
 
+         -------------------
+         -- Set_Chdir_Dir --
+         -------------------
+
+         procedure Set_Chdir_Dir (Switch, Path : String) is
+            package Adirs renames Ada.Directories;
+         begin
+            if Path = "" then
+               Early_Error ("Switch " & Switch & " requires argument.");
+            elsif not Adirs.Exists (Path) then
+               Early_Error
+                 ("Invalid non-existing directory for --chdir: " & Path);
+            elsif Adirs.Kind (Path) not in Adirs.Directory then
+               Early_Error
+                 ("Given --chdir path is not a directory: " & Path);
+            else
+               Effective_Starting_Dir :=
+                 new Alire.Any_Path'(Adirs.Full_Name (Path));
+               Adirs.Set_Directory (Path);
+            end if;
+         end Set_Chdir_Dir;
+
          -----------------------------
          -- Check_Config_Deprecated --
          -----------------------------
@@ -145,8 +191,8 @@ package body Alire_Early_Elaboration is
          -----------------------
          -- Check_Long_Switch --
          -----------------------
-         --  Take care manually of the -debug[ARG] optional ARG, since the
-         --  simple Getopt below doesn't for us:
+         --  Take care manually of long switches since the simple Getopt below
+         --  doesn't do it for us:
          procedure Check_Long_Switch (Switch : String) is
             use AAA.Strings;
          begin
@@ -155,6 +201,8 @@ package body Alire_Early_Elaboration is
             elsif Has_Prefix (Switch, "--debug") then
                Switch_D := True;
                Add_Scopes (Tail (Switch, "="));
+            elsif Has_Prefix (Switch, "--chdir") then
+               Set_Chdir_Dir (Switch, Tail (Switch, "="));
             elsif Has_Prefix (Switch, "--config") then
                Check_Config_Deprecated;
                Check_Settings_Seen;
@@ -171,13 +219,18 @@ package body Alire_Early_Elaboration is
          loop
             --  We use the simpler Getopt form to avoid built-in help and other
             --  shenanigans.
-            Option := Getopt ("* d? --debug? q v c= --config= s= --settings=");
+            Option := Getopt
+              ("* d? --debug? q v c= --config= s= --settings= C= --chdir=");
             case Option is
                when ASCII.NUL =>
                   exit;
                when '*' =>
                   if not Subcommand_Seen then
                      Check_Long_Switch (Full_Switch);
+                  end if;
+               when 'C' =>
+                  if not Subcommand_Seen then
+                     Set_Chdir_Dir ("-C", Parameter);
                   end if;
                when 'c' | 's' =>
                   if not Subcommand_Seen then
