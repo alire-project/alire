@@ -595,11 +595,19 @@ package body Alr.Commands is
 
       procedure Check_Starting_Dir is
          use Alire.Directories.Operators;
+         package Adirs renames Ada.Directories;
+
+         ------------------------
+         -- Effective_Dir_Late --
+         ------------------------
+
          function Effective_Dir_Late return Alire.Absolute_Path
          is (if Alire.Check_Absolute_Path (Command_Line_Chdir_Target_Path.all)
-             then Command_Line_Chdir_Target_Path.all
-             else Alire_Early_Elaboration.Get_Starting_Dir
-                  / Command_Line_Chdir_Target_Path.all);
+             then Adirs.Full_Name (Command_Line_Chdir_Target_Path.all)
+             else Adirs.Full_Name (Alire_Early_Elaboration.Get_Starting_Dir
+                                   / Command_Line_Chdir_Target_Path.all));
+         --  Take full name to ensure . and .. are resolved
+
       begin
          if Command_Line_Chdir_Target_Path /= null and then
             Command_Line_Chdir_Target_Path.all /= ""

@@ -142,7 +142,8 @@ package body Alire_Early_Elaboration is
                Early_Error ("Switch " & Switch & " requires argument.");
             elsif not Adirs.Exists (Path) then
                Early_Error
-                 ("Invalid non-existing directory for --chdir: " & Path);
+                 ("switch " & Switch & ": directory """ & Path
+                  & """ does not exist.");
             elsif Adirs.Kind (Path) not in Adirs.Directory then
                Early_Error
                  ("Given --chdir path is not a directory: " & Path);
