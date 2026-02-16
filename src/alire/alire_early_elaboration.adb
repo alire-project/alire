@@ -1,5 +1,6 @@
 with AAA.Strings;
 
+with Ada.Command_Line;
 with Ada.Directories;
 
 with Alire.Features;
@@ -316,11 +317,26 @@ package body Alire_Early_Elaboration is
    end TTY_Detection;
 
 begin
+   --  Custom log level for this earliest of messages
+   if (for some I in 1 .. Ada.Command_Line.Argument_Count =>
+         Ada.Command_Line.Argument (I) = "-vv")
+     or else
+      (for some I in 1 .. Ada.Command_Line.Argument_Count =>
+         Ada.Command_Line.Argument (I) = "-v" and then
+         (for some J in 1 .. Ada.Command_Line.Argument_Count =>
+            Ada.Command_Line.Argument (J) = "-v" and then J /= I))
+   then
+      Simple_Logging.Always ("-->> Early elaboration started");
+   end if;
+
    Simple_Logging.Stdout_Level := Simple_Logging.Info;
    --  Display warnings and errors to stderr
 
    TTY_Detection;
+
    Early_Switch_Detection;
 
    r.Init; -- Register all embedded resources
+
+   Simple_Logging.Debug ("Early elaboration finished");
 end Alire_Early_Elaboration;

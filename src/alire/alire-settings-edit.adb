@@ -190,6 +190,7 @@ package body Alire.Settings.Edit is
 
       for Lvl in Level loop
          if Lvl /= Local or else Directories.Detect_Root_Path /= "" then
+            Trace.Debug ("Loading settings from " & Filepath (Lvl));
             CLIC.Config.Load.From_TOML (C      => DB_Instance,
                                         Origin => Lvl'Img,
                                         Path   => Filepath (Lvl),
