@@ -1,8 +1,11 @@
 package body Alire.Reserved is
 
+   type String_Access is access constant String;
+   type String_Array is array (Positive range <>) of String_Access;
+
    --  list of Ada2022 and GPR keywords
-   Reserved_Keywords      : constant array (Positive range <>) of
-     access constant String :=
+   Reserved_Keywords      : constant access String_Array :=
+                              new String_Array'
        (
         new String'("abort"),
         new String'("abs"),
@@ -89,6 +92,6 @@ package body Alire.Reserved is
    ----------------
 
    function Is_Keyword (S : String) return Boolean
-   is (for some K of Reserved_Keywords => S = K.all);
+   is (for some K of Reserved_Keywords.all => S = K.all);
 
 end Alire.Reserved;
