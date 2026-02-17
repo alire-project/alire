@@ -22,8 +22,8 @@ package body Alire_Early_Elaboration is
    Real_Starting_Dir : constant Alire.Absolute_Path :=
      Ada.Directories.Current_Directory;
 
-   Effective_Starting_Dir : access Alire.Absolute_Path :=
-     new Alire.Absolute_Path'(Ada.Directories.Current_Directory);
+   Effective_Starting_Dir : Alire.Unbounded_Absolute_Path :=
+     Alire."+" (Ada.Directories.Current_Directory);
 
    ----------------------
    -- Get_Starting_Dir --
@@ -39,8 +39,9 @@ package body Alire_Early_Elaboration is
    -----------------------
 
    function Get_Effective_Dir return Alire.Absolute_Path is
+      use Alire;
    begin
-      return Effective_Starting_Dir.all;
+      return +Effective_Starting_Dir;
    end Get_Effective_Dir;
 
    -----------------
@@ -137,6 +138,7 @@ package body Alire_Early_Elaboration is
 
          procedure Set_Chdir_Dir (Switch, Path : String) is
             package Adirs renames Ada.Directories;
+            use Alire;
          begin
             if Path = "" then
                Early_Error ("Switch " & Switch & " requires argument.");
@@ -148,8 +150,7 @@ package body Alire_Early_Elaboration is
                Early_Error
                  ("Given --chdir path is not a directory: " & Path);
             else
-               Effective_Starting_Dir :=
-                 new Alire.Any_Path'(Adirs.Full_Name (Path));
+               Effective_Starting_Dir := +Adirs.Full_Name (Path);
                Adirs.Set_Directory (Path);
             end if;
          end Set_Chdir_Dir;
