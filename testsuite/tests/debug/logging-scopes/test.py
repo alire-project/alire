@@ -18,11 +18,13 @@ assert_eq('Filtering mode: BLACKLIST\n'
 
 # Check empty whitelist lets nothing through
 p = run_alr('-vv', '-d+', 'dev', quiet=False)
-assert_eq('Filtering mode: WHITELIST', p.out.strip())
+assert_eq('-->> Early elaboration started\n'
+          'Filtering mode: WHITELIST', p.out.strip())
 
 # Check whitelisting
 p = run_alr('-vv', '-d+dev', 'dev', '--filter', quiet=False)
-assert_match('Filtering mode: WHITELIST\n'
+assert_match('-->> Early elaboration started\n'
+             'Filtering mode: WHITELIST\n'
              'Filtering substring: dev\n'
              '\[Alr.Commands.Dev.Execute\] \(alr-commands-dev.adb:[0-9]* \)'
              ' -->> In dev --filter',
@@ -30,14 +32,16 @@ assert_match('Filtering mode: WHITELIST\n'
 
 # Check whitelisting with exception
 p = run_alr('-vv', '-d+dev-exec', 'dev', '--filter', quiet=False)
-assert_eq('Filtering mode: WHITELIST\n'
+assert_eq('-->> Early elaboration started\n'
+          'Filtering mode: WHITELIST\n'
           'Filtering substring: dev\n'
           'Filtering exception: exec',
           p.out.strip())
 
 # Check blacklisting with exception
 p = run_alr('-vv', '-d-a+main', 'dev', quiet=False)
-assert_match('Filtering mode: BLACKLIST\n'
+assert_match('-->> Early elaboration started\n'
+             'Filtering mode: BLACKLIST\n'
              'Filtering substring: a\n'
              'Filtering exception: main\n'
              '\[Alr.Main                \] \(alr-main.adb:.*',

@@ -542,6 +542,45 @@ package body Alr.Commands is
          Alire.Utils.User_Input.Enable_Silent_Running;
       end Set_Structured_Output;
 
+      ------------------------
+      -- Check_Starting_Dir --
+      ------------------------
+
+      procedure Check_Starting_Dir is
+         use Alire.Directories.Operators;
+         package Adirs renames Ada.Directories;
+
+         ------------------------
+         -- Effective_Dir_Late --
+         ------------------------
+
+         function Effective_Dir_Late return Alire.Absolute_Path
+         is (if Alire.Check_Absolute_Path (Command_Line_Chdir_Target_Path.all)
+             then Adirs.Full_Name (Command_Line_Chdir_Target_Path.all)
+             else Adirs.Full_Name (Alire_Early_Elaboration.Get_Starting_Dir
+                                   / Command_Line_Chdir_Target_Path.all));
+         --  Take full name to ensure . and .. are resolved
+
+      begin
+         if Command_Line_Chdir_Target_Path /= null and then
+            Command_Line_Chdir_Target_Path.all /= ""
+         then
+            --  Just verify that early processing caught it
+            Alire.Assert
+              (Alire_Early_Elaboration.Get_Effective_Dir = Effective_Dir_Late
+               and then
+                 Alire_Early_Elaboration.Get_Effective_Dir =
+                 Alire.Directories.Current,
+               "Unexpected mismatch of chdir paths:"
+               & Alire.New_Line
+               & "Early: " & Alire_Early_Elaboration.Get_Effective_Dir
+               & Alire.New_Line
+               & "Late : " & Effective_Dir_Late
+               & Alire.New_Line
+               & "Current: " & Alire.Directories.Current);
+         end if;
+      end Check_Starting_Dir;
+
       use all type Alire.Platforms.Operating_Systems;
    begin
 
@@ -584,7 +623,7 @@ package body Alr.Commands is
       if Command_Line_Config_Path /= null and then
          Command_Line_Config_Path.all /= ""
       then
-         --  Just verify that early processing catched it
+         --  Just verify that early processing caught it
          pragma Assert
            (Alire.Settings.Edit.Path =
               Ada.Directories.Full_Name (Command_Line_Config_Path.all),
@@ -595,13 +634,14 @@ package body Alr.Commands is
             & "Late : " & Command_Line_Config_Path.all);
       end if;
 
-      --  chdir(2) if necessary.
+      --  Note: -C/--chdir is handled during early elaboration, before settings
+      --  are loaded, so that initializations happening during elaboration that
+      --  depend on the working directory use the new location. Ideally, there
+      --  should be no implicit dependencies on the current directory, but
+      --  that's a much more involved fix. Here we just double-check we are at
+      --  the directory passed (if any)
 
-      if Command_Line_Chdir_Target_Path /= null and then
-         Command_Line_Chdir_Target_Path.all /= ""
-      then
-         Ada.Directories.Set_Directory (Command_Line_Chdir_Target_Path.all);
-      end if;
+      Check_Starting_Dir;
 
       Set_Structured_Output;
 
