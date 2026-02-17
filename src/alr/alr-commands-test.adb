@@ -29,10 +29,9 @@ package body Alr.Commands.Test is
            (Root.Environment,
             (Alire.Properties.Actions.Test => True, others => False))
            .Is_Empty
-        and then not Alire.Roots.Build
-                       (Root,
-                        AAA.Strings.Empty_Vector,
-                        Saved_Profiles => False)
+        and then
+          not Alire.Roots.Build
+                (Root, AAA.Strings.Empty_Vector, Saved_Profiles => False)
       then
          Success := 1;
       else
@@ -100,6 +99,8 @@ package body Alr.Commands.Test is
       Cmd.Requires_Workspace;
 
       if Cmd.Legacy then
+         Cmd.Forbids_Structured_Output
+           ("Cannot use structured output with legacy actions");
          Execute_Legacy (Cmd.Root);
          return;
       end if;
@@ -118,6 +119,8 @@ package body Alr.Commands.Test is
 
       if All_Settings.Is_Empty then
          Trace.Warning ("no test runner defined, running legacy actions");
+         Cmd.Forbids_Structured_Output
+           ("Cannot use structured output with legacy actions");
          Execute_Legacy (Cmd.Root);
          return;
       end if;
@@ -158,10 +161,18 @@ package body Alr.Commands.Test is
         and then Settings (All_Settings.First_Element).Runner.Kind = External
         and then Cmd.Jobs >= 0
       then
-         Trace.Warning
-           ("the --jobs flag is not forwarded to external commands. If you "
-            & "intended to pass it to an external test runner, put it after "
-            & """--"" in the command line.");
+         if Cmd.Jobs >= 0 then
+            Trace.Warning
+              ("the --jobs flag is not forwarded to external commands. If you "
+               & "intended to pass it to an external test runner, put it after"
+               & " ""--"" in the command line.");
+         end if;
+         if Cmd.List then
+            Trace.Warning
+              ("the --list flag is not forwarded to external commands. If you "
+               & "intended to pass it to an external test runner, put it after"
+               & " ""--"" in the command line.");
+         end if;
       end if;
 
       for Test_Setting of All_Settings loop
@@ -198,6 +209,12 @@ package body Alr.Commands.Test is
                            & "' (error: "
                            & Test_Root.Message
                            & ")");
+                     end if;
+
+                     if Cmd.List then
+                        Alire.Test_Runner.Show_List
+                          (Test_Root.Value, Get_Args);
+                        OS_Lib.Bailout;
                      end if;
 
                      Failures :=
@@ -293,6 +310,14 @@ package body Alr.Commands.Test is
          "--legacy",
          CLIC.TTY.Error ("Deprecated")
          & ". Force executing the legacy test actions",
+         Value => True);
+
+      Define_Switch
+        (Config,
+         Cmd.List'Access,
+         "",
+         "--list",
+         "Show a list of matching tests without running them",
          Value => True);
    end Setup_Switches;
 
