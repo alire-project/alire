@@ -411,6 +411,18 @@ package body Alr.Commands.Init is
 
       Query_Crate_Name (Args, Info);
 
+      --  check if project name is already in use in dir
+      if Cmd.In_Place then
+         if Dirs.Exists ("alire.toml") then
+            Reportaise_Wrong_Arguments ("alire.toml already exists");
+         end if;
+      else
+         if Dirs.Exists (Dirs."/" (To_String (Info.Name), "alire.toml")) then
+            Reportaise_Wrong_Arguments
+              (To_String (Info.Name) & "/alire.toml already exists");
+         end if;
+      end if;
+
       if Cmd.Bin then
          Info.Is_Library := False;
       elsif Cmd.Lib then
