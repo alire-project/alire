@@ -2,6 +2,7 @@ with AAA.Debug;
 
 with Alire.Environment;
 with Alire.Errors;
+with Alire.Reserved;
 with Alire.Warnings;
 with Alire.Utils.TTY;
 
@@ -194,7 +195,7 @@ package body Alire is
          Err := +"Identifiers must not begin with an underscore.";
       elsif (for some C of S => C not in Crate_Character) then
          Err := +"Identifiers must be lowercase ASCII alphanumerical.";
-      elsif (for some K of Reserved_Keywords => K.all = S) then
+      elsif Reserved.Is_Keyword (S) then
          Err := +"Identifier cannot be reserved keyword.";
       end if;
 
