@@ -26,8 +26,8 @@ import subprocess
 # Check gcc version. The first line of gcc --version looks like this:
 # gcc (Ubuntu 13.1.0-2ubuntu1~22.04) 13.1.0
 gcc_version = subprocess.check_output(["gcc", "--version"], text=True).splitlines()[0]
-# Use a regex to extract the major version number
-match = re.match(r".*gcc.*\s+(\d+)\.\d+\.\d+", gcc_version)
+# Use a regex to extract the major version number, allowing an optional patch
+match = re.match(r".*gcc.*\s+(\d+)\.\d+(?:\.\d+)?", gcc_version)
 if match and int(match.group(1)) == 13:
     print("SKIP: test on gcc 13 triggers known bug")
     exit(0)
