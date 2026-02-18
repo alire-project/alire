@@ -71,7 +71,7 @@ package body Alr.Commands.Run is
          if Declared.Is_Empty then
             Put_Line
               ("Crate " & Name &
-                 " does not explicitly declares to build any executable");
+                 " does not explicitly declare to build any executable");
 
             if Candidates.Is_Empty then
                Put_Line ("No default executable has been automatically " &

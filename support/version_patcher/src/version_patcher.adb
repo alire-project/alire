@@ -28,7 +28,16 @@ procedure Version_Patcher is
       F : Ada.Text_IO.File_Type;
       O : Ada.Text_IO.File_Type;
       use Ada.Text_IO;
-      Hit : Boolean := False;
+
+      type Hit_Kind is (
+         Replaced,
+         --  A hit was recorded and a replacement is needed
+         Identical,
+         --  A hit was recorded but no replacement is necessary
+         None
+         --  No hit recorded
+      );
+      Hit : Hit_Kind := None;
    begin
       Open (F, In_File, Filename);
       Create (O, Out_File, Filename & ".new");
@@ -36,7 +45,7 @@ procedure Version_Patcher is
          declare
             Line : constant String := Get_Line (F);
          begin
-            if not Hit and then
+            if Hit = None and then
               (for some I in Line'Range =>
                  I + Trigger'Length - 1 <= Line'Last and then
                Line (I .. I + Trigger'Length - 1) = Trigger)
@@ -68,7 +77,12 @@ procedure Version_Patcher is
                      Line (Line'First .. Ini)
                      & Replacement
                      & Line (Fin .. Line'Last));
-                  Hit := True;
+
+                  if Line (Ini + 1 .. Fin - 1) = Replacement then
+                     Hit := Identical;
+                  else
+                     Hit := Replaced;
+                  end if;
                end;
             else
                Put_Line (O, Line);
@@ -79,13 +93,18 @@ procedure Version_Patcher is
       Close (F);
       Close (O);
 
-      if not Hit then
-         raise Constraint_Error
-           with "Trigger not found in file: " & Trigger;
-      end if;
+      case Hit is
+         when None =>
+            raise Constraint_Error
+              with "Trigger not found in file: " & Trigger;
 
-      Ada.Directories.Delete_File (Filename);
-      Ada.Directories.Rename (Filename & ".new", Filename);
+         when Replaced =>
+            Ada.Directories.Delete_File (Filename);
+            Ada.Directories.Rename (Filename & ".new", Filename);
+
+         when Identical =>
+            Ada.Directories.Delete_File (Filename & ".new");
+      end case;
 
    end Replace_Info;
 

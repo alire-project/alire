@@ -23,6 +23,7 @@ with Alire.Solutions;
 with Alire.Toolchains;
 with Alire.Utils.Did_You_Mean;
 with Alire.Utils.Tables;
+with Alire.Utils.User_Input;
 
 with Alr.Commands.Action;
 with Alr.Commands.Build;
@@ -184,7 +185,8 @@ package body Alr.Commands is
                      Long_Switch => "--format?",
                      Argument    => "FORMAT",
                      Help        =>
-                       "Use structured output for tables (JSON, TOML)");
+                       "Use structured output for tables (JSON, TOML, YAML)."
+                       & " Implies -n and -q.");
 
       Define_Switch (Config,
                      No_Color'Access,
@@ -514,25 +516,70 @@ package body Alr.Commands is
               Alire.Utils.Did_You_Mean.Upper_Case);
 
       begin
-         if Structured_Format.all /= "unset" then
-            Alire.Utils.Tables.Structured_Output := True;
-         else
+         --  Do nothing if there is no `--format` argument (or in the unlikely
+         --  event `--formatunset` is passed)
+         if Structured_Format.all = "unset" then
             return;
          end if;
 
-         if Format_Str /= "" and then not Is_Valid (Format_Str) then
+         --  Enable structured output
+         Alire.Utils.Tables.Structured_Output := True;
+
+         --  Set the output format, defaulting to JSON if unspecified.
+         if Format_Str = "" then
+            Alire.Utils.Tables.Structured_Output_Format := JSON;
+         elsif Is_Valid (Format_Str) then
+            Alire.Utils.Tables.Structured_Output_Format
+              := Alire.Utils.Tables.Formats'Value (Format_Str);
+         else
             Reportaise_Wrong_Arguments
               ("Unknown argument in --format" & Structured_Format.all
                & "." & Suggest (Format_Str));
          end if;
 
-         if Format_Str /= "" then
-            Alire.Utils.Tables.Structured_Output_Format
-              := Alire.Utils.Tables.Formats'Value (Format_Str);
-         else
-            Alire.Utils.Tables.Structured_Output_Format := JSON;
-         end if;
+         --  Disable any additional messages/prompts which can render the
+         --  output unparsable
+         Alire.Utils.User_Input.Enable_Silent_Running;
       end Set_Structured_Output;
+
+      ------------------------
+      -- Check_Starting_Dir --
+      ------------------------
+
+      procedure Check_Starting_Dir is
+         use Alire.Directories.Operators;
+         package Adirs renames Ada.Directories;
+
+         ------------------------
+         -- Effective_Dir_Late --
+         ------------------------
+
+         function Effective_Dir_Late return Alire.Absolute_Path
+         is (if Alire.Check_Absolute_Path (Command_Line_Chdir_Target_Path.all)
+             then Adirs.Full_Name (Command_Line_Chdir_Target_Path.all)
+             else Adirs.Full_Name (Alire_Early_Elaboration.Get_Starting_Dir
+                                   / Command_Line_Chdir_Target_Path.all));
+         --  Take full name to ensure . and .. are resolved
+
+      begin
+         if Command_Line_Chdir_Target_Path /= null and then
+            Command_Line_Chdir_Target_Path.all /= ""
+         then
+            --  Just verify that early processing caught it
+            Alire.Assert
+              (Alire_Early_Elaboration.Get_Effective_Dir = Effective_Dir_Late
+               and then
+                 Alire_Early_Elaboration.Get_Effective_Dir =
+                 Alire.Directories.Current,
+               "Unexpected mismatch of chdir paths:"
+               & Alire.New_Line
+               & "Early: " & Alire_Early_Elaboration.Get_Effective_Dir
+               & Alire.New_Line
+               & "Late : " & Effective_Dir_Late
+               & Alire.New_Line
+               & "Current: " & Alire.Directories.Current);
+         end if;
+      end Check_Starting_Dir;
 
       use all type Alire.Platforms.Operating_Systems;
    begin
@@ -576,7 +623,7 @@ package body Alr.Commands is
       if Command_Line_Config_Path /= null and then
          Command_Line_Config_Path.all /= ""
       then
-         --  Just verify that early processing catched it
+         --  Just verify that early processing caught it
          pragma Assert
            (Alire.Settings.Edit.Path =
               Ada.Directories.Full_Name (Command_Line_Config_Path.all),
@@ -587,13 +634,14 @@ package body Alr.Commands is
             & "Late : " & Command_Line_Config_Path.all);
       end if;
 
-      --  chdir(2) if necessary.
+      --  Note: -C/--chdir is handled during early elaboration, before settings
+      --  are loaded, so that initializations happening during elaboration that
+      --  depend on the working directory use the new location. Ideally, there
+      --  should be no implicit dependencies on the current directory, but
+      --  that's a much more involved fix. Here we just double-check we are at
+      --  the directory passed (if any)
 
-      if Command_Line_Chdir_Target_Path /= null and then
-         Command_Line_Chdir_Target_Path.all /= ""
-      then
-         Ada.Directories.Set_Directory (Command_Line_Chdir_Target_Path.all);
-      end if;
+      Check_Starting_Dir;
 
       Set_Structured_Output;
 
@@ -679,7 +727,10 @@ package body Alr.Commands is
         .Append ("crate        " & ASCII.HT & "Newest/oldest version")
         .Append ("crate=version" & ASCII.HT & "Exact version")
         .Append ("crate^version" & ASCII.HT & "Major-compatible version")
-        .Append ("crate~version" & ASCII.HT & "Minor-compatible version");
+        .Append ("crate~version" & ASCII.HT & "Minor-compatible version")
+        .Append ("crate[op]version " & ASCII.HT
+                 & "Newest/oldest in set where [op] can be >, >=, <, <=, /=")
+      ;
    end Crate_Version_Sets;
 
    --------------
@@ -737,8 +788,10 @@ package body Alr.Commands is
                         return Boolean
    is
    begin
-      if Image in null or else Image.all = "" or else Image.all = Unset then
+      if Image in null or else Image.all = Unset then
          return Default;
+      elsif Image.all = "" or else Image.all = "=" then
+         return True;
       elsif Is_Boolean (Image.all) then
          return Boolean'Value (Image.all);
       elsif Image (Image'First) = '=' then

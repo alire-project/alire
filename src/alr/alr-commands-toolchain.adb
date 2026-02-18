@@ -8,6 +8,7 @@ with Alire.Origins.Deployers;
 with Alire.Releases.Containers;
 with Alire.Solver;
 with Alire.Toolchains;
+with Alire.Utils;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
 with Alire.Warnings;
@@ -351,7 +352,6 @@ package body Alr.Commands.Toolchain is
       --  We do not want tools that are later in the command-line to be taken
       --  into account prematurely for compatibility of origins. We store here
       --  crates still to be dealt with.
-
    begin
 
       --  Validation
@@ -365,6 +365,19 @@ package body Alr.Commands.Toolchain is
          Reportaise_Wrong_Arguments
            ("--local requires --select or --disable-assistant");
       end if;
+
+      declare
+         function As_Crate (S : String) return String is
+            (Alire.Dependencies.From_String (S).Crate.As_String);
+      begin
+         if Cmd.S_Select
+           and then
+            Alire.Utils.Has_Duplicates (Args, As_Crate'Access)
+         then
+            Reportaise_Wrong_Arguments
+              ("Release arguments contain duplicated crates");
+         end if;
+      end;
 
       --  Dispatch to subcommands
 

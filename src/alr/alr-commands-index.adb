@@ -214,7 +214,7 @@ package body Alr.Commands.Index is
                & "git+https://github.com/org/repo[#commit]")
       .Append ("- git over SSH:        "
                & "git+ssh://[user@]host.com/path/to/repo[#commit]")
-      .Append ("- git user over SSH:   git@github.com:/org/repo[#commit]")
+      .Append ("- git user over SSH:   git@github.com:/org/repo")
      );
 
    ---------------------

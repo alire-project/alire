@@ -55,6 +55,10 @@ init_local_crate()  # This leaves us inside the new crate
 run_alr("with", "--use", URL, "--commit", head)
 verify(head)
 
+# Add using with directly, using --arg=value
+run_alr("with", f"--use={URL}", f"--commit={head}")
+verify(head)
+
 # Add using with, without head commit
 run_alr("with", "--use", URL)
 verify()
@@ -62,6 +66,11 @@ verify()
 # Pin afterwards, with commit
 run_alr("with", "upstream", force=True)  # force, as it is unsolvable
 run_alr("pin", "upstream", "--use", URL, "--commit", head)
+verify(head)
+
+# Pin afterwards, with commit, using --arg=value
+run_alr("with", "upstream", force=True)
+run_alr("pin", "upstream", f"--use={URL}", f"--commit={head}")
 verify(head)
 
 # Pin afterwards, without commit

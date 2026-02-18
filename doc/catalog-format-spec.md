@@ -1038,7 +1038,7 @@ Derivative = {type = "Real"}
 ```
 #### Worst case allocation
 
-Integer variable can be used to define The maximum length of file names in a
+Integer variables can be used to define the maximum length of file names in a
 file-system:
 ```toml
 [configuration.variables]
@@ -1057,8 +1057,8 @@ Sort_Algorithm = {type = "Enum", values = ["bubble", "quick", "merge"]}
 The generated GPR will look something like this:
 ```ada
 project Test_Config is
-   type Sort_Algorith_Kind is ("bubble", "quick", "merge");
-   Sort_Algorith : Sort_Algorith_Kind := "quick";
+   type Sort_Algorithm_Kind is ("bubble", "quick", "merge");
+   Sort_Algorithm : Sort_Algorithm_Kind := "quick";
 end Test_Config;
 ```
 
@@ -1066,7 +1066,7 @@ It can be used in the main GPR file like so:
 
 ```ada
    package Naming is
-      for Body ("Test.Sort") use "test-sort__" & Test_Config.Sort_Algorith;
+      for Body ("Test.Sort") use "test-sort__" & Test_Config.Sort_Algorithm;
    end Naming;
 ```
 With the files `test-sort__bubble.adb`, `test-sort__quick.adb` and
@@ -1074,7 +1074,7 @@ With the files `test-sort__bubble.adb`, `test-sort__quick.adb` and
 
 ## Platform Specific Code
 
-In the crate configuration Alire also generates a few built-in values to
+In the crate configuration, Alire also generates a few built-in values to
 identify the host platform:
  - `Alire_Host_OS`
  - `Alire_Host_Arch`
@@ -1134,7 +1134,7 @@ By default, the root crate is in `Development` and the dependencies are in
 Each crate can customize the compiler switches corresponding to its profiles
 using the `[build-switches]` table. In general, this should be avoided to
 preserve consistency in the ecosystem. However, there are cases where it makes
-sense for a crates to change its build switches. For instance, a SPARK crate
+sense for a crate to change its build switches. For instance, a SPARK crate
 that is proved to be safe from errors can disable run-time checks in all
 profiles:
 ```toml
@@ -1155,7 +1155,7 @@ Alire will generate a list of switches in the crate configuration GPR file. It
 will look something like this:
 
 ```ada
-abstract project my_crate_Config is
+abstract project My_Crate_Config is
    [...]
    Ada_Compiler_Switches := External_As_List ("ADAFLAGS", " ") &
           (

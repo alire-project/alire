@@ -250,7 +250,9 @@ package body Alire.User_Pins is
                --  checkout in the 'alire/cache/pins' directory themselves, so
                --  we require user confirmation before discarding anything.
                declare
-                  Paths : constant AAA.Strings.Set :=
+                  use AAA.Strings;
+
+                  Paths : constant Set :=
                     VCSs.Git.Handler.Dirty_Files
                       (Destination, Include_Untracked => True);
 
@@ -258,10 +260,16 @@ package body Alire.User_Pins is
                   Paths_List : constant String :=
                     List_Sep & Paths.To_Vector.Flatten (List_Sep);
 
+                  Subdir_Prefix : constant String :=
+                    (if This.Subdir /= ""
+                     then (String (Alire.VFS.To_Portable (+This.Subdir)) & "/")
+                     else "");
+                  Alire_Generated_Dirs : constant Vector :=
+                    Empty_Vector & "alire/" & "config/";
                   Alire_Generated_Dirs_Only : constant Boolean :=
                     (for all Path of Paths =>
-                       AAA.Strings.Has_Prefix (Path, "alire/")
-                       or else AAA.Strings.Has_Prefix (Path, "config/"));
+                       (for some Generated_Dir of Alire_Generated_Dirs =>
+                          Has_Prefix (Path, Subdir_Prefix & Generated_Dir)));
                   --  'git status' yields '/' separated paths, even on Windows
 
                   Question : constant String :=
