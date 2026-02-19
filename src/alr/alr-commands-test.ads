@@ -35,9 +35,10 @@ package Alr.Commands.Test is
 private
 
    type Command is new Commands.Command with record
-      Jobs : aliased Integer := 0;
-      By_Id : aliased GNAT.Strings.String_Access;
+      Jobs   : aliased Integer := 0;
+      By_Id  : aliased GNAT.Strings.String_Access;
       Legacy : aliased Boolean := False;
+      List   : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Test;
