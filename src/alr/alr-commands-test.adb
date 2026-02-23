@@ -149,29 +149,37 @@ package body Alr.Commands.Test is
          end;
       end if;
 
-      if All_Settings.Length > 1
-        and then not (Args.Is_Empty and then Cmd.Jobs = -1)
-      then
-         Trace.Warning
-           ("arguments cannot be forwarded to test runners when several "
-            & "exist.");
+      if All_Settings.Length > 1 then
+         if Cmd.List then
+            Trace.Error
+              ("The --list flag cannot be used for multiple runners. Select"
+               & " a single test runner with --id. Available runners:");
+            for E of All_Settings loop
+               Trace.Always ("- " & Settings (E).Short_Image);
+            end loop;
+            Reportaise_Command_Failed ("");
+         end if;
+         if not (Args.Is_Empty and then Cmd.Jobs = -1) then
+            Trace.Warning
+              ("arguments cannot be forwarded to test runners when multiple"
+               & " exist.");
+         end if;
       end if;
 
       if All_Settings.Length = 1
         and then Settings (All_Settings.First_Element).Runner.Kind = External
-        and then Cmd.Jobs >= 0
       then
          if Cmd.Jobs >= 0 then
             Trace.Warning
-              ("the --jobs flag is not forwarded to external commands. If you "
-               & "intended to pass it to an external test runner, put it after"
-               & " ""--"" in the command line.");
+              ("the --jobs flag is not forwarded to external commands. If you"
+               & " intended to pass it to an external test runner, put it"
+               & " after ""--"" in the command line.");
          end if;
          if Cmd.List then
             Trace.Warning
-              ("the --list flag is not forwarded to external commands. If you "
-               & "intended to pass it to an external test runner, put it after"
-               & " ""--"" in the command line.");
+              ("the --list flag is not forwarded to external commands. If you"
+               & " intended to pass it to an external test runner, put it"
+               & " after ""--"" in the command line.");
          end if;
       end if;
 
@@ -197,7 +205,7 @@ package body Alr.Commands.Test is
                    (Cmd.Root.Path / S.Directory);
             begin
                if All_Settings.Length > 1 then
-                  Alire.Put_Info ("running test with" & S.Image);
+                  Alire.Put_Info ("running test with " & S.Image);
                end if;
 
                case S.Runner.Kind is
@@ -242,7 +250,7 @@ package body Alr.Commands.Test is
                end if;
             end;
          else
-            Trace.Error ("while running" & (Settings (Test_Setting).Image));
+            Trace.Error ("while running " & (Settings (Test_Setting).Image));
             Reportaise_Command_Failed
               ("directory '"
                & (Cmd.Root.Path / Settings (Test_Setting).Directory)
@@ -263,15 +271,19 @@ package body Alr.Commands.Test is
          ("Run the test runner as defined in the manifest.")
          .Append ("")
          .Append
-            ("The builtin test runner takes an extra --jobs parameter, "
-             & "that defines the maximum number of tests to run in "
-             & "parallel.")
+            ("The built-in test runner takes an extra --jobs parameter, that"
+             & " defines the maximum number of tests to run in parallel.")
          .Append ("")
          .Append
-            ("Extra arguments are passed to the runner as-is; "
-             & "in the case of the builtin runner, a basic filtering mechanism"
-             & " only compiles and runs the tests whose names contain one of"
-             & " the arguments."));
+            ("Extra arguments are passed to the runner as-is; in the case of"
+             & " the built-in runner, a basic filtering mechanism only"
+             & " compiles and runs the tests whose names contain one of the"
+             & " arguments.")
+         .Append ("")
+         .Append
+            ("When using a built-in runner, one can pass `--list` to get"
+             & " ahead of time a list of tests (optionally matching the"
+             & " command line filter)."));
 
    --------------------
    -- Setup_Switches --
