@@ -263,63 +263,6 @@ package body Alire.Test_Runner is
      Ada.Containers.Indefinite_Vectors (Positive, Portable_Path);
    subtype Portable_Path_Vector is Portable_Path_Vectors.Vector;
 
-   ---------------------
-   -- Create_Gpr_List --
-   ---------------------
-
-   procedure Create_Gpr_List (Root : Roots.Root; List : Portable_Path_Vector)
-     --  Create a gpr file containing a list of the test files
-     --  (named `Test_Files`).
-   is
-
-      --------------------
-      -- Load_Or_Create --
-      --------------------
-
-      function Load_Or_Create (Path : Any_Path) return Text_Files.File is
-         --  Load the file at the specified path, or create an empty file.
-      begin
-         if not Exists (Path) then
-            Touch (Path, True);
-         end if;
-         return Text_Files.Load (Path, Backup => False);
-      end Load_Or_Create;
-
-      File_Path : constant Absolute_Path :=
-        Root.Path
-        / Paths.Default_Config_Folder
-        / (Root.Name.As_String & "_list_config.gpr");
-      File      : Text_Files.File := Load_Or_Create (File_Path);
-      Lines     : access AAA.Strings.Vector renames File.Lines;
-      First     : Boolean := True;
-
-      Indent : constant String := "   ";
-
-      Root_Name : constant String :=
-        AAA.Strings.To_Mixed_Case (Root.Name.As_String);
-   begin
-      Lines.Clear;
-      --  The File object keeps track of the previous content,
-      --  and avoids overwriting if it's identical.
-
-      Lines.Append_Line ("abstract project " & Root_Name & "_List_Config is");
-      Lines.Append_Line (Indent & "Test_Files := (");
-
-      for Name of List loop
-         Lines.Append_Line (Indent & Indent);
-         if First then
-            Lines.Append_To_Last_Line (" ");
-            First := False;
-         else
-            Lines.Append_To_Last_Line (",");
-         end if;
-         Lines.Append_To_Last_Line ("""" & VFS.Simple_Name (Name) & """");
-      end loop;
-
-      Lines.Append_Line (Indent & ");");
-      Lines.Append_Line ("end " & Root_Name & "_List_Config;");
-   end Create_Gpr_List;
-
    -------------------
    -- Run_All_Tests --
    -------------------
@@ -486,28 +429,17 @@ package body Alire.Test_Runner is
       end loop;
    end Run_All_Tests;
 
-   ---------
-   -- Run --
-   ---------
+   -------------------
+   -- Get_File_List --
+   -------------------
 
-   function Run
-     (Root   : in out Roots.Root;
-      Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
-      Jobs   : Natural := 0) return Integer
+   function Get_File_List
+     (Root : Roots.Root; Filter : AAA.Strings.Vector)
+      return Portable_Path_Vector
    is
-      use all type AAA.Strings.Vector;
-
-      Job_Count : constant Positive :=
-        (if Jobs = 0
-         then Positive (System.Multiprocessors.Number_Of_CPUs)
-         else Jobs);
-      Path      : constant Absolute_Path := Root.Path;
-
-      Crate_Prefix      : constant String := Root_Prefix (Root);
-      Original_Switch_Q : constant Boolean := Alire_Early_Elaboration.Switch_Q;
+      Crate_Prefix : constant String := Root_Prefix (Root);
 
       Test_List : Portable_Path_Vector;
-
       --------------------
       -- Matches_Filter --
       --------------------
@@ -551,12 +483,32 @@ package body Alire.Test_Runner is
             Test_List.Append (Name);
          end if;
       end Append;
-
    begin
-      Den.Walk.Find (This => Path / "src", Action => Append'Access);
+      Den.Walk.Find (This => Root.Path / "src", Action => Append'Access);
+      return Test_List;
+   end Get_File_List;
 
-      Create_Gpr_List (Root, Test_List);
+   ---------
+   -- Run --
+   ---------
 
+   function Run
+     (Root   : in out Roots.Root;
+      Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+      Jobs   : Natural := 0) return Integer
+   is
+      Job_Count : constant Positive :=
+        (if Jobs = 0
+         then Positive (System.Multiprocessors.Number_Of_CPUs)
+         else Jobs);
+
+      Original_Switch_Q : constant Boolean := Alire_Early_Elaboration.Switch_Q;
+
+      Test_List : constant Portable_Path_Vector :=
+        Get_File_List (Root, Filter);
+
+      Src_To_Build : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+   begin
       --  Ensure a void solution on first test run
       if not Root.Has_Lockfile then
          Root.Update
@@ -570,7 +522,11 @@ package body Alire.Test_Runner is
          Alire_Early_Elaboration.Switch_Q := True;
       end if;
 
-      if Roots.Build (Root, AAA.Strings.Empty_Vector) then
+      for Test of Test_List loop
+         Src_To_Build.Append ("src/" & VFS.Simple_Name (Test));
+      end loop;
+
+      if Roots.Build (Root, Src_To_Build) then
          Alire_Early_Elaboration.Switch_Q := Original_Switch_Q;
          --  restore original value of `-q` switch
 
@@ -584,4 +540,52 @@ package body Alire.Test_Runner is
          return 1;
       end if;
    end Run;
+
+   ---------------
+   -- Show_List --
+   ---------------
+
+   procedure Show_List
+     (Root   : Roots.Root;
+      Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector)
+   is
+      Crate_Prefix : constant String := Root_Prefix (Root);
+      Path         : constant Absolute_Path := Root.Path;
+      Test_List    : constant Portable_Path_Vector :=
+        Get_File_List (Root, Filter);
+   begin
+      if Tables.Structured_Output then
+         declare
+            Builder : LML.Output.Builder'Class :=
+              LML.Output.Factory.Get (Tables.Structured_Output_Format);
+         begin
+            Builder.Begin_Map;
+            Builder.Insert (LML.Decode (TOML_Keys.Test_Report_Cases));
+            Builder.Begin_Map;
+            for Test of Test_List loop
+               Builder.Insert (LML.Decode (Display_Name (Test, Crate_Prefix)));
+               Builder.Begin_Map;
+               Builder.Insert (LML.Decode (TOML_Keys.Test_Report_Path));
+               Builder.Append
+                 (LML.Scalars.New_Text
+                    (LML.Decode (Path / "src" / String (Test))));
+               Builder.End_Map;
+            end loop;
+            Builder.End_Map;
+            Builder.End_Map;
+
+            Trace.Always (LML.Encode (Builder.To_Text));
+         end;
+      else
+         Put_Info ("Matching tests:");
+         for Test of Test_List loop
+            Trace.Info
+              ("   "
+               & Display_Name (Test, Crate_Prefix)
+               & (if Alire_Early_Elaboration.Switch_V
+                  then " (" & (Path / "src" / String (Test)) & ")"
+                  else ""));
+         end loop;
+      end if;
+   end Show_List;
 end Alire.Test_Runner;

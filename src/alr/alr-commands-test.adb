@@ -29,10 +29,9 @@ package body Alr.Commands.Test is
            (Root.Environment,
             (Alire.Properties.Actions.Test => True, others => False))
            .Is_Empty
-        and then not Alire.Roots.Build
-                       (Root,
-                        AAA.Strings.Empty_Vector,
-                        Saved_Profiles => False)
+        and then
+          not Alire.Roots.Build
+                (Root, AAA.Strings.Empty_Vector, Saved_Profiles => False)
       then
          Success := 1;
       else
@@ -100,6 +99,8 @@ package body Alr.Commands.Test is
       Cmd.Requires_Workspace;
 
       if Cmd.Legacy then
+         Cmd.Forbids_Structured_Output
+           ("Cannot use structured output with legacy actions");
          Execute_Legacy (Cmd.Root);
          return;
       end if;
@@ -118,6 +119,8 @@ package body Alr.Commands.Test is
 
       if All_Settings.Is_Empty then
          Trace.Warning ("no test runner defined, running legacy actions");
+         Cmd.Forbids_Structured_Output
+           ("Cannot use structured output with legacy actions");
          Execute_Legacy (Cmd.Root);
          return;
       end if;
@@ -146,22 +149,38 @@ package body Alr.Commands.Test is
          end;
       end if;
 
-      if All_Settings.Length > 1
-        and then not (Args.Is_Empty and then Cmd.Jobs = -1)
-      then
-         Trace.Warning
-           ("arguments cannot be forwarded to test runners when several "
-            & "exist.");
+      if All_Settings.Length > 1 then
+         if Cmd.List then
+            Trace.Error
+              ("The --list flag cannot be used for multiple runners. Select"
+               & " a single test runner with --id. Available runners:");
+            for E of All_Settings loop
+               Trace.Always ("- " & Settings (E).Short_Image);
+            end loop;
+            Reportaise_Command_Failed ("");
+         end if;
+         if not (Args.Is_Empty and then Cmd.Jobs = -1) then
+            Trace.Warning
+              ("arguments cannot be forwarded to test runners when multiple"
+               & " exist.");
+         end if;
       end if;
 
       if All_Settings.Length = 1
         and then Settings (All_Settings.First_Element).Runner.Kind = External
-        and then Cmd.Jobs >= 0
       then
-         Trace.Warning
-           ("the --jobs flag is not forwarded to external commands. If you "
-            & "intended to pass it to an external test runner, put it after "
-            & """--"" in the command line.");
+         if Cmd.Jobs >= 0 then
+            Trace.Warning
+              ("the --jobs flag is not forwarded to external commands. If you"
+               & " intended to pass it to an external test runner, put it"
+               & " after ""--"" in the command line.");
+         end if;
+         if Cmd.List then
+            Trace.Warning
+              ("the --list flag is not forwarded to external commands. If you"
+               & " intended to pass it to an external test runner, put it"
+               & " after ""--"" in the command line.");
+         end if;
       end if;
 
       for Test_Setting of All_Settings loop
@@ -186,7 +205,7 @@ package body Alr.Commands.Test is
                    (Cmd.Root.Path / S.Directory);
             begin
                if All_Settings.Length > 1 then
-                  Alire.Put_Info ("running test with" & S.Image);
+                  Alire.Put_Info ("running test with " & S.Image);
                end if;
 
                case S.Runner.Kind is
@@ -198,6 +217,12 @@ package body Alr.Commands.Test is
                            & "' (error: "
                            & Test_Root.Message
                            & ")");
+                     end if;
+
+                     if Cmd.List then
+                        Alire.Test_Runner.Show_List
+                          (Test_Root.Value, Get_Args);
+                        OS_Lib.Bailout;
                      end if;
 
                      Failures :=
@@ -225,7 +250,7 @@ package body Alr.Commands.Test is
                end if;
             end;
          else
-            Trace.Error ("while running" & (Settings (Test_Setting).Image));
+            Trace.Error ("while running " & (Settings (Test_Setting).Image));
             Reportaise_Command_Failed
               ("directory '"
                & (Cmd.Root.Path / Settings (Test_Setting).Directory)
@@ -246,15 +271,19 @@ package body Alr.Commands.Test is
          ("Run the test runner as defined in the manifest.")
          .Append ("")
          .Append
-            ("The builtin test runner takes an extra --jobs parameter, "
-             & "that defines the maximum number of tests to run in "
-             & "parallel.")
+            ("The built-in test runner takes an extra --jobs parameter, that"
+             & " defines the maximum number of tests to run in parallel.")
          .Append ("")
          .Append
-            ("Extra arguments are passed to the runner as-is; "
-             & "in the case of the builtin runner, a basic filtering mechanism"
-             & " only compiles and runs the tests whose names contain one of"
-             & " the arguments."));
+            ("Extra arguments are passed to the runner as-is; in the case of"
+             & " the built-in runner, a basic filtering mechanism only"
+             & " compiles and runs the tests whose names contain one of the"
+             & " arguments.")
+         .Append ("")
+         .Append
+            ("When using a built-in runner, one can pass `--list` to get"
+             & " ahead of time a list of tests (optionally matching the"
+             & " command line filter)."));
 
    --------------------
    -- Setup_Switches --
@@ -293,6 +322,14 @@ package body Alr.Commands.Test is
          "--legacy",
          CLIC.TTY.Error ("Deprecated")
          & ". Force executing the legacy test actions",
+         Value => True);
+
+      Define_Switch
+        (Config,
+         Cmd.List'Access,
+         "",
+         "--list",
+         "Show a list of matching tests without running them",
          Value => True);
    end Setup_Switches;
 
