@@ -31,8 +31,8 @@
 	url = https://github.com/mosteo/minirest
 [submodule "deps/spdx"]
 	path = deps/spdx
-	url = https://github.com/Fabien-Chouteau/spdx_ada
-	branch = 319ca7bcc1e2eb1843aad1f64aca3ecba91a2bcc
+	url = https://github.com/AdaCore/spdx_ada
+	branch = 918994274ef4ef91cdb8a9e9ed77bd4c05776229
 [submodule "deps/optional"]
 	path = deps/optional
 	url = https://github.com/mosteo/optional
