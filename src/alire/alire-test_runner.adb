@@ -263,63 +263,6 @@ package body Alire.Test_Runner is
      Ada.Containers.Indefinite_Vectors (Positive, Portable_Path);
    subtype Portable_Path_Vector is Portable_Path_Vectors.Vector;
 
-   ---------------------
-   -- Create_Gpr_List --
-   ---------------------
-
-   procedure Create_Gpr_List (Root : Roots.Root; List : Portable_Path_Vector)
-     --  Create a gpr file containing a list of the test files
-     --  (named `Test_Files`).
-   is
-
-      --------------------
-      -- Load_Or_Create --
-      --------------------
-
-      function Load_Or_Create (Path : Any_Path) return Text_Files.File is
-         --  Load the file at the specified path, or create an empty file.
-      begin
-         if not Exists (Path) then
-            Touch (Path, True);
-         end if;
-         return Text_Files.Load (Path, Backup => False);
-      end Load_Or_Create;
-
-      File_Path : constant Absolute_Path :=
-        Root.Path
-        / Paths.Default_Config_Folder
-        / (Root.Name.As_String & "_list_config.gpr");
-      File      : Text_Files.File := Load_Or_Create (File_Path);
-      Lines     : access AAA.Strings.Vector renames File.Lines;
-      First     : Boolean := True;
-
-      Indent : constant String := "   ";
-
-      Root_Name : constant String :=
-        AAA.Strings.To_Mixed_Case (Root.Name.As_String);
-   begin
-      Lines.Clear;
-      --  The File object keeps track of the previous content,
-      --  and avoids overwriting if it's identical.
-
-      Lines.Append_Line ("abstract project " & Root_Name & "_List_Config is");
-      Lines.Append_Line (Indent & "Test_Files := (");
-
-      for Name of List loop
-         Lines.Append_Line (Indent & Indent);
-         if First then
-            Lines.Append_To_Last_Line (" ");
-            First := False;
-         else
-            Lines.Append_To_Last_Line (",");
-         end if;
-         Lines.Append_To_Last_Line ("""" & VFS.Simple_Name (Name) & """");
-      end loop;
-
-      Lines.Append_Line (Indent & ");");
-      Lines.Append_Line ("end " & Root_Name & "_List_Config;");
-   end Create_Gpr_List;
-
    -------------------
    -- Run_All_Tests --
    -------------------
@@ -563,9 +506,9 @@ package body Alire.Test_Runner is
 
       Test_List : constant Portable_Path_Vector :=
         Get_File_List (Root, Filter);
-   begin
-      Create_Gpr_List (Root, Test_List);
 
+      Src_To_Build : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+   begin
       --  Ensure a void solution on first test run
       if not Root.Has_Lockfile then
          Root.Update
@@ -579,7 +522,11 @@ package body Alire.Test_Runner is
          Alire_Early_Elaboration.Switch_Q := True;
       end if;
 
-      if Roots.Build (Root, AAA.Strings.Empty_Vector) then
+      for Test of Test_List loop
+         Src_To_Build.Append ("src/" & VFS.Simple_Name (Test));
+      end loop;
+
+      if Roots.Build (Root, Src_To_Build) then
          Alire_Early_Elaboration.Switch_Q := Original_Switch_Q;
          --  restore original value of `-q` switch
 
