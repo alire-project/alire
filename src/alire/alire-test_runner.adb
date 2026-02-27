@@ -486,28 +486,17 @@ package body Alire.Test_Runner is
       end loop;
    end Run_All_Tests;
 
-   ---------
-   -- Run --
-   ---------
+   -------------------
+   -- Get_File_List --
+   -------------------
 
-   function Run
-     (Root   : in out Roots.Root;
-      Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
-      Jobs   : Natural := 0) return Integer
+   function Get_File_List
+     (Root : Roots.Root; Filter : AAA.Strings.Vector)
+      return Portable_Path_Vector
    is
-      use all type AAA.Strings.Vector;
-
-      Job_Count : constant Positive :=
-        (if Jobs = 0
-         then Positive (System.Multiprocessors.Number_Of_CPUs)
-         else Jobs);
-      Path      : constant Absolute_Path := Root.Path;
-
-      Crate_Prefix      : constant String := Root_Prefix (Root);
-      Original_Switch_Q : constant Boolean := Alire_Early_Elaboration.Switch_Q;
+      Crate_Prefix : constant String := Root_Prefix (Root);
 
       Test_List : Portable_Path_Vector;
-
       --------------------
       -- Matches_Filter --
       --------------------
@@ -551,10 +540,30 @@ package body Alire.Test_Runner is
             Test_List.Append (Name);
          end if;
       end Append;
-
    begin
-      Den.Walk.Find (This => Path / "src", Action => Append'Access);
+      Den.Walk.Find (This => Root.Path / "src", Action => Append'Access);
+      return Test_List;
+   end Get_File_List;
 
+   ---------
+   -- Run --
+   ---------
+
+   function Run
+     (Root   : in out Roots.Root;
+      Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+      Jobs   : Natural := 0) return Integer
+   is
+      Job_Count : constant Positive :=
+        (if Jobs = 0
+         then Positive (System.Multiprocessors.Number_Of_CPUs)
+         else Jobs);
+
+      Original_Switch_Q : constant Boolean := Alire_Early_Elaboration.Switch_Q;
+
+      Test_List : constant Portable_Path_Vector :=
+        Get_File_List (Root, Filter);
+   begin
       Create_Gpr_List (Root, Test_List);
 
       --  Ensure a void solution on first test run
@@ -584,4 +593,52 @@ package body Alire.Test_Runner is
          return 1;
       end if;
    end Run;
+
+   ---------------
+   -- Show_List --
+   ---------------
+
+   procedure Show_List
+     (Root   : Roots.Root;
+      Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector)
+   is
+      Crate_Prefix : constant String := Root_Prefix (Root);
+      Path         : constant Absolute_Path := Root.Path;
+      Test_List    : constant Portable_Path_Vector :=
+        Get_File_List (Root, Filter);
+   begin
+      if Tables.Structured_Output then
+         declare
+            Builder : LML.Output.Builder'Class :=
+              LML.Output.Factory.Get (Tables.Structured_Output_Format);
+         begin
+            Builder.Begin_Map;
+            Builder.Insert (LML.Decode (TOML_Keys.Test_Report_Cases));
+            Builder.Begin_Map;
+            for Test of Test_List loop
+               Builder.Insert (LML.Decode (Display_Name (Test, Crate_Prefix)));
+               Builder.Begin_Map;
+               Builder.Insert (LML.Decode (TOML_Keys.Test_Report_Path));
+               Builder.Append
+                 (LML.Scalars.New_Text
+                    (LML.Decode (Path / "src" / String (Test))));
+               Builder.End_Map;
+            end loop;
+            Builder.End_Map;
+            Builder.End_Map;
+
+            Trace.Always (LML.Encode (Builder.To_Text));
+         end;
+      else
+         Put_Info ("Matching tests:");
+         for Test of Test_List loop
+            Trace.Info
+              ("   "
+               & Display_Name (Test, Crate_Prefix)
+               & (if Alire_Early_Elaboration.Switch_V
+                  then " (" & (Path / "src" / String (Test)) & ")"
+                  else ""));
+         end loop;
+      end if;
+   end Show_List;
 end Alire.Test_Runner;
