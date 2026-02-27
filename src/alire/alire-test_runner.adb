@@ -75,7 +75,7 @@ package body Alire.Test_Runner is
               new Builder_Type'(Get_Builder (Structured_Output_Format));
             Builder.Begin_Map;
             Builder.Insert (+TOML_Keys.Test_Report_Cases);
-            Builder.Begin_Map;
+            Builder.Begin_Vec;
          end if;
       end Init;
 
@@ -116,8 +116,9 @@ package body Alire.Test_Runner is
          Passed := Passed + 1;
 
          if Structured_Output then
-            Builder.Insert (+Test_Name);
             Builder.Begin_Map;
+            Builder.Insert (+TOML_Keys.Test_Report_Display_Name);
+            Builder.Append (LML.Scalars.New_Text (+Test_Name));
             Builder.Insert (+TOML_Keys.Test_Report_Status);
             Builder.Append (LML.Scalars.New_Text ("pass"));
             Builder.Insert (+TOML_Keys.Test_Report_Duration);
@@ -145,8 +146,9 @@ package body Alire.Test_Runner is
       begin
          Failed := Failed + 1;
          if Structured_Output then
-            Builder.Insert (+Test_Name);
             Builder.Begin_Map;
+            Builder.Insert (+TOML_Keys.Test_Report_Display_Name);
+            Builder.Append (LML.Scalars.New_Text (+Test_Name));
             Builder.Insert (+TOML_Keys.Test_Report_Status);
             Builder.Append (LML.Scalars.New_Text ("fail"));
             Builder.Insert (+TOML_Keys.Test_Report_Reason);
@@ -199,7 +201,7 @@ package body Alire.Test_Runner is
       begin
          if Structured_Output then
             --  finalize report according to format
-            Builder.End_Map;
+            Builder.End_Vec;
             Builder.Insert (+TOML_Keys.Test_Report_Summary);
             Builder.Begin_Map;
             Builder.Insert (+TOML_Keys.Test_Report_Total);
@@ -614,17 +616,21 @@ package body Alire.Test_Runner is
          begin
             Builder.Begin_Map;
             Builder.Insert (LML.Decode (TOML_Keys.Test_Report_Cases));
-            Builder.Begin_Map;
+            Builder.Begin_Vec;
             for Test of Test_List loop
-               Builder.Insert (LML.Decode (Display_Name (Test, Crate_Prefix)));
                Builder.Begin_Map;
+               Builder.Insert
+                 (LML.Decode (TOML_Keys.Test_Report_Display_Name));
+               Builder.Append
+                 (LML.Scalars.New_Text
+                    (LML.Decode (Display_Name (Test, Crate_Prefix))));
                Builder.Insert (LML.Decode (TOML_Keys.Test_Report_Path));
                Builder.Append
                  (LML.Scalars.New_Text
                     (LML.Decode (Path / "src" / String (Test))));
                Builder.End_Map;
             end loop;
-            Builder.End_Map;
+            Builder.End_Vec;
             Builder.End_Map;
 
             Trace.Always (LML.Encode (Builder.To_Text));

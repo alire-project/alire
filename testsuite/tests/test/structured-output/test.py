@@ -31,20 +31,24 @@ end Xxx_Tests.Passing_Test;
 def structure_tests(data):
     assert sorted(list(data.keys())) == ["summary", "tests"]
 
-    assert sorted(list(data["tests"].keys())) == ["failing_test", "passing_test"]
-    print(data["tests"]["passing_test"])
-    assert sorted(list(data["tests"]["passing_test"].keys())) == [
+    tests = list(data["tests"])
+    tests.sort(key = lambda it: it["name"])
+    assert list(map(lambda it: it["name"], tests)) == ["failing_test", "passing_test"]
+    print(tests[0])
+    assert sorted(list(tests[0].keys())) == [
         "duration",
-        "status",
-    ]
-    assert sorted(list(data["tests"]["failing_test"].keys())) == [
-        "duration",
+        "name",
         "output",
         "reason",
         "status",
     ]
-    assert data["tests"]["failing_test"]["status"] == "fail"
-    assert data["tests"]["passing_test"]["status"] == "pass"
+    assert sorted(list(tests[1].keys())) == [
+        "duration",
+        "name",
+        "status",
+    ]
+    assert tests[0]["status"] == "fail"
+    assert tests[1]["status"] == "pass"
 
     assert sorted(list(data["summary"].keys())) == ["failures", "total"]
     assert data["summary"]["total"] == 2
