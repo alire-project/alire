@@ -40,4 +40,12 @@ assert_that(name='extends', fails_with='.*Identifier cannot be reserved keyword.
 for crate_type in CRATE_TYPES:
     run_alr('init', f"--{crate_type}", f"{VALID_NAME}{crate_type}")
 
+# Test if Project already exists
+run_alr('init', 'foo')
+p = run_alr('init', 'foo', complain_on_error=False)
+assert_match("ERROR: foo/alire.toml already exists", p.out)
+
+p = run_alr('--chdir=foo', 'init', '--in-place', 'foo', complain_on_error=False)
+assert_match("ERROR: alire.toml already exists", p.out)
+
 print('SUCCESS')
