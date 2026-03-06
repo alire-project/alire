@@ -127,7 +127,7 @@ package body Alr.Commands.Clean is
          Cmd.Root.Export_Build_Environment;
 
          --  We also want to leave the workspace ready to edit, so generate the
-         --  configuratin that would be used by an `alr build`.
+         --  configuration that would be used by an `alr build`.
 
          if not Cmd.Root.Build (Args, Stop_After => Alire.Builds.Generation)
          then

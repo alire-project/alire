@@ -11,19 +11,21 @@ from drivers.asserts import assert_file_exists
 
 init_local_crate()
 
+config_gpr = os.path.join("config", "xxx_config.gpr")
+
 # Build the crate so the config dir is generated
 run_alr("build")
 
-assert_file_exists("config")
+assert_file_exists(config_gpr)
 
 # Remove the config dir to simulate the situation where it was deleted
 shutil.rmtree("config")
-assert_file_exists("config", wanted=False)
+assert_file_exists(config_gpr, wanted=False)
 
 # alr clean should regenerate the config dir and succeed
 run_alr("clean")
 
 # The config dir should have been recreated
-assert_file_exists("config")
+assert_file_exists(config_gpr)
 
 print('SUCCESS')
