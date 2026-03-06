@@ -1,5 +1,6 @@
 with Ada.Directories;
 
+with Alire.Builds;
 with Alire.Settings.Edit;
 with Alire.Directories;
 with Alire.Paths;
@@ -124,6 +125,15 @@ package body Alr.Commands.Clean is
       if not (Cmd.Cache or else Cmd.Temp) then
          Cmd.Requires_Workspace;
          Cmd.Root.Export_Build_Environment;
+
+         --  We also want to leave the workspace ready to edit, so generate the
+         --  configuratin that would be used by an `alr build`.
+
+         if not Cmd.Root.Build (Args, Stop_After => Alire.Builds.Generation)
+         then
+            Trace.Warning
+              ("Failed to generate build configuration, cleaning anyway...");
+         end if;
 
          Trace.Detail ("Cleaning project and dependencies...");
 
