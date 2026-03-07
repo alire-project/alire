@@ -85,11 +85,6 @@ package body Alire.Properties.Labeled is
                      Val.Item (I).As_String);
                   use all type Conditional.Properties;
                begin
-                  if Cardinality (L.Name) = Unique and then I > 1 then
-                     raise Checked_Error with
-                       "Expected single value for " & Key;
-                  end if;
-
                   --  Label-specific validation:
                   L.Validate (From);
 
@@ -131,10 +126,12 @@ package body Alire.Properties.Labeled is
             end if;
 
          when Maintainers_Logins =>
-            if not Utils.Is_Valid_GitHub_Username (L.Value) then
+            --  The crate may be published through a private index, so we don't
+            --  know the requirements for a valid username; reject only an
+            --  empty string.
+            if L.Value'Length = 0 then
                From.Checked_Error
-                 ("maintainers-logins must be a valid GitHub login, but got: "
-                  & L.Value);
+                 ("maintainers-logins values must be non-empty");
             end if;
 
          when Tag =>

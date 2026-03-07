@@ -1,3 +1,5 @@
+with Alire.URI;
+
 package Alire.Index_On_Disk.Directory is
 
    --  A local index that is taken from a local filesystem path
@@ -8,10 +10,9 @@ package Alire.Index_On_Disk.Directory is
    function New_Handler (From   : URL;
                          Name   : Restricted_Name;
                          Parent : Any_Path) return Index with
-     Pre => AAA.Strings.Has_Prefix (From, "file://")
-              and then
-            Check_Absolute_Path (From (From'First + 7 .. From'Last));
-   --  file:// + absolute path
+     Pre => Alire.URI.URI_Kind (From) in Alire.URI.File
+       and then Check_Absolute_Path (Alire.URI.Local_Path (From));
+   --  From must be a "file:" URL with an absolute path
 
    overriding
    function Add (This : Index) return Outcome is (Outcome_Success);
@@ -19,7 +20,7 @@ package Alire.Index_On_Disk.Directory is
 
    overriding
    function Index_Directory (This : Index) return String;
-   --  A file:// index is already on disk, so we reuse its path
+   --  A "file:" index is already on disk, so we reuse its path
 
    overriding
    function Update (This : Index) return Outcome is (Outcome_Success);

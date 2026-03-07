@@ -2,14 +2,16 @@ import copy
 import os
 import shutil
 import sys
+import time
 
 from drivers.alr import prepare_env, prepare_indexes, run_alr
-from e3.testsuite.driver.classic import (ClassicTestDriver,
-                                         TestAbortWithFailure,
+from drivers.driver.base_driver import BaseDriver
+
+from e3.testsuite.driver.classic import (TestAbortWithFailure,
                                          TestSkip)
 
 
-class PythonScriptDriver(ClassicTestDriver):
+class PythonScriptDriver(BaseDriver):
     """
     Test driver to run a "test.py" Python script.
 
@@ -142,10 +144,15 @@ class PythonScriptDriver(ClassicTestDriver):
                                  self.test_env.get('build-mode',
                                                    DEFAULT_MODE))
         # One of 'shared', 'sandboxed', or 'both'
+        if mode not in ["shared", "sandboxed", "both"]:
+            raise ValueError(f"Invalid build mode: {mode}, must be one of "
+                             "'shared', 'sandboxed', or 'both'")
 
         # If mode is "both", track original files for later
         if mode == "both":
             self.save_working_dir()
+
+        start_time = time.time()
 
         # First run with shared builds disabled
 
@@ -164,8 +171,10 @@ class PythonScriptDriver(ClassicTestDriver):
             self.result.log.log += "Build mode: SHARED\n"
             # Activate shared builds. Using "-c" is needed as the environment
             # still isn't activated at the driver script level.
-            run_alr("-c", pristine_env["ALR_CONFIG"],
-                    "config", "--global", "--set",
+            run_alr(f"--settings={pristine_env['ALIRE_SETTINGS_DIR']}",
+                    "settings", "--global", "--set",
                     "dependencies.shared", "true")
             p = self.run_script(copy.deepcopy(pristine_env))
             self.check_result(p)
+
+        self.result.time = time.time() - start_time

@@ -27,7 +27,7 @@ package body Alire.Lockfiles is
    -- File_Name --
    ---------------
 
-   function File_Name (Root_Dir : Any_Path) return Any_Path
+   function File_Name (Root_Dir : Absolute_Path) return Absolute_Path
    is (Root_Dir / Paths.Working_Folder_Inside_Root / Simple_Name);
 
    ---------------
@@ -57,7 +57,11 @@ package body Alire.Lockfiles is
    -- Read --
    ----------
 
-   function Read (Filename : Any_Path) return Contents is
+   function Read (Root, Filename : Absolute_Path) return Contents is
+      --  Enter the workspace root for this lockfile, so any
+      --  relative pin paths can be properly resolved.
+      use Alire.Directories;
+      CWD : Guard (Enter (Root)) with Unreferenced;
    begin
       Trace.Debug ("Reading persistent contents from " & Filename);
 
@@ -93,7 +97,7 @@ package body Alire.Lockfiles is
    -- Validity --
    --------------
 
-   function Validity (File : Any_Path) return Validities is
+   function Validity (Root, File : Absolute_Path) return Validities is
    begin
       if not GNAT.OS_Lib.Is_Read_Accessible_File (File) then
          return Missing;
@@ -102,7 +106,7 @@ package body Alire.Lockfiles is
       --  Try to load to assess validity
 
       declare
-         Unused : constant Contents := Read (File);
+         Unused : constant Contents := Read (Root, File);
       begin
          return Valid;
       end;
@@ -119,7 +123,7 @@ package body Alire.Lockfiles is
    -----------
 
    procedure Write (Contents : Lockfiles.Contents;
-                    Filename : Any_Path)
+                    Filename : Absolute_Path)
    is
       use Ada.Text_IO;
       File  : File_Type;

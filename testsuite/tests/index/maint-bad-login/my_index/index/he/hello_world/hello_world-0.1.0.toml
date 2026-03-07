@@ -3,7 +3,7 @@ name = "hello_world"
 version = "0.1.0"
 licenses = "GPL-3.0-only"
 maintainers = ["Mr. User <mr.user@example.com>"]
-maintainers-logins = ["mr.user"]
+maintainers-logins = [""]
 
 [origin]
 url = "file:."

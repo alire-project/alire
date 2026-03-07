@@ -1,17 +1,20 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Crates;
 with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
 with Alire.Flags;
-with Alire.Origins.Deployers;
+with Alire.Formatting;
+with Alire.Origins.Deployers.System;
 with Alire.Paths;
 with Alire.Properties.Bool;
+with Alire.Properties.From_TOML;
 with Alire.Properties.Scenarios;
 with Alire.TOML_Load;
+with Alire.Utils.Tables;
 with Alire.Utils.YAML;
 with Alire.Warnings;
 
@@ -85,7 +88,7 @@ package body Alire.Releases is
       Newline    : constant String := ASCII.LF & "   ";
    begin
       for Dep of This.Flat_Dependencies loop
-         if Config.Builtins.Warning_Caret.Get
+         if Settings.Builtins.Warning_Caret.Get
            and then
            AAA.Strings.Contains (Dep.Versions.Image, "^0")
          then
@@ -98,7 +101,7 @@ package body Alire.Releases is
                & "The suspicious dependency is: " & TTY.Version (Dep.Image)
                & Newline
                & "You can disable this warning by setting the option "
-               & TTY.Emph (Config.Builtins.Warning_Caret.Key) & " to false.",
+               & TTY.Emph (Settings.Builtins.Warning_Caret.Key) & " to false.",
                Warnings.Caret_Or_Tilde);
             return True;
          end if;
@@ -201,8 +204,8 @@ package body Alire.Releases is
            & (case R.Origin.Kind is
                  when Git | Hg => R.Origin.Short_Unique_Id,
                  when SVN => R.Origin.Commit,
-                 when others => raise Program_Error
-                   with "monorepo folder only applies to VCS origins");
+                 when others => raise Program_Error with
+                   "monorepo folder only applies to VCS origins");
       end Monorepo_Path;
 
       ------------------
@@ -251,31 +254,42 @@ package body Alire.Releases is
       Mark_Completion : Boolean := True)
    is
       use Alire.Directories;
-      Folder : constant Any_Path := Parent_Folder / This.Deployment_Folder;
-      Completed : Flags.Flag := Flags.Complete_Copy (Folder);
+      Repo_Folder : constant Any_Path :=
+                      Parent_Folder / This.Deployment_Folder;
+      Rel_Folder  : constant Any_Path :=
+                      Parent_Folder / This.Base_Folder;
+      Completed   : Flags.Flag := Flags.Complete_Copy (Repo_Folder);
 
       ------------------------------
       -- Backup_Upstream_Manifest --
       ------------------------------
 
       procedure Backup_Upstream_Manifest is
-         Working_Dir : Guard (Enter (Folder)) with Unreferenced;
+         Working_Dir : Guard (Enter (Rel_Folder)) with Unreferenced;
       begin
          Ada.Directories.Create_Path (Paths.Working_Folder_Inside_Root);
 
          if GNAT.OS_Lib.Is_Regular_File (Paths.Crate_File_Name) then
-            Trace.Debug ("Backing up bundled manifest file as *.upstream");
+            Trace.Debug ("Backing up bundled manifest file at "
+                         & Adirs.Current_Directory & " as *.upstream");
             declare
                Upstream_File : constant String :=
                                  Paths.Working_Folder_Inside_Root
                                  / (Paths.Crate_File_Name & ".upstream");
             begin
+               --  Backup if already there
                Alire.Directories.Backup_If_Existing
                  (Upstream_File,
                   Base_Dir => Paths.Working_Folder_Inside_Root);
-               Ada.Directories.Rename
-                 (Old_Name => Paths.Crate_File_Name,
-                  New_Name => Upstream_File);
+               --  Remove just backed up file
+               if Directories.Is_File (Upstream_File) then
+                  Directories.Delete_Tree
+                    (Directories.Full_Name (Upstream_File));
+               end if;
+               --  And rename the original manifest into upstream
+               Directories.Rename
+                 (Source      => Paths.Crate_File_Name,
+                  Destination => Upstream_File);
             end;
          end if;
       end Backup_Upstream_Manifest;
@@ -288,48 +302,63 @@ package body Alire.Releases is
       begin
          Trace.Debug ("Generating manifest file for "
                       & This.Milestone.TTY_Image & " with"
-                      & This.Dependencies.Leaf_Count'Img & " dependencies");
+                      & This.Dependencies.Leaf_Count'Img & " dependencies "
+                      & " at " & (Rel_Folder / Paths.Crate_File_Name));
 
-         This.Whenever (Env).To_File (Folder / Paths.Crate_File_Name,
+         This.Whenever (Env).To_File (Rel_Folder / Paths.Crate_File_Name,
                                       Kind);
       end Create_Authoritative_Manifest;
 
    begin
 
       Trace.Debug ("Deploying " & This.Milestone.TTY_Image
-                   & " into " & TTY.URL (Folder));
+                   & " into " & TTY.URL (Repo_Folder));
 
-      --  Deploy if the target dir is not already there
+      --  Deploy if the target dir is not already there. We only skip for
+      --  releases that require a folder to be deployed; system releases
+      --  require the deploy attempt as the installation check is done by
+      --  the deployer.
 
-      if Completed.Exists then
+      if This.Origin.Is_Index_Provided and then Completed.Exists then
          Was_There := True;
          Trace.Detail ("Skipping checkout of already available " &
+                         This.Milestone.Image);
+
+      elsif This.Origin.Kind not in Origins.Deployable_Kinds then
+         Was_There := True;
+         Trace.Detail ("External requires no deployment for " &
+                         This.Milestone.Image);
+
+      elsif This.Origin.Is_System
+        and then Origins.Deployers.System.Already_Installed (This.Origin)
+      then
+         Was_There := True;
+         Trace.Detail ("Skipping install of already available system origin " &
                          This.Milestone.Image);
 
       else
          Was_There := False;
          Put_Info ("Deploying " & This.Milestone.TTY_Image & "...");
-         Alire.Origins.Deployers.Deploy (This, Folder).Assert;
-
-         --  For deployers that do nothing, we ensure the folder exists so all
-         --  dependencies leave a trace in the cache/dependencies folder, and
-         --  a place from where to run their actions by default.
-
-         Ada.Directories.Create_Path (Folder);
-
-         --  Backup a potentially packaged manifest, so our authoritative
-         --  manifest from the index is always used.
-
-         Backup_Upstream_Manifest;
-
+         Alire.Origins.Deployers.Deploy (This, Repo_Folder).Assert;
       end if;
+
+      --  For deployers that do nothing, we ensure the folder exists so all
+      --  dependencies leave a trace in the cache/dependencies folder, and
+      --  a place from where to run their actions by default.
+
+      Ada.Directories.Create_Path (Repo_Folder);
+
+      --  Backup a potentially packaged manifest, so our authoritative
+      --  manifest from the index is always used.
+
+      Backup_Upstream_Manifest;
 
       --  Create manifest if requested
 
       if Create_Manifest then
          Create_Authoritative_Manifest (if Include_Origin
-                                          then Manifest.Index
-                                          else Manifest.Local);
+                                        then Manifest.Index
+                                        else Manifest.Local);
       end if;
 
       if Mark_Completion then
@@ -342,14 +371,23 @@ package body Alire.Releases is
          --  during an action).
          Log_Exception (E);
 
-         if Ada.Directories.Exists (Folder) then
+         if Ada.Directories.Exists (Repo_Folder) then
             Trace.Debug ("Cleaning up failed release deployment of "
                          & This.Milestone.TTY_Image);
-            Directories.Force_Delete (Folder);
+            Directories.Force_Delete (Repo_Folder);
          end if;
 
          raise;
    end Deploy;
+
+   ----------------------------
+   -- Install_System_Package --
+   ----------------------------
+
+   procedure Install_System_Package (This : Release) is
+   begin
+      Origins.Deployers.System.Install (This);
+   end Install_System_Package;
 
    ----------------
    -- Forbidding --
@@ -449,7 +487,8 @@ package body Alire.Releases is
          Pins         => Base.Pins,
          Forbidden    => Base.Forbidden,
          Properties   => Base.Properties,
-         Available    => Base.Available)
+         Available    => Base.Available,
+         Imported     => Base.Imported)
       do
          null;
       end return;
@@ -504,7 +543,8 @@ package body Alire.Releases is
        Pins         => <>,
        Forbidden    => Conditional.For_Dependencies.Empty,
        Properties   => Properties,
-       Available    => Available);
+       Available    => Available,
+       Imported     => No_TOML_Value);
 
    -----------------------
    -- New_Empty_Release --
@@ -537,7 +577,8 @@ package body Alire.Releases is
       Pins         => <>,
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
-      Available    => Conditional.Empty
+      Available    => Conditional.Empty,
+      Imported     => No_TOML_Value
      );
 
    -------------------------
@@ -810,6 +851,33 @@ package body Alire.Releases is
    procedure Print (R : Release) is
       use GNAT.IO;
    begin
+      if Alire.Utils.Tables.Structured_Output then
+         if R.Imported.Is_Present then
+            --  This field may be missing if R.Whenever has been used, in which
+            --  case we properly want to print the re-exported information
+            --  without dynamic expressions (else branch below). It may be also
+            --  missing for releases being created from scratch during `alr
+            --  init`, but there's no way for a user to get us here until
+            --  after the release has been reloaded from its manifest.
+            Formatting.Print (R.Imported.all);
+         else
+            if R.Properties.Is_Unconditional then
+               Formatting.Print
+                 (R.To_TOML
+                    (if R.Origin.Kind in Origins.Filesystem
+                     then Manifest.Local
+                     else Manifest.Index));
+            else
+               --  Shouldn't happen as conditional releases should have the
+               --  Imported field populated (they always come from a loaded
+               --  manifest).
+               raise Program_Error with
+                 "Cannot export release with dynamic information";
+            end if;
+         end if;
+         return;
+      end if;
+
       --  MILESTONE
       Put_Line (R.Milestone.TTY_Image & ": " & R.TTY_Description);
 
@@ -898,15 +966,59 @@ package body Alire.Releases is
       return False;
    end Property_Contains;
 
+   -----------------------
+   -- Property_Contains --
+   -----------------------
+
+   function Property_Contains (R : Release; Str : String)
+                               return AAA.Strings.Set
+   is
+      Results : AAA.Strings.Set;
+      use AAA.Strings;
+
+      Search : constant String := To_Lower_Case (Str);
+   begin
+      for P of Conditional.Enumerate (R.Properties) loop
+         declare
+            Image : constant String := P.Image;
+         begin
+            if Contains (Image, ":") then
+               declare
+                  Prop  : constant String := Head (Image, ':');
+                  Value : constant String := Trim (Tail (Image, ':'));
+               begin
+                  if Contains (To_Lower_Case (Value), Search) then
+                     Results.Include (Prop);
+                  end if;
+               end;
+            else
+               if Contains (To_Lower_Case (Image), Search) then
+                  Results.Include (Image);
+               end if;
+            end if;
+         end;
+      end loop;
+
+      return Results;
+   end Property_Contains;
+
    -------------------
    -- From_Manifest --
    -------------------
 
    function From_Manifest (File_Name : Any_Path;
                            Source    : Manifest.Sources;
-                           Strict    : Boolean)
+                           Strict    : Boolean;
+                           Root_Path : Any_Path := "")
                            return Release
    is
+      --  Move to file base dir, as relative paths in pins are resolved during
+      --  loading relative to CWD.
+      CWD : Directories.Guard
+        (if Root_Path /= "" then
+            Directories.Enter (Root_Path)
+         else
+            Directories.Stay) with Unreferenced;
    begin
       return From_TOML
         (TOML_Adapters.From
@@ -938,6 +1050,12 @@ package body Alire.Releases is
       return This : Release := New_Empty_Release
         (Name => +From.Unwrap.Get (TOML_Keys.Name).As_String)
       do
+         --  Keep the original TOML to be able to export with conditional
+         --  expressions unresolved. Keep a copy since TOML is using reference
+         --  semantics.
+
+         This.Imported.all := From.Unwrap.Clone;
+
          --  Extract the version ASAP to show it properly during logging
 
          if From.Contains (TOML_Keys.Version) then
@@ -1047,9 +1165,10 @@ package body Alire.Releases is
                      Format : Manifest.Sources)
                      return TOML.TOML_Value
    is
-      package APL renames Alire.Properties.Labeled;
-      use all type Alire.Properties.Labeled.Cardinalities;
+      use all type Alire.Properties.From_TOML.Cardinalities;
       use TOML_Adapters;
+      function Tomlify is
+        new Tomify_Enum (Alire.Properties.From_TOML.Property_Keys);
       Root : constant TOML.TOML_Value := R.Properties.To_TOML;
    begin
 
@@ -1070,20 +1189,29 @@ package body Alire.Releases is
       end if;
 
       --  Ensure atoms are atoms and arrays are arrays
-      for Label in APL.Cardinality'Range loop
-         if Root.Has (APL.Key (Label)) then
-            case APL.Cardinality (Label) is
-               when Unique   =>
-                  pragma Assert
-                    (Root.Get
-                       (APL.Key (Label)).Kind in TOML.Atom_Value_Kind);
-               when Multiple =>
-                  Root.Set
-                    (APL.Key (Label),
-                     TOML_Adapters.To_Array
-                       (Root.Get (APL.Key (Label))));
-            end case;
-         end if;
+      for Prop in Alire.Properties.From_TOML.Cardinality'Range loop
+         declare
+            Toml_Key : constant String := Tomlify (Prop).As_String;
+         begin
+            if Root.Has (Toml_Key) then
+               case Alire.Properties.From_TOML.Cardinality (Prop) is
+                  when Unique =>
+                     Assert
+                       (Root.Get (Toml_Key).Kind in
+                            TOML.Atom_Value_Kind
+                          | TOML.TOML_Table,
+                        "Expected unique value/table for key '" & Toml_Key
+                        & "' but is: " & Root.Get (Toml_Key).Kind'Image,
+                        Unchecked => True);
+                     --  Unchecked as it shouldn't happen if manifest reading
+                     --  did its checks as intended.
+                  when Multiple =>
+                     Root.Set
+                       (Toml_Key,
+                        TOML_Adapters.To_Array (Root.Get (Toml_Key)));
+               end case;
+            end if;
+         end;
       end loop;
 
       --  Origin
@@ -1192,7 +1320,12 @@ package body Alire.Releases is
        Pins         => R.Pins,
        Forbidden    => R.Forbidden.Evaluate (P),
        Properties   => R.Properties.Evaluate (P),
-       Available    => R.Available.Evaluate (P));
+       Available    => R.Available.Evaluate (P),
+
+       Imported     => No_TOML_Value
+       --  We are discarding information above, so the imported information
+       --  would no longer match.
+      );
 
    ----------------------
    -- Long_Description --

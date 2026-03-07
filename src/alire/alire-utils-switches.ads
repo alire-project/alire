@@ -160,7 +160,7 @@ is
          Runtime_Checks  => (Custom => False, Value => Everything),
          Compile_Checks  => (Custom => False, Value => Errors),
          Contracts       => (Custom => False, Value => Yes),
-         Style_Checks    => (Custom => False, Value => Yes),
+         Style_Checks    => (Custom => False, Value => No),
          Ada_Version     => (Custom => False, Value => Compiler_Default),
          Source_Encoding => (Custom => False, Value => UTF_8));
 
@@ -170,7 +170,7 @@ is
          Runtime_Checks  => (Custom => False, Value => Default),
          Compile_Checks  => (Custom => False, Value => Warnings),
          Contracts       => (Custom => False, Value => No),
-         Style_Checks    => (Custom => False, Value => Yes),
+         Style_Checks    => (Custom => False, Value => No),
          Ada_Version     => (Custom => False, Value => Compiler_Default),
          Source_Encoding => (Custom => False, Value => UTF_8));
 

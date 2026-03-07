@@ -2,6 +2,7 @@ with AAA.Strings; use AAA.Strings;
 
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
+with Alire.Warnings;
 
 package body Alire.Origins.Deployers.System.Macports is
 
@@ -67,7 +68,7 @@ package body Alire.Origins.Deployers.System.Macports is
         ("port",
          Empty_Vector & "info" & "--version" & This.Base.Package_Name,
          Output     => Info,
-         Err_To_Out => True) /= 0
+         Err_To_Out => False) /= 0
       then
          --  failed.
          Trace.Debug ("port failed to find " & This.Base.Package_Name);
@@ -76,9 +77,18 @@ package body Alire.Origins.Deployers.System.Macports is
             Report => False);
       end if;
 
+      --  Early exit if port is misbehaving. This can be due to outdated port
+      --  definitions, see https://github.com/alire-project/alire/issues/1574
+
       if Integer (Info.Length) /= 1 then
-         raise Constraint_Error
-           with "port info --version returned" & Info.Length'Image & " lines.";
+         Warnings.Warn_Once
+           ("Detecting system packages: `port info --version "
+            & This.Base.Package_Name & "` returned"
+            & Info.Length'Image & " lines where exactly one was expected.");
+         Trace.Debug ("Port output was: " & Info.Flatten ("\n"));
+         return Version_Outcomes.Outcome_Failure
+           ("unexpected version output for " & This.Base.Package_Name,
+            Report => False);
       end if;
 
       Trace.Debug ("port info output: " & Info (Info.First));

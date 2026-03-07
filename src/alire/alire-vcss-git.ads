@@ -22,6 +22,9 @@ package Alire.VCSs.Git is
    function Git_Dir return Any_Path;
    --  ".git" unless overridden by GIT_DIR
 
+   function Short_Commit (Commit : Git_Commit) return String
+   is (Commit (Commit'First .. Commit'First + 7));
+
    type VCS (<>) is new VCSs.VCS with private;
 
    function Handler return VCS;
@@ -34,7 +37,9 @@ package Alire.VCSs.Git is
    function Branch (This : VCS;
                     Path : Directory_Path)
                     return String;
-   --  Returns the branch name of the repo checked out at Path.
+   --  Return the name of the branch currently checked out in the repo at Path.
+   --
+   --  This may have the form "(HEAD detached at <hash>)".
 
    function Branches (Repo   : Directory_Path;
                       Local  : Boolean := True;
@@ -42,24 +47,44 @@ package Alire.VCSs.Git is
                       return AAA.Strings.Vector;
    --  List all known branches (without going on-line)
 
+   type Branch_States is
+     (No_Branch, -- The specified branch doesn't exist
+      No_Remote, -- Local branch is not configured to track any remote
+      Synced,    -- Local and remote branches are synchronished
+      Ahead,     -- Local branch has commit(s) not present on remote branch
+      Behind);   -- Not Ahead, and remote branch has commit(s) not on local
+
+   not overriding
+   function Branch_Remote (This   : VCS;
+                           Path   : Directory_Path;
+                           Branch : String;
+                           Status : out Branch_States)
+                           return String;
+   --  Retrieve the name of the remote tracked by a specified branch (usually
+   --  "origin"), and determine whether the local and remote branches are
+   --  synchronised.
+   --
+   --  Returns "" when Status is No_Branch or No_Remote.
+
    overriding
    function Clone (This : VCS;
                    From : URL;
-                   Into : Directory_Path)
+                   Into : Directory_Path;
+                   Commit : String := "")
                    return Outcome;
-   --  Make a shallow clone of the given URL (that may include '#commit). For
-   --  more precise control, use the following Clone signature.
+   --  Make a shallow clone of the given URL, optionally specifying a commit.
+   --  For more precise control, use the following Clone signature.
 
-   not overriding
-   function Clone (This   : VCS;
-                   From   : URL;
-                   Into   : Directory_Path;
-                   Branch : String;
-                   Depth  : Natural := 0)
-                   return Outcome;
+   function Clone_Branch (This   : VCS;
+                          From   : URL;
+                          Into   : Directory_Path;
+                          Branch : String;
+                          Commit : String := "";
+                          Depth  : Natural := 0)
+                          return Outcome;
    --  Specify a branch to check out after cloning. Branch may be "" for the
    --  default remote branch. For any Depth /= 0, apply --depth <Depth>. A
-   --  commit may be specified as From#Commit_Id
+   --  commit may optionally be specified.
 
    type Output is new AAA.Strings.Vector with null record;
 
@@ -80,6 +105,24 @@ package Alire.VCSs.Git is
    --  Add and commit all changes in a given repo; commiter will be set to the
    --  user email stored in our config.
 
+   not overriding
+   function Dirty_Files (This              : VCS;
+                         Repo              : Directory_Path;
+                         Include_Untracked : Boolean := False)
+                         return AAA.Strings.Set;
+   --  Return the paths of any files with uncommitted changes.
+   --
+   --  Ignored files are not included. Untracked files are not included unless
+   --  Include_Untracked is True.
+
+   function Discard_Uncommitted (Repo : Directory_Path;
+                                 Discard_Untracked : Boolean := False)
+                                 return Outcome;
+   --  Reset all uncommitted changes to tracked files, and optionally also
+   --  untracked files.
+   --
+   --  Ignored files are not discarded.
+
    function Push (Repo   : Directory_Path;
                   Remote : String;
                   Force  : Boolean := False;
@@ -87,8 +130,9 @@ package Alire.VCSs.Git is
                   Token  : String  := "") return Outcome;
    --  Push to the remote. If Create, use "-u <Remote> <current branch>". If an
    --  Auth Token is given, a temporary remote that includes the token will be
-   --  created and removed for the push; the local branch will be set to track
-   --  the original remote afterwards.
+   --  created and removed for the push; in this case, there will be no change
+   --  to the local branch unless Create is True, in which case any configured
+   --  upstream will be unset.
 
    not overriding
    function Remote_Commit (This : VCS;
@@ -102,8 +146,10 @@ package Alire.VCSs.Git is
                              Repo   : Directory_Path;
                              Rev    : String)
                              return String;
-   --  Returns the commit for a revision, if the repository and revision
-   --  (commit, tag, branch...) exist. Should be a no-op for a commit.
+   --  Returns the commit for a revision (commit, tag, branch...), if the
+   --  repository and revision exist. Returns "" otherwise.
+   --
+   --  Should be a no-op for a commit.
 
    not overriding
    function Is_Detached (This : VCS;
@@ -116,12 +162,23 @@ package Alire.VCSs.Git is
    --  Check if a repo exists at Path
 
    not overriding
-   function Remote (This    : VCS;
-                    Path    : Directory_Path;
-                    Checked : Boolean := True)
-                    return String;
-   --  Retrieve current remote name (usually "origin"). If checked, raise
-   --  Checked_Error when no remote configured. Otherwise, return "";
+   function Commit_Remotes (This    : VCS;
+                            Path    : Directory_Path;
+                            Commit  : Git_Commit)
+                            return AAA.Strings.Set;
+   --  Retrieve the names of all remotes on which Commit can be found.
+   --
+   --  Only searches the current remote-tracking branches, so this information
+   --  may be out of date without a preceeding 'git fetch'.
+
+   not overriding
+   function Repo_Remote (This    : VCS;
+                         Path    : Directory_Path;
+                         Checked : Boolean := True)
+                         return String;
+   --  Retrieve the name of the only remote configured for the repository
+   --  (usually "origin"). If Checked, raise Checked_Error when zero or
+   --  multiple remotes are configured. Otherwise, return "".
 
    not overriding
    function Remote_URL (This    : VCS;
@@ -145,17 +202,23 @@ package Alire.VCSs.Git is
                     Branch : String)
                     return Outcome;
    --  Update and track Branch, if given.
+   --
+   --  Does not discard uncommitted changes, so will fail if there are local
+   --  changes which conflict with the update.
+   --
+   --  Raises Checked_Error when the repo has multiple remotes configured and
+   --  Branch is not the same as the current HEAD.
 
    type States is (Dirty,     -- Uncommitted local changes
-                   No_Remote, -- Clean, no remote configured
-                   Clean,     -- Clean, up to date with remote
-                   Ahead);    -- Clean, ahead of remote (needs pull)
+                   Clean);    -- Clean
    --  States we are interested in for publishing
 
    not overriding
    function Status (This : VCS;
                     Repo : Directory_Path)
                     return States;
+   --  Return whether the repo contains uncommitted changes to tracked files.
+   --
    --  Note that untracked files don't cause a Dirty result!
 
    not overriding

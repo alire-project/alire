@@ -2,12 +2,13 @@
 Verify that using manual edition and `alr with` result in equivalent manifests
 """
 
-from drivers.alr import run_alr, alr_with, init_local_crate
-from drivers.asserts import assert_eq, assert_match
-from drivers.helpers import init_git_repo, git_branch
-
 import os
-import shutil
+
+from e3.fs import rm
+
+from drivers.alr import run_alr, alr_with, init_local_crate
+from drivers.asserts import assert_eq
+from drivers.helpers import init_git_repo, git_branch
 
 
 def check_equivalent(dep="", path="", url="", commit="", branch=""):
@@ -31,9 +32,9 @@ def check_equivalent(dep="", path="", url="", commit="", branch=""):
         if i == 1:
             assert_eq(p[0], p[1])
 
-        # Cleanup
+        # Cleanup (use e3.fs, because shutil.rmtree() fails on links on Windows)
         os.chdir("..")
-        shutil.rmtree("xxx")
+        rm("xxx", recursive=True)
 
 
 # Simple with without subset cannot be tested as `alr with` will narrow down
@@ -50,13 +51,13 @@ check_equivalent("unobtanium")
 
 # Pinned folder
 init_local_crate("yyy", enter=False)
-check_equivalent("yyy~0", path="../yyy")
+yyy_path = os.path.join(os.getcwd(), "yyy")
+check_equivalent("yyy~0", path=yyy_path)
 
 # Prepare repository
 head = init_git_repo("yyy")
 branch = git_branch("yyy")
-os.rename("yyy", "yyy.git")  # to be recognizable as a git url
-url = "../yyy.git"
+url = "git+file:" + yyy_path  # to be recognizable as a git url
 
 # Simple git remote, explicit crate & version
 check_equivalent(dep="yyy~0", url=url)

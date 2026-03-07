@@ -1,0 +1,4 @@
+driver: python-script
+build_mode: both
+indexes:
+    compiler_only_index: {}

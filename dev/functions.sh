@@ -1,4 +1,12 @@
-#!/usr/bin/env
+#!/usr/bin/env bash
+
+echo "Begin sourcing functions from dev/functions.sh"
+
+# Alias sudo if already root (e.g., inside docker we may be root and not have sudo)
+[ "$(id -u)" -eq 0 ] && alias sudo=""
+
+echo "Aliases:"
+alias
 
 function guess_OS() {
     # Returns one of the values needed in ALIRE_OS, using environment variables
@@ -12,6 +20,9 @@ function guess_OS() {
                 ;;
             "freebsd")
                 echo freebsd
+                ;;
+            "openbsd")
+                echo openbsd
                 ;;
             "darwin"*) # varies with versions: darwin18, darwin19, etc.
                 echo macos
@@ -37,6 +48,9 @@ function get_OS() {
     "FreeBSD")
         echo freebsd
         ;;
+    "OpenBSD")
+        echo openbsd
+        ;;
     "Darwin")
         echo macos
         ;;
@@ -49,3 +63,5 @@ function get_OS() {
         ;;
     esac
 }
+
+echo "End of sourcing functions from dev/functions.sh"

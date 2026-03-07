@@ -4,10 +4,10 @@ Test the creation of the metadata file containing crate aliases (provides.toml)
 
 import os
 
-from drivers.alr import run_alr
-from drivers.asserts import assert_eq, assert_match
+from drivers.alr import run_alr, alr_settings_dir
+from drivers.asserts import assert_eq
 
-aliases_file = os.path.join(os.environ['ALR_CONFIG'],
+aliases_file = os.path.join(alr_settings_dir(),
                             "indexes", "providers.toml")
 # This is the file where crate aliases are stored
 
@@ -26,7 +26,7 @@ with open(aliases_file, "rt") as file:
 
 contents = "".join(contents).replace("\n", "")
 
-assert_eq('aliased = ["crate",]',
+assert_eq('aliased_ = ["crate",]',
           contents)
 # This means that "crate" provides "aliased", so when solving "aliased" we also
 # need to load "crate"

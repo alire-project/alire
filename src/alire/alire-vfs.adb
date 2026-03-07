@@ -11,8 +11,8 @@ package body Alire.VFS is
                               return String
    is
       Relative : constant Any_Path :=
-                   Directories.Find_Relative_Path (Parent => From,
-                                                   Child  => Path);
+         Directories.Find_Relative_Path (Parent => From,
+                                         Child  => Path);
    begin
       if Check_Absolute_Path (Relative) then
          return Path;

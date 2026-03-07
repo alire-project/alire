@@ -1,0 +1,6 @@
+driver: python-script
+control: 
+    - [SKIP, "skip_unix", "Test is Unix-only"]
+indexes:
+    basic_index:
+        in_fixtures: true

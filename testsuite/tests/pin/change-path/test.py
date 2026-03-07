@@ -38,7 +38,7 @@ p = run_alr("pin", quiet=False)
 assert_eq("""Note: Synchronizing workspace...
 Dependencies automatically updated as follows:
 
-   · yyy 0.1.0-dev (path=../nest2/yyy)
+   . yyy 0.1.0-dev (path=../nest2/yyy)
 
 yyy file:../nest2/yyy\n""",
           p.out)

@@ -1,8 +1,8 @@
 with Ada.Containers.Vectors;
 
 with Alire.Directories;
+private with Alire.OS_Lib;
 
-private with GNATCOLL.OS.Constants;
 with GNATCOLL.VFS;
 with AAA.Strings; use AAA.Strings;
 
@@ -19,6 +19,13 @@ package Alire.VFS is
                               return String;
    --  If Path seen from From is relative, convert to portable, else return
    --  as-is
+
+   function Parent (Path : Portable_Path) return Portable_Path;
+   --  Like Ada.Directories.Containing_Directory. Will return "." for simple
+   --  names.
+
+   function Simple_Name (Path : Portable_Path) return String;
+   --  Like Ada.Directories.Simple name but for portable paths no matter the OS
 
    function To_Portable (Path : Relative_Path) return Portable_Path;
 
@@ -85,8 +92,6 @@ package Alire.VFS is
 
 private
 
-   use all type GNATCOLL.OS.OS_Type;
-
    -----------------
    -- Is_Portable --
    -----------------
@@ -94,25 +99,40 @@ private
    function Is_Portable (Path : Any_Path) return Boolean
    is ((for all Char of Path => Char /= '\')
        and then
-       not Check_Absolute_Path (Path));
+         not Check_Absolute_Path (Path));
+
+   ------------
+   -- Parent --
+   ------------
+
+   function Parent (Path : Portable_Path) return Portable_Path
+   is (To_Portable
+        (Directories.Adirs.Containing_Directory
+          (To_Native (Path))));
+
+   -----------------
+   -- Simple_Name --
+   -----------------
+
+   function Simple_Name (Path : Portable_Path) return String
+   is (if Contains (String (Path), "/")
+       then Directories.Adirs.Simple_Name (To_Native (Path))
+       else String (Path));
 
    -----------------
    -- To_Portable --
    -----------------
 
    function To_Portable (Path : Relative_Path) return Portable_Path
-   is (case GNATCOLL.OS.Constants.OS is
-          when MacOS | Unix => Portable_Path (Path),
-          when Windows      => Portable_Path (Replace (Path, "\", "/")));
+   is (Portable_Path
+       (OS_Lib.To_Portable
+          (Path)));
 
    ---------------
    -- To_Native --
    ---------------
 
    function To_Native (Path : Portable_Path) return Relative_Path
-   is (case GNATCOLL.OS.Constants.OS is
-          when MacOS | Unix => Relative_Path (Path),
-          when Windows      => Relative_Path
-                                 (Replace (String (Path), "/", "\")));
+   is (Relative_Path (OS_Lib.To_Native (OS_Lib.Portable_Path_Like (Path))));
 
 end Alire.VFS;

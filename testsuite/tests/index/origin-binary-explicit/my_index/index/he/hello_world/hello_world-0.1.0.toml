@@ -1,0 +1,11 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello_world"
+version = "0.1.0"
+licenses = "GPL-3.0-only"
+maintainers = ["user@example.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "../../../crates/libhello_1.0.0.tgz"
+hashes = ["sha256:c17d6ce87c6997c5f68ea4bfe6134c318073fed38ec0f81ccb1ae2bfdcc0187a"]
+binary = true

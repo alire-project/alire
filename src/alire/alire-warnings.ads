@@ -14,6 +14,15 @@ package Alire.Warnings with Preelaborate is
    function Already_Warned (Id : Warning_Id) return Boolean;
    --  Says if a warning has been already emitted in the current run
 
+   generic
+      type Returned (<>) is private;
+   function Warn_With_Result (Text   : String;
+                              Result : Returned;
+                              Level  : Trace.Levels := Trace.Warning)
+                              return Returned;
+   --  Return Result after printing Text; for use in expressions. See instances
+   --  in Alire.Warnings.Typed.
+
    ------------------
    --  Defined Ids --
    ------------------

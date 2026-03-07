@@ -14,6 +14,9 @@ package Alire.Releases.Containers is
                                                      Release_Image);
    subtype Optional is Optional_Releases.Optional;
 
+   function Unit (Element : Releases.Release) return Optional
+                  renames Optional_Releases.Unit;
+
    package Release_Sets
    is new Ada.Containers.Indefinite_Ordered_Sets (Releases.Release,
                                                   Releases."<",
@@ -42,7 +45,7 @@ package Alire.Releases.Containers is
                   Release.Satisfies (Dep));
 
    package Release_Holders
-   is new AAA.Containers.Indefinite_Holders (Releases.Release);
+   is new AAA.Containers.Indefinite_Holders (Releases.Release, Releases."=");
    subtype Release_H is Release_Holders.Holder;
 
    package Crate_Release_Maps is new Ada.Containers.Indefinite_Ordered_Maps

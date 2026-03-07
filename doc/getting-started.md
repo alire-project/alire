@@ -10,14 +10,14 @@ repository](https://github.com/alire-project/alire/releases).
 On Linux, `Alire` is simply provided in an archive.
 
 Once the archive is extracted you have to add `alr` in the environment `PATH` .
-This may be done for the duration of a terminal session by running the command below: 
+This may be done for the duration of a terminal session by running the command below:
 ```bash
 $ export PATH="<PATH_TO_EXTRACTED>/bin/:$PATH"
 ```
 Those wanting to keep this path permanently in their `PATH` environment may do so by pasting the above command into the `.profile` file of their user's account.
 
-Alire provides GNAT toolchains hosted on x86-64 for Linux. If those toolchains do not 
-work for you, or if you are on another host architecture like ARM, you have the option 
+Alire provides GNAT toolchains hosted on x86-64 for Linux. If those toolchains do not
+work for you, or if you are on another host architecture like ARM, you have the option
 to look at the GNAT toolchains from the Linux distribution.
 
 ## `alr` on Windows
@@ -25,15 +25,23 @@ to look at the GNAT toolchains from the Linux distribution.
 On Windows an installer is provided. The installer will create a shortcut to
 start `PowerShell` with `Alire` in the environment `PATH`.
 
-The first time you run `alr` the program will ask if you want to install
-[msys2](https://www.msys2.org/). This is recommended as `alr` will use `msys2`
+The first time you run `alr`, the program
+will ask if you want to install
+[msys2](https://www.msys2.org/) (except in the cases listed below). This is recommended as `alr` will use `msys2`
 to automatically install required tools such as `git` or `make` that you would
 otherwise have to install manually. `msys2` will also provide external
 libraries required by some projects in the Alire index, allowing you to build
 more projects out of the box.
 
-Alire provides GNAT toolchains hosted on x86-64 for Windows. Those toolchains 
-should work for all cases, if not, let us know.
+`msys2` will not be installed
+- when running `alr settings`, to allow uninterrupted configuration, and setting
+  of `msys2` location (see `alr help settings`), or
+- when you already have a msys2 installation in your PATH (more precisely, if `pacman`
+  is found in your PATH.)
+  - In this case, `alr` will reuse your existing installation.
+
+Alire provides GNAT toolchains hosted on x86-64 for Windows. Those toolchains
+should work for all cases; if not, let us know.
 
 ## `alr` on macOS
 
@@ -44,14 +52,14 @@ Once the archive is extracted you have to add `alr` in the environment `PATH`:
 $ export PATH="<PATH_TO_EXTRACTED>/bin/:$PATH"
 ```
 
-If you try to run it on recent versions of macOS, you will get a popup saying 
-`“alr” cannot be opened because the developer cannot be verified.` and inviting 
+If you try to run it on recent versions of macOS, you will get a popup saying
+`“alr” cannot be opened because the developer cannot be verified.` and inviting
 you to move it to the bin. The way round this is to remove the quarantine attribute,
 ```console
 $ xattr -d com.apple.quarantine bin/alr
 ```
 
-Alire provides GNAT toolchains hosted on x86-64 for macOS. If those toolchains do not 
+Alire provides GNAT toolchains hosted on x86-64 for macOS. If those toolchains do not
 work for you, or if you are on another host architecture like the Apple M1, you have
 the option to look at the GNAT toolchains from the community.
 
@@ -265,6 +273,13 @@ website:
 
 * [alire.ada.dev](https://alire.ada.dev)
 
+### Using Alire with other indexes
+
+So far in this guide we have been using the community index, a central catalog
+of publicly available crates, but it is possible to host your own index for
+crates which you do not wish to make generally available. For more information,
+see [using Alire with private crates](private-crates).
+
 ## Build environment
 
 To create a build environment, `alr` sets environment variables such as
@@ -276,19 +291,76 @@ to print the build environment:
 
 ## Troubleshooting
 
-By default `alr` is quite terse and will hide the output of subprocesses,
-mostly reporting in case of failure. If you hit any problem, increasing
-verbosity (`-v` or even `-vv`) is usually enough to get an idea of the root of
-the problem. Additionally, `-d` will show tracebacks of exceptions.
+If you hit any problem, increasing verbosity (`-v` or even `-vv`) is usually
+enough to get an idea of the root of the problem. Additionally, `-d` will show
+tracebacks of exceptions.
+
+Subprocess output is shown by default (you can silence it, and anything else
+not an error) with `-q`, which enables quiet mode. Any subprocess that exits
+abnormally will be reported, including its invocation arguments.
+
+If you suspect your settings may be the source of some problem, please check
+our section on [Settings](settings), and in particular how to use a [default
+pristine settings](settings#relocating-your-settings)
 
 ## Running tests
+
+### Self-tests
 
 `alr` comes with a test suite for self-checks. See the instructions in the
 [README](https://github.com/alire-project/alire/blob/master/testsuite/README.md)
 of the `testsuite` folder.
 
-Additionally, you can test in batch the building of crates in your platform
-with the `alr test` command. (See `alr test --help` output for instructions.)
+### Testing your crates
+
+Alire provides an `alr test` command for testing the functionality of your
+projects. It needs to be configured in a `[test]` section of the Alire manifest,
+by specifying either `runner = 'alire'` or a custom runner with
+`command = [...]`.
+Any arguments passed to the `alr test` command are passed as-is to the runner
+command (or the built-in runner, which uses them for test filtering).
+
+It is recommended to provide tests for a library in a `tests` or `testsuite`
+subfolder of the root crate; if your test suite is an Alire crate, it can then
+depend on the root crate by using a pinned dependency, like so:
+
+```toml
+[[depends-on]]
+mycrate = '*'
+
+[[pins]]
+mycrate = { path = '..' }
+```
+
+### Built-in runner
+
+The built-in Alire test runner provides a simple way to run `.adb` files as
+separate tests. It requires setting up a subcrate, with a GPR file that defines
+its executables in a specific way:
+
+```ada
+with "config/<cratename>_list_config.gpr"
+--  ...
+for Main use <Cratename>_List_Config.Test_Files;
+```
+
+This subcrate is automatically generated by `alr init` (unless one specifies
+`--no-test`), so you will not have to write all of this by hand.
+
+When running the `alr test` command, it will put every `.adb` file in `/src` in
+the generated `config/<cratename>_list_config.gpr` file, then build them all 
+and run them in parallel in accordance with the `jobs` parameter (either from
+the manifest or the command line).
+
+Support code for the tests can be placed into another folder, like `/common`;
+only `.adb` files in `/src` are counted as tests. Each test must be a main
+procedure, taking no arguments and returning a non-zero error code on failure
+(for instance, by raising an exception, either manually or through some kind of
+`Assert` function).
+
+On execution, tests can be filtered by providing additional arguments to
+`alr test`: using `alr test abcd efgh` will only run tests whose name contain
+either 'abcd' or 'efgh'.
 
 ## Migration of an existing Ada/SPARK project to Alire
 
@@ -378,8 +450,9 @@ you have to add a
 project-files = ["project_file.gpr"]
 ```
 
-Although this is not recommended (see Best practices), you can have multiple
-GPR project files:
+Although this is not recommended (see
+[best practices](policies#best-practices)), you can have multiple GPR project files:
+
 ```toml
 project-files = ["project_file_1.gpr", "project_file_2.gpr"]
 ```

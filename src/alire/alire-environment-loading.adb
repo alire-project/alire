@@ -1,5 +1,7 @@
+with Ada.Exceptions;
+
 with Alire_Early_Elaboration;
-with Alire.Environment.Formatting;
+with Alire.Formatting;
 with Alire.GPR;
 with Alire.Platforms.Current;
 with Alire.Properties.Scenarios;
@@ -122,7 +124,10 @@ package body Alire.Environment.Loading is
          begin
             declare
                Value : constant String :=
-                         Formatting.Format (Release_Base, Act.Value);
+                         Formatting.Format
+                           (Act.Value,
+                            Formatting.For_Manifest_Environment (Release_Base),
+                            Convert_Path_Seps => True);
             begin
                case Act.Action is
 
@@ -141,10 +146,11 @@ package body Alire.Environment.Loading is
                end case;
             end;
          exception
-            when Formatting.Unknown_Formatting_Key =>
+            when E : Formatting.Unknown_Formatting_Key =>
                Raise_Checked_Error
-                 ("Unknown environment variable formatting key in var '" &
-                    Act.Name & " of '" & Origin & "'");
+                 ("Unknown predefined variable in environment variable '" &
+                    Act.Name & "' of '" & Origin & "': " &
+                    Ada.Exceptions.Exception_Message (E));
          end;
       end loop;
 

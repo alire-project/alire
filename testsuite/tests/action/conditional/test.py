@@ -35,14 +35,14 @@ command = ["echo", "4"]
 
 # Verify actions are there
 assert_match(".*" +
-             re.escape("""   Pre_Build run: ${CRATE_DIR}/./echo 1
+             re.escape("""   Pre_Build run: echo 1 (from ${CRATE_ROOT}/.)
    case OS is
-      when others => Pre_Build run: ${CRATE_DIR}/./echo 2
+      when others => Pre_Build run: echo 2 (from ${CRATE_ROOT}/.)
    case OS is
-      when others => Pre_Build run: ${CRATE_DIR}/./echo 3
-   Pre_Build run: ${CRATE_DIR}/./echo 4
+      when others => Pre_Build run: echo 3 (from ${CRATE_ROOT}/.)
+   Pre_Build run: echo 4 (from ${CRATE_ROOT}/.)
    case OS is
-      when others => Pre_Build run: ${CRATE_DIR}/./echo 5
+      when others => Pre_Build run: echo 5 (from ${CRATE_ROOT}/.)
 """) + ".*",
              run_alr("show").out)
 

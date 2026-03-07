@@ -469,6 +469,10 @@ package body Alire.Conditional_Trees is
       --  dependencies)
       --  Array values with same key are consolidated in a single array
       --    (e.g., actions, which are created as an array of tables).
+      --  NOTE: for an array of tables (actions, tests), its To_TOML must
+      --    return an array for each element rather than a single table per
+      --    element, so here these arrays can be properly identified and
+      --    appended.
 
    begin
 
@@ -494,6 +498,8 @@ package body Alire.Conditional_Trees is
             case Current.Kind is
                when TOML_Table =>
                   Table.Set (Key, TOML_Adapters.Merge_Tables (Current, Val));
+                  --  See comment on top if you see a "Ill-shaped TOML
+                  --  information cannot be merged" error reported here.
                when TOML_Array =>
                   case Val.Kind is
                      when TOML.Atom_Value_Kind | TOML.TOML_Table =>
@@ -532,6 +538,10 @@ package body Alire.Conditional_Trees is
                      This.Value.Constant_Reference.To_TOML);
    end To_TOML;
 
+   -------------
+   -- To_TOML --
+   -------------
+
    overriding
    procedure To_TOML (This : Vector_Node; Parent : TOML.TOML_Value) is
    begin
@@ -545,6 +555,10 @@ package body Alire.Conditional_Trees is
          To_TOML (Child, Parent);
       end loop;
    end To_TOML;
+
+   -------------
+   -- To_TOML --
+   -------------
 
    overriding
    function To_TOML (This : Tree) return TOML.TOML_Value is

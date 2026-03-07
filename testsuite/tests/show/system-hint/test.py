@@ -1,6 +1,5 @@
 """
 Test that hinted native dependencies appear correctly in 'alr show'.
-More precisely, a "Dependencies (native)" section is added to list them.
 """
 
 from glob import glob
@@ -14,7 +13,7 @@ p = run_alr('show', 'libhello=0.9-test-unav-native', '--solve',
             complain_on_error=True)
 
 assert_match('.*'
-             'Dependencies \(external\):\n'
+             'Dependencies \(missing\):\n'
              '   make\*'
              '.*',
              p.out, flags=re.S)

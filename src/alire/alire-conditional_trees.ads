@@ -90,7 +90,6 @@ package Alire.Conditional_Trees with Preelaborate is
    with Post'Class => Flatten'Result.Is_Empty or else
                       Flatten'Result.Is_Value or else
                       Flatten'Result.Is_Vector;
-   --  Above Post kept for reference but gnat bugs out during instantiation.
    --  Recursively merge all subtree elements in a single value or vector. It
    --  can result in an empty tree if a vector is empty, so it returns a tree.
 
@@ -448,7 +447,7 @@ private
    procedure To_TOML (This : Vector_Node; Parent : TOML.TOML_Value);
 
    overriding
-   function TO_YAML (V : Vector_Node) return String;
+   function To_YAML (V : Vector_Node) return String;
 
    function Is_Vector (This : Tree) return Boolean is
      (not This.Is_Empty and then This.Root in Vector_Node);

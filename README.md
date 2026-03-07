@@ -3,6 +3,7 @@
 [![MacOS CI](https://github.com/alire-project/alire/workflows/CI%20macOS/badge.svg)](https://github.com/alire-project/alire/actions)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/ada-lang/Alire)
 [![Gitpod ready](https://img.shields.io/badge/Gitpod-ready-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/alire-project/alire)
+[![Funding](https://polar.sh/embed/seeks-funding-shield.svg?org=alire-project)](https://polar.sh/alire-project)
 
 # ALR #
 
@@ -20,7 +21,7 @@ https://alire.ada.dev/
 
 ## TL;DR ##
 
-Available for Linux/macOS/Windows/FreeBSD.
+Available for Linux/macOS/Windows/FreeBSD/OpenBSD.
 
 Download the latest stable version from the [Releases](https://github.com/alire-project/alire/releases) page. See the [Getting Started](doc/getting-started.md) guide for binary downloads.
 
@@ -34,7 +35,7 @@ See the [Getting Started](doc/getting-started.md) guide.
 
 The build process of `alr` is straighforward and depends only on a recent GNAT Ada 2012 compiler. All dependencies are included as submodules. A project file (`alr_env.gpr`) is provided to drive the build with all necessary configuration (which is also valid for editing with GNAT Studio).
 
-The ALIRE_OS environment variable must be set to the OS for which `alr` is being build, taking one of the values in `freebsd`, `linux`, `macos`, `windows`.
+The ALIRE_OS environment variable must be set to the OS for which `alr` is being build, taking one of the values in `freebsd`, `openbsd`, `linux`, `macos`, `windows`.
 
 Follow these steps:
 
@@ -42,7 +43,7 @@ Follow these steps:
 1. Enter the cloned repository folder.
 1. Build the executable:
    * if you have Bash on your system: `dev/build.sh`
-   * if you don't have Bash on your system: `ALIRE_OS=<one of: freebsd, linux, macos, windows> gprbuild -j0 -p -P alr_env`
+   * if you don't have Bash on your system: `ALIRE_OS=<one of: freebsd, openbsd, linux, macos, windows> gprbuild -j0 -p -P alr_env`
 
 The binary will be found at `bin/alr`. You can run `alr version` to see version and diagnostics information.
 
@@ -80,7 +81,7 @@ environment `alr` is using with `alr printenv`.
 
 ## Supported platforms ##
 
-Alire can be built on Linux, macOS, Windows, and FreeBSD.
+Alire can be built on Linux, macOS, Windows, FreeBSD, and OpenBSD.
 
 Alire requires a recent Ada 2012 compiler. In practice, this currently means
 the latest [GNAT Community](https://www.adacore.com/download) or a somewhat

@@ -6,13 +6,7 @@ package body Alr.Utils is
 
    function Contains (V : AAA.Strings.Vector; Subst : String) return Boolean is
    begin
-      for Str of V loop
-         if AAA.Strings.Contains (Str, Subst) then
-            return True;
-         end if;
-      end loop;
-
-      return False;
+      return (for some Str of V => AAA.Strings.Contains (Str, Subst));
    end Contains;
 
 end Alr.Utils;

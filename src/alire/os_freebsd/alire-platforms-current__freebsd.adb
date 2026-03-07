@@ -7,8 +7,8 @@ package body Alire.Platforms.Current is
    -- Detected_Distribution --
    ---------------------------
 
-   function Detected_Distribution return Platforms.Distributions is
-      (Platforms.Distro_Unknown);
+   function Detected_Distribution return Platforms.Distributions
+   is (Platforms.Distribution_Unknown);
 
    -----------------------
    -- Distribution_Root --
@@ -30,5 +30,11 @@ package body Alire.Platforms.Current is
 
    function Operating_System return Alire.Platforms.Operating_Systems
    is (Alire.Platforms.FreeBSD);
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize is null;
 
 end Alire.Platforms.Current;

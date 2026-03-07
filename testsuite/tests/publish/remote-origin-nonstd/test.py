@@ -2,7 +2,7 @@
 Test proper publishing of a ready remote origin with custom manifest location
 """
 
-from drivers.alr import run_alr, index_version
+from drivers.alr import init_local_crate, run_alr, index_version
 from drivers.asserts import assert_match
 from drivers.helpers import contents, content_of, init_git_repo, zip_dir
 from shutil import copyfile, rmtree
@@ -26,7 +26,7 @@ with open(os.path.join("my_index", "index.toml"), "wt") as index_metadata:
 run_alr("index", "--add", "my_index", "--name", "my_index")
 
 # Prepare a repo and a zipball to be used as "remote" targets for publishing
-run_alr("init", "--bin", "xxx")
+init_local_crate("xxx", enter=False, with_maintainer_login=True)
 # Rename the manifest location
 os.rename(os.path.join("xxx", "alire.toml"), os.path.join("xxx", "xxx.toml"))
 

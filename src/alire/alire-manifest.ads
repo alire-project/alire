@@ -27,7 +27,12 @@ package Alire.Manifest is
    --  As removal of dependencies, but for pins. If the pin is not found, or
    --  it cannot be safely removed, it will raise.
 
-   function Is_Valid (Name : Any_Path; Source : Sources) return Boolean;
-   --  Check that the given Name is a loadable manifest
+   function Is_Valid (Name   : Any_Path;
+                      Source : Sources;
+                      Root   : Any_Path := "")
+                      return Boolean
+     with Pre => Source /= Local or else Check_Absolute_Path (Root);
+   --  Check that the given Name is a loadable manifest. For a local manifest
+   --  that may contain links, we need the root path.
 
 end Alire.Manifest;

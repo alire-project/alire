@@ -27,8 +27,8 @@ with Semantic_Versioning;
 with TOML;
 
 private with Alire.OS_Lib;
-private with CLIC.TTY;
 private with Alire.Utils.TTY;
+private with CLIC.TTY;
 
 package Alire.Releases is
 
@@ -287,6 +287,8 @@ package Alire.Releases is
 
    function Maintainer (R : Release) return Alire.Properties.Vector;
 
+   function Maint_Logins (R : Release) return Alire.Properties.Vector;
+
    function Milestone (R : Release) return Milestones.Milestone;
 
    function Website (R : Release) return Alire.Properties.Vector with
@@ -308,6 +310,10 @@ package Alire.Releases is
    function Property_Contains (R : Release; Str : String) return Boolean;
    --  True if some property contains the given string
 
+   function Property_Contains (R : Release; Str : String)
+                               return AAA.Strings.Set;
+   --  Return a set with the names of properties that contain the given string
+
    function Satisfies (R   : Release;
                        Dep : Alire.Dependencies.Dependency'Class)
                        return Boolean;
@@ -319,8 +325,12 @@ package Alire.Releases is
 
    function From_Manifest (File_Name : Any_Path;
                            Source    : Manifest.Sources;
-                           Strict    : Boolean)
-                           return Release;
+                           Strict    : Boolean;
+                           Root_Path : Any_Path := "")
+                           return Release
+     with Pre => Source in Manifest.Index or else Root_Path in Absolute_Path;
+   --  When loading a manifest for a workspace, it may contain pins that we
+   --  must resolve relative to Root_Path.
 
    function From_TOML (From   : TOML_Adapters.Key_Queue;
                        Source : Manifest.Sources;
@@ -371,6 +381,11 @@ package Alire.Releases is
    --  so future inspections of the folder can ensure the operation wasn't
    --  interrupted. No actions for the release are run at this time.
 
+   procedure Install_System_Package (This : Release)
+     with Pre => This.Origin.Is_System;
+   --  Install the system package that provides the release, without any
+   --  additional actions (unlike Deploy).
+
 private
 
    use Semantic_Versioning;
@@ -382,6 +397,11 @@ private
                             P : Alire.Properties.Vector)
                             return Alire.Properties.Vector;
    --  Properties that R has under platform properties P
+
+   type TOML_Value_Ptr is access TOML.TOML_Value;
+
+   function No_TOML_Value return TOML_Value_Ptr
+   is (new TOML.TOML_Value'(TOML.No_TOML_Value));
 
    type Release (Prj_Len,
                  Notes_Len : Natural)
@@ -397,6 +417,18 @@ private
       Forbidden    : Conditional.Dependencies;
       Properties   : Conditional.Properties;
       Available    : Conditional.Availability;
+
+      Imported     : TOML_Value_Ptr := No_TOML_Value;
+      --  For releases loaded from a manifest, this is the original structured
+      --  data that generated it, in which case Imported.Is_Present.
+      --
+      --  GNATs<14 have trouble with this value, raising during main Ada lib
+      --  finalization. Given that GNAT 14 is happy, and that TOML_Value is
+      --  a by-reference type internally, it seems pretty likely this is some
+      --  obscure bug in older GNATs. The only workaround I've found at this
+      --  time is to avoid finalization by explicitly allocating the value.
+      --  This is leaky, so we may want to revisit this issue in the future.
+      --  TODO: find better workaround.
    end record;
 
    function From_TOML (This   : in out Release;
@@ -512,6 +544,10 @@ private
    function Maintainer (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter
        (Alire.TOML_Keys.Maintainer));
+
+   function Maint_Logins (R : Release) return Alire.Properties.Vector
+   is (Conditional.Enumerate (R.Properties).Filter
+       (Alire.TOML_Keys.Maint_Logins));
 
    function Website (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter

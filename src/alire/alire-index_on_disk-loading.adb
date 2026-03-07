@@ -1,8 +1,8 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
-with Alire.Config.Builtins;
-with Alire.Config.Edit;
+with Alire.Settings.Builtins;
+with Alire.Settings.Edit;
 with Alire.Containers;
 with Alire.Index;
 with Alire.Index_On_Disk.Updates;
@@ -189,7 +189,7 @@ package body Alire.Index_On_Disk.Loading is
       Result : Outcome with Warnings => Off;
       --  Spurious warning to be silenced in Debian stable/Ubuntu LTS GNATs.
       Indexes : constant Set :=
-                  Find_All (Config.Edit.Indexes_Directory,
+                  Find_All (Settings.Edit.Indexes_Directory,
                             Result,
                             Cached => False);
       use Sets;
@@ -205,15 +205,15 @@ package body Alire.Index_On_Disk.Loading is
          return Add (Origin => Alire.Index.Community_Repo &
                        "#" & Alire.Index.Community_Branch,
                      Name   => Alire.Index.Community_Name,
-                     Under  => Config.Edit.Indexes_Directory,
+                     Under  => Settings.Edit.Indexes_Directory,
                      Before => Before);
       end Actually_Add;
 
    begin
-      if not Config.Builtins.Index_Auto_Community.Get then
+      if not Settings.Builtins.Index_Auto_Community.Get then
          Warnings.Warn_Once
            ("Not configuring the community index, disabled via "
-            & Config.Builtins.Index_Auto_Community.Key);
+            & Settings.Builtins.Index_Auto_Community.Key);
          return Outcome_Success;
       end if;
 
@@ -257,7 +257,7 @@ package body Alire.Index_On_Disk.Loading is
    ------------------
 
    function Default_Path return Absolute_Path
-   is (Config.Edit.Indexes_Directory);
+   is (Settings.Edit.Indexes_Directory);
 
    -----------
    -- Setup --
@@ -420,7 +420,7 @@ package body Alire.Index_On_Disk.Loading is
 
       if From.Is_Empty and then Path = "" then
          Load (Crate, Detect_Externals, Strict, From,
-               Config.Edit.Indexes_Directory);
+               Settings.Edit.Indexes_Directory);
          return;
       elsif Path /= "" then
          Setup (Path);

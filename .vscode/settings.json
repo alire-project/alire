@@ -11,4 +11,12 @@
     "terminal.integrated.env.linux": {
         "ALIRE_OS": "linux",
     },
+    "workspaceKeybindings.alireGprbuild.enabled": true,
+    "workspaceKeybindings.alireBuildFile.enabled": true,
+    "triggerTaskOnSave.tasks": {
+        "Alire: Compile current file": [
+            "*.ads",
+            "*.adb",
+        ],
+    }
 }

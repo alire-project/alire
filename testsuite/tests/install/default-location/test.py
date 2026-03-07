@@ -17,7 +17,7 @@ else:
 
 # Disable msys2 as the home change doesn't sit well with it and we don't need it here.
 # This is a workaround because trying to disable it via config doesn't work on 1st run:
-# run_alr("config", "--global", "--set", "msys2.do_not_install", "true")
+# run_alr("settings", "--global", "--set", "msys2.do_not_install", "true")
 if on_windows():
     os.makedirs(os.path.join(os.environ["USERPROFILE"], ".cache", "alire", "msys64"))
 

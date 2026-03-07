@@ -4,7 +4,363 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
-## Release `2.0-dev`
+## Release `3.0`
+
+### Support for quoting in custom editors, quoting changes for `alr run`
+
+PR [#1993](https://github.com/alire-project/alire/pull/1993)
+
+The `alr edit --set-editor` command now supports double quotes, single quotes,
+and backslash escaping within `editor.cmd` using shell quoting rules.
+
+```shell
+$ alr config --set --global editor.cmd "command with 'quoted arguments'"
+```
+
+`${CRATE_ROOT}` and `${GPR_FILE}` are still replaced directly
+
+Arguments passed using `alr run -a arguments` now use the same quoting format.
+
+```shell
+$ alr run -a "list of 'quoted arguments'"
+```
+
+The `origins.archive.download_cmd` setting also uses this quoting format.
+
+### Longer default solver timeout
+
+The solver timeout has been increased from 5 seconds to 10 seconds by default.
+This should avoid hitting it on complex dependencies on slower machines.
+
+### Replace `--no-color` with a new `--color[=WHEN]` switch
+
+The new global switch allows specifying `--color=always`, for instance when
+one wants to keep color output in a redirection. The default value is `auto`,
+which has the same behavior as before without the `--no-color` switch.
+
+Disabling colors is done with the `never` value. It also follows the
+`NO_COLOR` environment variable, like before, but the `always` value has
+priority.
+
+The `--no-color` switch will still work, but is deprecated and will be removed
+in the next version.
+
+### Gentoo support
+
+Add Gentoo's Portage support via sudo, if the base package contains a section
+for gentoo, see libsdl2 for example, emerge will be called if the package is
+not installed.
+
+### New `--github` switch for `alr init` command
+
+PR [#1972](https://github.com/alire-project/alire/pull/1972)
+
+The `alr init` command now supports a `--github` switch to automatically
+generate GitHub files (README.md, workflows) for new crates. This can be
+controlled with `--github[=true/false]` or by setting the new built-in
+`init.github_files` setting.
+
+### Style checks disabled by default in all build profiles
+
+PR [#1919](https://github.com/alire-project/alire/pull/1919)
+
+Style checks are now disabled by default in all build profiles (release, validation, and development). Previously, style checks were enabled by default in the validation and development profiles. This change intends to avoid unwanted compiler errors related to style issues.
+
+To enable former style checks, you can use the `build-switches` table in your manifest:
+
+```toml
+[build-switches]
+"*".style_checks = "Yes"  # Enable for all profiles
+```
+
+Or for a specific profile:
+
+```toml
+[build-switches]
+validation.style_checks = "Yes"  # Enable only for validation profile
+```
+
+Alternatively, `gnatformat` is available in the community index to easily apply the default GNAT style.
+
+### New `--builtin` switch for `alr settings`
+
+PR [#1912](https://github.com/alire-project/alire/pull/1912)
+
+A new `--builtin` switch has been added to the `alr settings` command to avoid
+unintended silent errors. This switch can only be used with `--set`, `--get`,
+or `--unset` and ensures that the setting being operated on is a built-in
+setting.
+
+When `--builtin` is used with a non-built-in setting, an error is raised.
+Conversely, when operating on a built-in setting without using `--builtin`, a
+warning is printed suggesting the use of `--builtin`.
+
+### New test command
+
+PR [#1874](https://github.com/alire-project/alire/pull/1874)
+
+The `alr test` command can now be configured with a new `[test]` section in the
+Alire manifest, with the option to use a built-in test runner or an external
+command.
+
+```toml
+[test]
+runner = 'alire'
+# OR
+command = ["my", "custom", "runner"]
+```
+
+The built-in test runner allows crate authors to compile and run tests from
+simple `.adb` files. It compiles and runs every `.adb` file of the subcrate's
+`/src` folder as a separate test. A skeleton test subcrate is now generated
+with `alr init` (this can be prevented with the `--no-test` flag).
+
+For backwards compatibility, running `alr test` without a `[test]` section in
+the manifest will still run local test actions, but they should be considered
+deprecated. The remote testing capabilities of `alr test` have been removed.
+
+### New self-update helper
+
+The `alr self-update` command will help users update the Alire binary more
+easily. It takes several optional command line flags:
+
+- `--location=<path/to/alr>` to specify where to install the new binary
+- `--release=<version>` to download and install a specific version (provided
+  that Alire builds binaries for this version on your platform)
+- `--nightly` to install a pre-release version of Alire.
+
+  **Disclaimer**: nightly versions may have incomplete features, unresolved
+  bugs and may delete features or break compatibility without warning.
+
+On Windows, updating the binary will launch a separate console window to
+perform the update. This is expected behavior, needed because Windows does not
+allow us to overwrite a running binary easily.
+
+## Release `2.1`
+
+### New `--format` global switch to produce structured output
+
+PR [#1851](https://github.com/alire-project/alire/pull/1851)
+
+The global switch `--format` can be used to produce JSON format with some
+commands, e.g., `index`, `search`, `show`.
+
+This new switch accepts an optional parameter that can be JSON, TOML or YAML, to
+select the desired output language:
+
+```
+$ alr --format=TOML search --crates hello
+[[data]]
+description = "'Hello, world!' demonstration project"
+name = "hello"
+[[data]]
+description = "Basic library demonstration project"
+name = "libhello"
+```
+
+### Allow pinning a crate in a subdirectory of a git repository
+
+PR [#1857](https://github.com/alire-project/alire/pull/1857)
+
+Until now, monorepos were supported in origins of indexed crates but not in user
+pins. A workaround was to manually clone a repository and pin the appropriate
+local path. This can now be achieved entirely within Alire, e.g.:
+
+`alr with --use=https://github.com/myuser/mymonorepo --subdir=mycrate`
+
+This way, `alr update` works as expected and it removes the need to manually
+update these repositories.
+
+### Configurable trusted sites list for Git repositories
+
+PR [#1819](https://github.com/alire-project/alire/pull/1819)
+
+The list of hosts which the `alr publish --for-private-index` and
+`alr index --check` commands consider to be trusted for Git repository origins
+can now be configured with the `origins.git.trusted_sites` settings key. The
+existing hard-coded list still applies when using `alr publish` to submit to the
+community index.
+
+### Custom download command for archive crates
+
+PR [#1815](https://github.com/alire-project/alire/pull/1815)
+
+The command used to download a crate as a source archive can now be configured
+using the `origins.archive.download_cmd` key of `alr settings`, instead of using
+a hard-coded `curl` command. The tokens `${URL}` and `${DEST}` are replaced by
+the origin URL and destination file path respectively.
+
+For example
+```sh
+alr settings --set --global origins.archive.download_cmd 'curl ${URL} --netrc -L -s -o ${DEST}'
+```
+configures `alr` to use the default command with the addition of the switch
+`--netrc` (which instructs `curl` to use the login information in the `.netrc`
+file found in the user's home directory).
+
+The default behavior is unchanged.
+
+### Abbreviated `--tree` output for repeating dependencies
+
+PR [#1814](https://github.com/alire-project/alire/pull/1814)
+
+By default, repeated dependencies are now omitted by `--tree` output, e.g.:
+
+```
+$ alr show --tree libgpr2
+...
+Dependencies (tree):
+   gnat=14.1.3 (gnat_native) (>=14)
+   gnatcoll=25.0.0 (~25.0.0)
+   ├── gnat=14.1.3 (gnat_native) (>=13)
+   └── libgpr=25.0.0 (~25.0.0)
+       ├── gnat=14.1.3 (gnat_native) (/=2020)
+       └── xmlada=25.0.0 (~25.0.0)
+           └── gnat=14.1.3 (gnat_native) (>=11)
+   gnatcoll_gmp=25.0.0 (~25.0.0)
+   ├── gnatcoll=25.0.0 (~25.0.0)
+   │   └── ...
+   └── libgmp=6.3.0 (*)
+   gnatcoll_iconv=25.0.0 (~25.0.0)
+   └── gnatcoll=25.0.0 (~25.0.0)
+       └── ...
+```
+
+Whenever '...' appears, it means that the preceding release has its
+dependencies already printed somewhere in the preceding tree lines.
+
+The old behavior can be obtained by increasing verbosity with the global `-v`
+switch.
+
+### Faster `alr search` without resolving dependencies
+
+PR [#1799](https://github.com/alire-project/alire/pull/1799)
+
+`alr search` no longer solves dependencies of releases by default, in order to
+speed up the command. The `--solve` switch can be used to achieve the old
+behavior.
+
+In the new default situation, releases that have dependencies are marked with a
+'?' symbol in the STATUS column. The `--solve` switch will solve the
+dependencies and replace the '?' with either nothing for a solvable release or
+the usual 'X' if dependencies are unsatisfiable.
+
+### Support for private indexes with `alr publish --for-private-index`
+
+PR [#1745](https://github.com/alire-project/alire/pull/1745)
+
+Automated manifest generation with `alr publish` can now be performed for crates
+which are not intended for submission to the community index by supplying the
+`--for-private-index` switch. This has the same effects as `--skip-submit`, and
+additionally disables a number of checks that enforce submission requirements
+specific to the community index.
+
+## Release `2.0`
+
+### `ALIRE_SETTINGS_DIR` replaces `ALR_CONFIG`
+
+PR [#1625](https://github.com/alire-project/alire/pull/1625)
+
+This reflects the new nomenclature of Alire settings versus crate
+configuration. Also, it better reflects that the effect is on the whole library
+and not only the `alr` command-line tool.
+
+### `alr settings` replaces `alr config`
+
+PR [#1617](https://github.com/alire-project/alire/pull/1617)
+
+The `alr settings` command replaces the `alr config` command. This change is
+introduced to tackle the confusion between the configuration of the Alire
+commands and operations, and the configuration of crates.
+
+`alr config` is still available and should work as before with the exception of
+a deprecation warning message.
+
+### Deprecation of `toolchain --install/--uninstall/--install-dir`
+
+PR [#1614](https://github.com/alire-project/alire/pull/1614)
+
+Toolchain selection for use by Alire is still done by using
+`alr toolchain --select`.
+
+For the installation of toolchains outside of Alire management (i.e., for
+direct use with other tools, but not with Alire), the recommended
+method now is to use `alr install`, e.g.:
+```
+# Install to the default location, <user home>/.alire/bin
+$ alr install gnat_native gprbuild
+
+# Install elsewhere
+$ alr install --prefix=/path/to/installation gnat_native gprbuild
+```
+
+Removal of managed toolchains can be done by simply removing their folders
+inside the toolchain cache (reported by `alr version`).
+
+### Cache and toolchain storage location overridding
+
+PR [#1593](https://github.com/alire-project/alire/pull/1593)
+
+The cache directory can now be set independently of the configuration
+directory, by setting the `cache.dir` config builtin to an absolute path. For
+example:
+```
+alr config --global --set cache.dir /path/to/my/global/cache
+```
+Since the cache by default also contains installed toolchains, which may not be
+needed to be moved elsewhere, the `toolchain.dir` can be used to dissociate
+toolchain location from cache location in a similar way:
+```
+alr config --global --set toolchain.dir /path/to/my/toolchains
+```
+
+### New switch `alr build --stop-after=<build stage>`
+
+PR [#1573](https://github.com/alire-project/alire/pull/1573)
+
+From `alr help build`:
+
+**Build stages**
+
+   Instead of always doing a full build, the process can be stopped early using `--stop-after=<stage>`, where `<stage>` is one of:
+
+   * sync: sync pristine sources to build location
+   * generation: generate configuration-dependent files
+   * post-fetch: running of post-fetch actions
+   * pre-build: running of pre-build actions
+   * build: actual building of sources
+   * post-build: running of post-build actions
+
+### Enable shared dependencies by default
+
+PR [#1449](https://github.com/alire-project/alire/pull/1449)
+
+Pre-2.0, Alire worked always in "sandboxed" mode; that is, all source
+dependencies were found under `<workspace>/alire/cache`. This behavior can be
+now enabled with `alr config --set dependencies.shared false`, locally or
+globally.
+
+By default, post-2.0, Alire works in "shared" mode, where sources are
+downloaded once (to `~/.cache/alire/releases`) and unique builds are created
+(under `~/.cache/alire/builds`) for unique configurations. This should minimize
+rebuilds across crate configurations and workspaces, and eliminate risks of
+inconsistencies.
+
+Disk use is decreased by unique source downloads, but might be increased by
+unique build configurations. Cache management and cleanup will be provided down
+the road. The build cache can always be deleted to retrieve disk space, at the
+cost of triggering rebuilds.
+
+Unique builds are identified by a build hash which takes into account the
+following inputs for a given release:
+
+- Build profile
+- Environment variables modified in the manifest
+- GPR external variables declared or set
+- Configuration variables declared or set
+- Compiler version
+- Vaue of `LIBRARY_TYPE` and `<CRATE>_LIBRARY_TYPE` variables.
+- Hash of dependencies
 
 ### Automatic index updates
 
@@ -47,6 +403,14 @@ be achieved by using a new configuration path (`ALR_CONFIG` or `-c` global
 switch). In that case, the aforementioned paths will be found under
 `/path/to/config/cache`.
 
+### Set working directory with `--chdir`
+
+PR [#1479](https://github.com/alire-project/alire/pull/1479)
+
+A new switch `--chdir` (short form `-C`) is introduced which requires a target
+directory argument. `alr` then runs as though it were invoked in that
+directory.
+
 ### Request review of an index submission with `alr publish --request-review`
 
 PR [#1409](https://github.com/alire-project/alire/pull/1409)
@@ -59,8 +423,8 @@ be reviewed and merged manually. This can now be done with `alr publish
 
 PR [#1406](https://github.com/alire-project/alire/pull/1406)
 
-A pending submission can be closed with `alr publish --cancel
-<num> --reason <text>`.
+A pending submission can be closed with
+`alr publish --cancel <num> --reason <text>`.
 
 ### Track user's index submissions with `alr publish --status`
 
@@ -603,8 +967,8 @@ crate_1.var2 = true
 crate_2.var1 = "Debug"
 ```
 
-Check more examples and details in the catalog specification section ["Using
-configuration"](https://github.com/mosteo/alire/blob/master/doc/catalog-format-spec.md#using-crate-configuration).
+Check more examples and details in the catalog specification section
+[Using configuration](catalog-format-spec#using-crate-configuration).
 
 ## Release `1.0`
 
@@ -729,7 +1093,7 @@ to be submitted to the community index via pull request. An upload link is
 provided for convenience that can be used to create this pull request.
 
 Complete information about this feature is available in the updated
-[Publishing](publishing.md) page.
+[Publishing](publishing) page.
 
 Other features of the assistant are that, in the local mode, a branch or tag
 can be specified to pinpoint a commit, and that the test build of the crate can
@@ -753,8 +1117,8 @@ files, executables, maintainers, etc.).
 The manifest internal format has been simplified by eliminating the possibility
 of multiple releases from its contents, which removes some nesting, and
 removing or making optional some fields that only make sense at the time of
-publishing a crate to some index. Check the [catalog-format-spec.md] file for
-details.
+publishing a crate to some index. Check the [catalog-format-spec](catalog-format-spec)
+file for details.
 
 The `alire` directory continues to exist, and it is used to store the source
 code of dependencies, local configuration and backup files. It can be safely
@@ -885,3 +1249,15 @@ $ alr with indexed_crate
 $ alr pin indexed_crate --use /path/to/gpr/containing/folder
 # To pin a previously added dependency.
 ```
+
+### Crate names cannot be reserved keywords anymore
+
+PR [#2051](https://github.com/alire-project/alire/pull/2051)
+
+It is no longer possible to create a Crate with a reserved keyword as its name.
+The reserved keywords are the same as Ada2022 and the ones defined by GPR.
+See the [GPR config](https://docs.adacore.com/gprbuild-docs/pdf/gprbuild_ug.pdf)
+definition in 2.9.1 and
+[Ada2022](https://www.adaic.org/resources/add_content/standards/22rm/html/RM-2-9.html)
+definition.
+

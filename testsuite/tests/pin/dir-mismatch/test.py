@@ -3,7 +3,6 @@ Detect that a given folder to pin contains an unexpected crate
 """
 
 import os
-import re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match

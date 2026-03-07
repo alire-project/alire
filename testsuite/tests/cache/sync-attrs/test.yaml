@@ -1,0 +1,8 @@
+driver: python-script
+build_mode: shared
+control:
+    - [SKIP, "skip_unix", "Test is Unix-only"]
+indexes:
+    compiler_only_index: {}
+    my_index:
+        in_fixtures: false

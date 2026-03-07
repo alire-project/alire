@@ -18,29 +18,7 @@ package Alr.Commands.Publish is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return AAA.Strings.Vector
-   is (AAA.Strings.Empty_Vector
-       .Append ("Checks a release and generates an index manifest")
-       .New_Line
-       .Append ("See full details at")
-       .New_Line
-       .Append (" https://github.com/alire-project/alire/blob/master/"
-                & "doc/publishing.md")
-       .New_Line
-       .Append ("URL is an optional path to a remote source archive, or"
-                & " a local or remote git repository.")
-       .New_Line
-       .Append ("For the common use case of a github-hosted repository,"
-                & " issue " & Formatter.Terminal ("alr publish")
-                & " after committing and pushing the new release version.")
-       .New_Line
-       .Append ("Use " & Formatter.Terminal ("--tar")
-                & " to create a source archive ready to be uploaded.")
-       .New_Line
-       .Append ("Use " & Formatter.Terminal ("--manifest")
-                & " to use metadata in a non-default file.")
-       .New_Line
-       .Append ("See the above link for help with other scenarios."));
+                              return AAA.Strings.Vector;
 
    overriding
    procedure Setup_Switches
@@ -53,7 +31,7 @@ package Alr.Commands.Publish is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--skip-build] [--skip-submit] [--tar] "
+   is ("[--skip-build] [--skip-submit|--for-private-index] [--tar] "
        & "[--manifest <file>] [<URL> [commit]]] [--request-review NUM]");
 
 private
@@ -68,7 +46,12 @@ private
       --  Skip the build check
 
       Skip_Submit : aliased Boolean := False;
-      --  Stop after generation instead of asking the user to continue
+      --  Skip checking user's GitHub account, and stop after manifest
+      --  generation instead of asking the user to continue
+
+      For_Private_Index : aliased Boolean := False;
+      --  Skip_Submit, and also disable checks which only apply to the
+      --  community index
 
       Cancel     : aliased GNAT.Strings.String_Access := new String'(Unset);
       --  Number of a PR to prematurely close

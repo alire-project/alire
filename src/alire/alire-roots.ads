@@ -3,10 +3,12 @@ private with Ada.Finalization;
 
 with AAA.Strings;
 
+with Alire.Builds;
 private with Alire.Builds.Hashes;
 with Alire.Containers;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.States;
+with Alire.Directories;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
 with Alire.Paths;
@@ -123,7 +125,11 @@ package Alire.Roots is
        Post => Release'Result.Provides (Crate);
    --  Retrieve a release, that can be either the root or any in the solution
 
-   type Usages is (For_Deploy, For_Build);
+   type Usages is (For_Deploy,
+                   --  Deployments are to the vault, a specific write-once dir
+                   For_Build
+                   --  Builds take place in a copy located in the builds dir
+                  );
 
    function Release_Parent (This  : in out Root;
                             Rel   : Releases.Release;
@@ -138,6 +144,12 @@ package Alire.Roots is
                           Usage : Usages)
                           return Absolute_Path;
    --  Find the base folder in which a release can be found for the given root
+
+   function Release_Manifest (This  : in out Root;
+                              Crate : Crate_Name;
+                              Usage : Usages)
+                              return Absolute_File;
+   --  Return the full path to the manifest of a release in the solution
 
    function Requires_Build_Sync (This : in out Root;
                                  Rel  : Releases.Release)
@@ -173,6 +185,12 @@ package Alire.Roots is
    --  requires being updated. This currently relies on timestamps, but (TODO)
    --  conceivably we could use checksums to make it more robust against
    --  automated changes within the same second.
+
+   function Has_Outdated_Links (This : in out Root) return Boolean;
+   --  Check whether any linked dependency has a more recent manifest than
+   --  ours. If so, that means the user has edited a linked dependency and
+   --  we need to update. TL;DR: True if we need to update because a linked
+   --  dependency has changed.
 
    function Is_Root_Release (This : in out Root;
                              Dep  : Dependencies.States.State)
@@ -263,7 +281,9 @@ package Alire.Roots is
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
                    Build_All_Deps   : Boolean := False;
-                   Saved_Profiles   : Boolean := True)
+                   Saved_Profiles   : Boolean := True;
+                   Stop_After       : Builds.Stop_Points :=
+                     Builds.Stop_Points'Last)
                    return Boolean;
    --  Recursively build all dependencies that declare executables, and finally
    --  the root release. Also executes all pre-build/post-build actions for
@@ -285,7 +305,9 @@ package Alire.Roots is
 
    procedure Build_Prepare (This           : in out Root;
                             Saved_Profiles : Boolean;
-                            Force_Regen    : Boolean);
+                            Force_Regen    : Boolean;
+                            Stop_After     : Builds.Stop_Points :=
+                              Builds.Stop_Points'Last);
    --  Perform all preparations but the building step itself. This will require
    --  complete configuration, and will leave all files on disk as if an actual
    --  build were attempted. May optionally use saved profiles from the command
@@ -333,7 +355,8 @@ package Alire.Roots is
    --  overwrite even if existing (so `alr update` can deal with any
    --  corner case).
 
-   procedure Print_Nested_Crates (Path : Any_Path);
+   procedure Print_Nested_Crates (Path : Any_Path)
+     with Pre => Directories.Is_Directory (Path);
    --  Look for nested crates below the given path and print a summary of
    --  path/milestone:description for each one found. Won't enter `alire` dirs.
 
@@ -345,7 +368,7 @@ package Alire.Roots is
    function Cache_Dir (This : Root) return Absolute_Path;
    --  The "alire/cache" dir inside the root path, containing releases and pins
 
-   function Dependencies_Dir (This  : in out Root) return Any_Path;
+   function Dependencies_Dir (This  : in out Root) return Absolute_Path;
    --  The path at which dependencies are deployed, which will
    --  be either Paths.Vault.Path if dependencies are shared, or
    --  <workspace>/alire/cache/dependencies when dependencies are
@@ -366,11 +389,12 @@ private
    --  Force loading of the configuration; useful since the auto-load is not
    --  triggered when doing This.Configuration here.
 
-   function Load_Solution (Lockfile : String) return Solutions.Solution
-   is (Lockfiles.Read (Lockfile).Solution);
+   function Load_Solution (Lockfile : Absolute_Path) return Solutions.Solution
+   is (Lockfiles.Read (Directories.Current, Lockfile).Solution);
+   --  Note that this function requires CWD to already be the crate root
 
    procedure Write_Solution (Solution : Solutions.Solution;
-                             Lockfile : String);
+                             Lockfile : Absolute_Path);
    --  Wrapper for use with Cached_Solutions
 
    package Cached_Solutions is new AAA.Caches.Files
@@ -406,7 +430,8 @@ private
       --  These values, if different from "", mean this is a temporary root
       Manifest        : Unbounded_Absolute_Path;
       Lockfile        : Unbounded_Absolute_Path;
-   end record;
+   end record
+     with Type_Invariant => Check_Absolute_Path (+Root.Path);
 
    overriding
    procedure Adjust (This : in out Root);

@@ -53,26 +53,6 @@ package Alire.Properties.Labeled with Preelaborate is
       --  One word that identify one of the topic convered by a crate
      );
 
-   type Cardinalities is (Unique, Multiple); -- Are they atoms or arrays?
-   --  This information is used during loading to enforce index correctness,
-   --  and during exporting to ensure the proper type (atom/array) is created.
-
-   Cardinality : array (Labels) of Cardinalities :=
-                   (Author             => Multiple,
-                    Description        => Unique,
-                    Executable         => Multiple,
-                    Hint               => Unique,
-                    Long_Description   => Unique,
-                    Maintainer         => Multiple,
-                    Maintainers_Logins => Multiple,
-                    Name               => Unique,
-                    Notes              => Unique,
-                    Path               => Multiple,
-                    Project_File       => Multiple,
-                    Version            => Unique,
-                    Website            => Unique,
-                    Tag                => Multiple);
-
    type Label (<>) is new
      Properties.Property and
      Interfaces.Tomifiable

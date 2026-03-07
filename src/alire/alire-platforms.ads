@@ -3,7 +3,7 @@ package Alire.Platforms with Preelaborate is
    --  Platform information necessary for some releases
 
    type Extended_Architectures is
-     (AMD64, -- Equivalent to X86_64 (FreeBSD)
+     (AMD64, -- Equivalent to X86_64 (FreeBSD/OpenBSD)
       ARM64, -- Equivalent to AARCH64
       End_Of_Duplicates,
       --  Up to this point, these are architectures that we want to rename to
@@ -21,6 +21,7 @@ package Alire.Platforms with Preelaborate is
    --  See e.g. https://stackoverflow.com/a/45125525/761390
 
    type Operating_Systems is (FreeBSD,
+                              OpenBSD,
                               Linux,
                               MacOS,
                               Windows,
@@ -43,7 +44,8 @@ package Alire.Platforms with Preelaborate is
                           Suse,
                           Homebrew,
                           Macports,
-                          Distro_Unknown);
+                          Gentoo,
+                          Distribution_Unknown);
 
    subtype Known_Distributions is
      Distributions range Distributions'First ..
@@ -60,6 +62,7 @@ package Alire.Platforms with Preelaborate is
                              Zypper,
                              Homebrew,
                              Macports,
+                             Portage,
                              Packager_Unknown);
 
    Distro_Manager : constant array (Distributions) of Package_Managers :=
@@ -70,7 +73,8 @@ package Alire.Platforms with Preelaborate is
       Suse            => Zypper,
       Homebrew        => Homebrew,
       Macports        => Macports,
-      Distro_Unknown  => Packager_Unknown);
+      Gentoo          => Portage,
+      Distribution_Unknown  => Packager_Unknown);
 
    type Toolchains is (System,
                        --  Provided through system packages, able to use other

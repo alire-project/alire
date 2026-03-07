@@ -6,10 +6,12 @@ with Alire.Properties.Configurations;
 with Alire.Properties.Environment;
 with Alire.Properties.Build_Profiles;
 with Alire.Properties.Build_Switches;
+with Alire.Properties.Future;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.Properties.Scenarios;
 with Alire.Properties.Bool;
+with Alire.Properties.Tests;
 with Alire.TOML_Adapters;
 
 package Alire.Properties.From_TOML is
@@ -27,6 +29,7 @@ package Alire.Properties.From_TOML is
                           Description,
                           Environment,
                           Executables,
+                          Future, -- Placeholder for unknown future properties
                           GPR_Externals,
                           GPR_Set_Externals,
                           Hint,
@@ -38,6 +41,7 @@ package Alire.Properties.From_TOML is
                           Notes,
                           Project_Files,
                           Tags,
+                          Test,
                           Version,
                           Website);
    --  These enum values must match the toml key they represent with '-' => '_'
@@ -53,14 +57,12 @@ package Alire.Properties.From_TOML is
                   Crates.External_Shared_Section  =>
                     (Description        |
                      Maintainers        |
-                     Maintainers_Logins |
                      Name   => True,
                      others => False),
 
                   Crates.Index_Release           =>
                     (Description        |
                      Maintainers        |
-                     Maintainers_Logins |
                      Name               |
                      Version => True,
                      others  => False),
@@ -78,6 +80,45 @@ package Alire.Properties.From_TOML is
                     Tags     |
                     Website => True,
                     others  => False);
+
+   --  Cardinalities say if a property must be a single value or an array.
+   --  Since we store properties always as elements in a list, we lose this
+   --  information after load so we use this not only during loading to enforce
+   --  index correctness, but also during exporting to ensure the proper type
+   --  (atom/array) is created.
+
+   type Cardinalities is
+     (Unique,
+      --  Must be a single value
+      Multiple
+      --  We accept either table or array , but we will always export an array
+     );
+
+   Cardinality : constant array (Property_Keys) of Cardinalities :=
+                   (Actions            => Multiple,
+                    Authors            => Multiple,
+                    Auto_GPR_With      => Unique,
+                    Build_Profiles     => Unique,
+                    Build_Switches     => Unique,
+                    Configuration      => Unique,
+                    Description        => Unique,
+                    Environment        => Unique,
+                    Executables        => Multiple,
+                    Future             => Multiple,
+                    GPR_Externals      => Unique,
+                    GPR_Set_Externals  => Unique,
+                    Hint               => Unique,
+                    Licenses           => Unique,
+                    Long_Description   => Unique,
+                    Maintainers        => Multiple,
+                    Maintainers_Logins => Multiple,
+                    Name               => Unique,
+                    Notes              => Unique,
+                    Project_Files      => Multiple,
+                    Version            => Unique,
+                    Website            => Unique,
+                    Tags               => Multiple,
+                    Test               => Multiple);
 
    type Loader_Array is array (Property_Keys range <>) of Property_Loader;
 
@@ -119,6 +160,7 @@ package Alire.Properties.From_TOML is
       Environment    =>
         Properties.Environment.From_TOML'Access,
       Executables    => Labeled.From_TOML'Access,
+      Future         => Properties.Future.From_TOML'Access,
       GPR_Externals |
       GPR_Set_Externals
                      => Scenarios.From_TOML'Access,
@@ -132,7 +174,8 @@ package Alire.Properties.From_TOML is
       Project_Files      |
       Tags               |
       Version            |
-      Website        => Labeled.From_TOML'Access);
+      Website        => Labeled.From_TOML'Access,
+      Test           => Tests.From_TOML'Access);
    --  This loader applies to a normal release manifest
 
    --  The following array determines which properties accept dynamic
@@ -144,10 +187,12 @@ package Alire.Properties.From_TOML is
          Configuration     |
          Environment       |
          Executables       |
+         Future            |
          GPR_Set_Externals |
          Hint              |
-         Project_Files => True,
-         others        => False);
+         Project_Files     |
+         Test              => True,
+         others            => False);
 
    function Loader (From    : TOML_Adapters.Key_Queue;
                     Loaders : Loader_Array;

@@ -1,4 +1,5 @@
 name: CI Docker
+# Check builds on supported Linux distributions
 
 on:
   pull_request:
@@ -19,28 +20,43 @@ jobs:
       fail-fast: false
       matrix:
         tag: # Those are our ghcr.io/alire-project/docker/gnat:tag machines
+            - arch-rolling             # Test Arch compiler (closest to FSF?)
             - centos-stream-fsf-latest # Test unsupported package manager
             - debian-stable            # Test current stable Debian compiler
             - fedora-latest            # Test current Fedora compiler
+            - gentoo-rolling           # Test Gentoo compiler
             - ubuntu-lts               # Test current LTS Ubuntu compiler
-            - arch-rolling             # Test Arch compiler (closest to FSF?)
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: recursive
 
-    - name: Run test script (${{ matrix.tag }})
-      uses: mosteo-actions/docker-run@v1
+    - name: OS information for ${{ matrix.tag }}
+      uses: mosteo-actions/docker-run@v2
       with:
         image: ghcr.io/alire-project/docker/gnat:${{matrix.tag}}
-        command: scripts/ci-github.sh
-        params: -v${PWD}:/alire -w /alire
+        command: |
+          lsb_release -a || \
+          cat /etc/os-release || \
+          cat /etc/system-release || \
+          echo "No lsb_release information"
+
+    - name: Run test script (${{ matrix.tag }})
+      uses: mosteo-actions/docker-run@v2
+      with:
+        image: ghcr.io/alire-project/docker/gnat:${{matrix.tag}}
+        command: scripts/ci-github.sh use_external # Use external compiler already installed
+        params: >
+          -v${PWD}:/alire
+          -w /alire
+          -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+        # Token required for self-update tests to not hit GH API rate limits
 
     - name: Upload logs (if failed)
       if: failure()
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v4
       with:
         name: e3-log-docker-${{ matrix.tag }}.zip
         path: testsuite/out

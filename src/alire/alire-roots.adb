@@ -1,9 +1,8 @@
+with Ada.Directories;
 with Ada.Unchecked_Deallocation;
 
-with Alire.Builds;
 with Alire.Conditional;
 with Alire.Dependencies.Containers;
-with Alire.Directories;
 with Alire.Environment.Loading;
 with Alire.Errors;
 with Alire.Flags;
@@ -20,8 +19,12 @@ with Alire.Toolchains.Solutions;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
+with Alire.VFS;
+
+with Den.Filesystem;
 
 with GNAT.OS_Lib;
+with GNAT.SHA256;
 
 with Semantic_Versioning.Extended;
 
@@ -33,13 +36,33 @@ package body Alire.Roots is
 
    use type UString;
 
+   ----------------
+   -- Stop_Build --
+   ----------------
+
+   function Stop_Build (Wanted, Actual : Builds.Stop_Points) return Boolean
+   is
+      use type Builds.Stop_Points;
+   begin
+      if Wanted <= Actual then
+         Trace.Debug ("Stopping build as requested at stage: " & Wanted'Image);
+         return True;
+      else
+         return False;
+      end if;
+   end Stop_Build;
+
    -------------------
    -- Build_Prepare --
    -------------------
 
    procedure Build_Prepare (This           : in out Root;
                             Saved_Profiles : Boolean;
-                            Force_Regen    : Boolean) is
+                            Force_Regen    : Boolean;
+                            Stop_After     : Builds.Stop_Points :=
+                              Builds.Stop_Points'Last)
+   is
+      use all type Builds.Stop_Points;
    begin
       --  Check whether we should override configuration with the last one used
       --  and stored on disk. Since the first time the one from disk will be be
@@ -49,9 +72,17 @@ package body Alire.Roots is
          This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
       end if;
 
+      --  Right after initialization, a Root may lack a solution, which is
+      --  needed for configuration generation, so ensure there is one.
+
+      if not This.Has_Lockfile then
+         This.Set (Solutions.Empty_Valid_Solution);
+      end if;
+
+      --  Proceed to load configuration, which must be complete before building
+
       This.Load_Configuration;
       This.Configuration.Ensure_Complete;
-      --  For proceeding to build, the configuration must be complete
 
       --  Ensure sources are up to date
 
@@ -60,12 +91,20 @@ package body Alire.Roots is
          --  Changes in configuration may require new build dirs.
       end if;
 
+      if Stop_Build (Stop_After, Actual => Sync) then
+         return;
+      end if;
+
       --  Ensure configurations are in place and up-to-date
 
       This.Generate_Configuration (Full => Force or else Force_Regen);
       --  Will regenerate on demand only those changed. For shared
       --  dependencies, will also generate any missing configs not generated
       --  during sync, such as for linked releases and the root release.
+
+      --  Set the environment to be used during build
+
+      This.Export_Build_Environment;
    end Build_Prepare;
 
    -----------
@@ -75,10 +114,14 @@ package body Alire.Roots is
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
                    Build_All_Deps   : Boolean := False;
-                   Saved_Profiles   : Boolean := True)
+                   Saved_Profiles   : Boolean := True;
+                   Stop_After       : Builds.Stop_Points :=
+                     Builds.Stop_Points'Last)
                    return Boolean
    is
       Build_Failed : exception;
+
+      use all type Builds.Stop_Points;
 
       --------------------------
       -- Build_Single_Release --
@@ -185,18 +228,29 @@ package body Alire.Roots is
             end if;
 
             --  Run post-fetch, it will be skipped if already ran
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
                Properties.Actions.Post_Fetch);
 
+            if Stop_Build (Stop_After, Actual => Post_Fetch) then
+               return;
+            end if;
+
             --  Pre-build must run always
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
                Properties.Actions.Pre_Build);
 
+            if Stop_Build (Stop_After, Actual => Pre_Build) then
+               return;
+            end if;
+
             --  Actual build
+
             if Release.Origin.Requires_Build then
                Call_Gprbuild (Release);
             else
@@ -205,7 +259,12 @@ package body Alire.Roots is
                   & ": release has no sources.", Detail);
             end if;
 
+            if Stop_Build (Stop_After, Actual => Build) then
+               return;
+            end if;
+
             --  Post-build must run always
+
             Properties.Actions.Executor.Execute_Actions
               (This,
                State,
@@ -216,17 +275,20 @@ package body Alire.Roots is
       end Build_Single_Release;
 
    begin
-
       This.Build_Prepare (Saved_Profiles => Saved_Profiles,
-                          Force_Regen    => False);
+                          Force_Regen    => False,
+                          Stop_After     => Stop_After);
 
-      This.Export_Build_Environment;
+      if Stop_Build (Stop_After, Actual => Generation) then
+         return True;
+      end if;
 
       This.Traverse (Build_Single_Release'Access);
 
       return True;
    exception
-      when Properties.Actions.Action_Failed | Build_Failed =>
+      when E : Properties.Actions.Action_Failed | Build_Failed =>
+         Log_Exception (E);
          return False;
    end Build;
 
@@ -262,7 +324,10 @@ package body Alire.Roots is
            ("Requested build hash of release " & Name.As_String
             & " not among solution states:");
          This.Solution.Print_States ("   ", Error);
-         raise Program_Error;
+         Recoverable_Program_Error ("using default hash");
+         --  Using an improperly computed hash may cause some unexpected
+         --  recompilations but should be less of a show-stopper.
+         return "error:" & GNAT.SHA256.Digest (Name.As_String);
       end if;
    end Build_Hash;
 
@@ -388,7 +453,7 @@ package body Alire.Roots is
                            Prefix       => Prefix,
                            Recursive    => False,
                            Quiet        => True,
-                           Force        => (Force or
+                           Force        => (Force or else
                                               Action in Reinstall | Replace));
 
                         --  Say something if after installing a crate it
@@ -610,7 +675,7 @@ package body Alire.Roots is
       Guard : Directories.Guard (Directories.Enter (Path (This)))
         with Unreferenced;
       --  At some point inside the configuration generation process the config
-      --  is loaded and Config.Edit.Filepath requires being inside the root,
+      --  is loaded and Settings.Edit.Filepath requires being inside the root,
       --  which can't be directly used because of circularities.
    begin
       This.Load_Configuration;
@@ -757,9 +822,12 @@ package body Alire.Roots is
                  );
 
                --  If the release was newly deployed, we can inform about its
-               --  nested crates now.
+               --  nested crates now (if it has its own folder where nested
+               --  crates could be found).
 
-               if not Was_There and then not CLIC.User_Input.Not_Interactive
+               if Rel.Origin.Is_Index_Provided
+                 and then not Was_There
+                 and then not CLIC.User_Input.Not_Interactive
                then
                   Print_Nested_Crates (This.Release_Base (Rel.Name,
                                                           For_Deploy));
@@ -873,6 +941,11 @@ package body Alire.Roots is
         Containers.Crate_Name_Sets.Empty_Set)
    is
 
+      --  Pins may be stored with relative paths so we need to ensure being at
+      --  the root of the workspace:
+      CD : Directories.Guard (Directories.Enter (Path (This)))
+        with Unreferenced;
+
       Top_Root   : Root renames This;
       Pins_Dir   : constant Any_Path   := This.Pins_Dir;
       Linked     : Containers.Crate_Name_Sets.Set;
@@ -969,7 +1042,7 @@ package body Alire.Roots is
             --  reprocess it
 
             if Linked.Contains (Crate) then
-               Trace.Debug ("Skipping adding of already added link target: "
+               Trace.Debug ("Skipping addition of already added link target: "
                             & Utils.TTY.Name (Crate));
                return;
             else
@@ -981,7 +1054,7 @@ package body Alire.Roots is
             declare
                use Containers.Crate_Name_Sets;
                use Semver.Extended;
-               Target : constant Optional.Root :=
+               Target : Optional.Root :=
                           Optional.Detect_Root (Pin.Path);
             begin
 
@@ -990,7 +1063,9 @@ package body Alire.Roots is
                if Target.Is_Valid then
                   Trace.Debug
                     ("Crate found at pin location " & Pin.Relative_Path);
-                  if Target.Value.Name /= Crate then
+                  if Target.Value.Name /= Crate and then
+                    not Target.Value.Release.Element.Provides (Crate)
+                  then
                      Raise_Checked_Error
                        ("Mismatched crates for pin linking to "
                         & TTY.URL (Pin.Path) & ": expected " &
@@ -998,6 +1073,10 @@ package body Alire.Roots is
                         & " but found "
                         & Utils.TTY.Name (Target.Value.Name));
                   end if;
+               elsif Target.Is_Broken then
+                  Trace.Error ("Invalid manifest in pinned crate at "
+                               & TTY.URL (Pin.Path) & ":");
+                  Raise_Checked_Error (Target.Message);
                else
                   Trace.Debug
                     ("No crate found at pin location " & Pin.Relative_Path);
@@ -1110,7 +1189,9 @@ package body Alire.Roots is
          return
            "Expected ordinary manifest file but found a: "
            & Kind (This.Crate_File)'Img;
-      elsif not Alire.Manifest.Is_Valid (This.Crate_File, Alire.Manifest.Local)
+      elsif not Alire.Manifest.Is_Valid (This.Crate_File,
+                                         Alire.Manifest.Local,
+                                         Path (This))
       then
          return "Manifest is not loadable: " & This.Crate_File;
       end if;
@@ -1123,13 +1204,22 @@ package body Alire.Roots is
    ---------------
 
    function Load_Root (Path : Any_Path) return Root
-   is (Roots.Optional.Detect_Root (Path).Value);
+   is
+      Optional_Root : Optional.Root := Optional.Detect_Root (Path);
+   begin
+      return Optional_Root.Value;
+   end Load_Root;
 
    ------------------------------
    -- Export_Build_Environment --
    ------------------------------
 
    procedure Export_Build_Environment (This : in out Root) is
+      CWD : Directories.Guard (Directories.Enter (Path (This)))
+        with Unreferenced;
+      --  Required as this function gets called sometimes directly from
+      --  commands that may not have relocated to the crate root.
+
       Context : Alire.Environment.Context;
    begin
       Alire.Environment.Loading.Load (Context, This);
@@ -1151,17 +1241,17 @@ package body Alire.Roots is
       Found : AAA.Strings.Set; -- Milestone --> Description
 
       procedure Check_Dir
-        (Item : Ada.Directories.Directory_Entry_Type;
-         Stop  : in out Boolean)
+        (Item : Any_Path;
+         Stop : in out Boolean)
       is
          pragma Unreferenced (Stop);
-         use Ada.Directories;
+         use all type Den.Kinds;
       begin
-         if Kind (Item) /= Directory then
+         if Den.Kind (Item) /= Directory then
             return;
          end if;
 
-         if Simple_Name (Item) = Paths.Working_Folder_Inside_Root
+         if Den.Name (Item) = Paths.Working_Folder_Inside_Root
          then
             --  This is an alire metadata folder, don't go in. It could also be
             --  a crate named "alire" but that seems like a bad idea anyway.
@@ -1171,15 +1261,24 @@ package body Alire.Roots is
          --  Try to detect a root in this folder
 
          declare
-            Opt : constant Optional.Root :=
-                    Optional.Detect_Root (Full_Name (Item));
+            Opt : Optional.Root :=
+                    Optional.Detect_Root (Den.Filesystem.Full_Name (Item));
          begin
             if Opt.Is_Valid then
                Found.Insert
-                 (TTY.URL (Directories.Find_Relative_Path
-                    (Starting_Path, Full_Name (Item))) & "/"
-                  & Opt.Value.Release.Constant_Reference.Milestone.TTY_Image
-                  & ": " & TTY.Emph
+                 (TTY.URL
+                    (String
+                         (VFS.To_Portable
+                              (Directories.Find_Relative_Path
+                                 (Den.Filesystem.Full_Name (Starting_Path),
+                                  Den.Filesystem.Full_Name (Item))))
+                         --  We use both full names because on Windows we see
+                         --  mixed short/long names for the same path if we
+                         --  apply Full_Name to only one of them.
+                  & "/"
+                  & Opt.Value.Release.Constant_Reference.Milestone.TTY_Image)
+                  & ": "
+                  & TTY.Emph
                     (if Opt.Value.Release.Constant_Reference.Description /= ""
                      then Opt.Value.Release.Constant_Reference.Description
                      else "(no description)"));
@@ -1271,6 +1370,15 @@ package body Alire.Roots is
 
    function Solution (This : in out Root) return Solutions.Solution
    is
+      --  Enter the lockfile parent dir, which will be the crate root, so any
+      --  relative pin paths can be properly resolved, if the lockfile is not
+      --  yet loaded.
+      use Alire.Directories;
+      CWD : Guard (if This.Cached_Solution.Has_Element
+                   then Stay
+                   else Enter (Parent (Parent (This.Lock_File))))
+        with Unreferenced;
+
       Result : constant Cached_Solutions.Cached_Info
         := This.Cached_Solution.Element (This.Lock_File);
    begin
@@ -1435,7 +1543,7 @@ package body Alire.Roots is
             Rel : constant Releases.Release := Release (This, Crate);
          begin
             if not This.Requires_Build_Sync (Rel) then
-               return This.Release_Parent (Rel, For_Build) / Rel.Base_Folder;
+               return This.Release_Parent (Rel, For_Deploy) / Rel.Base_Folder;
             else
                case Usage is
                   when For_Deploy =>
@@ -1448,10 +1556,22 @@ package body Alire.Roots is
          end;
       elsif This.Solution.State (Crate).Is_Linked then
          return This.Solution.State (Crate).Link.Path;
+         --  Usage doesn't matter in this case, the crate is where it is
       else
-         raise Program_Error with "release must be either solved or linked";
+         raise Program_Error with
+           "release must be either solved or linked";
       end if;
    end Release_Base;
+
+   ----------------------
+   -- Release_Manifest --
+   ----------------------
+
+   function Release_Manifest (This  : in out Root;
+                              Crate : Crate_Name;
+                              Usage : Usages)
+                              return Absolute_File
+   is (This.Release_Base (Crate, Usage) / Paths.Crate_File_Name);
 
    ----------------------
    -- Migrate_Lockfile --
@@ -1479,7 +1599,7 @@ package body Alire.Roots is
          else
             Put_Info ("Migrating lockfile from "
                       & TTY.URL (Old_Path) & " to " & TTY.URL (Path));
-            Adirs.Rename (Old_Path, Path);
+            Directories.Rename (Old_Path, Path);
          end if;
       end if;
 
@@ -1515,7 +1635,7 @@ package body Alire.Roots is
    -- Dependencies_Dir --
    ----------------------
 
-   function Dependencies_Dir (This  : in out Root) return Any_Path
+   function Dependencies_Dir (This  : in out Root) return Absolute_Path
    is (if Builds.Sandboxed_Dependencies
        then This.Cache_Dir / Paths.Deps_Folder_Inside_Cache_Folder
        else Paths.Vault.Path);
@@ -1559,7 +1679,7 @@ package body Alire.Roots is
    --------------------
 
    procedure Write_Solution (Solution : Solutions.Solution;
-                             Lockfile : String)
+                             Lockfile : Absolute_Path)
    is
    begin
       Lockfiles.Write (Contents => (Solution => Solution),
@@ -1578,9 +1698,10 @@ package body Alire.Roots is
          --  speeds up things greatly and both should be in sync if things
          --  are as they should.
        or else
-         (if Check_Valid
-          then Lockfiles.Validity (This.Lock_File) in Lockfiles.Valid
-          else Ada.Directories.Exists (This.Lock_File)));
+         (if Check_Valid then
+            Lockfiles.Validity (Path (This), This.Lock_File) in Lockfiles.Valid
+          else
+            Ada.Directories.Exists (This.Lock_File)));
 
    --------------------------
    -- Is_Lockfile_Outdated --
@@ -1592,6 +1713,48 @@ package body Alire.Roots is
       return
         File_Time_Stamp (This.Crate_File) > File_Time_Stamp (This.Lock_File);
    end Is_Lockfile_Outdated;
+
+   --------------------
+   -- Outdated_Links --
+   --------------------
+
+   function Has_Outdated_Links (This : in out Root) return Boolean is
+      use GNAT.OS_Lib;
+      Changed : AAA.Strings.Set;
+   begin
+
+      --  If we do not even have a lockfile, for sure we must update
+
+      if not This.Has_Lockfile then
+         return True;
+      end if;
+
+      --  Otherwise, check manifests of linked dependencies. Note that we do
+      --  not care about their lockfiles, which may well be outdated; we care
+      --  that the user has modified the dependency info in the manifest and
+      --  thus *we* need updating. The lockfile in the dependency will be
+      --  automatically updated if it ever is used as the root.
+
+      for Dep of This.Solution.All_Dependencies loop
+         if Dep.Is_Linked and then Dep.Has_Release
+           and then
+             File_Time_Stamp (This.Release_Manifest (Dep.Crate, For_Build)) >
+               File_Time_Stamp (This.Lock_File)
+         then
+            Trace.Debug ("Changes detected in pinned dependency: "
+                         & Dep.Crate.TTY_Image);
+            Changed.Include (Dep.Crate.As_String);
+         end if;
+      end loop;
+
+      if Changed.Is_Empty then
+         return False;
+      else
+         Put_Info ("Changes detected in pinned dependencies: "
+                   & Changed.To_Vector.Flatten (", "));
+         return True;
+      end if;
+   end Has_Outdated_Links;
 
    -------------
    -- Is_Root --
@@ -1621,12 +1784,10 @@ package body Alire.Roots is
                                  Force    : Boolean := False)
    is
    begin
-      if Force or else This.Is_Lockfile_Outdated then
-         --  TODO: we may want to recursively check manifest timestamps of
-         --  linked crates to detect changes in these manifests and re-resolve.
-         --  Otherwise a manual `alr update` is needed to detect these changes.
-         --  This would imply to store the timestamps in our lockfile for
-         --  linked crates with a manifest.
+      if Force
+        or else This.Is_Lockfile_Outdated
+        or else This.Has_Outdated_Links
+      then
 
          Put_Info ("Synchronizing workspace...");
 
@@ -1784,7 +1945,7 @@ package body Alire.Roots is
         (Deps    => Deps,
          Props   => This.Environment,
          Pins    => This.Pins,
-         Options => Options);
+         Options => Options).Solution;
    end Compute_Update;
 
    -------------------------
@@ -1799,6 +1960,11 @@ package body Alire.Roots is
       Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set)
    is
+      --  Pins may be stored with relative paths so we need to ensure being at
+      --  the root of the workspace:
+      CD : Directories.Guard (Directories.Enter (Path (This)))
+        with Unreferenced;
+
       Old : constant Solutions.Solution :=
               (if This.Has_Lockfile
                then This.Solution
@@ -1815,7 +1981,7 @@ package body Alire.Roots is
          if Old.Pins.Contains (Crate) then
             --  The solver will never update a pinned crate, so we may allow
             --  this to be attempted but it will have no effect.
-            Recoverable_Error
+            Recoverable_User_Error
               ("Requested crate is pinned and cannot be updated: "
                & Alire.Utils.TTY.Name (Crate));
          end if;
@@ -1828,7 +1994,7 @@ package body Alire.Roots is
       begin
          --  Early exit when there are no changes
 
-         if not Alire.Force and not Diff.Contains_Changes then
+         if not Alire.Force and then not Diff.Contains_Changes then
             if not Needed.Is_Complete then
                Trace.Warning
                  ("There are missing dependencies"
@@ -1840,27 +2006,31 @@ package body Alire.Roots is
             --  In case manual changes in manifest do not modify the
             --  solution.
 
-            if not Silent then
+            if not Silent and then not Diff.Contains_Changes then
                Trace.Info ("Nothing to update.");
             end if;
 
-         else
+         else -- Forced or there are changes
 
             --  Show changes and optionally ask user to apply them
 
-            if not Interact then
-               declare
-                  Level : constant Trace.Levels :=
-                            (if Silent then Debug else Info);
-               begin
-                  Trace.Log
-                    ("Dependencies automatically updated as follows:",
-                     Level);
-                  Diff.Print (Level => Level);
-               end;
-            elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
-               Trace.Detail ("Update abandoned.");
-               return;
+            if Diff.Contains_Changes then
+               if not Interact then
+                  declare
+                     Level : constant Trace.Levels :=
+                               (if Silent then Debug else Info);
+                  begin
+                     Trace.Log
+                       ("Dependencies automatically updated as follows:",
+                        Level);
+                     Diff.Print (Level => Level);
+                  end;
+               elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
+                  Trace.Detail ("Update abandoned.");
+                  return;
+               end if;
+            elsif not Silent then
+               Trace.Info ("Nothing to update.");
             end if;
 
          end if;
@@ -1943,7 +2113,8 @@ package body Alire.Roots is
         (Releases.From_Manifest
            (This.Crate_File,
             Manifest.Local,
-            Strict => True));
+            Strict    => True,
+            Root_Path => Path (This)));
 
       --  And our pins
 
@@ -1992,6 +2163,9 @@ package body Alire.Roots is
         (Crate_Configuration.Global_Config, Global_Config_Access);
    begin
       Free (This.Configuration);
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
 end Alire.Roots;

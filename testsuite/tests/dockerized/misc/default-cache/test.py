@@ -7,7 +7,7 @@ import os
 
 from drivers import builds
 from drivers.alr import alr_with, init_local_crate, run_alr
-from drivers.helpers import contents
+from drivers.helpers import contents, on_windows
 
 # Forcing the deployment of a binary crate triggers the use of the global
 # cache, which should be created at the expected location.
@@ -16,10 +16,13 @@ alr_with("gnat_native")
 
 home = os.environ["HOME"]
 
-base = f"{home}/.cache/alire"
+if on_windows():
+    base = f"{home}/AppData/Local/alire"
+else:
+    base = f"{home}/.local/share/alire"
 
 assert \
-    os.path.isdir(f"{base}/toolchains/gnat_native_8888.0.0_99fa3a55"), \
+    os.path.isdir(f"{base}/toolchains/gnat_native_8888.0.0_15743d73"), \
     f"Toolchain dir not found at the expected location: {contents(base)}"
 
 # Let's also check the rest of dirs for shared builds
@@ -46,7 +49,7 @@ run_alr("build", complain_on_error=False)
 # procedures)
 hash = "0774083df8ff003084c32cabdec6090a58b41c6be317cec0475df5eacbca0d23"
 assert \
-    os.path.isdir(f"{base}/builds/crate_real_1.0.0_filesystem_{hash}"), \
+    os.path.isdir(f"{base}/builds/crate_real_1.0.0_filesystem/{hash}"), \
     f"Shared build not found at the expected location: f{contents(base)}"
 
 print('SUCCESS')

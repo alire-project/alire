@@ -1,0 +1,18 @@
+description = "The GPRBuild Ada/multilanguage build tool"
+name = "gprbuild"
+
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mosteo"]
+
+[[external]]
+kind = "version-output"
+version-regexp = "^GPRBUILD\\D*([\\d\\.-]+).*"
+version-command = ["gprbuild", "--version"]
+
+# Neither macOS distribution (Homebrew, MacPorts) provides gprbuild.
+[[external]]
+kind = "system"
+[external.origin.'case(os)']
+"freebsd" = ["gprbuild"]
+"linux"   = ["gprbuild"]
+"windows" = ["gprbuild"]

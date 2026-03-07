@@ -21,7 +21,7 @@ function createShortcuts()
 	var shortcuts = ["@StartMenuDir@/Alire.lnk", "@DesktopDir@/Alire.lnk"];
 	for (shortcut of shortcuts) {
 		component.addOperation("CreateShortcut", "powershell", shortcut,
-                               "-NoExit -Command \"$env:Path += \"\"\";@TargetDir@\\bin\"\"\"; \"$host.UI.RawUI.BackgroundColor = \"\"\"DarkBlue\"\"\"; clear-host\"",
+                               "-NoExit -Command \"$env:Path += \"\"\";@TargetDir@\\bin\"\"\"; clear-host\"",
                                "workingDirectory=@HomeDir@",
 	                           "iconPath=@TargetDir@/share/alire/alr_icon.ico",
 	                           "description=Start App");

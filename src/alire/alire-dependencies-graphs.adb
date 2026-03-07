@@ -72,13 +72,7 @@ package body Alire.Dependencies.Graphs is
                               return Boolean
    is
    begin
-      for Dep of This loop
-         if +Dep.Dependent = Crate then
-            return True;
-         end if;
-      end loop;
-
-      return False;
+      return (for some Dep of This => +Dep.Dependent = Crate);
    end Has_Dependencies;
 
    -----------
@@ -189,13 +183,22 @@ package body Alire.Dependencies.Graphs is
 
       Filtered : constant Graph := This.Filtering_Unused (Solution.Crates);
    begin
+      if Utils.Tables.Structured_Output then
+         Table.Header ("Dependent").Header ("Dependency").New_Row;
+      end if;
+
       for Dep of Filtered loop
          Table.Append
            (Prefix & Label_Dependent (+Dep.Dependent, Solution, TTY => True));
-         Table.Append ("-->");
+
+         if not Utils.Tables.Structured_Output then
+            Table.Append ("-->");
+         end if;
+
          Table.Append
            (Label_Dependee
               (+Dep.Dependent, +Dep.Dependee, Solution, For_Plot => False));
+
          Table.New_Row;
       end loop;
 

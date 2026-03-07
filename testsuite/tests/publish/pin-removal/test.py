@@ -16,7 +16,7 @@ crate = "pinner"
 # We create a repository with the nested crate that will act as the upstream
 # remote repository:
 start_dir = os.getcwd()
-init_local_crate(crate)
+init_local_crate(crate, with_maintainer_login=True)
 
 # And add the pin directly in the remote
 alr_pin("unobtanium", path="/")

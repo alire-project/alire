@@ -75,11 +75,8 @@ package Alire.Directories is
    function Find_Relative_Path_To (Path : Any_Path) return Any_Path;
    --  Same as Find_Relative_Path (Parent => Current, Child => Path)
 
-   function Find_Single_File (Path      : String;
-                              Extension : String)
-                              return String;
-   --  Finds a single file in a folder with the given extension and return its
-   --  absolute path.  If more than one, or none, returns "".
+   function Exists (Path : Any_Path) return Boolean;
+   --  Path designates something, be it file, dir or symbolic link
 
    function Is_Directory (Path : Any_Path) return Boolean;
    --  Returns false for non-existing paths too
@@ -90,7 +87,8 @@ package Alire.Directories is
    procedure Merge_Contents (Src, Dst              : Any_Path;
                              Skip_Top_Level_Files  : Boolean;
                              Fail_On_Existing_File : Boolean;
-                             Remove_From_Source    : Boolean);
+                             Remove_From_Source    : Boolean;
+                             Silent                : Boolean := True);
    --  Move all contents from Src into Dst, recursively. Dirs already existing
    --  on Dst tree will be merged. For existing regular files, either log
    --  at debug level or fail. If Skip, discard files at the Src top-level.
@@ -98,8 +96,15 @@ package Alire.Directories is
    --  the top-level only contains "doinstall", "README" and so on that
    --  are unusable and would be confusing in a binary prefix.
 
-   procedure Touch (File : File_Path)
-     with Pre => Is_Directory (Parent (File));
+   procedure Rename (Source,
+                     Destination : Any_Path);
+   --  Renames files/directories. Will try first with a plain rename, and
+   --  fallback to copy/delete if rename fails. As we sometimes create
+   --  temporary files in user-supplied locations, depending on the underlying
+   --  move system call, these might fail across filesystems.
+
+   procedure Touch (File : File_Path; Create_Tree : Boolean := False)
+     with Pre => Create_Tree or else Is_Directory (Parent (File));
    --  If the file exists, update last edition time; otherwise create it.
    --  If File denotes anything else than a regular file, raise.
 
@@ -110,7 +115,7 @@ package Alire.Directories is
 
    procedure Traverse_Tree (Start   : Any_Path;
                             Doing   : access procedure
-                              (Item : Ada.Directories.Directory_Entry_Type;
+                              (Item : Any_Path;
                                Stop : in out Boolean);
                             Recurse : Boolean := False;
                             Spinner : Boolean := False);
@@ -134,7 +139,7 @@ package Alire.Directories is
    --  This type simplifies staying in a folder during the life of a scope.
    --  Once the scope ends, the current folder is set back to the one it was.
 
-   type Destination is access String;
+   type Destination is access Absolute_Path;
    Stay : constant Destination;
 
    type Guard (Enter : Destination := Stay) is limited private;
@@ -155,10 +160,10 @@ package Alire.Directories is
    --  For user forced Ctrl-C interruptions, this will attempt to delete any
    --  currently existing temporaries.
 
-   function Temp_Name (Length : Positive := 8) return String
-     with Pre => Length >= 5;
-   --  Return a filename such as "alr-sdrv.tmp". Length refers to the name
-   --  without .tmp. The alr- prefix is fixed.
+   function Temp_Name return String with
+     Post => (for all Char of Temp_Name'Result => Char /= '?');
+   --  Return a filename such as "alr-PID-sdrv.tmp". The trailing four letters
+   --  are guaranteed to be unique per run.
 
    --  TEMP_FILE: obtain a temporary name with optional cleanup
 

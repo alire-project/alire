@@ -2,6 +2,7 @@ with AAA.Debug;
 
 with Alire.Environment;
 with Alire.Errors;
+with Alire.Reserved;
 with Alire.Warnings;
 with Alire.Utils.TTY;
 
@@ -10,6 +11,8 @@ with GNAT.IO;
 with GNATCOLL.OS.Constants;
 
 package body Alire is
+
+   package OS renames GNAT.OS_Lib;
 
    ---------
    -- "=" --
@@ -37,7 +40,17 @@ package body Alire is
    -- Check_Absolute_Path --
    -------------------------
 
-   function Check_Absolute_Path (Path : Any_Path) return Boolean is separate;
+   function Check_Absolute_Path (Path : Any_Path) return Boolean
+      is (OS.Is_Absolute_Path (Path)
+          and then
+          --  On Windows, we must ensure the path is not only absolute but
+          --  also that it has a drive letter. This is not checked by the
+          --  GNAT.OS_Lib function.
+            (if OS.Directory_Separator = '\'
+             then
+               (Path'Length >= 3
+                and then Path (Path'First) in 'a' .. 'z' | 'A' .. 'Z'
+                and then Path (Path'First + 1) = ':')));
 
    -------------
    -- Err_Log --
@@ -117,9 +130,9 @@ package body Alire is
    -- Put_Warning --
    -----------------
 
-   procedure Put_Warning (Text           : String;
-                          Level          : Trace.Levels := Warning;
-                          Disable_Config : String := "")
+   procedure Put_Warning (Text            : String;
+                          Level           : Trace.Levels := Warning;
+                          Disable_Setting : String := "")
    is
       Prefix : constant String :=
                  (if Level = Warning
@@ -128,10 +141,10 @@ package body Alire is
                                                "Warning: "));
    begin
       Trace.Log (Prefix & Text, Level);
-      if Disable_Config /= "" then
+      if Disable_Setting /= "" then
          Trace.Log (Prefix
-                    & "You can disable this warning with configuration key '"
-                    & TTY.Emph (Disable_Config) & "'",
+                    & "You can disable this warning with settings key '"
+                    & TTY.Emph (Disable_Setting) & "'",
                     Level);
       end if;
    end Put_Warning;
@@ -151,10 +164,16 @@ package body Alire is
    -- Assert --
    ------------
 
-   procedure Assert (Condition : Boolean; Or_Else : String) is
+   procedure Assert (Condition : Boolean;
+                     Or_Else   : String;
+                     Unchecked : Boolean := False) is
    begin
       if not Condition then
-         Raise_Checked_Error (Msg => Or_Else);
+         if Unchecked then
+            raise Program_Error with Errors.Set (Or_Else);
+         else
+            Raise_Checked_Error (Msg => Or_Else);
+         end if;
       end if;
    end Assert;
 
@@ -166,6 +185,7 @@ package body Alire is
    is
       Err : UString;
       use type UString;
+
    begin
       if S'Length < Min_Name_Length then
          Err := +"Identifier too short (Min " & Min_Name_Length'Img & ").";
@@ -175,6 +195,8 @@ package body Alire is
          Err := +"Identifiers must not begin with an underscore.";
       elsif (for some C of S => C not in Crate_Character) then
          Err := +"Identifiers must be lowercase ASCII alphanumerical.";
+      elsif Reserved.Is_Keyword (S) then
+         Err := +"Identifier cannot be reserved keyword.";
       end if;
 
       if +Err /= "" then
@@ -276,12 +298,14 @@ package body Alire is
    -- Recoverable_Error --
    -----------------------
 
-   procedure Recoverable_Error (Msg : String; Recover : Boolean := Force) is
+   procedure Recoverable_User_Error (Msg     : String;
+                                     Recover : Boolean := Force)
+   is
       Info : constant String := " (This error can be overridden with "
                                 & TTY.Terminal ("--force") & ".)";
    begin
       if Msg'Length > 0 and then Msg (Msg'Last) /= '.' then
-         Recoverable_Error (Msg & ".", Recover);
+         Recoverable_User_Error (Msg & ".", Recover);
          return;
       end if;
 
@@ -290,7 +314,19 @@ package body Alire is
       else
          Raise_Checked_Error (Msg & Info);
       end if;
-   end Recoverable_Error;
+   end Recoverable_User_Error;
+
+   -------------------------------
+   -- Recoverable_Program_Error --
+   -------------------------------
+
+   procedure Recoverable_Program_Error (Explanation : String := "") is
+   begin
+      Errors.Program_Error (Explanation,
+                            Recoverable  => True,
+                            Stack_Offset => 1);
+      --  Offset is 1 because this procedure adds its own stack frame
+   end Recoverable_Program_Error;
 
    --------------
    -- New_Line --

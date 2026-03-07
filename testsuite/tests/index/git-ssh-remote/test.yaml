@@ -1,0 +1,9 @@
+driver: python-script
+indexes:
+    compiler_only_index: {}
+
+# We cannot run this test without ssh keys, so not intended for remote use.
+# Also, it requires going on-line.
+control:
+    - [SKIP, "skip_local",   "Local developer-only tests disabled"]
+    - [SKIP, "skip_network", "Network-requiring tests disabled"]

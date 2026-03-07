@@ -1,6 +1,7 @@
 with Alire.Crate_Configuration;
 with Alire.Environment;
 with Alire.Platforms;
+with Alire.Utils.User_Input;
 
 package body Alr.Commands.Printenv is
 
@@ -16,6 +17,9 @@ package body Alr.Commands.Printenv is
    is
       Enabled : Natural := 0;
    begin
+      Alire.Utils.User_Input.Enable_Silent_Running;
+      Cmd.Forbids_Structured_Output;
+
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
       end if;
@@ -65,10 +69,21 @@ package body Alr.Commands.Printenv is
                  " This command can be used to setup a build environment," &
                  " for instance before starting an IDE.")
       .New_Line
-      .Append ("Examples:")
+      .Append ("When using " & TTY.Terminal ("alr printenv") & " in scripts, "
+        & "to ensure no unwanted output is intermixed with the environment "
+        & "definitions, the recommendation is to run it twice and and use the "
+        & "output of the second run in quiet non-interactive mode. This is "
+        & "because running " & TTY.Terminal ("alr printenv") & " after "
+        & "manifest editions may trigger an automatic synchronization that "
+        & "could produce extra output not intended as environment variables.")
       .New_Line
-      .Append ("* eval $(alr printenv --unix)")
-      .Append ("* alr printenv --powershell | Invoke-Expression")
+      .Append ("Examples:")
+      --  The following is indented four spaces to be correctly rendered
+      --  as code in the markdown help.
+      .Append ("    - eval $(alr -n -q printenv --unix)")
+      .Append ("    - alr -n -q printenv --powershell | Invoke-Expression")
+      .Append ("    - for /F ""usebackq delims="" %x "
+               & "in (`alr -n -q printenv --wincmd`) do %x")
      );
 
    --------------------

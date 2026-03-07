@@ -60,8 +60,10 @@ package body Alire.Conditional is
             return Result : Boolean := True do
                for Child of T loop
                   case T.Conjunction is
-                     when Anded => Result := Result and Eval_Children (Child);
-                     when Ored  => Result := Result or Eval_Children (Child);
+                     when Anded =>
+                        Result := Result and then Eval_Children (Child);
+                     when Ored  =>
+                        Result := Result or else  Eval_Children (Child);
                   end case;
                end loop;
             end return;

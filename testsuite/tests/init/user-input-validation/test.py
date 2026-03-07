@@ -10,9 +10,9 @@ from drivers.helpers import content_of
 
 # Preconfigure needed fields
 name = "Äł O'Reilly O\"Raro"
-run_alr("config", "--global", "--set", "user.email", "abc@de.com")
-run_alr("config", "--global", "--set", "user.github_login", "abcde")
-run_alr("config", "--global", "--set", "user.name", name)
+run_alr("settings", "--global", "--set", "user.email", "abc@de.com")
+run_alr("settings", "--global", "--set", "user.github_login", "abcde")
+run_alr("settings", "--global", "--set", "user.name", name)
 
 # Create crate
 run_alr("init", "--bin", "xxx")

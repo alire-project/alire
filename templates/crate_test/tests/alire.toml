@@ -1,0 +1,13 @@
+name = "@_NAME_@_tests"
+description = "Tests for the built-in Alire test runner"
+version = "0.0.0-test"
+
+[[depends-on]]
+@_NAME_@ = "*"
+
+[[pins]]
+@_NAME_@ = { path = ".." }
+
+[build-profiles]
+@_NAME_@       = "validation"
+@_NAME_@_tests = "validation"

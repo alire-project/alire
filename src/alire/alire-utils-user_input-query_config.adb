@@ -1,4 +1,4 @@
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 with CLIC.User_Input; use CLIC.User_Input;
 
 package body Alire.Utils.User_Input.Query_Config is
@@ -13,17 +13,17 @@ package body Alire.Utils.User_Input.Query_Config is
                                     Validation : String_Validation_Access)
                                     return String
    is
-      use Alire.Config;
+      use Alire.Settings;
    begin
-      if Config.DB.Defined (Config_Key) then
-         return Config.DB.Get (Config_Key, Default);
+      if Settings.DB.Defined (Config_Key) then
+         return Settings.DB.Get (Config_Key, Default);
       else
          declare
             Result : constant String :=
               Query_String (Question, Default, Validation);
          begin
             if Result /= Default then
-               Alire.Config.Edit.Set_Globally (Config_Key, Result);
+               Alire.Settings.Edit.Set_Globally (Config_Key, Result);
             end if;
 
             return Result;
@@ -41,15 +41,23 @@ package body Alire.Utils.User_Input.Query_Config is
                                Default    => "Your Name",
                                Validation => null));
 
+   ---------------------------------------
+   -- Is_Empty_Or_Valid_GitHub_Username --
+   ---------------------------------------
+
+   function Is_Empty_Or_Valid_GitHub_Username (Str : String) return Boolean
+   is (Str = "" or else Is_Valid_GitHub_Username (Str));
+
    -----------------------
    -- User_GitHub_Login --
    -----------------------
 
    function User_GitHub_Login return String
-   is (Config_Or_Query_String (Config_Key => "user.github_login",
-                               Question   => "Please enter your GitHub login:",
-                               Default    => "github-username",
-                               Validation => Is_Valid_GitHub_Username'Access));
+   is (Config_Or_Query_String
+         (Config_Key => "user.github_login",
+          Question   => "Please enter your GitHub login:",
+          Default    => "",
+          Validation => Is_Empty_Or_Valid_GitHub_Username'Access));
 
    -----------------
    -- Check_Email --

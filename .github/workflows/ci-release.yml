@@ -1,0 +1,592 @@
+# These are the builds that get uploaded as releases. When this workflow is run
+# from a regular PR, it stops before the release steps, but the checks are
+# always performed.
+
+name: CI Release
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
+  release:
+    types: [published]
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      release_nightly:
+        description: Set to true to trigger the nightly build (will overwrite artifacts in the Nightly release!)
+        required: false
+        default: 'false'
+
+env:
+  alire_index: ""
+  # Empty index: test with master of community index
+  # Otherwise: test with particular commit/branch
+  # e.g.: index: "git+https://github.com/alire-project/alire-index@deadbeef"
+  MSYS64_ROOT:  C:\Users\runneradmin\AppData\Local\alire\cache\msys64
+  MINGW64_PATH: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\mingw64\bin
+  MSYS2_PATH:   C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin
+  MSYS2_PACMAN: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin\pacman --noconfirm
+
+jobs:
+
+  #########
+  # build #
+  #########
+
+  build:
+    name: Build on ${{ matrix.platform.id }}
+
+    runs-on: ${{ matrix.platform.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os: macos-15-intel      # x64
+            id: x86_64-macos
+
+          - os: macos-14            # arm64 (macos-latest is now v15 and it breaks things, TODO)
+            id: aarch64-macos
+
+          - os: ubuntu-22.04        # x64, oldest supported so releases can run on older distros
+            id: x86_64-linux
+
+          - os: ubuntu-22.04-arm    # new ARM runners
+            id: aarch64-linux
+
+          - os: windows-latest
+            id: x86_64-windows
+
+    steps:
+
+    - name: Check out repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    # Install GNAT, we only need a system compiler for Ubuntu ARM until we have
+    # Alire for ARM64/Linux (on Ubuntu 22.04) release.
+
+    - name: Install system toolchain (Ubuntu ARM)
+      if: matrix.platform.id == 'aarch64-linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gnat gprbuild
+        echo ALIRE_TESTSUITE_DISABLE_DOCKER=true >> $GITHUB_ENV
+        # We need to disable Docker tests on Ubuntu ARM.
+
+    - name: Bootstrap Alire (Ubuntu ARM)
+      if: matrix.platform.id == 'aarch64-linux'
+      uses: alire-project/setup-alire@v5
+      with:
+        branch: "master" # build from source
+
+    - name: Remove system GNAT (Ubuntu ARM)
+      if: matrix.platform.id == 'aarch64-linux'
+      run: |
+        sudo apt-get remove -y gnat-10 gprbuild
+        rm -rf ~/.local/share/alire/toolchains/
+      shell: bash
+
+    - name: Install Alire toolchain
+      uses: alire-project/alr-install@v2
+      with:
+        crates: gnat_native gprbuild
+        prefix: alire_prefix
+
+    - name: Check toolchain architecture
+      uses: mosteo-actions/gnat-toolchain-arch-checker@v1
+
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    # The test script itself will build alr
+
+    - name: Run test script
+      run: scripts/ci-github.sh $USE_EXTERNAL
+      shell: bash
+      env:
+        BRANCH: ${{ github.base_ref }}
+        INDEX: ""
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # Ascertain whether alr can run without the toolchain that built it
+
+    - name: Check standalone alr
+      uses: mosteo-actions/alr-standalone-checker@v1
+      with:
+        alr_path: bin
+        toolchain_path: alire_prefix
+
+    # Artifacts for later release uploading
+
+    - name: Upload binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: alr-bin-${{matrix.platform.id}}.zip
+        path: |
+          bin/alr*
+          LICENSE.txt
+
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e3-log-${{matrix.platform.id}}.zip
+        path: testsuite/out
+
+  #########################
+  # build-macos-universal #
+  #########################
+  # Joins the two binaries for macOS in a single universal one
+
+  build-macos-universal:
+    name: Create macOS universal binary
+    runs-on: macos-14 # See above about macos-latest
+    needs: build
+    steps:
+
+      - name: Download x86_64
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-bin-x86_64-macos.zip
+          path: x86_64
+
+      - name: Download aarch64
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-bin-aarch64-macos.zip
+          path: aarch64
+
+      - name: Create universal binary
+        run: |
+          mkdir bin
+          lipo x86_64/bin/alr aarch64/bin/alr -create -output bin/alr
+          chmod +x bin/alr
+          cp aarch64/LICENSE.txt .
+
+      - name: Upload universal artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alr-bin-universal-macos.zip
+          path: |
+            bin/alr
+            LICENSE.txt
+
+  ################
+  # release-info #
+  ################
+
+  release-info:
+    name: Info for release uploads
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    outputs:
+      upload-url: ${{ steps.get_release.outputs.upload_url }}
+      version-without-v: ${{ steps.get_version.outputs.version-without-v }}
+
+    steps:
+      - name: Retrieve upload URL for the release
+        id: get_release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Get release version
+        id: get_version
+        uses: battila7/get-version-action@v2
+
+
+  ###########
+  # release #
+  ###########
+  # Actual uploading of release assets
+
+  release:
+    name: Release on ${{ matrix.platform.id }}
+    if: github.event_name == 'release'
+    needs: [build, build-macos-universal, release-info]
+    runs-on: ${{ matrix.platform.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os: macos-15-intel
+            id: x86_64-macos
+
+          - os: macos-14 # See above about macos-latest
+            id: aarch64-macos
+
+          - os: macos-14 # See above about macos-latest
+            id: universal-macos
+
+          - os: ubuntu-22.04
+            id: x86_64-linux
+
+          - os: ubuntu-22.04-arm
+            id: aarch64-linux
+
+          - os: windows-latest
+            id: x86_64-windows
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-bin-${{ matrix.platform.id }}.zip
+
+      # On Windows, install zip as it is not available by default
+      - name: Install zip (Windows)
+        if: matrix.platform.os == 'windows-latest'
+        run: choco install zip
+
+      - name: Package binaries
+        shell: bash
+        # Mark executable as artifacts remove the executable bit
+        run: |
+          chmod +x bin/alr*
+          zip alr-bin.zip bin/alr* LICENSE.txt
+
+      - name: Upload binary assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release-info.outputs.upload-url }}
+          asset_path: alr-bin.zip
+          asset_name: alr-${{ needs.release-info.outputs.version-without-v }}-bin-${{ matrix.platform.id }}.zip
+          asset_content_type: application/zip
+
+  #####################
+  # windows-installer #
+  #####################
+  # Generation of the Windows installer from Windows-built alr
+
+  windows-installer:
+    name: Create Windows installer
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+
+    - name: Check out repository
+      uses: actions/checkout@v4
+      # We need it for the installer scripts. We don't need submodules now though.
+
+    - name: Download built alr
+      uses: actions/download-artifact@v4
+      with:
+        name: alr-bin-x86_64-windows.zip
+
+    - name: Copy to preinstall location
+      shell: bash
+      run: |
+        INSTALL_DIR=$PWD/alr_install
+        echo "INSTALL_DIR=$INSTALL_DIR" >> $GITHUB_ENV
+        mkdir -p $INSTALL_DIR/bin
+        cp bin/alr.exe $INSTALL_DIR/bin
+        cp LICENSE.txt $INSTALL_DIR
+
+    # We need to install MSYS2 again. This is a bit wasteful since the build
+    # job already did it, but at least this way things are more clearly
+    # separated. If we rely on an existing Alire, we might hit the cache rather
+    # than always reinstalling from scratch. Also, we use setup-alire that is
+    # lighter than alr-install (which uses setup-alire internally).
+
+    - name: Set up stable Alire (for MSYS2)
+      uses: alire-project/setup-alire@v4
+
+    - name: Check MSYS2 installation
+      run: bin/alr version
+      shell: bash
+
+    - name: Install qt-installer-framework in msys2
+      run: ${{env.MSYS2_PACMAN}} -S mingw64/mingw-w64-x86_64-qt-installer-framework
+
+    - name: Add msys2 /mingw64/bin to the path (for qt-installer-framework)
+      run: echo '${{env.MINGW64_PATH}}' >> $GITHUB_PATH
+      shell: bash
+
+    - name: Install zip in msys2
+      run: ${{env.MSYS2_PACMAN}} --noconfirm -S zip
+
+    - name: Add msys2 /usr/bin to the path (for zip)
+      run: echo '${{env.MSYS2_PATH}}' >> $GITHUB_PATH
+      shell: bash
+
+    - name: Run installer build script
+      run: bash make-alire-installer
+      shell: bash
+      working-directory: scripts/installer/
+      env:
+        ALR_INSTALL_DIR: ${{ env.INSTALL_DIR }}
+        ALR_INSTALL_OS: ${{ runner.os }}
+
+    - name: Upload installer
+      uses: actions/upload-artifact@v4
+      with:
+        name: installer-x86_64-windows
+        path: scripts/installer/alire-*.exe
+
+    - name: Upload zip archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: installer-x86_64-windows.zip
+        path: scripts/installer/alire-*.zip
+
+    - name: Upload tar archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: installer-x86_64-windows.tar.xz
+        path: scripts/installer/alire-*.tar.xz
+
+  #############################
+  # release-windows-installer #
+  #############################
+  # Upload the Windows installer as a release asset in its own job, as it
+  # follows a different naming convention and disk structure than other assets.
+
+  release-windows-installer:
+    name: Release Windows installer
+    if: github.event_name == 'release'
+    needs: [build, release-info, windows-installer]
+    runs-on: windows-latest
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: installer-x86_64-windows
+          path: installer
+
+      # For the record, list the contents of the installer directory
+      - name: List installer directory
+        run: ls -alF installer
+        shell: bash
+
+      - name: Rename installer
+        run: copy installer/alire-*.exe installer/alire-install.exe
+
+      - name: Upload installer asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release-info.outputs.upload-url }}
+          asset_path: installer/alire-install.exe
+          asset_name: alr-${{ needs.release-info.outputs.version-without-v }}-installer-x86_64-windows.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+
+  ############
+  # appimage #
+  ############
+
+  appimage:
+    name: Create AppImage
+    needs: build
+    runs-on: ubuntu-22.04
+    outputs:
+      short_sha: ${{ steps.get_ref.outputs.short_sha }}
+
+    steps:
+
+    - name: Check out repository
+      uses: actions/checkout@v4
+      # No need for submodules, but we need some resources for the appimage
+
+    - name: Retrieve artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: alr-bin-x86_64-linux.zip
+
+    - name: Install AppImage dependencies (libfuse2)
+      shell: bash
+      run: |
+        sudo add-apt-repository universe
+        sudo apt-get install -y libfuse2
+
+    - name: Install AppImage's linuxdeploy
+      uses: miurahr/install-linuxdeploy-action@v1
+      with:
+        plugins: appimage
+
+    - name: Copy license into AppImage
+      run: |
+        mkdir -p AppDir
+        cp LICENSE.txt AppDir/
+
+    - name: Create AppImage
+      run: >
+        linuxdeploy-x86_64.AppImage --appdir AppDir -e bin/alr
+        -d resources/alr.desktop -i resources/alr.png --output appimage
+
+    - name: Rename AppImage
+      run: mv alr*AppImage alr.AppImage
+
+    - name: Test AppImage without the toolchain installed
+      run: |
+        chmod +x ./alr.AppImage
+        which gnat || { echo "Toolchain purged"; ./alr.AppImage version; }
+
+    - name: Get ref version
+      id: get_ref
+      run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Upload as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: alr-${{ steps.get_ref.outputs.short_sha }}-x86_64.AppImage.zip
+        path: alr.AppImage
+
+  ####################
+  # release-appimage #
+  ####################
+
+  release-appimage:
+    name: Release AppImage
+    if: github.event_name == 'release'
+    needs: [appimage, release-info]
+    runs-on: ubuntu-22.04
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-${{needs.appimage.outputs.short_sha}}-x86_64.AppImage.zip
+
+      - name: Mark as executable
+        run: chmod +x alr.AppImage
+
+      - name: Upload AppImage asset
+        if: (github.event_name == 'release')
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release-info.outputs.upload-url }}
+          asset_path: alr.AppImage
+          asset_name: alr-${{ needs.release-info.outputs.version-without-v }}-x86_64.AppImage
+          asset_content_type: application/x-elf
+
+  ###################
+  # release-nightly #
+  ###################
+
+  release-nightly:
+    name: Nightly release on ${{ matrix.platform.id }}
+    if: >
+      github.event_name == 'schedule'
+      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false')
+      || (github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'nightly'))
+    needs: [build, build-macos-universal]
+    runs-on: ${{ matrix.platform.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os: macos-15-intel
+            id: x86_64-macos
+
+          - os: macos-14 # See above about macos-latest
+            id: aarch64-macos
+
+          - os: macos-14 # See above about macos-latest
+            id: universal-macos
+
+          - os: ubuntu-22.04
+            id: x86_64-linux
+
+          - os: ubuntu-22.04-arm
+            id: aarch64-linux
+
+          - os: windows-latest
+            id: x86_64-windows
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-bin-${{ matrix.platform.id }}.zip
+
+      - name: Install zip (Windows)
+        if: matrix.platform.os == 'windows-latest'
+        run: choco install zip
+
+      - name: Get date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Get metadata
+        run: |
+          touch alr-date-is-${{steps.date.outputs.date}}.txt
+          touch alr-commit-is-${{github.sha}}.txt
+        shell: bash
+
+      - name: Package binaries
+        run: |
+          chmod +x bin/alr*
+          zip alr-nightly-bin-${{matrix.platform.id}}.zip bin/alr* LICENSE.txt alr-*.txt
+
+      # The uploader needs Python with the github module
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Upload to release
+        uses: pyTooling/Actions/releaser/composite@r4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            alr-nightly-*.zip
+          tag: nightly
+          rm: false
+
+  ############################
+  # release-nightly-appimage #
+  ############################
+
+  release-nightly-appimage:
+    name: Nightly AppImage
+    if: >
+      github.event_name == 'schedule'
+      || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_nightly != 'false')
+      || (github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'nightly'))
+    needs: [appimage]
+    runs-on: ubuntu-22.04
+
+    steps:
+
+      - name: Retrieve binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: alr-${{needs.appimage.outputs.short_sha}}-x86_64.AppImage.zip
+
+      - name: Rename binary
+        run: |
+          chmod +x alr.AppImage
+          mv alr.AppImage alr-nightly-x86_64.AppImage
+
+      - name: Upload to release
+        uses: pyTooling/Actions/releaser/composite@r4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: nightly
+          rm: false
+          files: alr-nightly-x86_64.AppImage

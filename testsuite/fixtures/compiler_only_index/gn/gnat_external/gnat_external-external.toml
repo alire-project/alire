@@ -5,8 +5,8 @@ maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mosteo"]
 
 [[external]]
+# Fake GNAT version that cannot conflict with any real one
 kind = "version-output"
-# We look for make instead that should be always installed.
-version-command = ["make", "--version"]
-version-regexp = ".*Make ([\\d\\.]+).*"
+version-command = ["echo", "1.0"]
+version-regexp = "([\\d\\.]+).*"
 provides = "gnat"

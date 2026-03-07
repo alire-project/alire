@@ -1,4 +1,5 @@
 with Alire.Conditional;
+with Alire.Paths;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
 
@@ -107,7 +108,8 @@ package Alire.Properties.Configurations with Preelaborate is
 private
 
    type Config_Entry is new Properties.Property with record
-      Output_Dir    : Ada.Strings.Unbounded.Unbounded_String := +"config";
+      Output_Dir    : Ada.Strings.Unbounded.Unbounded_String :=
+        +Alire.Paths.Default_Config_Folder;
       Gen_Ada       : Boolean := True;
       Gen_GPR       : Boolean := True;
       Gen_C         : Boolean := True;

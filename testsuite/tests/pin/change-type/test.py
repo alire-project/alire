@@ -33,7 +33,7 @@ alr_pin('libhello', path='../crates/libhello_1.0.0')
 
 # Check that it shows as such in the solution
 p = run_alr('show', '--solve')
-assert_match('.*Dependencies \(external\):.*'
+assert_match('.*Dependencies \(solution\):.*'
              'libhello.*\^1.*\(direct,linked'
              ',path=../crates/libhello_1.0.0\).*',
              p.out, flags=re.S)

@@ -22,7 +22,7 @@ run_alr('with', 'make', force=True)
 p = run_alr('with', '--solve')
 assert_match('Dependencies \(direct\):\n'
              '   make\*\n'
-             'Dependencies \(external\):\n'
+             'Dependencies \(missing\):\n'
              '   make\* \(direct,hinted\)\n'
              'Dependencies \(graph\):\n'
              '   xxx=0.1.0-dev --> make\*\n'

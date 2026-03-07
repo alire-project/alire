@@ -65,6 +65,26 @@ package body Alire.Utils.User_Input is
       end if;
    end Confirm_Solution_Changes;
 
+   ---------------------------
+   -- Enable_Silent_Running --
+   ---------------------------
+
+   procedure Enable_Silent_Running is
+   begin
+      --  If we are already at debug log level, we want to preserve it as we do
+      --  not want to miss any messages.
+
+      if Alire.Log_Level < Simple_Logging.Debug then
+         Trace.Detail ("Enabling silent running");
+         --  If we are running with -v, it's too late to remain silent anyway
+
+         Alire.Log_Level := Simple_Logging.Error;
+         CLIC.User_Input.Not_Interactive := True;
+      else
+         Trace.Debug ("Cannot enable silent running when log level is debug");
+      end if;
+   end Enable_Silent_Running;
+
    -------------------------------
    -- To_Absolute_From_Portable --
    -------------------------------
@@ -79,7 +99,7 @@ package body Alire.Utils.User_Input is
       if not Check_Absolute_Path (User_Path) and then
         not VFS.Is_Portable (User_Path)
       then
-         Recoverable_Error
+         Recoverable_User_Error
            (Error_When_Relative_Native & ": " & TTY.URL (User_Path));
       end if;
 

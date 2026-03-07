@@ -1,13 +1,13 @@
 with AAA.Strings;
 
-with Alire.Config.Builtins;
-with Alire.Config.Edit;
+with Alire.Cache;
 with Alire.Directories;
 with Alire.Flags;
 with Alire.Paths.Vault;
 with Alire.Roots;
+with Alire.Settings.Builtins;
 
-with GNATCOLL.VFS;
+with Den.Filesystem;
 
 package body Alire.Builds is
 
@@ -18,7 +18,7 @@ package body Alire.Builds is
    ----------------------------
 
    function Sandboxed_Dependencies return Boolean
-   is (not Config.Builtins.Dependencies_Shared.Get);
+   is (not Settings.Builtins.Dependencies_Shared.Get);
 
    ----------
    -- Sync --
@@ -56,16 +56,14 @@ package body Alire.Builds is
                   Simple_Logging.Activity
                     ("Syncing " & Release.Milestone.TTY_Image)
                     with Unreferenced;
-         Success : Boolean := False;
-         use GNATCOLL.VFS;
       begin
-         GNATCOLL.VFS.Copy
-           (Create (+Src),
-            +Dst,
-            Success);
-
-         Assert (Success,
-                 "Could not sync build dir from " & Src & " to " & Dst);
+         Den.Filesystem.Create_Directory (Dst);
+         Den.Filesystem.Copy (Src, Dst);
+      exception
+         when E : others =>
+            Log_Exception (E);
+            Raise_Checked_Error
+              ("Could not sync build dir from " & Src & " to " & Dst);
       end;
 
       --  At this point we can generate the final crate configuration
@@ -83,7 +81,7 @@ package body Alire.Builds is
    ----------
 
    function Path return Absolute_Path
-   is (Config.Edit.Cache_Path
+   is (Cache.Path
        / Paths.Build_Folder_Inside_Working_Folder);
 
    ----------
@@ -97,9 +95,8 @@ package body Alire.Builds is
    is
       Base : constant Absolute_Path :=
                Builds.Path
-                 / (Release.Deployment_Folder
-                    & "_"
-                    & Root.Build_Hash (Release.Name));
+                 / Release.Deployment_Folder
+                 / Root.Build_Hash (Release.Name);
    begin
       if Subdir and then Release.Origin.Is_Monorepo then
          return Base / Release.Origin.Subdir;

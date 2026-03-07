@@ -11,7 +11,7 @@ deps_dir = "deps"
 
 # Enable sharing of dependencies
 os.mkdir(deps_dir)
-run_alr("config", "--global", "--set", "dependencies.dir",
+run_alr("settings", "--global", "--set", "dependencies.dir",
         os.path.abspath(deps_dir))
 
 # Create a crate with a dependency

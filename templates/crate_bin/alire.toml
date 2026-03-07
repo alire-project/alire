@@ -1,0 +1,19 @@
+name = "@_LOWER:NAME_@"
+description = "@_DESCRIPTION_@"
+version = "0.1.0-dev"
+
+authors = ["@_USERNAME_@"]
+maintainers = ["@_USERNAME_@ <@_EMAIL_@>"]
+@@IF@@ @_LOGIN_@ /= ""
+maintainers-logins = ["@_LOGIN_@"]
+@@END_IF@@
+licenses = "@_LICENSES_@"
+website = "@_WEBSITE_@"
+tags = [@_TAGS_@]
+
+executables = ["@_LOWER:NAME_@"]
+@@IF@@ @_WITH_TEST_@
+
+[test]
+runner = "alire"
+@@END_IF@@

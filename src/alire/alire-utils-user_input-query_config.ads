@@ -26,7 +26,9 @@ package Alire.Utils.User_Input.Query_Config is
    function User_Name return String;
 
    function User_GitHub_Login return String
-     with Post => (Is_Valid_GitHub_Username (User_GitHub_Login'Result));
+     with Post =>
+       (User_GitHub_Login'Result = ""
+        or else Is_Valid_GitHub_Username (User_GitHub_Login'Result));
 
    function User_Email return String
      with Post => Could_Be_An_Email (User_Email'Result, With_Name => False);

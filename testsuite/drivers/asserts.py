@@ -7,6 +7,7 @@ import difflib
 import os
 import re
 import difflib
+import sys
 
 from drivers.alr import run_alr
 from drivers.helpers import contents, lines_of
@@ -134,3 +135,19 @@ def match_deploy_dir(crate : str, path_fragment : str):
     assert_match(f".*[: ]{crate.upper()}_ALIRE_PREFIX=[^\\n]*"
                  f"{re.escape(path_fragment)}[^\\n]*{crate}_.*",
                  p.out)
+
+
+def assert_substring(target: str, text: str):
+    """
+    Check that a target string is contained in a given text
+    """
+    assert target in text, \
+        f"Missing expected string '{target}' in text:\n{text}"
+
+
+def assert_not_substring(target: str, text: str):
+    """
+    Check that a string is not contained in another string
+    """
+    assert target not in text, \
+        f"Unexpected string '{target}' in text:\n{text}"

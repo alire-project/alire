@@ -1,12 +1,9 @@
-with Ada.Containers;
-
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Crates;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Errors;
 with Alire.Index;
-with Alire.Milestones;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
@@ -19,7 +16,7 @@ package body Alire.Solutions is
 
    package Semver renames Semantic_Versioning;
 
-   use type Ada.Containers.Count_Type;
+   use type Alire.Releases.Release;
    use type Semantic_Versioning.Version;
    use all type States.Missed_Reasons;
 
@@ -50,6 +47,26 @@ package body Alire.Solutions is
        else
           Mixed);
 
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains (This    : Solution;
+                      Release : Alire.Releases.Release) return Boolean
+   is (for some Rel of This.Releases => Rel = Release);
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains (This    : Solution;
+                      Release : Milestones.Milestone) return Boolean
+   is
+      use type Milestones.Milestone;
+   begin
+      return (for some Rel of This.Releases => Rel.Milestone = Release);
+   end Contains;
+
    ----------------------
    -- Contains_Release --
    ----------------------
@@ -57,6 +74,24 @@ package body Alire.Solutions is
    function Contains_Release (This  : Solution;
                               Crate : Crate_Name) return Boolean
    is (This.Depends_On (Crate) and then This.State (Crate).Has_Release);
+
+   ----------------------
+   -- Contains_Skipped --
+   ----------------------
+
+   function Contains_Skipped (This : Solution) return Boolean
+   is (for some Dep of This.Dependencies =>
+          Dep.Is_Missing and then Dep.Reason = Skipped);
+
+   ---------------------------
+   -- Contains_Incompatible --
+   ---------------------------
+
+   function Contains_Incompatible (This    : Solution;
+                                   Release : Alire.Releases.Release)
+                                   return Boolean
+   is (for some Dep of This.Dependencies =>
+          Dep.Has_Release and then Release.Satisfies (Dep));
 
    ----------------
    -- Dependency --
@@ -91,6 +126,14 @@ package body Alire.Solutions is
       return Result;
    end Excluding;
 
+   -------------------------
+   -- Depends_Directly_On --
+   -------------------------
+
+   function Depends_Directly_On (This : Solution;
+                                 Name : Crate_Name) return Boolean
+   is (This.Dependencies.Contains (Name));
+
    ----------------
    -- Depends_On --
    ----------------
@@ -109,15 +152,6 @@ package body Alire.Solutions is
    function Depends_On (This    : Solution;
                         Release : Alire.Releases.Release) return Boolean
    is (for some Dep of This.Dependencies => Release.Provides (Dep.Crate));
-
-   ------------------------------
-   -- Depends_On_Specific_GNAT --
-   ------------------------------
-
-   function Depends_On_Specific_GNAT (This : Solution) return Boolean
-   is (This.Releases.Contains_Or_Provides (GNAT_Crate) and then
-         (for some Rel of This.Releases.Elements_Providing (GNAT_Crate) =>
-               Rel.Name /= GNAT_Crate));
 
    ----------------------------
    -- Empty_Invalid_Solution --
@@ -154,7 +188,7 @@ package body Alire.Solutions is
    -- Hints --
    -----------
 
-   function Hints (This : Solution) return Dependency_Map
+   function Hints (This : Solution) return State_Map
    is (This.Dependencies_That (States.Is_Hinted'Access));
 
    ------------------
@@ -175,15 +209,22 @@ package body Alire.Solutions is
    -- Links --
    -----------
 
-   function Links (This : Solution) return Dependency_Map
+   function Links (This : Solution) return State_Map
    is (This.Dependencies_That (States.Is_Linked'Access));
 
    ------------
    -- Misses --
    ------------
 
-   function Misses (This : Solution) return Dependency_Map
+   function Misses (This : Solution) return State_Map
    is (This.Dependencies_That (States.Is_Missing'Access));
+
+   -------------
+   -- Skipped --
+   -------------
+
+   function Skipped (This : Solution) return State_Map
+   is (This.Dependencies_That (States.Is_Skipped'Access));
 
    -------------
    -- Missing --
@@ -239,6 +280,17 @@ package body Alire.Solutions is
                       Release : Alire.Releases.Release)
                       return Boolean
    is (for some Solved of This.Releases => Solved.Provides (Release));
+
+   ---------------
+   -- Satisfies --
+   ---------------
+
+   function Satisfies (This : Solution;
+                       Dep  : Dependencies.Dependency'Class)
+                       return Boolean
+   is (This.Links.Contains (Dep.Crate)
+       or else
+         (for some Solved of This.Releases => Solved.Satisfies (Dep)));
 
    ---------------
    -- Resetting --
@@ -322,13 +374,13 @@ package body Alire.Solutions is
    function Dependencies_That
      (This  : Solution;
       Check : not null access function (Dep : Dependency_State) return Boolean)
-      return Dependency_Map
+      return State_Map
    is
    begin
-      return Map : Dependency_Map do
+      return Map : State_Map do
          for Dep of This.Dependencies loop
             if Check (Dep) then
-               Map.Insert (Dep.Crate, Dep.As_Dependency);
+               Map.Insert (Dep.Crate, Dep);
             end if;
          end loop;
       end return;
@@ -408,17 +460,47 @@ package body Alire.Solutions is
                      Env     : Properties.Vector)
                      return Boolean
    is
+      use type Milestones.Milestone;
    begin
       return
-       --  Some of the releases in the solution forbid this one release
-       ((for some Solved of This.Releases =>
-          (for some Dep of Solved.Forbidden (Env) =>
-                Release.Satisfies (Dep.Value)))
-       or else
-       --  The candidate release forbids something in the solution
-          (for some Dep of Release.Forbidden (Env) =>
-               (for some Rel of This.Releases => Rel.Satisfies (Dep.Value))));
+        --  Some of the releases in the solution forbid this one release
+        (for all Solved of This.Releases =>
+           Solved.Milestone /= Release.Milestone)
+        and then
+          ((for some Solved of This.Releases =>
+              (for some Dep of Solved.Forbidden (Env) =>
+                   Release.Satisfies (Dep.Value)))
+           or else
+           --  The candidate release forbids something in the solution
+           (for some Dep of Release.Forbidden (Env) =>
+              (for some Rel of This.Releases => Rel.Satisfies (Dep.Value))));
    end Forbids;
+
+   --------------------
+   -- Image_One_Line --
+   --------------------
+
+   function Image_One_Line (This : Solution) return String is
+      use UStrings;
+      Result : UString;
+      First  : Boolean := True;
+   begin
+      for State of This.Dependencies loop
+         if First then
+            First := False;
+         else
+            Result := Result & "; ";
+         end if;
+
+         if State.Has_Release then
+            Append (Result, State.Release.Milestone.TTY_Image);
+         else
+            Append (Result, State.TTY_Image);
+         end if;
+      end loop;
+
+      return +Result;
+   end Image_One_Line;
 
    ---------------
    -- Including --
@@ -488,140 +570,6 @@ package body Alire.Solutions is
 
       end return;
    end Including;
-
-   ---------------
-   -- Is_Better --
-   ---------------
-
-   function Is_Better (This, Than : Solution) return Boolean is
-
-      type Comparison is (Better, Equivalent, Worse);
-
-      ----------------------
-      -- Compare_Versions --
-      ----------------------
-
-      function Compare_Versions (This, Than : Solution) return Comparison is
-      begin
-
-         --  TODO: instead of using the first discrepancy, we should count all
-         --  differences and see which one is globally "newer".
-
-         --  Check releases in both only
-
-         for Rel of This.Releases loop
-            if Than.Contains_Release (Rel.Name) then
-               if Than.Releases_Providing (Rel.Name)
-                      .First_Element.Version < Rel.Version
-               then
-                  return Better;
-               elsif
-                 Rel.Version < Than.Releases_Providing (Rel.Name)
-                                   .First_Element.Version
-               then
-                  return Worse;
-               end if;
-            end if;
-         end loop;
-
-         return Equivalent;
-      end Compare_Versions;
-
-      -----------------------------
-      -- Lexicographical_Compare --
-      -----------------------------
-
-      function Lexicographical_Compare (This, Than : Solution) return Boolean
-      is
-      begin
-         for Crate of This.Crates.Union (Than.Crates) loop
-            if This.Depends_On (Crate) and then not Than.Depends_On (Crate)
-            then
-               return True;
-            elsif not This.Depends_On (Crate) and then Than.Depends_On (Crate)
-            then
-               return False;
-            end if;
-         end loop;
-
-         return False; -- Identical
-      end Lexicographical_Compare;
-
-   begin
-
-      --  Prefer better compositions
-
-      if This.Composition < Than.Composition then
-         return True;
-      elsif This.Composition > Than.Composition then
-         return False;
-      end if;
-
-      --  Within complete solutions, prefer higher versions
-
-      if This.Composition = Releases then
-         case Compare_Versions (This, Than) is
-            when Better     => return True;
-            when Worse      => return False;
-            when Equivalent =>
-               case Compare_Versions (This => Than, Than => This) is
-                  when Better     => return False;
-                  when Worse      => return True;
-                  when Equivalent => null;
-               end case;
-         end case;
-
-         --  Disambiguate preferring a complete solution with less releases
-
-         if This.Releases.Length < Than.Releases.Length then
-            return True;
-         elsif This.Releases.Length > Than.Releases.Length then
-            return False;
-         end if;
-
-         --  At this point they must be identical; just in case keep comparing
-
-      end if;
-
-      --  Prefer more fulfilled releases when the solution is incomplete.
-      --  The rationale is that fewer solved releases will mean more unknown
-      --  missing indirect dependencies.
-
-      if This.Releases.Length > Than.Releases.Length then
-         return True;
-      elsif This.Releases.Length < Than.Releases.Length then
-         return False;
-      end if;
-
-      --  Prefer more undetected hints; at least we know these dependencies
-      --  exist in some platforms and can be made available somehow.
-
-      if This.Hints.Length > Than.Hints.Length then
-         return True;
-      elsif This.Hints.Length < Than.Hints.Length then
-         return False;
-      end if;
-
-      --  Prefer fewer missing crates, although at this point who knows what
-      --  indirect dependencies we are missing through undetected/missing
-      --  dependencies.
-
-      if This.Misses.Length < Than.Misses.Length then
-         return True;
-      elsif This.Misses.Length > Than.Misses.Length then
-         return False;
-      end if;
-
-      --  Final disambiguation by any known versions in [partial] solutions
-
-      case Compare_Versions (This, Than) is
-         when Better     => return True;
-         when Worse      => return False;
-         when Equivalent => return Lexicographical_Compare (This, Than);
-            --  Final way out is lexicographical ordering of crates, and first
-            --  one missing a crate in the other solution is worse.
-      end case;
-   end Is_Better;
 
    -------------
    -- Linking --
@@ -724,12 +672,15 @@ package body Alire.Solutions is
          return;
       end if;
 
-      --  Print all releases first, followed by the rest of dependencies
+            --  Print all fulfilled releases first. We include in this
+            --  section linked releases, even those that do not have an Alire
+            --  manifest (raw GPR projects), since those count as a buildable
+            --  dependency.
 
-      if not This.Releases.Is_Empty then
+      if not This.Dependencies_That (States.Is_Fulfilled'Access).Is_Empty then
          Trace.Log (Prefix & "Dependencies (solution):", Level);
 
-         for Dep of This.Dependencies loop
+         for Dep of This.Dependencies_That (States.Is_Fulfilled'Access) loop
             if Dep.Has_Release then
                Trace.Log
                  (Prefix & "   "
@@ -756,54 +707,49 @@ package body Alire.Solutions is
                           & ")" -- origin completed
                      else ""),   -- no details
                   Level);
-            end if;
-         end loop;
-      end if;
-
-      --  Show other dependencies with their status and hints
-
-      --  TODO: show these in line with the previous ones, as most of the info
-      --  is common. Just mark the true external (missing ones) better, see
-      --  #646 and #685. Now, pins without a release are shown here too,
-      --  although they're properly resolved.
-
-      if (for some Dep of This.Dependencies => not Dep.Has_Release) then
-         Trace.Log (Prefix & "Dependencies (external):", Level);
-         for Dep of This.Dependencies loop
-            if not This.State (Dep.Crate).Has_Release
-            then
+            elsif Dep.Is_Linked then
                Trace.Log
                  (Prefix & "   "
                   & Dep.TTY_Image
-                  & (if Dep.Is_Pinned or else Dep.Is_Linked
-                    then TTY.Emph (" (pinned)")
-                    else "")
-                  & (if Detailed and then Dep.Is_Linked
-                     then " (origin: "
-                         & Dep.Link.Relative_Path
-                         & (if Dep.Link.Is_Remote
-                            then " from "
-                                 & Dep.Link.TTY_URL_With_Reference
-                            else "") -- no remote
-                         & ")"  -- origin completed
-                     else ""),  -- no details
+                  & TTY.Emph (" (pinned)"),
                   Level);
+            else
+               Recoverable_Program_Error;
+               --  This should be unreachable, as dependencies in this block
+               --  should either have a release or a link.
+            end if; -- has release
+         end loop;
+      end if;
 
-               --  Look for hints. If we are relying on workspace information
-               --  the index may not be loaded, or have changed, so we need to
-               --  ensure the crate is indexed.
+      --  Show unfulfilled (missing) dependencies with their status and hints
 
-               if Index.Exists (Dep.Crate) then
-                  for Hint of
-                    Alire.Index.Crate (Dep.Crate)
-                    .Externals.Hints
-                      (Name => Dep.Crate,
-                       Env  => Env)
-                  loop
-                     Trace.Log (Prefix & TTY.Emph ("      Hint: ") & Hint,
-                                Level);
-                  end loop;
-               end if;
+      if not This.Dependencies_That (States.Is_Unfulfilled'Access).Is_Empty
+      then
+         Trace.Log
+           (Prefix & "Dependencies (" & TTY.Error ("missing") & "):", Level);
+         for Dep of This.Dependencies_That (States.Is_Unfulfilled'Access) loop
+            Trace.Log
+              (Prefix & "   "
+               & Dep.TTY_Image
+               & (if Dep.Is_Pinned
+                 then TTY.Emph (" (pinned)")
+                 else ""),  -- no details
+               Level);
+
+            --  Look for hints. If we are relying on workspace information
+            --  the index may not be loaded, or have changed, so we need to
+            --  ensure the crate is indexed.
+
+            if Index.Exists (Dep.Crate) then
+               for Hint of
+                 Alire.Index.Crate (Dep.Crate)
+                 .Externals.Hints
+                   (Name => Dep.Crate,
+                    Env  => Env)
+               loop
+                  Trace.Log (Prefix & TTY.Emph ("      Hint: ") & Hint,
+                             Level);
+               end loop;
             end if;
          end loop;
       end if;
@@ -879,7 +825,7 @@ package body Alire.Solutions is
             & "are unavailable within Alire:");
 
          for Dep of This.Hints loop
-            Trace.Warning ("   " & Dep.Image);
+            Trace.Warning ("   " & Dep.As_Dependency.Image);
 
             if Index.All_Crates.Contains (Dep.Crate) then
                for Hint of Index.Crate (Dep.Crate)
@@ -903,8 +849,17 @@ package body Alire.Solutions is
       Table : Utils.Tables.Table;
    begin
       if This.Links.Is_Empty and then Dependency_Map'(This.Pins).Is_Empty then
-         Trace.Always ("There are no pins");
+         if Utils.Tables.Structured_Output then
+            Table.Print (Always);
+         else
+            Trace.Always ("There are no pins");
+         end if;
       else
+         --  To preserve old behavior with human output
+         if Utils.Tables.Structured_Output then
+            Table.Header ("Crate").Header ("Target").Header ("Origin").New_Row;
+         end if;
+
          for Dep of This.Dependencies loop
             if Dep.Is_Linked then
                Table
@@ -961,7 +916,8 @@ package body Alire.Solutions is
    procedure Print_Tree (This       : Solution;
                          Root       : Alire.Releases.Release;
                          Prefix     : String := "";
-                         Print_Root : Boolean := True)
+                         Print_Root : Boolean := True;
+                         Concise    : Boolean := not Detailed)
    is
 
       Mid_Node  : constant String :=
@@ -971,6 +927,30 @@ package body Alire.Solutions is
       Branch    : constant String :=
                     (if TTY.Color_Enabled then U ("│   ") else "|   ");
       No_Branch : constant String := "    ";
+      More_Deps : constant String := (Last_Node & "...");
+
+      Printed   : AAA.Strings.Sets.Set;
+      --  Dependencies already printed, to avoid reprinting in Concise mode
+
+      -----------
+      -- Label --
+      -----------
+      --  The dependency Milestone or State
+      function Label (Dep : Dependencies.Dependency) return String
+      is (if This.State (Dep.Crate).Has_Release
+          then This.State (Dep.Crate).Milestone_Image
+          else This.State (Dep.Crate).TTY_Image);
+
+      ---------------------
+      -- Already_Printed --
+      ---------------------
+
+      function Already_Printed (Dep : Dependencies.Dependency) return Boolean
+      is (Printed.Contains (Label (Dep)));
+
+      -----------
+      -- Print --
+      -----------
 
       procedure Print (Deps   : Dependencies.Containers.Set;
                        Prefix : String := "";
@@ -978,9 +958,31 @@ package body Alire.Solutions is
         --  Omit is used to remove the top-level connectors, for when the tree
         --  is printed without the root release.
       is
+
+         ----------------------
+         -- Has_Dependencies --
+         ----------------------
+
+         function Has_Dependencies (Dep : Dependencies.Dependency)
+                                     return Boolean
+         is (This.State (Dep.Crate).Has_Release
+             and then not Conditional.Enumerate
+               (This.State (Dep.Crate).Release.Dependencies).Is_Empty);
+
          Last : UString;
          --  Used to store the last dependency name in a subtree, to be able to
          --  use the proper ASCII connector. See just below.
+
+         ----------------------
+         -- Parent_Connector --
+         ----------------------
+
+         function Parent_Connector (Dep : Dependencies.Dependency)
+                                    return String
+         is (if +Dep.Crate = +Last
+             then No_Branch  -- End of this connector
+             else Branch);   -- Continuation
+
       begin
 
          --  Find last printable dependency. This is related to OR trees, that
@@ -1011,27 +1013,37 @@ package body Alire.Solutions is
 
                   --  For a dependency solved by a release, print exact
                   --  version. Otherwise print the state of the dependency.
-                  & (if This.State (Dep.Crate).Has_Release
-                    then This.State (Dep.Crate).Milestone_Image
-                    else This.State (Dep.Crate).TTY_Image)
+                  & Label (Dep)
 
                   --  And dependency that introduces the crate in the solution
                   & " (" & TTY.Emph (Dep.Versions.Image) & ")");
 
-               --  Recurse for further releases
+               --  Recurse for further releases, or print the concise marker
 
-               if This.State (Dep.Crate).Has_Release then
-                  Print (Conditional.Enumerate
-                          (This.State (Dep.Crate).Release.Dependencies).To_Set,
-                         Prefix =>
-                           Prefix
-                           --  Indent adding the proper running connector
-                           & (if Omit
-                              then ""
-                              else (if +Dep.Crate = +Last
-                                    then No_Branch  -- End of this connector
-                                    else Branch))); -- "│" over the subtree
+               if
+                 Concise
+                 and then Already_Printed (Dep)
+                 and then Has_Dependencies (Dep)
+               then
+                  Trace.Always (Prefix
+                                & Parent_Connector (Dep)
+                                & More_Deps);
+               elsif
+                 (not Concise or else not Printed.Contains (Label (Dep)))
+                 and then Has_Dependencies (Dep)
+               then
+                  Print
+                    (Conditional.Enumerate
+                       (This.State (Dep.Crate).Release.Dependencies).To_Set,
+                     Prefix =>
+                       Prefix
+                       --  Indent adding the proper running connector
+                       & (if Omit
+                          then ""
+                          else Parent_Connector (Dep)));
                end if;
+
+               Printed.Include (Label (Dep));
             end if;
          end loop;
       end Print;
@@ -1256,7 +1268,7 @@ package body Alire.Solutions is
       end loop;
 
       raise Program_Error with Errors.Set
-        ("No dependency in solution matches release "
+         ("No dependency in solution matches release "
          & Release.Milestone.TTY_Image);
    end State;
 
@@ -1382,7 +1394,7 @@ package body Alire.Solutions is
 
       --  Do nothing when deps are being removed.
 
-      if not Config.Builtins.Solver_Autonarrow.Get or else
+      if not Settings.Builtins.Solver_Autonarrow.Get or else
         not Diff.Removed.Is_Empty
       then
          return New_Deps;
@@ -1520,8 +1532,8 @@ package body Alire.Solutions is
             --  that were marked as safe to visit in the 1st step of the round.
 
             if To_Remove.Is_Empty then
-               raise Program_Error
-                 with "No release visited in round" & Round'Img;
+               raise Program_Error with
+                 "No release visited in round" & Round'Img;
             else
                for Dep of To_Remove loop
                   Visit (Dep);

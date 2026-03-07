@@ -1,9 +1,12 @@
+with Ada.Directories;
+
 with Alire.Conditional;
 with Alire.Dependencies.Diffs;
 with Alire.Directories;
+with Alire.Index;
 with Alire.Manifest;
-with Alire.Origins;
 with Alire.Roots.Optional;
+with Alire.Solver.Predefined_Options;
 with Alire.User_Pins;
 with Alire.Utils.User_Input;
 with Alire.VCSs.Git;
@@ -78,8 +81,9 @@ package body Alire.Roots.Editable is
    -- Add_Dependency --
    --------------------
 
-   procedure Add_Dependency (This : in out Root;
-                             Dep  : Dependencies.Dependency)
+   procedure Add_Dependency (This          : in out Root;
+                             Dep           : Dependencies.Dependency;
+                             Allow_Unknown : Boolean := Alire.Force)
    is
 
       --------------------
@@ -103,7 +107,15 @@ package body Alire.Roots.Editable is
                                   .Dependencies (This.Edit.Environment)
                                   and Dep,
                        Props   => This.Edit.Environment,
-                       Pins    => This.Edit.Pins);
+                       Pins    => This.Edit.Pins,
+                       Options => Solver.Predefined_Options.Best_Effort)
+                    .Solution;
+            --  Here we are internally looking for a solution, but we do
+            --  not want to nag the user in case of trouble, as it would be
+            --  confusing (this is not the main search for a solution with all
+            --  the new dependencies, which will do ask). So we use Best_Effort
+            --  to come with a solution quickly (usual case) or abandon
+            --  silently.
          begin
             if Sol.State (Dep.Crate).Has_Release then
                return
@@ -124,6 +136,17 @@ package body Alire.Roots.Editable is
       end Find_Updatable;
 
    begin
+
+      --  Reject if unknown
+
+      if not Allow_Unknown
+        and then not Index.Exists (Dep.Crate)
+        and then Index.Releases_For_Crate (Dep.Crate).Is_Empty
+      then
+         Alire.Recoverable_User_Error
+           ("Cannot add crate '" & Alire.Utils.TTY.Name (Dep.Crate)
+            & "' not found in index.");
+      end if;
 
       --  Do not add if already a direct dependency
 
@@ -233,14 +256,17 @@ package body Alire.Roots.Editable is
                                   Path  : Any_Path)
                                   return Crate_Name
    is
-      Pin_Root : constant Optional.Root := Optional.Detect_Root (Path);
+      Pin_Root : Optional.Root := Optional.Detect_Root (Path);
 
       -------------------------
       -- Pin_Is_Parent_Crate --
       -------------------------
 
       function Pin_Is_Parent_Crate return Boolean
-      is (Directories.Find_Relative_Path_To (Path) = "..");
+      is
+      begin
+         return Directories.Find_Relative_Path_To (Path) = "..";
+      end Pin_Is_Parent_Crate;
 
    begin
       --  When adding a pin from a folder other than the root, notify about it.
@@ -282,12 +308,28 @@ package body Alire.Roots.Editable is
          --  aesthetic, as pins will always override the version.
 
          if not This.Solution.Depends_On (Crate) then
-            This.Add_Dependency
-              (Dependencies.New_Dependency
-                 (Crate,
-                  (if Pin_Root.Is_Valid and then not Pin_Is_Parent_Crate
-                   then Pin_Root.Updatable_Dependency.Versions
-                   else Semver.Extended.Any)));
+            declare
+               --  This temporary is used to work around a bug in GNAT 13
+               Dep_Ver : Semver.Extended.Version_Set;
+            begin
+               if Pin_Root.Is_Valid and then not Pin_Is_Parent_Crate then
+                  declare
+                     --  This temporary is used to work around a bug in GNAT 13
+                     Updatable_Dep : constant Dependencies.Dependency
+                       := Pin_Root.Updatable_Dependency;
+                  begin
+                     Dep_Ver := Updatable_Dep.Versions;
+                  end;
+               else
+                  Dep_Ver := Semver.Extended.Any;
+               end if;
+
+               This.Add_Dependency
+                 (Dependencies.New_Dependency (Crate, Dep_Ver),
+                  Allow_Unknown => True);
+               --  Pins to local paths are more likely not to be indexed, so we
+               --  allow unknown dependencies here.
+            end;
          end if;
 
          --  Remove any previous pin for this crate
@@ -339,7 +381,8 @@ package body Alire.Roots.Editable is
                              Crate  : Alire.Optional.Crate_Name;
                              Origin : URL;
                              Ref    : String := "";
-                             Branch : String := "")
+                             Branch : String := "";
+                             Subdir : Relative_Path := "")
    is
 
       ---------------------------
@@ -354,7 +397,11 @@ package body Alire.Roots.Editable is
          if Commit /= "" then
             Put_Info ("Using commit " & TTY.Emph (Commit)
                       & " for reference " & TTY.Emph (Ref));
-            This.Add_Remote_Pin (Crate, Origin, Commit, Branch);
+            This.Add_Remote_Pin (Crate,
+                                 Origin,
+                                 Ref    => Commit,
+                                 Branch => Branch,
+                                 Subdir => Subdir);
          else
             Raise_Checked_Error
               ("Requested remote reference " & TTY.Emph (Ref)
@@ -371,7 +418,7 @@ package body Alire.Roots.Editable is
       --  We accept any reference that can be converted to a commit, as commit.
       --  This is a bit of a misnomer really in the command-line interface.
 
-      if Ref /= "" and then not Origins.Is_Valid_Commit (Ref) then
+      if Ref /= "" and then not VCSs.Git.Is_Valid_Commit (Ref) then
          Convert_Ref_To_Commit;
          return;
       end if;
@@ -379,12 +426,11 @@ package body Alire.Roots.Editable is
       --  Clone the remote so we can identify the crate and perform other
       --  validity checks.
 
-      if not VCSs.Git.Handler.Clone
-               (From   => Origin & (if Ref /= ""
-                                       then "#" & Ref
-                                       else ""),
+      if not VCSs.Git.Handler.Clone_Branch
+               (From   => Origin,
                 Into   => Temp_Pin.Filename,
                 Branch => Branch, -- May be empty for default branch
+                Commit => Ref, -- May be empty for most recent commit
                 Depth  => 1).Success
       then
          Raise_Checked_Error
@@ -395,14 +441,22 @@ package body Alire.Roots.Editable is
       --  We can proceed as if it where a local pin now
 
       declare
+         use Directories.Operators;
+
+         Crate_Path : constant Absolute_Path :=
+                        (if Subdir /= ""
+                         then Temp_Pin.Filename / Subdir
+                         else Temp_Pin.Filename);
+
          Crate : constant Crate_Name :=
                    Add_Pin_Preparations (This,
                                          Add_Remote_Pin.Crate,
-                                         Temp_Pin.Filename);
+                                         Crate_Path);
          New_Pin : User_Pins.Pin :=
                      User_Pins.New_Remote (URL    => Origin,
                                            Commit => Ref,
-                                           Branch => Branch);
+                                           Branch => Branch,
+                                           Subdir => Subdir);
 
          Destination : constant Absolute_Path :=
                          New_Pin.Deploy_Path (Crate, This.Edit.Pins_Dir);
@@ -421,8 +475,8 @@ package body Alire.Roots.Editable is
             Directories.Delete_Tree (Destination);
          end if;
 
-         Adirs.Rename (Old_Name => Temp_Pin.Filename,
-                       New_Name => Destination);
+         Directories.Rename (Source      => Temp_Pin.Filename,
+                             Destination => Destination);
 
          --  Finally add the new pin to the manifest
 
@@ -430,7 +484,8 @@ package body Alire.Roots.Editable is
                                 Crate,
                                 User_Pins.New_Remote (URL    => Origin,
                                                       Commit => Ref,
-                                                      Branch => Branch));
+                                                      Branch => Branch,
+                                                      Subdir => Subdir));
          This.Reload_Manifest;
 
          --  And update lockfile. We need to call Deploy on the pin (although
@@ -489,6 +544,9 @@ package body Alire.Roots.Editable is
                Trace.Debug ("Discarding temporary root file: " & File);
             end;
          end if;
+      exception
+         when E : others =>
+            Alire.Utils.Finalize_Exception (E);
       end Finalize;
 
    begin
@@ -496,7 +554,7 @@ package body Alire.Roots.Editable is
       Finalize (+This.Edit.Lockfile);
    exception
       when E : others =>
-         Log_Exception (E, Warning);
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    ---------

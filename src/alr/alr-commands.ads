@@ -71,6 +71,11 @@ package Alr.Commands is
    --  performing a silent update. If not Sync, only a minimal empty lockfile
    --  is created. If Error, replace the first generic error message with it.
 
+   procedure Forbids_Structured_Output (Cmd : in out Command'Class;
+                                        Custom_Msg : String := "");
+   --  Use this to mark that the output of a command is not (yet) compatible
+   --  with global flag --format.
+
    function Has_Root (Cmd : in out Command'Class) return Boolean;
    --  True when Requires_Workspace would succeed, false otherwise
 
@@ -140,7 +145,7 @@ private
 
    package Sub_Cmd is new CLIC.Subcommand.Instance
      (Main_Command_Name   => "alr",
-      Version             => Alire.Version.Current,
+      Version             => Alire.Version.Current.Image,
       Put                 => GNAT.IO.Put,
       Put_Line            => GNAT.IO.Put_Line,
       Put_Error           => Put_Error,
@@ -169,10 +174,11 @@ private
                         Default : Boolean)
                         return Boolean
      with Post =>
-       (if Image in null or else Image.all = "" or else Image.all = Unset
+       (if Image in null or else Image.all = Unset
         then To_Boolean'Result = Default);
    --  Convert a switch value to a boolean, if explicitly given, or use the
    --  default otherwise. If not a valid boolean or empty, raise Checked_Error
-   --  with an appropriate error message.
+   --  with an appropriate error message. NOTE: If the switch exists (is not
+   --  unset) but has no argument, it's considered TRUE, not default.
 
 end Alr.Commands;

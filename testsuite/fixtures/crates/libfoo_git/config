@@ -2,3 +2,6 @@
 	repositoryformatversion = 0
 	filemode = true
 	bare = true
+	sharedrepository = 2
+[receive]
+	denyNonFastforwards = true

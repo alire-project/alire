@@ -9,7 +9,7 @@ from drivers.asserts import assert_eq, assert_match
 from glob import glob
 
 expected_output = """main=1.0.0:
-   Post_Fetch run: ${CRATE_DIR}/./echo POST-FETCH MAIN
+   Post_Fetch run: echo POST-FETCH MAIN (from ${CRATE_ROOT}/.)
 """
 
 # First test, list action in a root crate

@@ -1,0 +1,9 @@
+description = "missing external crate"
+name = "missing_external"
+
+maintainers = ["no@bo.dy"]
+maintainers-logins = ["nobody"]
+
+[[external]]
+kind = "system"
+origin = [] # undetectable

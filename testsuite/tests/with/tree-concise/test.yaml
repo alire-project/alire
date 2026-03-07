@@ -1,0 +1,5 @@
+driver: python-script
+build_mode: both
+indexes:
+    basic_index:
+        in_fixtures: true

@@ -1,4 +1,6 @@
 driver: docker-wrapper
+control:
+    - [SKIP, "skip_docker", "Docker disabled"]
 indexes:
     toolchain_index:
         copy_crates_src: True

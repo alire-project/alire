@@ -2,6 +2,11 @@ with Alire.Solutions.Diffs;
 
 package Alire.Utils.User_Input is
 
+   procedure Enable_Silent_Running;
+   --  Configure for non-interactive silent output, only Trace.Always goes to
+   --  console. If current log level is already Debug, this will silently do
+   --  nothing, to allow debug logs of parts that would normally be silent.
+
    function Confirm_Solution_Changes
      (Changes        : Solutions.Diffs.Diff;
       Changed_Only   : Boolean            := not Alire.Detailed;

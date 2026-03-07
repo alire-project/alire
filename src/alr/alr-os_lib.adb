@@ -1,5 +1,3 @@
-with Alire.OS_Lib.Subprocess;
-
 package body Alr.OS_Lib is
 
    ------------
@@ -40,25 +38,4 @@ package body Alr.OS_Lib is
          return False;
       end if;
    end Is_Older;
-
-   ---------------
-   -- Spawn_Raw --
-   ---------------
-
-   procedure Spawn_Raw (Command   : String;
-                        Arguments : String := "")
-   is
-      Code : Integer;
-   begin
-      Trace.Debug ("Spawning " & Command & " " & Arguments);
-
-      Code := GNAT.OS_Lib.Spawn
-        (Alire.OS_Lib.Subprocess.Locate_In_Path (Command),
-         GNAT.OS_Lib.Argument_String_To_List (Arguments).all);
-
-      if Code /= 0 then
-         raise Child_Failed with "Exit code:" & Code'Image;
-      end if;
-   end Spawn_Raw;
-
 end Alr.OS_Lib;

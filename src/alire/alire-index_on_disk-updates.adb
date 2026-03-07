@@ -1,14 +1,14 @@
 with Ada.Calendar;
 
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Index_On_Disk.Loading;
 
 with CLIC.User_Input;
 
 package body Alire.Index_On_Disk.Updates is
 
-   package Builtins renames Config.Builtins;
-   subtype Int is Config.Config_Int;
+   package Builtins renames Settings.Builtins;
+   subtype Int is Settings.Setting_Int;
 
    Epoch : constant Ada.Calendar.Time := Ada.Calendar.Time_Of
      (Year  => 2017,
@@ -21,7 +21,7 @@ package body Alire.Index_On_Disk.Updates is
    -----------------
 
    procedure Auto_Update
-     (Under : Absolute_Path := Config.Edit.Indexes_Directory)
+     (Under : Absolute_Path := Settings.Edit.Indexes_Directory)
    is
       Wait : constant Int := Builtins.Index_Auto_Update.Get;
 
@@ -52,13 +52,13 @@ package body Alire.Index_On_Disk.Updates is
                    Valid    => (Yes | No => True, others => False),
                    Default  => Yes) = Yes
          then
-            Builtins.Index_Auto_Update_Asked.Set (Config.Global, True);
+            Builtins.Index_Auto_Update_Asked.Set (Settings.Global, True);
             return True;
          else
             Put_Info ("Understood, Alire will not perform automatic updates.");
             Trace.Debug ("Index auto-refresh disabled by user");
-            Builtins.Index_Auto_Update.Set (Config.Global, 0);
-            Builtins.Index_Auto_Update_Asked.Set (Config.Global, True);
+            Builtins.Index_Auto_Update.Set (Settings.Global, 0);
+            Builtins.Index_Auto_Update_Asked.Set (Settings.Global, True);
             return False;
          end if;
       end User_Approves;
@@ -122,7 +122,7 @@ package body Alire.Index_On_Disk.Updates is
    ----------------
 
    function Update_All
-     (Under : Absolute_Path  := Config.Edit.Indexes_Directory) return Outcome
+     (Under : Absolute_Path  := Settings.Edit.Indexes_Directory) return Outcome
    is
       Result  : Outcome;
       Indexes : constant Loading.Set := Loading.Find_All (Under, Result);
@@ -163,7 +163,7 @@ package body Alire.Index_On_Disk.Updates is
       use Ada.Calendar;
    begin
       Trace.Debug ("Index auto-refresh timestamp updated");
-      Builtins.Index_Last_Update.Set (Config.Global,
+      Builtins.Index_Last_Update.Set (Settings.Global,
                                       Int (Clock - Epoch));
    end Reset_Update_Time;
 

@@ -2,6 +2,8 @@
 
 .clang-format
 .clangd/
+.repomix
+.vscode
 
 *.cgpr
 *.db

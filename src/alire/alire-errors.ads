@@ -52,7 +52,8 @@ package Alire.Errors with Preelaborate is
    --  Returns the error for Ex if it exists, or defaults to Exception_Message.
    --  The stored error is cleared.
 
-   procedure Pretty_Print (Error : String);
+   procedure Pretty_Print (Error : String;
+                           Level : Trace.Levels := Trace.Error);
    --  Split Error at LFs to prefix each sub-error in a new line with the
    --  appropriate tracing prefix. Also, from the second line on, messages are
    --  indented. This way, several top-level errors are easier to distinguish.
@@ -121,6 +122,21 @@ package Alire.Errors with Preelaborate is
 
    function Stack (Text : String) return String;
    --  Return current error stack, plus Text as the latest error
+
+   -----------
+   -- Other --
+   -----------
+
+   procedure Program_Error (Explanation  : String  := "";
+                            Recoverable  : Boolean := True;
+                            Stack_Trace  : String  := "";
+                            Stack_Offset : Natural := 0);
+   --  For unexpected situations where normally a Program_Error would be
+   --  adequate, but we do not want to bomb on the user because continuing is
+   --  acceptable. We log a stack trace, print a warning and continue, so a
+   --  motivated user can report an issue, but we don't needlessly raise. If
+   --  not Recoverable, then do raise a Program_Error. If Stack_Trace /= "",
+   --  use it instead of generating one.
 
 private
 

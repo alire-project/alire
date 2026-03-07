@@ -1,14 +1,18 @@
 with Alire.Origins.Deployers.System.Apt;
+with Alire.Origins.Deployers.System.Portage;
 with Alire.Origins.Deployers.System.Homebrew;
 with Alire.Origins.Deployers.System.Macports;
 with Alire.Origins.Deployers.System.Pacman;
 with Alire.Origins.Deployers.System.RPM_Wrappers;
+with Alire.Origins.Deployers.System.Unknown;
 with Alire.Origins.Deployers.System.Zypper;
-with Alire.Platforms.Current;
+with Alire.OS_Lib;
+with Alire.Toolchains;
 
 with CLIC.User_Input;
 
 with GNAT.IO;
+--  with System;
 
 package body Alire.Origins.Deployers.System is
 
@@ -86,9 +90,12 @@ package body Alire.Origins.Deployers.System is
    -- Platform_Deployer --
    -----------------------
 
-   function Platform_Deployer (From : Origins.Origin) return Deployer'Class is
-     (case Platforms.Distro_Manager (Platforms.Current.Distribution) is
-         when Platforms.Apt | Platforms.Packager_Unknown =>
+   function Platform_Deployer
+     (From   : Origins.Origin;
+      Distro : Platforms.Distributions := Platforms.Current.Distribution)
+      return Deployer'Class
+   is (case Platforms.Distro_Manager (Distro) is
+         when Platforms.Apt =>
             System.Apt.Deployer'(Deployers.Deployer'(Base => From)
                                  with others => <>),
          when Platforms.Pacman =>
@@ -112,7 +119,14 @@ package body Alire.Origins.Deployers.System is
                                       with others => <>),
          when Platforms.Macports =>
             System.Macports.Deployer'(Deployers.Deployer'(Base => From)
-                                      with others => <>));
+                                      with others => <>),
+         when Platforms.Portage =>
+            System.Portage.Deployer'(Deployers.Deployer'(Base => From)
+                                        with others => <>),
+         when Platforms.Packager_Unknown =>
+            System.Unknown.Deployer'(Deployers.Deployer'(Base => From)
+                                     with others => <>)
+     );
       --  NOTE: add here other native package managers as they get
       --  implemented.
 
@@ -124,5 +138,47 @@ package body Alire.Origins.Deployers.System is
    begin
       This.Ask_Permission := False;
    end Dont_Ask_Permission;
+
+   ---------------------
+   -- Executable_Name --
+   ---------------------
+
+   function Executable_Name return String is
+      Make : constant Origin := New_System ("make");
+      --  We use a mock system package to be able to obtain a deployer. It
+      --  doesn't matter if this system package doesn't exist.
+   begin
+      return Platform_Deployer
+        (Make,
+         Distro => Platforms.Current.Detected_Distribution)
+        .Executable_Name;
+   end Executable_Name;
+
+   ---------------------
+   -- Executable_Path --
+   ---------------------
+
+   function Executable_Path return Optional_Absolute_Path is
+   begin
+      if Executable_Name /= "" then
+         return OS_Lib.Locate_Exec_On_Path (Executable_Name);
+      else
+         return "";
+      end if;
+   end Executable_Path;
+
+   -------------
+   -- Install --
+   -------------
+
+   procedure Install (This : Releases.Release) is
+   begin
+      if Toolchains.Is_Tool (This) then
+         Toolchains.Deploy (This);
+         --  This ensures the cache of tools is properly reset
+      else
+         Platform_Deployer (This.Origin).Deploy ("").Assert;
+      end if;
+   end Install;
 
 end Alire.Origins.Deployers.System;

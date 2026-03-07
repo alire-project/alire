@@ -13,15 +13,13 @@ package Alire.Index_On_Disk is
    --  Index metadata are stored in the <config>/indexes/<unique_id>/index.toml
    --  Actual index is stored in <config>/indexes/<name>/repo
 
-   --  URLs given to New_Handler functions must be complete, commit optional:
+   --  URLs given to New_Handler functions must be complete, optionally with a
+   --  commit (except for 'file:' URLs, where path can contain literal '#'):
    --  E.g.: git+https://path/to/server/and/project[#commit]
-   --  E.g.: file:///path/to/local/folder
+   --  E.g.: file:/path/to/local/folder
 
    Checkout_Directory : constant String := "repo";
    Metadata_Filename  : constant String := "index.toml";
-
-   File_Prefix        : constant String := "file://";
-   HTTP_Prefix        : constant String := "http";
 
    subtype Priorities is Integer; -- Lower is loaded before
 
@@ -36,7 +34,7 @@ package Alire.Index_On_Disk is
                          Result   : out Outcome;
                          Priority :     Priorities := Default_Priority)
                          return Index'Class
-     with Post => Name in Restricted_Name or not Result.Success;
+     with Post => Name in Restricted_Name or else not Result.Success;
    pragma Warnings (On);
    --  Factory function.
    --  Name is a user given name used to denote the index (like a git origin).

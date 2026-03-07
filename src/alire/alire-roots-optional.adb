@@ -51,10 +51,12 @@ package body Alire.Roots.Optional is
                   return This : constant Root :=
                     Outcome_Success
                       (Roots.New_Root
-                         (R    => Releases.From_Manifest (Crate_File,
-                                                          Manifest.Local,
-                                                          Strict => True),
-                          Path => Ada.Directories.Full_Name (Path),
+                         (R    => Releases.From_Manifest
+                            (Crate_File,
+                             Manifest.Local,
+                             Strict    => True,
+                             Root_Path => Directories.Current),
+                          Path => Directories.Current,
                           Env  => Alire.Root.Platform_Properties))
                   do
                      --  Crate loaded properly, we can return a valid root here
@@ -125,14 +127,24 @@ package body Alire.Roots.Optional is
    -- Value --
    -----------
 
-   function Value (This : aliased Root) return Reference
+   function Value (This : in out Root) return Reference
    is
    begin
       This.Assert;
       --  The following Unrestricted_Access cannot fail as we just asserted
       --  the value is stored.
-      return Reference'(Ptr => This.Data.Value'Unrestricted_Access);
+      return Ref : constant Reference :=
+        Reference'(Ptr => This.Data.Value'Unrestricted_Access);
    end Value;
+
+   -------------
+   -- Discard --
+   -------------
+
+   procedure Discard (This : in out Root) is
+   begin
+      This.Data := (Status => Outside);
+   end Discard;
 
    ---------------------
    -- Outcome_Failure --
@@ -166,7 +178,7 @@ package body Alire.Roots.Optional is
    -- Updatable_Dependency --
    --------------------------
 
-   function Updatable_Dependency (This : Root)
+   function Updatable_Dependency (This : in out Root)
                                   return Dependencies.Dependency
    is (Dependencies.New_Dependency
        (This.Value.Release.Element.Name,

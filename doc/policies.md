@@ -60,7 +60,7 @@ major/minor/patch/build version changes), but not modified.
   - Tests, demos, examples, etc., can be provided in nested crates so they can
     be conveniently used locally when needed without causing extra build load
     on clients. See the documentation on
-    [local pins](catalog-format-spec.md#using-pins-for-crate-testing) for
+    [local pins](catalog-format-spec#using-pins-for-crate-testing) for
     details.
 
   - The manifests of these nested crates need not to be published to the

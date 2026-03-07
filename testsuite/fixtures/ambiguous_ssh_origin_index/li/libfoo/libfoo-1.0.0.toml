@@ -1,0 +1,9 @@
+description = "Custom repo to check retrieval of unidentified ssh:// crates"
+name = "libfoo"
+version = "1.0.0"
+maintainers = ["some@one.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "ssh://host.invalid/path/to/repo_without_suffix"
+commit = "0000000000000000000000000000000000000000"

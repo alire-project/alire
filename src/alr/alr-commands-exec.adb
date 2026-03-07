@@ -18,8 +18,9 @@ package body Alr.Commands.Exec is
       use GNAT.Strings;
       use Ada.Containers;
       use AAA.Strings;
-
    begin
+      Cmd.Forbids_Structured_Output;
+
       if Args.Is_Empty then
          Reportaise_Wrong_Arguments
            (Cmd.Name & " takes at least one argument");
@@ -124,7 +125,8 @@ package body Alr.Commands.Exec is
          Cmd.Prj'Access,
          Switch => "-P?",
          Help => "Add """ & Formatter.Terminal ("-P <PROJECT_FILE>")
-           & """ to the command switches");
+           & """ to the command switches",
+         Argument => "NUM");
    end Setup_Switches;
 
 end Alr.Commands.Exec;

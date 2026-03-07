@@ -10,11 +10,6 @@ import sys
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
 
-# Skip this test in non-networked environments
-if "ALIRE_DISABLE_NETWORK_TESTS" in os.environ:
-    print("SKIP: network tests disabled")
-    sys.exit(0)
-
 # Configure our online test index
 # An alternative might be to launch a local git server in bg
 INDEX = "git+https://github.com/alire-project/test-index"
@@ -24,11 +19,11 @@ run_alr("index", "--name", "test", "--add", INDEX)
 run_alr("show", "libhello")
 
 # Enable autoupdate
-run_alr("config", "--global", "--set", "index.auto_update", "1")
+run_alr("settings", "--global", "--set", "index.auto_update", "1")
 
 # Ensure next `alr show` will trigger an update
-run_alr("config", "--global", "--unset", "index.last_update")
-run_alr("config", "--global", "--set", "index.auto_update_asked", "true")
+run_alr("settings", "--global", "--unset", "index.last_update")
+run_alr("settings", "--global", "--set", "index.auto_update_asked", "true")
 
 # Prepare a copy of `unshare` that can be run as regular user
 run(["cp", "/usr/bin/unshare", "/tmp"]).check_returncode()

@@ -1,6 +1,10 @@
 name: CI self+toolchain
 # Build Alire with `alr build` and using a toolchain installed from Alire
 # The `alr` being tested is the one which is being submitted in the PR
+# Toolchain is tested from `alr install` (1st build) and `alr build` (2nd
+# build), so those are two different toolchain installations of the same
+# toolchain. This way we not only test that alr builds itself, but that
+# toolchain installations via `alr install` work as intented.
 
 on:
   pull_request:
@@ -14,38 +18,94 @@ jobs:
 
   build:
 
-    name: ${{ matrix.os }}
+    name: ${{ matrix.os }} gcc^${{ matrix.gcc_version }}
 
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
         os:
-          - macos-latest
+          - macos-15-intel
+          - macos-14 # See ci-release.yml about macos-latest
+          - ubuntu-22.04
           - ubuntu-latest
           - windows-latest
+        gcc_version: [10, 11, 12, 13, 14, 15]
+
+        exclude:
+          # Some combos are not supported due to missing pieces in the toolchain
+
+          # Linking troubles on macos-15 for those gcc versions
+          - os: macos-15-intel
+            gcc_version: 10
+          - os: macos-15-intel
+            gcc_version: 11
+          - os: macos-15-intel
+            gcc_version: 12
+          - os: macos-15-intel
+            gcc_version: 13
+          - os: macos-15-intel
+            gcc_version: 14
+
+          # No builds of gcc-10, -11, -12 that work on arm64
+          - os: macos-14 # See ci-release.yml about macos-latest
+            gcc_version: 10
+          - os: macos-14 # See ci-release.yml about macos-latest
+            gcc_version: 11
+          - os: macos-14 # See ci-release.yml about macos-latest
+            gcc_version: 12
+
+          # gcc-10 and -11 do not work on LTS 24.04 anymore
+          - os: ubuntu-latest
+            gcc_version: 10
+          - os: ubuntu-latest
+            gcc_version: 11
+
+          # exclude all ubuntu-22.04 because we are only interested in two
+          # older tests that are explicitly included next
+          - os: ubuntu-22.04
+
+        include:
+          # Only test gcc-10 and -11 on ubuntu-22.04 (to maintain testing
+          # back-compatibility, as those were being tested before)
+          - os: ubuntu-22.04
+            gcc_version: 10
+          - os: ubuntu-22.04
+            gcc_version: 11
 
     steps:
     - name: Check out
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: recursive
 
     # Use a stock alr to make the latest toolchain available
 
     - name: Install FSF toolchain
-      uses: alire-project/alr-install@v1
+      uses: alire-project/alr-install@v2
       with:
-        crates: gnat_native gprbuild
+        crates: gnat_native^${{matrix.gcc_version}} gprbuild
 
-    - name: Build alr with default toolchain
+    - name: Build alr with toolchain from `alr install`
       shell: bash
       run: dev/build.sh
 
     # We can start using the alr we just built
 
+    - name: Select toolchain GNAT^${{matrix.gcc_version}}
+      run: ./bin/alr -d -n toolchain --select gnat_native^${{matrix.gcc_version}} gprbuild
+
+    - name: Show builder alr configuration
+      run: ./bin/alr -d -n version
+
+    - name: Verify proper toolchain used for 1st build
+      shell: bash
+      run: ./bin/alr -d -n version | grep 'compiled with version' | grep -q '${{ matrix.gcc_version }}'
+
     - name: Update dependencies
-      run: ./bin/alr -d -n update
+      run: ./bin/alr -d -n -f update
+      # Force because otherwise solving may time out in non-interactive mode
 
     - name: Show dependencies/pins
       run: ./bin/alr -d -n -q with --solve || ./bin/alr -n -v -d with --solve
@@ -53,9 +113,14 @@ jobs:
     - name: Show build environment, with debug fallback
       run: ./bin/alr -d -n printenv || ./bin/alr -n -v -d printenv
 
-    - shell: bash
-      run: mv ./bin ./bin-old
-      # Windows doesn't allow to replace a running exe so the next command fails otherwise
+    - name: Move ./bin to ./bin-old to allow for self-build
+      shell: bash
+      run: |
+        mv ./bin ./bin-old || \
+        { sleep 5s && mv ./bin ./bin-old && echo Old moved on 2nd attempt; }
+      # Windows doesn't allow to replace a running exe so the next command
+      # fails otherwise. Also, this mv fails sometimes so we try twice JIC.
+
 
     - name: SELF-BUILD
       run: ./bin-old/alr -d -n build
@@ -63,17 +128,23 @@ jobs:
     - name: Show built version
       run: ./bin/alr -d -n version
 
+    - name: Verify proper toolchain used for 2nd build
+      shell: bash
+      run: ./bin/alr -d -n version | grep 'compiled with version' | grep -q '${{ matrix.gcc_version }}'
+
     # Run the testsuite with the just build alr. The testsuite picks the proper
     # alr in the ./bin/alr location.
 
     - name: Install Python 3.x # required by testsuite
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
     - name: Install e3
-      run: pip install --upgrade e3-testsuite
+      run: pip install --upgrade -r testsuite/requirements.txt
 
-    - name: Run testsuite
-      run: cd testsuite; ./run.py -E
+    - name: Run testsuite # But ensure a new alr is not build
+      run: scripts/ci-github.sh build=false
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

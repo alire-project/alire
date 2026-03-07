@@ -1,11 +1,16 @@
 with Ada.Directories;
 
 with Alire.Directories;
+with Alire.Errors;
 with Alire.Origins;
 with Alire.Roots.Optional;
 with Alire.Utils.User_Input;
 with Alire.Utils.TTY;
 with Alire.VFS;
+
+with AAA.Strings;
+
+with CLIC.User_Input;
 
 with GNAT.OS_Lib;
 
@@ -18,6 +23,7 @@ package body Alire.User_Pins is
       Commit   : constant String := "commit";
       Internal : constant String := "lockfiled";
       Path     : constant String := "path";
+      Subdir   : constant String := "subdir";
       URL      : constant String := "url";
       Version  : constant String := "version";
    end Keys;
@@ -35,22 +41,24 @@ package body Alire.User_Pins is
    --------------
 
    function New_Path (Path : Any_Path) return Pin
-   is (Kind => To_Path,
-       Path => +Path);
+   is (Kind       => To_Path,
+       Local_Path => +Path);
 
    ----------------
    -- New_Remote --
    ----------------
 
-   function New_Remote (URL : Alire.URL;
+   function New_Remote (URL    : Alire.URL;
                         Commit : String := "";
-                        Branch : String := "")
+                        Branch : String := "";
+                        Subdir : Alire.Relative_Path := "")
                         return Pin
-   is (Kind       => To_Git,
-       URL        => +URL,
-       Commit     => +Commit,
-       Branch     => +Branch,
-       Local_Path => <>);
+   is (Kind          => To_Git,
+       URL           => +URL,
+       Commit        => +Commit,
+       Branch        => +Branch,
+       Subdir        => +Subdir,
+       Checkout_Path => <>);
 
    -----------
    -- Image --
@@ -59,11 +67,13 @@ package body Alire.User_Pins is
    function Image (This : Pin; User : Boolean) return String
    is (case This.Kind is
           when To_Version => "version=" & TTY.Version (This.Version.Image),
-          when To_Path    => "path=" & TTY.URL (if User
-                                       then VFS.Attempt_Portable (+This.Path)
-                                       else +This.Path),
+          when To_Path    => "path="
+                             & TTY.URL
+                               (if User
+                                then VFS.Attempt_Portable (+This.Local_Path)
+                                else +This.Local_Path),
           when To_Git     =>
-            (if Path (This) /= ""
+            (if This.Has_Path and then This.Path /= ""
              then "path=" & TTY.URL ((if User
                                       then VFS.Attempt_Portable (Path (This))
                                       else Path (This))) & ","
@@ -86,11 +96,15 @@ package body Alire.User_Pins is
                "path='" & VFS.Attempt_Portable (Path (This)) & "'",
             when To_Git     =>
                "url='" & (+This.URL) & "'"
+               & (if This.Subdir /= ""
+                  then ", subdir='" & (+This.Subdir) & "'"
+                  else "")
                & (if This.Branch /= ""
                   then ", branch='" & (+This.Branch) & "'"
                   elsif This.Commit /= ""
                   then ", commit='" & (+This.Commit) & "'"
-                  else ""))
+                  else "")
+         )
        & " }");
 
    ---------------
@@ -146,7 +160,14 @@ package body Alire.User_Pins is
                           Commit : String := "")
       is
          package Adirs renames Ada.Directories;
-         Temp : Directories.Temp_File;
+         use Directories.Operators;
+
+         --  Ensure the temporary pin location is in the same directory as the
+         --  final one, so a plain rename should always succeed.
+         Temp : constant Directories.Temp_File :=
+                  Directories.With_Name
+                    (Adirs.Containing_Directory (Destination)
+                     / Directories.Temp_Name);
       begin
 
          --  Skip checkout of existing commit
@@ -156,15 +177,28 @@ package body Alire.User_Pins is
             return;
          end if;
 
+         --  Create parent for a first pin
+
+         if not Adirs.Exists (Adirs.Containing_Directory (Destination)) then
+            Adirs.Create_Path (Adirs.Containing_Directory (Destination));
+         end if;
+
          --  Check out the branch or commit
 
+         Put_Info ("Deploying " & Utils.TTY.Name (Crate)
+                   & (if Commit /= ""
+                     then " commit " & TTY.URL (VCSs.Git.Short_Commit (Commit))
+                     elsif Branch /= ""
+                     then  " branch " & TTY.URL (Branch)
+                     else " default branch")
+                   & "...");
+
          if not
-           VCSs.Git.Handler.Clone
-             (From   => URL (This) & (if Commit /= ""
-                                      then "#" & Commit
-                                      else ""),
+           VCSs.Git.Handler.Clone_Branch
+             (From   => URL (This),
               Into   => Temp.Filename,
               Branch => Branch, -- May be empty for default branch
+              Commit => Commit, -- May be empty for most recent commit
               Depth  => 1).Success
          then
             Raise_Checked_Error
@@ -172,13 +206,10 @@ package body Alire.User_Pins is
                & " failed, re-run with -vv -d for details");
          end if;
 
-         --  Successful checkout
+         --  Successful checkout, rename into final destination
 
-         if not Adirs.Exists (Adirs.Containing_Directory (Destination)) then
-            Adirs.Create_Path (Adirs.Containing_Directory (Destination));
-         end if;
-         Adirs.Rename (Temp.Filename, Destination);
-         Temp.Keep;
+         Directories.Rename (Temp.Filename,
+                             Destination);
       end Checkout;
 
       ------------
@@ -190,11 +221,15 @@ package body Alire.User_Pins is
          Trace.Detail ("Checking out pin " & Utils.TTY.Name (Crate) & " at "
                        & TTY.URL (Destination));
 
-         --  If the fetch URL has been changed, fall back to checkout
+         --  If the fetch URL has been changed, do a fresh 'git clone'.
+         --
+         --  Note that VCSs.Git.Clone converts the URL to a git-friendly form
+         --  with VCSs.Repo, so this is what the output of 'git config' should
+         --  be compared against.
 
          if VCSs.Git.Handler.Fetch_URL
            (Repo   => Destination,
-            Public => False) /= This.URL
+            Public => False) /= VCSs.Repo_URL (URL (This))
          then
             Put_Info ("Switching pin " & Utils.TTY.Name (Crate) &
                         " to origin at " & TTY.URL (+This.URL));
@@ -207,11 +242,89 @@ package body Alire.User_Pins is
          --  user in the manifest, the following call will also take care of
          --  it.
 
-         if not VCSs.Git.Handler.Update (Destination, Branch).Success then
-            Raise_Checked_Error
-              ("Update of repository at " & TTY.URL (Destination)
-               & " failed, re-run with -vv -d for details");
-         end if;
+         Put_Info ("Pulling " & Utils.TTY.Name (Crate)
+                   & " branch " & TTY.URL (Branch) & "...");
+
+         declare
+            use CLIC.User_Input;
+            Result : Outcome := VCSs.Git.Handler.Update (Destination, Branch);
+         begin
+            if not Result.Success then
+               --  One reason why the update may fail is if there are
+               --  uncommitted changes in the local clone which would conflict
+               --  with the update, so we discard such changes and try again.
+               --
+               --  This generally happens if the crate's repo tracks
+               --  Alire-generated files (e.g. those in 'config/'). However, it
+               --  is conceivable the user might have made changes to the
+               --  checkout in the 'alire/cache/pins' directory themselves, so
+               --  we require user confirmation before discarding anything.
+               declare
+                  use AAA.Strings;
+
+                  Paths : constant Set :=
+                    VCSs.Git.Handler.Dirty_Files
+                      (Destination, Include_Untracked => True);
+
+                  List_Sep : constant String := New_Line & "  ";
+                  Paths_List : constant String :=
+                    List_Sep & Paths.To_Vector.Flatten (List_Sep);
+
+                  Subdir_Prefix : constant String :=
+                    (if This.Subdir /= ""
+                     then (String (Alire.VFS.To_Portable (+This.Subdir)) & "/")
+                     else "");
+                  Alire_Generated_Dirs : constant Vector :=
+                    Empty_Vector & "alire/" & "config/";
+                  Alire_Generated_Dirs_Only : constant Boolean :=
+                    (for all Path of Paths =>
+                       (for some Generated_Dir of Alire_Generated_Dirs =>
+                          Has_Prefix (Path, Subdir_Prefix & Generated_Dir)));
+                  --  'git status' yields '/' separated paths, even on Windows
+
+                  Question : constant String :=
+                    "Updating the pin '"
+                    & Crate.As_String
+                    & "' will discard local uncommitted changes in '"
+                    & Destination
+                    & "' to the following:"
+                    & Paths_List
+                    & New_Line
+                    & (if Alire_Generated_Dirs_Only
+                       then
+                         "These changes affect only Alire's automatically "
+                         & "generated files, which are safe to overwrite."
+                         & New_Line
+                         & "Do you want to proceed?"
+                       else
+                         "These changes include files which were not "
+                         & "automatically generated by Alire."
+                         & New_Line
+                         & "Are you sure you want to proceed?");
+                  Default  : constant Answer_Kind :=
+                    (if Force or else Alire_Generated_Dirs_Only then Yes
+                     else No);
+               begin
+                  if Paths.Length not in 0
+                    and then Query
+                      (Question => Question,
+                       Valid    => (Yes | No => True, others => False),
+                       Default  => Default)
+                      = Yes
+                  then
+                     VCSs.Git.Discard_Uncommitted
+                       (Repo => Destination, Discard_Untracked => True).Assert;
+                     Result := VCSs.Git.Handler.Update (Destination, Branch);
+                  end if;
+               end;
+            end if;
+
+            if not Result.Success then
+               Raise_Checked_Error
+                 ("Update of repository at " & TTY.URL (Destination)
+                  & " failed, re-run with -vv -d for details");
+            end if;
+         end;
       end Update;
 
    begin
@@ -222,7 +335,7 @@ package body Alire.User_Pins is
          return;
       end if;
 
-      This.Local_Path := +Destination;
+      This.Checkout_Path := +Destination;
 
       --  Don't check out an already existing commit pin, or a non-update
       --  branch pin
@@ -259,8 +372,8 @@ package body Alire.User_Pins is
       --  At this point, we have the sources at Destination. Last checks ensue.
 
       declare
-         Root : constant Roots.Optional.Root :=
-                  Roots.Optional.Detect_Root (Destination);
+         Root : Roots.Optional.Root :=
+                  Roots.Optional.Detect_Root (This.Path);
       begin
 
          --  Check crate name mismatch
@@ -278,9 +391,12 @@ package body Alire.User_Pins is
 
          if not Root.Is_Valid then
             Put_Warning
-              ("Pin for " & Utils.TTY.Name (Crate) &
-                 " does not contain an Alire " &
-                 "manifest. It will be used as a raw GNAT project.");
+              ("Pin for " & Utils.TTY.Name (Crate) & " at "
+               & Utils.TTY.URL (Destination)
+               & " does not contain a valid Alire manifest. "
+               & "It will be used as a raw GNAT project.");
+            Errors.Pretty_Print
+              ("Pin diagnostic is:" & New_Line & Root.Message, Trace.Warning);
          end if;
 
       end;
@@ -303,21 +419,36 @@ package body Alire.User_Pins is
          then "#" & TTY.Emph (+This.Branch)
          else ""));
 
+   --------------
+   -- Has_Path --
+   --------------
+
+   function Has_Path (This : Pin) return Boolean
+   is (This.Kind = To_Path
+       or else
+         (This.Kind = To_Git
+          and then +This.Checkout_Path /= ""));
+
    ----------
    -- Path --
    ----------
 
    function Path (This : Pin) return Absolute_Path
    is
+      use Alire.Directories.Operators;
       --  Having this as an expression function causes CE2021 to return a
       --  corrupted string some times.
    begin
       case This.Kind is
          when To_Path =>
-            return +This.Path;
+            return +This.Local_Path;
          when To_Git  =>
-            if +This.Local_Path /= "" then
-               return +This.Local_Path;
+            if +This.Checkout_Path /= "" then
+               if +This.Subdir /= "" then
+                  return (+This.Checkout_Path) / (+This.Subdir);
+               else
+                  return +This.Checkout_Path;
+               end if;
             else
                raise Program_Error with "Undeployed pin";
             end if;
@@ -376,7 +507,7 @@ package body Alire.User_Pins is
                     +This.Checked_Pop (Keys.URL,
                                        TOML_String).As_String;
 
-                  Result.Local_Path :=
+                  Result.Checkout_Path :=
                     +Utils.User_Input.To_Absolute_From_Portable
                     (This.Checked_Pop (Keys.Path, TOML_String).As_String);
 
@@ -387,6 +518,11 @@ package body Alire.User_Pins is
                      Result.Branch :=
                        +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
                   end if;
+
+                  if This.Contains (Keys.Subdir) then
+                     Result.Subdir :=
+                       +This.Checked_Pop (Keys.Subdir, TOML_String).As_String;
+                  end if;
                end return;
 
             else
@@ -394,9 +530,15 @@ package body Alire.User_Pins is
                --  Just a local pin
 
                return Result : Pin := (Kind => To_Path, others => <>) do
-                  Result.Path :=
+                  Result.Local_Path :=
                     +Utils.User_Input.To_Absolute_From_Portable
                     (This.Checked_Pop (Keys.Path, TOML_String).As_String);
+
+                  if not GNAT.OS_Lib.Is_Directory (+Result.Local_Path) then
+                     This.Recoverable_Error
+                       ("Pin path is not a valid directory: "
+                        & (+Result.Local_Path));
+                  end if;
                end return;
             end if;
          end From_Lockfile;
@@ -408,7 +550,7 @@ package body Alire.User_Pins is
          function Load_To_Path return Pin is
             Result : Pin :=
                        (Kind => To_Path,
-                        Path => <>);
+                        Local_Path => <>);
             User_Path : constant String :=
                           This.Checked_Pop (Keys.Path,
                                             TOML_String).As_String;
@@ -428,16 +570,16 @@ package body Alire.User_Pins is
 
             --  Make the path absolute if not already, and store it
 
-            Result.Path :=
+            Result.Local_Path :=
               +Utils.User_Input.To_Absolute_From_Portable
               (User_Path                  => User_Path,
                Error_When_Relative_Native =>
                  "Pin relative paths must use forward slashes " &
                  " to be portable");
 
-            if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
+            if not GNAT.OS_Lib.Is_Directory (+Result.Local_Path) then
                This.Recoverable_Error ("Pin path is not a valid directory: "
-                                       & (+Result.Path));
+                                       & (+Result.Local_Path));
             end if;
 
             return Result;
@@ -448,13 +590,15 @@ package body Alire.User_Pins is
          -----------------
 
          function Load_Remote return Pin is
+            use Ada.Strings.Unbounded;
             Result : Pin :=
-                       (Kind       => To_Git,
-                        URL        => +This.Checked_Pop (Keys.URL,
-                          TOML_String).As_String,
-                        Branch     => <>,
-                        Commit     => <>,
-                        Local_Path => <>);
+                       (Kind          => To_Git,
+                        URL           => +This.Checked_Pop (Keys.URL,
+                                                        TOML_String).As_String,
+                        Branch        => <>,
+                        Commit        => <>,
+                        Subdir        => <>,
+                        Checkout_Path => <>);
          begin
             if This.Contains (Keys.Branch)
               and then This.Contains (Keys.Commit)
@@ -475,6 +619,15 @@ package body Alire.User_Pins is
                  +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
                This.Assert (+Result.Branch /= "",
                             "branch cannot be the empty string");
+            end if;
+
+            --  Subdir
+
+            if This.Contains (Keys.Subdir) then
+               Result.Subdir :=
+                 +This.Checked_Pop (Keys.Subdir, TOML_String).As_String;
+               This.Assert (+Result.Subdir in Alire.Relative_Path,
+                            "invalid subdir : " & (+Result.Subdir));
             end if;
 
             --  TEST: empty branch value
@@ -557,10 +710,28 @@ package body Alire.User_Pins is
             Table.Set (Keys.Branch,
                        Create_String (Branch (This).Element.Ptr.all));
          end if;
+
+         if Subdir (This).Has_Element then
+            Table.Set (Keys.Subdir,
+                       Create_String (Subdir (This).Element.Ptr.all));
+         end if;
       end if;
 
-      Table.Set (Keys.Path,
-                 Create_String (VFS.Attempt_Portable (Path (This))));
+      --  Path; we store separately checkout and subdir path, like in the user
+      --  manifest.
+
+      case This.Kind is
+         when To_Path =>
+            Table.Set
+              (Keys.Path,
+               Create_String (VFS.Attempt_Portable (+This.Local_Path)));
+         when To_Git =>
+            Table.Set
+              (Keys.Path,
+               Create_String (VFS.Attempt_Portable (+This.Checkout_Path)));
+         when To_Version =>
+            null;
+      end case;
 
       Table.Set (Keys.Internal, Create_Boolean (True));
 

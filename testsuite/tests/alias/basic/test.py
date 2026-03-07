@@ -15,7 +15,7 @@ run_alr('get', 'hello')
 os.chdir(glob('hello*')[0])
 
 # Define an alias locally
-run_alr('config', '--set', 'alias.my_alias', 'exec -- echo Test an alias')
+run_alr('settings', '--set', 'alias.my_alias', 'exec -- echo Test an alias')
 
 # Use the alias
 p = run_alr('my_alias',

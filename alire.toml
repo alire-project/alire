@@ -1,7 +1,7 @@
 name = "alr"
 description = "Command-line tool from the Alire project"
 
-version = "1.3.0-dev"
+version = "2.2.0-dev"
 
 authors = ["Alejandro R. Mosteo", "Fabien Chouteau", "Pierre-Marie de Rodat"]
 maintainers = ["alejandro@mosteo.com", "chouteau@adacore.com"]
@@ -10,50 +10,153 @@ maintainers-logins = ["mosteo", "Fabien-Chouteau"]
 # At some point we should have a separate alire/libalire crate for use of
 # alire.gpr only. For now this crate is not intended as a dependency but to be
 # used to build alr.
-auto-gpr-with = false
 project-files = ["alr.gpr"]
 executables = ["alr"]
 
 [[depends-on]]
 aaa = "~0.3.0"
-ada_toml = "~0.3"
+ada_toml = "~0.5"
 ajunitgen = "^1.0.1"
-ansiada = "^1.0"
+ansiada = "^1.1"
+c_strings = "^1.0"
 clic = "~0.3"
+den = "~0.2"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
 gnatcoll = "^21"
+lml = "~0.1"
 minirest = "~0.3"
-optional = "~0.1"
+optional = "~0.1.1"
+resources = "~0.1"
 semantic_versioning = "^3.0"
 simple_logging = "^2.0"
-si_units = "~0.2"
+si_units = "~0.2.2"
+spdx = "~0.2"
 stopwatch = "~0.1"
+templates_parser = "^24" # Latests pre-Ada 2022 version
 toml_slicer = "~0.1"
 uri_ada = "^2.0"
-spdx = "~0.2"
 
-# For some reason static-pic is causing problems in CLIC
 [gpr-set-externals]
-CLIC_LIBRARY_TYPE="static"
+CLIC_LIBRARY_TYPE="static"  # Has problems with "static-pic" for some reason
 
-# Building alr requires the explicit setting of this variable
+# Building alr requires the explicit setting of these variables
+# ALIRE_OS required by alr
+# GNATCOLL_OS required by gnatcoll
+# PRJ_TARGET required by templates_parser
 [gpr-set-externals."case(os)"]
-freebsd = { ALIRE_OS = "freebsd" }
-linux   = { ALIRE_OS = "linux" }
-macos   = { ALIRE_OS = "macos" }
-windows = { ALIRE_OS = "windows" }
+freebsd = { ALIRE_OS = "freebsd", GNATCOLL_OS = "unix",    PRJ_TARGET = "FreeBSD" }
+openbsd = { ALIRE_OS = "openbsd", GNATCOLL_OS = "unix",    PRJ_TARGET = "UNIX" }
+linux   = { ALIRE_OS = "linux",   GNATCOLL_OS = "unix",    PRJ_TARGET = "Linux" }
+macos   = { ALIRE_OS = "macos",   GNATCOLL_OS = "osx",     PRJ_TARGET = "macOS" }
+windows = { ALIRE_OS = "windows", GNATCOLL_OS = "windows", PRJ_TARGET = "Windows" }
 "..."   = { ALIRE_OS = "unknown" } # Will cause the build to fail
 
 # Some dependencies require precise versions during the development cycle:
 [[pins]]
-aaa = { url = "https://github.com/mosteo/aaa", commit = "ecc38772bd4a6b469b54c62363766ea1c0e9f912" }
-ada_toml = { url = "https://github.com/mosteo/ada-toml", commit = "da4e59c382ceb0de6733d571ecbab7ea4919b33d" }
-clic = { url = "https://github.com/alire-project/clic", commit = "b40b170b1561adfa99910c69e3897cc2ca441730" }
-dirty_booleans = { url = "https://github.com/mosteo/dirty_booleans", branch = "main" }
-diskflags = { url = "https://github.com/mosteo/diskflags", branch = "main" }
-gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "4e663b87a028252e7e074f054f8f453661397166" }
-minirest = { url = "https://github.com/mosteo/minirest.git", commit = "9a9c660f9c6f27f5ef75417e7fac7061dff14d78" }
-semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning", commit = "2f23fc5f6b4855b836b599adf292fed9c0ed4144" }
-simple_logging = { url = "https://github.com/alire-project/simple_logging", commit = "3505dc645f3eef6799a486aae223d37e88cfc4d5" }
-stopwatch = { url = "https://github.com/mosteo/stopwatch", commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9" }
+[pins.aaa]
+url    = "https://github.com/mosteo/aaa"
+commit = "73d99ae1ff2f5210dc41c2ea7afebe600f9e9916"
+
+[pins.ada_toml]
+url    = "https://github.com/mosteo/ada-toml"
+commit = "33eaab64b9d531e240c3f525ad80a1f3eb8b9633"
+
+[pins.ansiada]
+url    = "https://github.com/mosteo/ansi-ada"
+commit = "0772e48d3e1f640829d142745a36b37edcd5470b"
+
+[pins.c_strings]
+url    = "https://github.com/mosteo/cstrings"
+commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
+
+[pins.clic]
+url    = "https://github.com/alire-project/clic"
+commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
+
+[pins.den]
+url    = "https://github.com/mosteo/den"
+commit = "bab6ef56b74b3b348daf402f09f4b04c304bc280"
+
+[pins.dirty_booleans]
+url    = "https://github.com/mosteo/dirty_booleans"
+commit = "05c40d88ecfe109e575ec8b21dd6ffa2e61df1dc"
+
+[pins.diskflags]
+url    = "https://github.com/mosteo/diskflags"
+commit = "60729edf31816aca0036b13b2794c39a9bd0172e"
+
+[pins.gnatcoll]
+url    = "https://github.com/alire-project/gnatcoll-core.git"
+commit = "40cb993cc0bdd84bd7c4d5ff0438380751497c16"
+
+[pins.lml]
+url    = "https://github.com/mosteo/lml_ada.git"
+commit = "3d79edaff98bc4985014c641327ceb22d655df6b"
+
+[pins.minirest]
+url    = "https://github.com/mosteo/minirest.git"
+commit = "9a9c660f9c6f27f5ef75417e7fac7061dff14d78"
+
+[pins.optional]
+url    = "https://github.com/mosteo/optional.git"
+commit = "7b8132a09a6c3c467409ab15d34fac605b1e5711"
+
+[pins.resources]
+url    = "https://github.com/alire-project/resources"
+commit = "d3a83f35d7c0b586119fc19a568289cf21c87aa0"
+
+[pins.semantic_versioning]
+url    = "https://github.com/alire-project/semantic_versioning"
+commit = "4861e32bd8a2f0df038d3ecc9a72b6381e7a34cc"
+
+[pins.simple_logging]
+url    = "https://github.com/alire-project/simple_logging"
+commit = "f45bf378588dc1d0479cc24eb0eb41dc99f69cb4"
+
+[pins.si_units]
+url    = "https://github.com/mosteo/si_units"
+commit = "9329d2591b82440ccc859a53f1380ac07ea4194d"
+
+[pins.stopwatch]
+url    = "https://github.com/mosteo/stopwatch"
+commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9"
+
+[pins.templates_parser]
+# We pin templates parser to avoid a spurious dependency on gnat>=14
+url    = "https://github.com/alire-project/templates-parser"
+commit = "441acdc3769469e348680d4afd1928022a4da36b"
+
+[pins.toml_slicer]
+url    = "https://github.com/mosteo/toml_slicer"
+commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
+
+[pins.yeison_12]
+url    = "https://github.com/mosteo/yeison"
+subdir = "yeison_12"
+commit = "20033cf90a3eb2eff69d9ff9d0820291aed79b57"
+
+# To disable version updating, export ALR_VERSION_DONT_PATCH with any value
+
+# Before building, we add the commit to the version, for unique identification:
+[[actions]]
+[actions.'case(os)'.windows]
+type = "pre-build"
+command = ["pwsh", "scripts/version-patcher.ps1"]
+
+[actions.'case(os)'.'...']
+type = "pre-build"
+command = ["scripts/version-patcher.sh"]
+
+# Before building, on Linux only, we regenerate resources. This is not needed
+# on other platforms as this is only to ensure that in the rare case of
+# template modification, the developer on Linux has not to regenerate manually
+# every time. For builds on GitHub, embedded templates should be up to date.
+[[actions]]
+[actions.'case(os)'.linux]
+type = "pre-build"
+command = ["support/embedder/embedder.sh"]
+
+[test]
+runner = "alire"
+directory = "testsuite/tests_ada"

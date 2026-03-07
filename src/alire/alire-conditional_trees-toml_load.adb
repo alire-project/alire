@@ -120,7 +120,7 @@ package body Alire.Conditional_Trees.TOML_Load is
                                      return Tree
       is
          Table : constant TOML_Adapters.Key_Queue :=
-                   From.Descend (Val, "values");
+                   From.Descend (Val, "properties of " & Key);
 
          Case_Result : Tree;
          --  We store properties coming from cases separately so for the action
@@ -144,6 +144,11 @@ package body Alire.Conditional_Trees.TOML_Load is
                                Table.Pop_Expr ("case(", Case_Val);
                begin
                   exit when Case_Key = ""; -- Table contains no more cases
+
+                  if not Resolve then
+                     Table.Checked_Error
+                       ("Dynamic expression not allowed for '" & Key & "'");
+                  end if;
 
                   Case_Result.Append
                     (Process_Case (From, Key, Case_Key, Case_Val));

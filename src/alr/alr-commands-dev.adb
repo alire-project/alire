@@ -1,9 +1,10 @@
 with Ada.Strings.Unbounded;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+with Ada.Finalization;
 
 with CLIC.Formatter;
 
-with Alire.Selftest;
+with Alire.Utils;
 
 package body Alr.Commands.Dev is
 
@@ -78,6 +79,27 @@ package body Alr.Commands.Dev is
       Sub_Cmd.Iterate_Topics (Process => Put_MD_Topic'Access);
 
    end Print_MD_Help;
+   -----------------------------
+   -- Raise_From_Finalization --
+   -----------------------------
+
+   procedure Raise_From_Finalization is
+      type Ctrl is new Ada.Finalization.Controlled with null record;
+
+      overriding
+      procedure Finalize (This : in out Ctrl) is
+      begin
+         raise Program_Error with "Raising forcibly from finalization";
+      exception
+         when E : others =>
+            Alire.Utils.Finalize_Exception (E);
+      end Finalize;
+
+      Test : Ctrl;
+      pragma Unreferenced (Test);
+   begin
+      null;
+   end Raise_From_Finalization;
 
    -------------
    -- Execute --
@@ -100,12 +122,16 @@ package body Alr.Commands.Dev is
          Trace.Debug ("In dev --filter");
       end if;
 
+      if Cmd.Error then
+         Alire.Recoverable_Program_Error ("Forced error");
+      end if;
+
       if Cmd.Raise_Except then
          raise Program_Error with "Raising forcibly";
       end if;
 
-      if Cmd.Self_Test then
-         Alire.Selftest.Run;
+      if Cmd.Raise_Final then
+         Raise_From_Finalization;
       end if;
 
       if Cmd.UTF_8_Test then
@@ -151,14 +177,19 @@ package body Alr.Commands.Dev is
                      "Used by scope filtering test");
 
       Define_Switch (Config,
+                     Cmd.Error'Access,
+                     "", "--error",
+                     "Program error report");
+
+      Define_Switch (Config,
                      Cmd.Raise_Except'Access,
                      "", "--raise",
                      "Raise an exception");
 
       Define_Switch (Config,
-                     Cmd.Self_Test'Access,
-                     "", "--test",
-                     "Run self-tests");
+                     Cmd.Raise_Final'Access,
+                     "", "--raise-finalization",
+                     "Raise an exception from a finalization procedure");
 
       Define_Switch (Config,
                      Cmd.UTF_8_Test'Access,

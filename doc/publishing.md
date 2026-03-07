@@ -22,6 +22,34 @@ index on GitHub on your behalf.
 Read on for the details underlying these automated steps, or in case you need
 to perform further tweaking.
 
+## Creating a GitHub Personal Access Token
+
+A Personal Access Token (PAT) allows Alire to act on your behalf to fork the
+community index, push the new release manifest to a new branch in your own fork,
+and finally open a pull-request against the community repository.
+
+The PAT, once created, is a plain string. You can either export the environment
+variable `GH_TOKEN` set to this string, or provide it when Alire asks for it.
+
+**NOTE**: whenever Alire asks for the token, you need to provide the full
+string that Github shows only during its creation. Do not provide the token
+name instead.
+
+There are two kinds of PATs on GitHub: classic and fine-grained. The latter are
+in beta and not documented here yet. Follow these steps to create a classic PAT:
+
+1. On the main https://github.com page, after having logged in, click on your
+   profile photo on the top-right corner.
+1. Click on "Settings" in the list of options in the profile menu.
+1. Click on "Developer settings" entry at the bottom in your Settings page.
+1. Click on "Personal access tokens" and then "Tokens (classic)".
+1. Click on "Generate new token" and then select the classic variant.
+1. In the "Select scopes" section, under "repo", check "public_repo". That is
+   the only permission needed for this PAT.
+1. Click on "Generate token" at the bottom.
+
+You will get the PAT string after completing the generation.
+
 ## General concepts
 
 The community index is a collection of
@@ -33,7 +61,7 @@ crate and version it contains. A file contains the description of a release,
 with other metadata.
 
 The complete specification of such TOML files is available in this
-[document](catalog-format-spec.md).
+[document](catalog-format-spec).
 
 ## New crates and releases
 
@@ -64,7 +92,7 @@ release of `alr`.
 
 Each crate is "owned" by a list of maintainers, provided with the
 `maintainers-logins` property of the crate file. After the initial submission,
-which will be manually approved (see the [policies](policies.md) for details),
+which will be manually approved (see the [policies](policies) for details),
 the maintainers of a crate are the only people allowed to submit new releases
 or metadata modifications to the corresponding crate.
 
@@ -76,7 +104,7 @@ Other checks your submission will go through are:
 
 ## Best practices
 
-See the section on [best practices](policies.md#best-practices) for crates
+See the section on [best practices](policies#best-practices) for crates
 before publishing your first release.
 
 ## Detailed steps
@@ -88,20 +116,20 @@ methods to prepare your release submission:
 
 For this common use case, you need:
 
-- A git repository that is clean an up-to-date with its remote.
+- A git repository that is clean and up-to-date with its remote.
    - The repository already contains the release you want to publish.
    - The commit with the release must exist both locally and at the remote.
 - The repository must also be an Alire-enabled workspace:
    - It contains a top-level `alire.toml` manifest describing the release.
 - The remote host must be one of a few trusted major open-source sites.
    - This requirement is motivated by vulnerabilities identified with SHA1,
-     whose migration to a stronger hash is [not yet complete]
-     (https://git-scm.com/docs/hash-function-transition/) in `git`.
+     whose migration to a stronger hash is
+     [not yet complete](https://git-scm.com/docs/hash-function-transition/) in `git`.
    - `alr` will inform you if your host is not supported. Please contact us if
      you think a site should be allowed. The complete list can be consulted by
 running `alr publish --trusted-sites`.
    - This is a temporary measure until more sophisticated publishing automation
-     is supported. See the [Remote Source Archive](#remote-source-archive) case
+     is supported. See the [Starting with a remote source archive](#starting-with-a-remote-source-archive) case
 for alternatives to this scenario (you are not forced to change your code
 hosting, or even have an online repository).
 
@@ -129,7 +157,7 @@ offer to create the pull request for you, unless you specify `--skip-submit`.
 If so, a link for conveniently creating this PR will also be provided by `alr`:
 
 - Upload the generated index manifest file (`crate-version.toml`) to the
-  supplied page link on github and create a pull-request.
+  supplied page link on GitHub and create a pull-request.
 
 ### Starting with a remote repository, without local clone
 
@@ -193,7 +221,7 @@ must be manually uploaded by the user to a publicly accessible hosting service.
 After the upload, the user can supply the URL to fetch this archive to the
 publishing assistant (which will be waiting for this information), and the
 assistant will resume as if it had been invoked with `alr publish <URL>`
-(see #starting-with-a-remote-source-archive).
+(see [Starting with a remote source archive](#starting-with-a-remote-source-archive)).
 
 ### Support for complex projects whose sources become multiple Alire crates
 
@@ -237,8 +265,8 @@ workflows.
 
 ### Creating the PR via cloning.
 
-Instead of uploading the generated index manifest file via the github upload
-link, you can follow the usual procedure to submit a PR to a github repository:
+Instead of uploading the generated index manifest file via the GitHub upload
+link, you can follow the usual procedure to submit a PR to a GitHub repository:
 
 1. Fork the community index to your GitHub account.
 1. Clone your fork locally and place generated manifest at the intended folder.
@@ -289,15 +317,25 @@ This will be shown as:
 
 ## Publishing to a local/private index
 
-Having a local index may be useful sometimes, be it for local testing, or for
-private crates not intended for publication.
+Having a local or private index may be useful sometimes, be it for local
+testing, or for private crates not intended for publication. For more
+information on private indexes, see
+[this guide](private-crates#using-a-private-index).
 
-There is no practical difference between the community index that is cloned
-locally and a private local index stored on disk. Hence, after obtaining the
-manifest file with `alr publish`, it is a matter of placing it at the expected
-location within the index: `/path/to/index/cr/crate_name/crate_name-x.x.x.toml`
+To "publish" a crate to a private index, run
+```
+alr publish --for-private-index [<path|URL> [<commit|tag|branch>]]
+```
+where the `--for-private-index` switch disables the submission step and certain
+checks which are only applicable to the community index, and the remaining
+arguments function as described above. This will generate a manifest file which
+you can place at the indicated path (relative to the location of `index.toml`)
+in your private index. If you are using a remote Git repository which is not on
+one of the community index's trusted hosts, you will need to configure it with
+the `origins.git.trusted_sites` [setting](settings).
 
-If the crate being published locally contains `"provides"` definitions, it is
-necessary to call `alr index --update-all` once to ensure it is properly used
-by the dependency solver. This is only necessary for the first release in a
-crate that uses the `"provides"` feature.
+One important thing to note is that publishing from a local repository will
+detect the URL configured as the Git remote (as displayed by
+`git remote show origin`). If this is not configured with the recommended form
+(as discussed [here](private-crates#git-repositories)), you may wish to pass the
+desired URL explicitly.

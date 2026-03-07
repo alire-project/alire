@@ -1,0 +1,11 @@
+description = "Fake gprbuild external"
+name = "gprbuild"
+
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mosteo"]
+
+[[external]]
+kind = "version-output"
+# We look for make instead, that should be always installed.
+version-command = ["make", "--version"]
+version-regexp = ".*Make ([\\d\\.]+).*"

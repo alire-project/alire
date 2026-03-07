@@ -3,15 +3,16 @@ with AAA.Text_IO;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Directories;
 
-with Alire.Config.Edit;
+with Alire.Cache;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Manifest;
-with Alire.Origins;
+with Alire.Origins.Deployers.System;
 with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Properties;
 with Alire.Root;
+with Alire.Settings.Edit;
 with Alire.Toolchains.Solutions;
 with Alire.Warnings;
 
@@ -22,6 +23,9 @@ with Semantic_Versioning.Extended;
 package body Alire.Toolchains is
 
    use type Ada.Containers.Count_Type;
+   use type Milestones.Milestone;
+
+   use Directories.Operators;
 
    --------------
    -- Any_Tool --
@@ -29,13 +33,19 @@ package body Alire.Toolchains is
    --  crate=* dependency builder
    function Any_Tool (Crate : Crate_Name) return Dependencies.Dependency
    is (Dependencies.New_Dependency
-        (Crate, Semantic_Versioning.Extended.Any));
+       (Crate, Semantic_Versioning.Extended.Any));
+
+   ----------------------
+   -- Dirty_Cache_Flag --
+   ----------------------
+
+   function Dirty_Cache_Flag return Absolute_Path is (Path / "must_reload");
 
    ---------------
    -- Assistant --
    ---------------
 
-   procedure Assistant (Level              : Config.Level;
+   procedure Assistant (Level              : Settings.Level;
                         Allow_Incompatible : Boolean := False;
                         First_Run          : Boolean := False) is
       package Release_Vectors is new
@@ -195,6 +205,8 @@ package body Alire.Toolchains is
 
          if Release.Origin.Is_Index_Provided then
             Toolchains.Deploy (Release);
+         elsif Release.Origin.Is_System then
+            Release.Install_System_Package;
          else
             Trace.Debug
               ("The user selected a external version as default for "
@@ -394,14 +406,15 @@ package body Alire.Toolchains is
    -- Set_As_Default --
    --------------------
 
-   procedure Set_As_Default (Release : Releases.Release; Level : Config.Level)
+   procedure Set_As_Default (Release : Releases.Release;
+                             Level   : Settings.Level)
    is
    begin
-      Alire.Config.Edit.Set
+      Alire.Settings.Edit.Set
         (Level,
          Key   => Tool_Key (Release.Name),
          Value => Release.Milestone.Image);
-      Alire.Config.Edit.Set_Boolean
+      Alire.Settings.Edit.Set_Boolean
         (Level,
          Key   => Tool_Key (Release.Name, For_Is_External),
          Value => not Release.Origin.Is_Index_Provided);
@@ -411,10 +424,11 @@ package body Alire.Toolchains is
    -- Set_Automatic_Assistant --
    -----------------------------
 
-   procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level)
+   procedure Set_Automatic_Assistant (Enabled : Boolean;
+                                      Level   : Settings.Level)
    is
    begin
-      Config.Builtins.Toolchain_Assistant.Set (Level, Enabled);
+      Settings.Builtins.Toolchain_Assistant.Set (Level, Enabled);
    end Set_Automatic_Assistant;
 
    ------------------------
@@ -422,7 +436,7 @@ package body Alire.Toolchains is
    ------------------------
 
    function Tool_Is_Configured (Crate : Crate_Name) return Boolean
-   is (Config.DB.Defined (Tool_Key (Crate)));
+   is (Settings.DB.Defined (Tool_Key (Crate)));
 
    ---------------------
    -- Tool_Dependency --
@@ -447,7 +461,9 @@ package body Alire.Toolchains is
    exception
       when E : Constraint_Error =>
          Log_Exception (E);
-         Raise_Checked_Error ("Requested tool configured but not installed: "
+         Raise_Checked_Error ("Requested tool configured as "
+                              & Tool_Milestone (Crate).TTY_Image
+                              & " but not installed: "
                               & Utils.TTY.Name (Crate));
    end Tool_Release;
 
@@ -456,12 +472,12 @@ package body Alire.Toolchains is
    -----------------
 
    procedure Unconfigure (Crate         : Crate_Name;
-                          Level         : Config.Level;
+                          Level         : Settings.Level;
                           Fail_If_Unset : Boolean := True) is
    begin
-      if CLIC.Config.Defined (Config.DB, Tool_Key (Crate)) and then
+      if CLIC.Config.Defined (Settings.DB.all, Tool_Key (Crate)) and then
         not CLIC.Config.Edit.Unset
-          (Config.Edit.Filepath (Level),
+          (Settings.Edit.Filepath (Level),
            Tool_Key (Crate))
       then
          declare
@@ -476,11 +492,30 @@ package body Alire.Toolchains is
             end if;
          end;
       end if;
+
+      --  Remove caching of external condition too for consistency
+
+      if CLIC.Config.Defined (Settings.DB.all,
+                              Tool_Key (Crate, For_Is_External))
+      then
+         Trace.Debug
+           ("Unsetting " & Tool_Key (Crate, For_Is_External) & ": "
+            & CLIC.Config.Edit.Unset
+              (Settings.Edit.Filepath (Level),
+               Tool_Key (Crate, For_Is_External))'Image);
+      end if;
    end Unconfigure;
 
-   use Directories.Operators;
+   Available_Cached    : Releases.Containers.Release_Set;
 
-   use type Milestones.Milestone;
+   --------------------------------
+   -- Invalidate_Available_Cache --
+   --------------------------------
+
+   procedure Invalidate_Available_Cache is
+   begin
+      Available_Cached.Clear;
+   end Invalidate_Available_Cache;
 
    ---------------
    -- Available --
@@ -495,7 +530,7 @@ package body Alire.Toolchains is
       -- Detect --
       ------------
 
-      procedure Detect (Item : Ada.Directories.Directory_Entry_Type;
+      procedure Detect (Item : Any_Path;
                         Stop : in out Boolean)
       is
          use Ada.Directories;
@@ -517,13 +552,23 @@ package body Alire.Toolchains is
                   & TTY.URL (Full_Name (Item)));
             end if;
 
-         else
+         elsif Simple_Name (Item) /= Simple_Name (Dirty_Cache_Flag) then
             Warnings.Warn_Once ("Unexpected file in toolchain crates path: "
                                 & TTY.URL (Full_Name (Item)));
          end if;
       end Detect;
 
    begin
+      --  Early exit with cached available toolchains. Looking for toolchains
+      --  on disk is expensive. We rely on folder modification time to
+      --  re-detect available toolchains.
+
+      if not Available_Cached.Is_Empty and then
+        not Ada.Directories.Exists (Dirty_Cache_Flag)
+      then
+         return Available_Cached;
+      end if;
+
       if Ada.Directories.Exists (Path) then
          Directories.Traverse_Tree
            (Start => Path,
@@ -541,20 +586,99 @@ package body Alire.Toolchains is
                                                    Root.Platform_Properties)
          loop
             if not Release.Origin.Is_Index_Provided then
-               Result.Include (Release);
+               --  For a system external, we must make sure it is installed
+               case Origins.External_Kinds'(Release.Origin.Kind) is
+                  when Origins.External =>
+                     Trace.Debug ("Detected external toolchain release: "
+                                  & Release.Milestone.TTY_Image);
+                     Result.Include (Release);
+                  when Origins.System =>
+                     if Release.Origin.Already_Installed then
+                        Trace.Debug ("Detected system toolchain release: "
+                                     & Release.Milestone.TTY_Image);
+                        Result.Include (Release);
+                     else
+                        Trace.Debug
+                          ("Skipping uninstalled system toolchain release: "
+                           & Release.Milestone.TTY_Image);
+                     end if;
+               end case;
             end if;
          end loop;
       end loop;
 
+      --  Update cache and remove dirty flag
+
+      Available_Cached := Result;
+      Directories.Force_Delete (Dirty_Cache_Flag);
+
+      Trace.Debug ("Detected available tools:");
+      for Rel of Result loop
+         Trace.Debug ("   Tool: " & Rel.Milestone.TTY_Image
+                      & " hash: " & Rel.Origin.Unique_Ids.Flatten (","));
+      end loop;
+
+      --  When we have cached results, this is the earliest moment in which we
+      --  can check we don't have a tool mismatch. If Results were empty the
+      --  detection results in a recursive loop.
+
+      if not Result.Is_Empty then
+         Detect_Hash_Mismatch;
+      end if;
+
       return Result;
    end Available;
+
+   --------------------------
+   -- Detect_Hash_Mismatch --
+   --------------------------
+
+   procedure Detect_Hash_Mismatch is
+      use type AAA.Strings.Vector;
+   begin
+      for Tool of Tools loop
+         if Tool_Is_Configured (Tool) and then not Tool_Is_Missing (Tool) then
+            declare
+               Tool_Rel : constant Releases.Release := Tool_Release (Tool);
+            begin
+               if Index.Exists (Tool, Tool_Rel.Version) and then
+                 Tool_Rel.Origin.Unique_Ids /=
+                   Index.Find (Tool, Tool_Rel.Version).Origin.Unique_Ids
+               then
+                  Trace.Debug ("Tool hash mismatch for "
+                               & Tool_Rel.Milestone.TTY_Image);
+                  Trace.Debug ("Configured: "
+                               & Tool_Rel.Origin.Unique_Ids.Flatten);
+                  Trace.Debug ("From index: "
+                               & Index.Find (Tool, Tool_Rel.Version)
+                                      .Origin.Unique_Ids.Flatten);
+
+                  Raise_Checked_Error
+                    ("Selected tool " & Tool_Rel.Milestone.TTY_Image
+                     & " does not match its fingerprint from the index."
+                     & New_Line
+                     & "This may be caused by reusing the configuration "
+                     & "of an alr built for a different architecture"
+                     & New_Line
+                     & "Please manually delete the folder "
+                     & TTY.URL (Path / Tool_Rel.Deployment_Folder)
+                     & New_Line
+                     & "Afterwards, reconfigure your toolchain with "
+                     & TTY.Terminal ("alr toolchain --select"));
+               end if;
+            end;
+         end if;
+      end loop;
+   end Detect_Hash_Mismatch;
 
    ----------
    -- Path --
    ----------
 
-   function Path return String
-   is (Config.Edit.Cache_Path / "toolchains");
+   function Path return Absolute_Path
+   is (if Settings.Builtins.Toolchain_Dir.Get /= ""
+       then Settings.Builtins.Toolchain_Dir.Get
+       else Cache.Path / "toolchains");
 
    ------------
    -- Deploy --
@@ -573,9 +697,23 @@ package body Alire.Toolchains is
          Trace.Detail ("Skipping installation of already available release: "
                        & Release.Milestone.TTY_Image);
          return;
+      elsif Release.Origin.Is_System then
+         if Release.Origin.Already_Installed then
+            Trace.Debug ("Skipping installation of already available release: "
+                         & Release.Milestone.TTY_Image);
+         else
+            Origins.Deployers.System.Platform_Deployer
+              (Release.Origin).Deploy ("").Assert;
+            Invalidate_Available_Cache;
+         end if;
+         return;
+      elsif Release.Origin.Kind in Origins.External then
+         Trace.Debug ("Skipping installation of external tool release: "
+                       & Release.Milestone.TTY_Image);
+         return;
       end if;
 
-      --  Deploy at the install location
+      --  Deploy a regular binary release at the install location
 
       Release.Deploy (Env             => Root.Platform_Properties,
                       Parent_Folder   => Location,
@@ -592,8 +730,40 @@ package body Alire.Toolchains is
             & Release.Milestone.TTY_Image);
       end if;
 
+      --  Notify that releases must be reloaded
+
+      Directories.Touch (Dirty_Cache_Flag, Create_Tree => True);
+
       Put_Info (Release.Milestone.TTY_Image & " installed successfully.");
    end Deploy;
+
+   --------------------
+   -- Deploy_Missing --
+   --------------------
+
+   procedure Deploy_Missing is
+   begin
+      for Tool of Tools loop
+         if Tool_Is_Configured (Tool) and then Tool_Is_Missing (Tool) then
+            declare
+               Mil : constant Milestones.Milestone := Tool_Milestone (Tool);
+            begin
+               Put_Warning ("Tool " & Mil.TTY_Image
+                            & " is missing, redeploying...");
+               if Index.Exists (Mil.Crate, Mil.Version) then
+                  Deploy (Index.Find (Mil.Crate, Mil.Version));
+               else
+                  Raise_Checked_Error
+                    (Errors.Wrap
+                       ("A configured tool is missing on disk and unavailable "
+                        & "in the loaded index.",
+                        " Run " & TTY.Terminal ("alr toolchain --select")
+                        & " to select another toolchain"));
+               end if;
+            end;
+         end if;
+      end loop;
+   end Deploy_Missing;
 
    ------------
    -- Remove --
@@ -618,7 +788,7 @@ package body Alire.Toolchains is
       end if;
 
       if Toolchains.Solutions.Is_In_Toolchain (Release) then
-         Recoverable_Error ("The release to be removed ("
+         Recoverable_User_Error ("The release to be removed ("
                             & Release.Milestone.TTY_Image & ") is part of the "
                             & "configured default toolchain.");
 
@@ -628,10 +798,12 @@ package body Alire.Toolchains is
 
          --  So remove it at any level. We currently do not have a way to know
          --  from which level we have to remove this configuration.
-         Toolchains.Unconfigure (Release.Name, Config.Global,
+         Toolchains.Unconfigure (Release.Name, Settings.Global,
                                  Fail_If_Unset => False);
-         Toolchains.Unconfigure (Release.Name, Config.Local,
+         Toolchains.Unconfigure (Release.Name, Settings.Local,
                                  Fail_If_Unset => False);
+
+         Invalidate_Available_Cache;
       end if;
 
       if not Confirm or else Query
@@ -685,5 +857,16 @@ package body Alire.Toolchains is
 
       raise Constraint_Error with "Not installed: " & Target.TTY_Image;
    end Release;
+
+   ---------------------
+   -- Tool_Is_Missing --
+   ---------------------
+
+   function Tool_Is_Missing (Crate : Crate_Name) return Boolean is
+   begin
+      return not (for some Release of Available (Detect_Externals =>
+                                                   Tool_Is_External (Crate))
+                  => Release.Milestone = Tool_Milestone (Crate));
+   end Tool_Is_Missing;
 
 end Alire.Toolchains;

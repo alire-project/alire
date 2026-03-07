@@ -1,7 +1,8 @@
 with AAA.Strings; use AAA.Strings;
 
-with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
+with Alire.OS_Lib.Subprocess;
+with Alire.Utils.Regex;
 
 package body Alire.Origins.Deployers.System.Pacman is
 
@@ -81,7 +82,7 @@ package body Alire.Origins.Deployers.System.Pacman is
 
          declare
             Match : constant String :=
-                      Utils.First_Match (Regexp, Package_Line);
+                      Utils.Regex.First_Match (Regexp, Package_Line);
          begin
             if Match /= "" then
                Trace.Detail ("Candidate version string: " & Match);

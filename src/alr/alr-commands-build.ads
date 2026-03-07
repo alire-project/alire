@@ -1,5 +1,7 @@
 with AAA.Strings;
 
+with Alire.Builds;
+
 private with GNAT.OS_Lib;
 
 package Alr.Commands.Build is
@@ -21,7 +23,9 @@ package Alr.Commands.Build is
                       Args :        AAA.Strings.Vector);
 
    function Execute (Cmd  : in out Commands.Command'Class;
-                     Args :        AAA.Strings.Vector)
+                     Args :        AAA.Strings.Vector;
+                     Stop :        Alire.Builds.Stop_Points :=
+                       Alire.Builds.Stop_Points'Last)
                      return Boolean;
    --  Returns True if compilation succeeded. For invocations after some other
    --  command that already has set up the build environment we need to avoid
@@ -53,5 +57,6 @@ private
       Profiles        : aliased GNAT.OS_Lib.String_Access;
       --  A string of "crate:profile" values, with "*" meaning all crates and
       --  "%" meaning all crates without a previous setting in a manifest.
+      Stop_After      : aliased GNAT.OS_Lib.String_Access;
    end record;
 end Alr.Commands.Build;

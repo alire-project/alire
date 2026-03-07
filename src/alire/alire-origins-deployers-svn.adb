@@ -9,7 +9,7 @@ package body Alire.Origins.Deployers.SVN is
    overriding
    function Deploy (This : Deployer; Folder : String) return Outcome is
    begin
-      return VCSs.SVN.Handler.Clone (This.Base.URL_With_Commit, Folder);
+      return VCSs.SVN.Handler.Clone (This.Base.URL, Folder, This.Base.Commit);
    end Deploy;
 
    -----------

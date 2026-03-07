@@ -35,6 +35,7 @@ package body Alr.Commands.Update is
       end Parse_Allowed;
 
    begin
+      Cmd.Forbids_Structured_Output;
       Cmd.Requires_Workspace (Sync => False);
       --  The user has explicitly requested an update, so it makes no sense to
       --  sync previously, or the update would never find changes.

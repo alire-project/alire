@@ -7,8 +7,6 @@ with Semantic_Versioning;
 
 package body Alire.Dependencies is
 
-   package Semver renames Semantic_Versioning;
-
    -----------------
    -- From_String --
    -----------------

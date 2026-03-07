@@ -49,6 +49,10 @@ package Alire.User_Pins is
    function Is_Broken (This : Pin) return Boolean
      with Pre => This.Kind in Kinds_With_Path;
 
+   function Has_Path (This : Pin) return Boolean;
+   --  True if Path will return a path for a local or deployed link, False if
+   --  Path will raise.
+
    function Path (This : Pin) return Absolute_Path
      with Pre => This.Kind in Kinds_With_Path;
    --  May raise if a Git pin hasn't been yet deployed (see Deploy proc). Even
@@ -62,9 +66,10 @@ package Alire.User_Pins is
 
    --  Remote pins
 
-   function New_Remote (URL : Alire.URL;
+   function New_Remote (URL    : Alire.URL;
                         Commit : String := "";
-                        Branch : String := "")
+                        Branch : String := "";
+                        Subdir : Alire.Relative_Path := "")
                         return Pin
      with
        Pre => Commit = "" or else VCSs.Git.Is_Valid_Commit (Commit),
@@ -78,6 +83,12 @@ package Alire.User_Pins is
 
    function Commit (This : Pin) return Optional.String
      with Pre => This.Is_Remote;
+
+   function Subdir (This : Pin) return Optional.String with
+     Pre => This.Is_Remote,
+     Post =>
+       (if Subdir'Result.Has_Element
+        then not Check_Absolute_Path (Subdir'Result.Value));
 
    function TTY_URL_With_Reference (This     : Pin;
                                     Detailed : Boolean := False)
@@ -134,13 +145,15 @@ private
    type Pin (Kind : Kinds) is tagged record
       case Kind is
          when To_Git =>
-            URL        : UString;
-            Branch : UString; -- Optional
-            Commit     : UString; -- Optional
-            Local_Path : Unbounded_Absolute_Path;
-            --  Empty until the pin is locally deployed
+            URL           : UString;
+            Branch        : UString; -- Optional
+            Commit        : UString; -- Optional
+            Checkout_Path : Unbounded_Absolute_Path;
+            --  Empty until the repo is locally deployed
+            Subdir        : Unbounded_Relative_Path;
+            --  For monorepos, subdir in which the crate is found
          when To_Path =>
-            Path : Unbounded_Absolute_Path;
+            Local_Path : Unbounded_Absolute_Path;
          when To_Version =>
             Version : Semantic_Versioning.Version;
       end case;
@@ -163,6 +176,15 @@ private
    is (if +This.Commit = ""
        then Optional.Strings.Empty
        else Optional.Strings.Unit (+This.Commit));
+
+   ------------
+   -- Subdir --
+   ------------
+
+   function Subdir (This : Pin) return Optional.String
+   is (if +This.Subdir = ""
+       then Optional.Strings.Empty
+       else Optional.Strings.Unit (+This.Subdir));
 
    ---------------
    -- Is_Remote --

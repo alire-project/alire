@@ -16,4 +16,7 @@ package Alire.Origins.Deployers.System.RPM_Wrappers is
    overriding
    function Install (This : Deployer) return Outcome;
 
+   overriding
+   function Executable_Name (This : Deployer) return String;
+
 end Alire.Origins.Deployers.System.RPM_Wrappers;

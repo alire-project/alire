@@ -55,11 +55,11 @@ package body Alire.Publish.Submit is
 
    function Ask_For_Token (Reason : String) return String is
 
-      --------------
-      -- Validate --
-      --------------
+      ---------------
+      -- Non_Empty --
+      ---------------
 
-      function Validate (S : String) return Boolean
+      function Non_Empty (S : String) return Boolean
       is (S /= "");
 
       GH_Token : constant String := OS_Lib.Getenv (GitHub.Env_GH_Token, "");
@@ -72,15 +72,23 @@ package body Alire.Publish.Submit is
             & "variable.");
          Put_Info
            ("You can create access tokens at " & TTY.URL (GitHub.URL_Tokens));
+         Put_Info
+           ("Run " & TTY.Terminal ("alr help publish")
+            & " for further details.");
       end if;
 
       return (if GH_Token /= ""
               then GH_Token
               else
                  CLIC.User_Input.Query_String
-                ("Please provide your GitHub Personal Access Token: ",
+                ("Please provide your GitHub Personal Access Token "
+                   & "(full value): ",
                  Default    => "",
-                 Validation => Validate'Unrestricted_Access));
+                 Validation =>
+                 --  Allow bypassing in case some day GitHub introduces new
+                 --  token formats so not to stop everybody completely.
+                   (if Force then Non_Empty'Unrestricted_Access
+                    else GitHub.Is_Possibly_A_Token'Access)));
    end Ask_For_Token;
 
    ------------
@@ -117,29 +125,21 @@ package body Alire.Publish.Submit is
       Put_Success ("No conflicting pull request found");
    end Exists;
 
-   ---------------
-   -- Fork_Repo --
-   ---------------
+   -----------------
+   -- Ask_To_Fork --
+   -----------------
 
-   procedure Fork (Context : in out Data) is
+   function Ask_To_Fork (Context : in out Data) return Boolean is
       use all type CLIC.User_Input.Answer_Kind;
       use all type GitHub.Async_Result;
    begin
-
-      --  Verify manifest to publish was generated at expected place
-
-      if not Directories.Is_File (Context.Generated_Manifest) then
-         Raise_Checked_Error ("Cannot continue: manifest missing at "
-                              & TTY.URL (Context.Generated_Manifest));
-      end if;
-
-      Context.Token := +Ask_For_Token
-        ("to fork the community index to your account");
-
       if GitHub.Repo_Exists then
          Put_Success ("Community index fork exists in user account");
-         return;
+         return True;
       else
+         Context.Token := +Ask_For_Token
+           ("to fork the community index to your account");
+
          if CLIC.User_Input.Query
            ("A fork of the community index will now be created into your "
             & "GitHub account to be able to submit a pull request. "
@@ -147,8 +147,7 @@ package body Alire.Publish.Submit is
             Valid   => (Yes | No => True, others => False),
             Default => Yes) /= Yes
          then
-            Raise_Checked_Error
-              ("Cannot continue with automatic submission");
+            return False;
          end if;
       end if;
 
@@ -163,6 +162,29 @@ package body Alire.Publish.Submit is
          when Completed =>
             Put_Success ("Fork of community index completed");
       end case;
+
+      return True;
+   end Ask_To_Fork;
+
+   ---------------
+   -- Fork_Repo --
+   ---------------
+
+   procedure Fork (Context : in out Data) is
+      use type UString;
+   begin
+      if not Ask_To_Fork (Context) then
+            Raise_Checked_Error
+              ("Cannot continue with automatic submission");
+      end if;
+
+      --  If the fork already existed, the token wouldn't have been needed up
+      --  to this point, so now we make sure it is informed for next steps.
+
+      if Context.Token = "" then
+         Context.Token := +Ask_For_Token
+           ("to create a submission to the community index on your behalf");
+      end if;
    end Fork;
 
    -----------
@@ -244,12 +266,13 @@ package body Alire.Publish.Submit is
       Directories.Force_Delete (Local_Repo_Path);
       --  Delete a possibly outdated repo
 
-      VCSs.Git.Handler.Clone
+      VCSs.Git.Handler.Clone_Branch
         (From   => Index.Community_Host
          / User_Info.User_GitHub_Login
          / Index.Community_Repo_Name,
          Into   => Local_Repo_Path,
          Branch => "",
+         Commit => "",
          Depth  => 1).Assert;
 
       --  We can reuse the pull logic now to set up the local branch
@@ -281,7 +304,7 @@ package body Alire.Publish.Submit is
          Target : constant Absolute_Path
            := Local_Repo_Path
               / VFS.To_Native
-                 (TOML_Index.Manifest_Path (Context.Root.Value.Name))
+                 (TOML_Index.Community_Manifest_Path (Context.Root.Value.Name))
               / Filename;
       begin
          Directories.Create_Tree (Directories.Parent (Target));
@@ -310,7 +333,7 @@ package body Alire.Publish.Submit is
             VCSs.Git.Commit_All
               (Local_Repo_Path,
                Msg => Context.PR_Name
-                      & " (via `alr publish --submit`)").Assert;
+                      & " (via `alr publish`)").Assert;
          else
             Put_Warning
               ("Nothing to commit: "
@@ -369,7 +392,7 @@ package body Alire.Publish.Submit is
               Title       => Context.PR_Name,
               Message     =>
                 "Created via `alr publish` with `alr "
-                & Version.Current & "`");
+                & Version.Current.Image & "`");
       begin
          Put_Success ("Pull request created successfully");
          Put_Info ("Visit " & TTY.URL (States.Webpage (Number))

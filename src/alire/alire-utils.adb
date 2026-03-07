@@ -16,13 +16,9 @@ package body Alire.Utils is
 
    function Command_Line_Contains (Prefix : String) return Boolean is
    begin
-      for I in 1 .. Ada.Command_Line.Argument_Count loop
-         if Has_Prefix (Ada.Command_Line.Argument (I), Prefix) then
-            return True;
-         end if;
-      end loop;
-
-      return False;
+      return
+        (for some I in 1 .. Ada.Command_Line.Argument_Count =>
+           Has_Prefix (Ada.Command_Line.Argument (I), Prefix));
    end Command_Line_Contains;
 
    -------------
@@ -128,43 +124,6 @@ package body Alire.Utils is
          end loop;
       end return;
    end Count_True;
-
-   -----------------
-   -- First_Match --
-   -----------------
-
-   function First_Match (Regex : String; Text : String) return String is
-
-      -----------------------
-      -- Count_Parentheses --
-      -----------------------
-
-      function Count_Parentheses return Positive is
-         Count : Natural := 0;
-      begin
-         for Char of Regex loop
-            if Char = '(' then
-               Count := Count + 1;
-            end if;
-         end loop;
-         return Count;
-      end Count_Parentheses;
-
-      use GNAT.Regpat;
-      Matches : Match_Array (1 .. Count_Parentheses);
-      --  This is a safe estimation, as some '(' may not be part of a capture
-
-   begin
-      Match (Regex, Text, Matches);
-
-      for I in Matches'Range loop
-         if Matches (I) /= No_Match then
-            return Text (Matches (I).First .. Matches (I).Last);
-         end if;
-      end loop;
-
-      return "";
-   end First_Match;
 
    -------------------------------
    -- Is_Valid_Full_Person_Name --
@@ -289,5 +248,108 @@ package body Alire.Utils is
          end;
       end if;
    end Image_Keys_One_Line;
+
+   ------------------------
+   -- Finalize_Exception --
+   ------------------------
+
+   procedure Finalize_Exception (E : Ada.Exceptions.Exception_Occurrence) is
+
+      --  Import a Last_Chance_Handler procedure that will either be the one
+      --  declared by Alr, or the default GNAT last chance handler.
+
+      procedure Last_Chance_Handler (E : Ada.Exceptions.Exception_Occurrence);
+      pragma Import (C,
+                     Last_Chance_Handler,
+                     "__gnat_last_chance_handler");
+      pragma No_Return (Last_Chance_Handler);
+
+   begin
+      Last_Chance_Handler (E);
+   end Finalize_Exception;
+
+   --------------------
+   -- Has_Duplicates --
+   --------------------
+
+   function Has_Duplicates
+     (V         : AAA.Strings.Vector;
+      Transform : access function (S : String) return String := null)
+      return Boolean is
+      Seen : AAA.Strings.Set := AAA.Strings.Empty_Set;
+   begin
+      for Elt of V loop
+         declare
+            Transformed : constant String := (if Transform /= null
+                                                then Transform (Elt)
+                                                else Elt);
+         begin
+            if Seen.Contains (Transformed) then
+               return True;
+            else
+               Seen.Insert (Transformed);
+            end if;
+         end;
+      end loop;
+      return False;
+   end Has_Duplicates;
+
+   ------------------
+   -- Strip_Prefix --
+   ------------------
+
+   function Strip_Prefix (Src, Prefix : String) return String is
+   begin
+      if AAA.Strings.Has_Prefix (Src, Prefix) then
+         return Src (Src'First + Prefix'Length .. Src'Last);
+      else
+         return Src;
+      end if;
+   end Strip_Prefix;
+
+   ------------------
+   -- Strip_Suffix --
+   ------------------
+
+   function Strip_Suffix (Src, Suffix : String) return String is
+   begin
+      if AAA.Strings.Has_Suffix (Src, Suffix) then
+         return Src (Src'First .. Src'Last - Suffix'Length);
+      else
+         return Src;
+      end if;
+   end Strip_Suffix;
+
+   ---------------------
+   -- Format_Duration --
+   ---------------------
+
+   function Format_Duration (D : Duration) return String is
+      I, F : Long_Integer;
+
+      --  account for rounding up
+      Seconds_Max : constant := 59.9995;
+      Minutes_Max : constant := 3599.5;
+   begin
+      if D < 0.0 then
+         return "-" & Format_Duration (-D);
+      elsif D < Seconds_Max then
+         I := Long_Integer (D * 1000.0);
+         F := I mod 1000;
+         I := I / 1000;
+         return Trim (I'Image) & "s" & Left_Pad (Trim (F'Image), 3, '0');
+      else
+         I :=
+           (if D < Minutes_Max
+            then Long_Integer (D)
+            else Long_Integer (D / 60.0));
+         F := I mod 60;
+         I := I / 60;
+         return
+           Trim (I'Image)
+           & (if D < Minutes_Max then "m" else "h")
+           & Left_Pad (Trim (F'Image), 2, '0');
+      end if;
+   end Format_Duration;
 
 end Alire.Utils;

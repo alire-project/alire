@@ -2,6 +2,7 @@ with Ada.Containers;
 
 with Alire.Conditional;
 with Alire.Dependencies;
+with Alire.Formatting;
 with Alire.Index.Search;
 with Alire.Milestones;
 with Alire.Platforms.Current;
@@ -11,7 +12,8 @@ with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.Tables;
-with Alire.Utils.TTY;
+
+with Alr.Common;
 
 with Semantic_Versioning.Extended;
 
@@ -78,13 +80,25 @@ package body Alr.Commands.Show is
          Rel : constant Alire.Releases.Release :=
                  Cmd.Find_Target_Release (Name, Versions, Current);
       begin
+         if Alire.Formatting.Structured_Output and then
+           (Cmd.Graph or else Cmd.Solve or else Cmd.Tree)
+         then
+            Reportaise_Wrong_Arguments
+              ("--format global switch is incompatible with "
+               & (if Cmd.Graph then "--graph"
+                  elsif Cmd.Solve then "--solve"
+                  else "--tree"));
+         end if;
+
          if Cmd.System then
             Rel.Whenever (Platform.Properties).Print;
          else
             Rel.Print;
          end if;
 
-         if Rel.Origin.Is_System then
+         if Rel.Origin.Is_System and then
+           not Alire.Utils.Tables.Structured_Output
+         then
                Put_Line ("Platform package: " & Rel.Origin.Package_Name);
          end if;
 
@@ -98,7 +112,7 @@ package body Alr.Commands.Show is
                               Platform.Properties,
                               Alire.Solutions.Empty_Valid_Solution,
                               Options => (Age    => Query_Policy,
-                                          others => <>)));
+                                          others => <>)).Solution);
             begin
                if Cmd.Solve then
                   Needed.Print (Rel,
@@ -163,15 +177,16 @@ package body Alr.Commands.Show is
                                Cmd  : Command) is
       use Alire;
       Table : Utils.Tables.Table;
+      Structured : Boolean renames Utils.Tables.Structured_Output;
    begin
       if Alire.Index.Crate (Name).Externals.Is_Empty then
          Trace.Info ("No externals defined for the requested crate.");
       else
          Table
-           .Append ("Kind")
-           .Append ("Description")
-           .Append ("Details")
-           .Append ("Available");
+           .Header ("Kind")
+           .Header ("Description")
+           .Header ("Details")
+           .Header ("Available");
 
          for External of Alire.Index.Crate (Name).Externals loop
             Table.New_Row;
@@ -180,7 +195,7 @@ package body Alr.Commands.Show is
                           External.Detail
                             (if Cmd.System
                              then Alire.Platforms.Current.Distribution
-                             else Alire.Platforms.Distro_Unknown);
+                             else Alire.Platforms.Distribution_Unknown);
                Available : Alire.Conditional.Availability :=
                              (if Cmd.System
                               then External.On_Platform
@@ -195,14 +210,14 @@ package body Alr.Commands.Show is
                for I in Detail.First_Index .. Detail.Last_Index loop
                   --  Skip last element, which is unknown distro
                   Table
-                    .Append (if I = Detail.First_Index
+                    .Append (if I = Detail.First_Index or else Structured
                              then External.Kind
                              else "")
-                    .Append (if I = Detail.First_Index
+                    .Append (if I = Detail.First_Index or else Structured
                              then External.Image
                              else "")
                     .Append (Detail (I))
-                    .Append (if I = Detail.First_Index
+                    .Append (if I = Detail.First_Index or else Structured
                              then Available.Image_One_Line
                              else "");
                   if I /= Detail.Last_Index then
@@ -248,27 +263,6 @@ package body Alr.Commands.Show is
                        (Name, Versions).TTY_Image);
    end Report_Jekyll;
 
-   --------------------
-   -- Show_Providers --
-   --------------------
-
-   function Show_Providers (Dep : Alire.Dependencies.Dependency) return Boolean
-   is
-      use Alire;
-   begin
-      if Index.All_Crate_Aliases.Contains (Dep.Crate) then
-         Trace.Info ("Crate " & Utils.TTY.Name (Dep.Crate) & " is abstract and"
-                     & " provided by:");
-         for Provider of Index.All_Crate_Aliases.all (Dep.Crate) loop
-            Trace.Info ("   " & Utils.TTY.Name (Provider));
-         end loop;
-
-         return True;
-      else
-         return False;
-      end if;
-   end Show_Providers;
-
    -------------
    -- Execute --
    -------------
@@ -310,7 +304,7 @@ package body Alr.Commands.Show is
             --  Even if the crate does not exist, it may be an abstract crate
             --  provided by some others (e.g. gnat_native -> gnat).
 
-            if Show_Providers (Allowed) then
+            if Common.Show_Providers (Allowed) then
                return;
             else
                raise Alire.Query_Unsuccessful;
@@ -389,8 +383,8 @@ package body Alr.Commands.Show is
                      Cmd.Dependents'Access,
                      "", "--dependents?",
                      "Show dependent crates ("
-                     & Formatter.Terminal ("ARG=direct|shortest|all") & ")",
-                     Argument => "=ARG");
+                     & Formatter.Terminal ("WHICH=direct|shortest|all") & ")",
+                     Argument => "=WHICH");
 
       Define_Switch (Config,
                      Cmd.Detail'Access,
@@ -445,7 +439,7 @@ package body Alr.Commands.Show is
       end if;
 
       if Args.Count = 0 then
-         if Alire.Root.Current.Outside and not Cmd.Nested then
+         if Alire.Root.Current.Outside and then not Cmd.Nested then
             Reportaise_Wrong_Arguments
               ("Cannot proceed without a crate name");
          elsif not Cmd.Nested then
@@ -455,8 +449,8 @@ package body Alr.Commands.Show is
 
       if Cmd.External and then
         (Cmd.Dependents.all /= "unset"
-         or Cmd.Detect or Cmd.Jekyll or Cmd.Graph or Cmd.Solve
-         or Cmd.Tree)
+         or else Cmd.Detect or else Cmd.Jekyll or else Cmd.Graph
+         or else Cmd.Solve  or else Cmd.Tree)
       then
          Reportaise_Wrong_Arguments
            ("Switch --external can only be combined with --system");

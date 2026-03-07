@@ -24,7 +24,7 @@ run_alr('update')
 # dependency is included in the restrictions
 p = run_alr('with', '--solve')
 assert_match(
-    '.*Dependencies \(external\):\n'
+    '.*Dependencies \(missing\):\n'
     '   ' +
     re.escape('libhello(=3.0.0) & (^2.0.0) '
               '(direct,missed:conflict,pin=3.0.0)') + '.*',

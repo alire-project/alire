@@ -4,12 +4,15 @@ Helpers to run alr in the testsuite.
 
 import os
 import os.path
+import platform
+import pexpect
 import re
-from shutil import copytree
+import sys
 
 from e3.fs import mkdir
 from e3.os.process import Run, quote_arg
 from e3.testsuite.driver.classic import ProcessResult
+from shutil import copytree
 
 TESTSUITE_ROOT = os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))
@@ -21,11 +24,11 @@ class CalledProcessError(Exception):
 
 def distro_is_known():
     p = run_alr('version')
-    return not re.match('.*distribution:.*DISTRO_UNKNOWN.*',
+    return not re.match('.*distribution:.*DISTRIBUTION_UNKNOWN.*',
                         p.out, flags=re.S)
 
 
-def prepare_env(config_dir, env):
+def prepare_env(settings_dir, env):
     """
     Prepare the environment to run "alr".
 
@@ -38,40 +41,51 @@ def prepare_env(config_dir, env):
     env["GIT_CONFIG_GLOBAL"] = "/dev/null"
     env["GIT_CONFIG_SYSTEM"] = "/dev/null"
 
-    config_dir = os.path.abspath(config_dir)
-    mkdir(config_dir)
-    env['ALR_CONFIG'] = config_dir
-    #  We pass config location explicitly in the following calls since env is
+    settings_dir = os.path.abspath(settings_dir)
+    mkdir(settings_dir)
+    env['ALIRE_SETTINGS_DIR'] = settings_dir
+    #  We pass settings location explicitly in the following calls since env is
     #  not yet applied (it's just a dict to be passed later to subprocess)
+
+    if platform.system() == "Windows":
+        # Disable msys inadvertent installation
+        run_alr("-s", settings_dir, "settings", "--global",
+                "--set", "msys2.do_not_install", "true")
+
+        # And configure the one set up in the environment so it is used by
+        # tests that need it.
+        run_alr("-s", settings_dir, "settings", "--global",
+                "--set", "msys2.install_dir",
+                os.path.join(
+                    os.environ.get("LocalAppData"), "alire", "cache", "msys64"))
 
     # Disable autoconfig of the community index, to prevent unintended use of
     # it in tests, besides the overload of fetching it
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr(f"-s", settings_dir, "settings", "--global",
             "--set", "index.auto_community", "false")
 
     # Disable selection of toolchain to preserve older behavior. Tests that
     # require a configured compiler will have to set it up explicitly.
-    run_alr("-c", config_dir, "toolchain", "--disable-assistant")
+    run_alr("-s", settings_dir, "toolchain", "--disable-assistant")
 
     # Disable warning on old index, to avoid having to update index versions
     # when they're still compatible.
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr("-s", settings_dir, "settings", "--global",
             "--set", "warning.old_index", "false")
 
     # Disable shared dependencies (keep old pre-2.0 behavior) not to break lots
     # of tests. The post-2.0 behavior will have its own tests.
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr("-s", settings_dir, "settings", "--global",
             "--set", "dependencies.shared", "false")
 
     # Disable index auto-updates, which is not expected by most tests
-    run_alr("-c", config_dir, "config", "--global",
+    run_alr("-s", settings_dir, "settings", "--global",
             "--set", "index.auto_update", "0")
 
     # If distro detection is disabled via environment, configure so in alr
-    if "ALIRE_DISABLE_DISTRO" in env:
-        if env["ALIRE_DISABLE_DISTRO"] == "true":
-            run_alr("-c", config_dir, "config", "--global",
-                    "--set", "distribution.disable_detection", "true")
+    if "ALIRE_TESTSUITE_DISABLE_DISTRO" in env:
+        run_alr("-s", settings_dir, "settings", "--global",
+                "--set", "distribution.disable_detection", "true")
 
 
 def run_alr(*args, **kwargs):
@@ -109,22 +123,91 @@ def run_alr(*args, **kwargs):
         argv.insert(1, '-q')
     argv.extend(args)
     p = Run(argv)
-    if (p.status != 0 and complain_on_error) or (p.status == 0 and not complain_on_error):
-        print('The following command:')
-        print('  {}'.format(' '.join(quote_arg(arg) for arg in argv)))
-        print('Exited with status code {}'.format(p.status))
-        print('Output:')
-        print(p.out)
-        if complain_on_error:
-            raise CalledProcessError('alr returned non-zero status code')
-        else:
-            raise CalledProcessError('alr returned zero status code but '
-                                     'an error was expected')
+    _report_unexpected_exit_status(p.status, complain_on_error, argv, p.out)
 
     # Convert CRLF line endings (Windows-style) to LF (Unix-style). This
     # canonicalization is necessary to make output comparison work on all
     # platforms.
     return ProcessResult(p.status, p.out.replace('\r\n', '\n'))
+
+
+def run_alr_interactive(args: list[str], output: list[str], input: list[str],
+                        timeout=5, complain_on_error=True) -> str:
+    """
+    NON-WINDOWS-ONLY
+    Run "alr" with the given arguments, feeding it the given input. No other
+    arguments like -q or -d are added (except --no-color).
+
+    Returns the output of the command, with CRLF replaced by LF.
+
+    :param args: List of arguments to pass to "alr".
+    :param output: List of strings expected to be output by the subprocess.
+    :param input: List of strings to feed to the subprocess's standard input.
+    :param timeout: Timeout in seconds for the subprocess to complete. If
+        exceeded, RuntimeError is raised.
+    :param complain_on_error: If True and the subprocess exits with a non-zero
+        status code, print information on the standard output (for debugging)
+        and raise a CalledProcessError (to abort the test). Conversely if False
+        and the process ends without error, it's presumed an error was expected
+        and CalledProcessError is raised too.
+    """
+
+    # Check whether on Windows to fail early (revisit if pexpect is updated?)
+    if platform.system() == "Windows":
+        print('SKIP: pexpect unavailable on Windows')
+        sys.exit(0)
+
+    # Run interactively using pexpect (run with input fails as it is not
+    # detected as tty and input is closed prematurely)
+    args.insert(0, "--no-color")
+    child = pexpect.spawn('alr',  args=args, timeout=timeout)
+
+    try:
+        # Alternate between expected output and given input
+        for out, inp in zip(output, input):
+            child.expect(out)
+            child.sendline(inp)
+
+        # Wait for the process to finish
+        child.expect(pexpect.EOF)  # Match all output before ending
+        child.wait()
+        child.close()
+    except pexpect.exceptions.TIMEOUT:
+        raise RuntimeError(f"pexpect timeout with alr output:\n"
+                           f"{child.before.decode('utf-8')}")
+
+    # Assert proper output code
+    output = child.before.decode('utf-8')
+    _report_unexpected_exit_status(
+        child.exitstatus, complain_on_error, ["alr"] + args, output
+    )
+
+    # Return command output with CRLF replaced by LF (as does run_alr)
+    return output.replace('\r\n', '\n')
+
+
+def _report_unexpected_exit_status(exit_status, complain_on_error, args, output):
+    """
+    Report if a command yielded an unexpected exit status.
+
+    If complain_on_error is True and exit_status is non-zero, or if it is False
+    and exit_status is zero, print the command and its output, then raise a
+    CalledProcessError. Otherwise, do nothing.
+    """
+    error_occured = (exit_status != 0)
+    if (error_occured == complain_on_error):
+        command = " ".join(quote_arg(arg) for arg in args)
+        print('The following command:')
+        print(f'  {command}')
+        print(f'Exited with status code {exit_status}')
+        print('Output:')
+        print(output)
+        if complain_on_error:
+            raise CalledProcessError('alr returned non-zero status code')
+        else:
+            raise CalledProcessError(
+                'alr returned zero status code but an error was expected'
+            )
 
 
 def fixtures_path(*args):
@@ -224,7 +307,8 @@ def index_version():
     return index_branch().split('-')[1]
 
 
-def init_local_crate(name="xxx", binary=True, enter=True, update=True):
+def init_local_crate(name="xxx", binary=True, enter=True, update=True,
+                     with_maintainer_login=False, with_test=False):
     """
     Initialize a local crate and enter its folder for further testing.
 
@@ -233,16 +317,26 @@ def init_local_crate(name="xxx", binary=True, enter=True, update=True):
     :param bool binary: Initialize as --bin or --lib
 
     :param bool enter: Enter the created crate directory
+
+    :param bool with_maintainer_login: Set the value of the `maintainers-logins`
+        field of the manifest to `["github-username"]` so that the crate is
+        valid for submission to the community index.
     """
-    run_alr("init", name, "--bin" if binary else "--lib")
+    args = [name, "--bin" if binary else "--lib"]
+    if not with_test:
+        args.append("--no-test")
+    run_alr("init", *args)
+    os.chdir(name)
 
     if update:
-        os.chdir(name)
         run_alr("update")
-        os.chdir("..")
 
-    if enter:
-        os.chdir(name)
+    if with_maintainer_login:
+        with open("alire.toml", "a") as f:
+            f.write('maintainers-logins = ["github-username"]\n')
+
+    if not enter:
+        os.chdir("..")
 
 
 def alr_workspace_cache():
@@ -318,7 +412,7 @@ def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
         run_alr("pin", "--unpin", crate)
 
 
-def alr_pin(crate, version="", path="", url="", commit="", branch="",
+def alr_pin(crate, version="", path="", url="", commit="", branch="", subdir="",
             manual=True, update=True, force=False):
     """
     Pin a crate, either manually or using the command-line interface. Use only
@@ -336,12 +430,15 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
             pin_line = f'{crate} = {{ version = "{version}" }}'
         elif path != "":
             pin_line = f"{crate} = {{ path = '{path}' }}"  # literal so \ works
-        elif url != "" and commit != "":
-            pin_line = f"{crate} = {{ url = '{url}', commit = '{commit}' }}"
-        elif url != "" and branch != "":
-            pin_line = f"{crate} = {{ url = '{url}', branch = '{branch}' }}"
         elif url != "":
-            pin_line = f"{crate} = {{ url = '{url}' }}"
+            if branch != "":
+                rev_part = f", branch = '{branch}'"
+            elif commit != "":
+                rev_part = f", commit = '{commit}'"
+            else:
+                rev_part = ""
+            subdir_part = f", subdir = '{subdir}'" if subdir != "" else ""
+            pin_line = f"{crate} = {{ url = '{url}'{rev_part}{subdir_part} }}"
         else:
             raise ValueError("Specify either version, path or url")
 
@@ -374,6 +471,9 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
                 args += ["--commit", f"{commit}"]
             elif branch != "":
                 args += ["--branch", f"{branch}"]
+
+            if subdir != "":
+                args += ["--subdir", f"{subdir}"]
 
         return run_alr("pin", *args, force=force)
 
@@ -446,7 +546,7 @@ def alr_with(dep="", path="", url="", commit="", branch="",
             return run_alr(*args, force=force)
 
 
-def add_action(type, command, name="", directory=""):
+def add_action(type: str, command: [str], name="", directory=""):
     """
     Add an action to the manifest in the current directory.
     :param str type: "pre-build", etc
@@ -514,25 +614,25 @@ def alr_publish(name,
     return p
 
 
-def alr_config_dir() -> str:
+def alr_settings_dir() -> str:
     """
     Return the path to the alr configuration directory
     """
-    return os.environ.get("ALR_CONFIG")
+    return os.environ.get("ALIRE_SETTINGS_DIR")
 
 
 def alr_vault_dir() -> str:
     """
     Return the path to the vault for release pristine sources
     """
-    return os.path.join(alr_config_dir(), "cache", "releases")
+    return os.path.join(alr_settings_dir(), "cache", "releases")
 
 
 def alr_builds_dir() -> str:
     """
     Return the path to the builds directory
     """
-    return os.path.join(alr_config_dir(), "cache", "builds")
+    return os.path.join(alr_settings_dir(), "cache", "builds")
 
 
 def crate_dirname(crate):
@@ -551,3 +651,56 @@ def external_compiler_version() -> str:
 
     # Capture version
     return re.search("gnat_external ([0-9.]+)", p.out, re.MULTILINE).group(1)
+
+def alr_settings_unset(key: str, local: bool = False):
+    """
+    Unset a key with `alr settings`
+
+    Sets the value globally unless `local` is `True`.
+    """
+    if local:
+        run_alr("settings", "--unset", key)
+    else:
+        run_alr("settings", "--global", "--unset", key)
+
+def alr_settings_set(key: str, value: str, local: bool = False, builtin: bool = True):
+    """
+    Set a key-value pair with `alr settings`
+
+    Sets the value globally unless `local` is `True`.
+    """
+    args=["settings"]
+    if builtin:
+        args.append("--builtin")
+    if not local:
+        args.append("--global")
+    args.append("--set")
+    args.append(key)
+    args.append(value)
+
+    run_alr(*args)
+
+
+def unselect_compiler():
+    """
+    Leave compiler configuration as if "None" was selected by the user in the
+    assistant.
+    """
+    alr_settings_unset("toolchain.use.gnat")
+    alr_settings_unset("toolchain.external.gnat")
+
+
+def unselect_gprbuild():
+    """
+    Leave gprbuild configuration as if "None" was selected by the user in the
+    assistant.
+    """
+    alr_settings_unset("toolchain.use.gprbuild")
+
+
+def set_default_user_settings():
+    """
+    Set the default alr settings that are undone by the testsuite defaults
+    """
+    alr_settings_set("index.auto_community", "true")
+    alr_settings_set("toolchain.assistant", "true")

@@ -1,3 +1,4 @@
+with Alire.Formatting;
 with Alire.Origins;
 with Alire.Publish.States;
 with Alire.URI;
@@ -5,7 +6,12 @@ with Alire.Utils;
 
 package body Alr.Commands.Publish is
 
+   package Format renames Alire.Formatting;
    package URI renames Alire.URI;
+
+   ------------
+   -- To_Int --
+   ------------
 
    function To_Int (S : String) return Integer is
    begin
@@ -29,14 +35,19 @@ package body Alr.Commands.Publish is
 
       Options : constant Alire.Publish.All_Options :=
                   Alire.Publish.New_Options
-                    (Manifest    =>
+                    (Manifest          =>
                        (if Cmd.Manifest.all /= ""
                         then Cmd.Manifest.all
                         else Alire.Roots.Crate_File_Name),
-                     Skip_Build  => Cmd.Skip_Build,
-                     Skip_Submit => Cmd.Skip_Submit);
+                     Skip_Build        => Cmd.Skip_Build,
+                     Skip_Submit       =>
+                       --  "--for-private-index" implies "--skip-submit"
+                       Cmd.Skip_Submit or else Cmd.For_Private_Index,
+                     For_Private_Index => Cmd.For_Private_Index);
 
    begin
+      Cmd.Forbids_Structured_Output;
+
       if Alire.Utils.Count_True
         ((Cmd.Tar, Cmd.Print_Trusted, Cmd.Status,
           Cmd.Cancel.all /= Unset, Cmd.Review.all /= Unset)) > 1
@@ -50,7 +61,8 @@ package body Alr.Commands.Publish is
       Cmd.Auto_Update_Index;
 
       if Cmd.Print_Trusted then
-         Alire.Publish.Print_Trusted_Sites;
+         Alire.Publish.Print_Trusted_Sites
+           (For_Community => not Cmd.For_Private_Index);
 
       elsif Cmd.Tar then
 
@@ -111,8 +123,8 @@ package body Alr.Commands.Publish is
                use Alire.Origins;
                URL : constant String := Args (1);
             begin
-               if URI.Scheme (URL) in URI.File_Schemes then
-                  if Archive_Format (URI.Local_Path (URL)) /= Unknown then
+               if URI.URI_Kind (URL) in URI.Bare_Path then
+                  if Archive_Format (URL) /= Unknown then
                      --  This is a local tarball posing as a remote. Will fail
                      --  unless forced.
                      Alire.Publish.Remote_Origin (URL     => URL,
@@ -136,6 +148,43 @@ package body Alr.Commands.Publish is
       end if;
    end Execute;
 
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
+       .Append ("Checks a release and generates an index manifest.")
+       .New_Line
+       .Append ("See full details at")
+       .New_Line
+       .Append
+         (" https://github.com/alire-project/alire/blob"
+          & Format.Format ("/${ALIRE_VERSION}/", Format.For_Github_URL,
+                           Convert_Path_Seps => False)
+          & "doc/publishing.md")
+       .New_Line
+       .Append ("URL is an optional path to a remote source archive, or"
+         & " a local or remote git repository.")
+       .New_Line
+       .Append ("For the common use case of a github-hosted repository,"
+         & " issue " & Formatter.Terminal ("alr publish")
+         & " after committing and pushing the new release version.")
+       .New_Line
+       .Append ("See the above link for instructions on how to create a "
+         & "Github Personal Access Token (PAT), needed to allow `alr` to "
+         & "interact with Github (forking, PR creation) on your behalf.")
+       .New_Line
+       .Append ("Use " & Formatter.Terminal ("--tar")
+         & "to create a source archive ready to be uploaded.")
+       .New_Line
+       .Append ("Use " & Formatter.Terminal ("--manifest")
+         & "to use metadata in a non-default file.")
+       .New_Line
+       .Append ("See the above link for help with other scenarios."));
+
    --------------------
    -- Setup_Switches --
    --------------------
@@ -151,7 +200,8 @@ package body Alr.Commands.Publish is
         (Config,
          Cmd.Manifest'Access,
          "", "--manifest=",
-         "Selects a manifest file other than ./alire.toml");
+         "Selects a manifest file other than ./alire.toml",
+         Argument => "FILE");
 
       Define_Switch
         (Config,
@@ -164,6 +214,13 @@ package body Alr.Commands.Publish is
          Cmd.Skip_Submit'Access,
          "", "--skip-submit",
          "Do not create the online pull request onto the community index");
+
+      Define_Switch
+        (Config,
+         Cmd.For_Private_Index'Access,
+         "", "--for-private-index",
+         "The same as --skip-submit, but additionally disable checks which "
+         & "are specific to the community index and may not apply to others");
 
       Define_Switch
         (Config,

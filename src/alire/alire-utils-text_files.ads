@@ -6,6 +6,8 @@ package Alire.Utils.Text_Files is
    --  lines. On destruction, changes to the contents are written back to disk.
    --  A backup ".prev" file is also created by default.
 
+   --  Lines are presumed to be UTF-8 and are written via Wide_Wide_Text_IO
+
    type File (<>) is tagged limited private;
 
    function Create (Name : Any_Path) return File;
@@ -21,11 +23,20 @@ package Alire.Utils.Text_Files is
    function Lines (This : aliased in out File)
                    return access AAA.Strings.Vector;
 
+   function Lines (Filename : Any_Path)
+                   return AAA.Strings.Vector;
+
    procedure Append_Lines (File       : Any_Path;
                            Lines      : AAA.Strings.Vector;
                            Backup     : Boolean  := True;
                            Backup_Dir : Any_Path := "");
    --  Add the given lines to the end of the file
+
+   procedure Replace_Lines (File       : Any_Path;
+                            Lines      : AAA.Strings.Vector;
+                            Backup     : Boolean  := True;
+                            Backup_Dir : Any_Path := "");
+   --  Replace contents of File with the new lines.
 
 private
 

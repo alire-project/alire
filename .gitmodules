@@ -20,9 +20,6 @@
 	path = deps/gnatcoll-slim
 	url = https://github.com/alire-project/gnatcoll-core.git
 	branch = slim
-[submodule "testsuite/fixtures/crates/libhello_git"]
-	path = testsuite/fixtures/crates/libhello_git
-	url = https://github.com/alire-project/libhello.git
 [submodule "deps/ansi"]
 	path = deps/ansi
 	url = https://github.com/mosteo/ansi-ada
@@ -60,3 +57,21 @@
 [submodule "deps/dirty_booleans"]
 	path = deps/dirty_booleans
 	url = https://github.com/mosteo/dirty_booleans
+[submodule "deps/den"]
+	path = deps/den
+	url = https://github.com/mosteo/den
+[submodule "deps/cstrings"]
+	path = deps/cstrings
+	url = https://github.com/mosteo/cstrings
+[submodule "deps/lml"]
+	path = deps/lml
+	url = https://github.com/mosteo/lml_ada
+[submodule "deps/yeison"]
+	path = deps/yeison
+	url = https://github.com/mosteo/yeison
+[submodule "deps/templates-parser"]
+	path = deps/templates-parser
+	url = https://github.com/alire-project/templates-parser
+[submodule "deps/resources"]
+	path = deps/resources
+	url = https://github.com/alire-project/resources

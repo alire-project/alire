@@ -25,7 +25,7 @@ alr_pin('hello', version='3')
 p = run_alr('with', '--solve')
 assert_match('.*Dependencies \(solution\):\n'
              '   hello=3\.0\.0 \(pinned\).*\n'  # skip irrelevant origin info
-             '.*Dependencies \(external\):\n'
+             '.*Dependencies \(missing\):\n'
              '   libhello\^3\.0.*',
              p.out, flags=re.S)
 
@@ -38,7 +38,7 @@ alr_pin('hello', version='5')
 # optimizations, this may show as hello=5.0.0 or hello(=5.0.0&>0), hence the
 # permissive regex
 p = run_alr('with', '--solve')
-assert_match('.*Dependencies \(external\):\n'
+assert_match('.*Dependencies \(missing\):\n'
              '   hello.*=5\.0\.0.*',
              p.out, flags=re.S)
 

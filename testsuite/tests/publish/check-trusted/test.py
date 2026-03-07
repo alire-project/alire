@@ -11,16 +11,20 @@ for domain in ["badsite.com", "ggithub.com", "github.comm"]:
                 "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
                 "--skip-submit",
                 complain_on_error=False)
-    assert_match(f".*Origin is hosted on unknown site: {domain}.*", p.out)
+    assert_match(f".*Origin host '{domain}' is not a trusted site.*", p.out)
 
 # Try that having credentials doesn't interfere with the previous check and
-# that the domain was recognized properly
+# that the domain was recognized properly.
+#
+# The presence of credentials means the origin is considered private, so
+# we use '--for-private-index' to skip the "The origin cannot use a private
+# remote" error.
 for domain in ["badsite.com", "ggithub.com", "github.comm"]:
     for creds in ["user", "user:passwd"]:
         p = run_alr("publish", f"http://{creds}@{domain}/repo.git",
                     "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-                    "--skip-submit",
+                    "--for-private-index",
                     complain_on_error=False)
-        assert_match(f".*Origin is hosted on unknown site: {domain}.*", p.out)
+        assert_match(f".*Origin host '{domain}' is not a trusted site.*", p.out)
 
 print('SUCCESS')

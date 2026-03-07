@@ -4,8 +4,7 @@ Check conflict detection for remote pins for the same crate
 
 from drivers.alr import run_alr, alr_pin, alr_unpin, init_local_crate
 from drivers.asserts import assert_eq, assert_match
-from drivers.helpers import git_blast, git_head, init_git_repo
-from e3.os.fs import touch
+from drivers.helpers import git_blast, git_commit_file, git_head, init_git_repo
 from re import escape
 
 import re
@@ -23,10 +22,7 @@ os.chdir("zzz")
 
 # Create a second branch and commit for testing
 subprocess.run(["git", "checkout", "-b", "devel"]).check_returncode()
-touch("x")
-subprocess.run(["git", "add", "x"]).check_returncode()
-subprocess.run(["git", "commit", "-m", "branching"]).check_returncode()
-head2 = git_head()
+head2 = git_commit_file(commit_name="branching", path="x", content="")
 os.chdir("..")
 
 

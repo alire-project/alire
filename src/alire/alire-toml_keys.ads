@@ -44,6 +44,12 @@ package Alire.TOML_Keys with Preelaborate is
    Provides       : constant String := "provides";
    Tag            : constant String := "tags";
    Target         : constant String := "target";
+   Test           : constant String := "test";
+   Test_Runner    : constant String := "runner";
+   Test_Command   : constant String := "command";
+   Test_Folder    : constant String := "directory";
+   Test_Jobs      : constant String := "jobs";
+   Test_Id        : constant String := "id";
    Toolchain      : constant String := "toolchain";
    Version        : constant String := "version";
    Version_Cmd    : constant String := "version-command";
@@ -56,5 +62,15 @@ package Alire.TOML_Keys with Preelaborate is
    Index_URL      : constant String := "url";
    Index_Name     : constant String := "name";
    Index_Priority : constant String := "priority";
+
+   Test_Report_Cases    : constant String := "tests";
+   Test_Report_Status   : constant String := "status";
+   Test_Report_Reason   : constant String := "reason";
+   Test_Report_Output   : constant String := "output";
+   Test_Report_Duration : constant String := "duration";
+   Test_Report_Path     : constant String := "path";
+   Test_Report_Summary  : constant String := "summary";
+   Test_Report_Total    : constant String := "total";
+   Test_Report_Failures : constant String := "failures";
 
 end Alire.TOML_Keys;

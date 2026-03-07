@@ -1,0 +1,7 @@
+driver: docker-wrapper
+build_mode: both
+control:
+    - [SKIP, "skip_docker",  "Test is Docker-only"]
+    - [SKIP, "skip_unix",    "Test is Unix-only"]
+indexes:
+    compiler_only_index: {}

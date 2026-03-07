@@ -10,7 +10,7 @@ from drivers.asserts import assert_match
 init_local_crate()
 
 # Re-config as if it was the first time running alr
-run_alr("config", "--global", "--set", "toolchain.assistant", "true")
+run_alr("settings", "--global", "--set", "toolchain.assistant", "true")
 
 # A command requiring a workspace will trigger the assistant
 p = run_alr("show", quiet=False)

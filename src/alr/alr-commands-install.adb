@@ -15,6 +15,8 @@ package body Alr.Commands.Install is
 
    procedure Validate (Cmd : in out Command; Args : AAA.Strings.Vector) is
    begin
+      Cmd.Forbids_Structured_Output;
+
       --  If nothing given, we must be in workspace
       if not Cmd.Info and then Args.Is_Empty then
          Cmd.Requires_Workspace
@@ -124,9 +126,9 @@ package body Alr.Commands.Install is
          & " without issue.")
        .New_Line
        .Append ("You can use the " & Formatter.Terminal ("--force")
-         & " to reinstall already installed "
-         & "releases.")
-      );
+         & " global option to reinstall already installed releases.")
+       .New_Line
+       .Append (Crate_Version_Sets));
 
    --------------------
    -- Setup_Switches --
@@ -143,7 +145,8 @@ package body Alr.Commands.Install is
                      Cmd.Prefix'Access,
                      "", "--prefix=",
                      "Override installation prefix (default is "
-                     & TTY.URL ("${CRATE_ROOT}/alire/prefix)") & ")");
+                     & TTY.URL (Alire.Install.Default_Prefix) & ")",
+                     Argument => "DIR");
 
       Define_Switch (Config,
                      Cmd.Info'Access,

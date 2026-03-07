@@ -1,584 +1,264 @@
-with Ada.Calendar;
-with Ada.Directories;
-with Ada.Exceptions;
 with Ada.Containers;
 
-with Alire.Crates;
-with Alire.Dependencies;
 with Alire.Directories;
-with Alire.Errors;
-with Alire.Index;
-with Alire.Milestones;
-with Alire.Origins;
+with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
-with Alire.Paths;
-with Alire.Platforms.Current;
 with Alire.Properties.Actions.Executor;
-with Alire.Releases.Containers;
-with Alire.Solutions;
-with Alire.Solver;
+with Alire.Properties.Tests;
+with Alire.Roots;
+with Alire.Test_Runner;
 
-with Alr.Files;
-with Alr.Testing.Collections;
-with Alr.Testing.Console;
-with Alr.Testing.JUnit;
-with Alr.Testing.Markdown;
-with Alr.Testing.Text;
-
-with GNATCOLL.VFS;
-
-with CLIC.User_Input;
+with CLIC.Subcommand;
 
 package body Alr.Commands.Test is
 
-   use type Ada.Containers.Count_Type;
+   package Dirs renames Alire.Directories;
 
-   package Paths    renames Alire.Paths;
-   package Platform renames Alire.Platforms.Current;
-   package Query    renames Alire.Solver;
+   --------------------
+   -- Execute_Legacy --
+   --------------------
 
-   -----------------
-   -- Check_Files --
-   -----------------
+   procedure Execute_Legacy (Root : in out Alire.Roots.Root) is
+      Success : Integer := 0;
+      Output  : AAA.Strings.Vector;
 
-   function Check_Files (Cmd    : in out Command;
-                         Output : in out AAA.Strings.Vector;
-                         R      : Alire.Index.Release;
-                         Local  : Boolean) return Boolean
-   is
-      use AAA.Strings;
-      use Ada.Directories;
+      Guard : Dirs.Guard (Dirs.Enter (Root.Path))
+      with Unreferenced;
    begin
-      --  Declared GPR files in include paths
-      declare
-         Guard : Folder_Guard (Enter_Folder (if Local
-                                             then Cmd.Root.Path
-                                             else R.Base_Folder))
-           with Unreferenced;
-      begin
+      if Root.Release.On_Platform_Actions
+           (Root.Environment,
+            (Alire.Properties.Actions.Test => True, others => False))
+           .Is_Empty
+        and then
+          not Alire.Roots.Build
+                (Root, AAA.Strings.Empty_Vector, Saved_Profiles => False)
+      then
+         Success := 1;
+      else
+         Alire.Properties.Actions.Executor.Execute_Actions
+           (Root.Release,
+            Root.Environment,
+            Alire.Properties.Actions.Test,
+            Capture    => False,
+            Err_To_Out => False,
+            Code       => Success,
+            Output     => Output);
+      end if;
 
-         --  Check project files. We allow a binary release to not contain
-         --  project files, but if it declares a non-standard one (why?) it
-         --  should be there.
+      if Success = 0 then
+         Alire.Put_Success ("Successful actions run");
+      else
+         Reportaise_Command_Failed ("failed actions run");
+      end if;
+   end Execute_Legacy;
 
-         for Gpr of R.Project_Files (Platform.Properties, With_Path => True)
-         loop
-            if OS_Lib.Is_Regular_File (Gpr) then
-               Output.Append_Line ("Found declared GPR file: " & Gpr);
-            elsif R.Origin.Kind in Alire.Origins.Binary_Archive and then
-              To_Lower_Case (Base_Name (Gpr)) = R.Name_Str
-            then
-               Output.Append_Line
-                 ("Warning: Binary release does not contain default "
-                  & "project file: " & Simple_Name (Gpr));
-            else
-               Output.Append_Line
-                 ("FAIL: Declared project file not found: " & Gpr
-                  & " while at " & Ada.Directories.Current_Directory);
-               return False;
-            end if;
-         end loop;
-      end;
+   --------------------------
+   -- Find_Root_With_Tests --
+   --------------------------
 
-      --  Generated executables
+   function Find_Root_With_Tests
+     (Cmd : in out Command) return Alire.Roots.Optional.Root
+   is
+      use Alire;
 
-      for Exe of R.Executables (Platform.Properties) loop
-         if Files.Locate_File_Under (Folder    => Alire.Directories.Current,
-                                     Name      => Exe,
-                                     Max_Depth => Natural'Last).Is_Empty
-         then
-            Output.Append_Line
-              ("FAIL: Declared executable not found after compilation: "
-               & Exe);
-            return False;
-         end if;
+      Res : Roots.Optional.Root := Cmd.Optional_Root;
+   begin
+      while Res.Is_Valid
+        and then
+          Res.Value.Release.On_Platform_Properties
+            (Res.Value.Environment, Properties.Tests.Settings'Tag)
+            .Is_Empty
+      loop
+         Res := Roots.Optional.Search_Root (Dirs.Parent (Res.Value.Path));
       end loop;
-
-      return True;
-   end Check_Files;
-
-   -------------
-   -- Do_Test --
-   -------------
-
-   procedure Do_Test
-     (Cmd          : in out Command;
-      Releases     : Alire.Releases.Containers.Release_Sets.Set;
-      Local        : Boolean)
-   is
-      use Ada.Calendar;
-      use GNATCOLL.VFS;
-      use OS_Lib.Paths;
-
-      Some_Failed : Boolean := False;
-
-      Reporters : Testing.Collections.Collection;
-
-      No_Log : constant AAA.Strings.Vector :=
-                 (AAA.Strings.Vectors.Empty_Vector with null record);
-
-      Is_Available, Is_Resolvable : Boolean;
-
-      Timestamp                   : constant String :=
-        AAA.Strings.Trim
-          (Long_Long_Integer'Image
-             (Long_Long_Integer (Clock - Time_Of (1970, 1, 1))));
-
-      Test_Name : constant String
-        := "alr_test_" & (if Local then "local" else Timestamp);
-
-      Newline : constant String := "" & ASCII.LF;
-
-      ------------------
-      -- Test_Release --
-      ------------------
-
-      procedure Test_Release (R : Alire.Releases.Release) is
-         Output : AAA.Strings.Vector;
-         Start  : Time;
-
-         --  When testing the local crate, we must ensure being at the root
-         CD     : Folder_Guard (if Local
-                                then Enter_Folder (Cmd.Root.Path)
-                                else Alire.Directories.Stay)
-           with Unreferenced;
-
-         -----------------
-         -- Test_Action --
-         -----------------
-
-         procedure Test_Action is
-            use AAA.Strings;
-
-            use Alire.OS_Lib.Subprocess;
-
-            Regular_Alr_Switches : constant AAA.Strings.Vector :=
-                                 Empty_Vector
-                                     & "-d"
-                                     & "-n"
-                                     & (if Alire.Force
-                                        then To_Vector ("--force")
-                                        else Empty_Vector);
-
-            ------------------
-            -- Default_Test --
-            ------------------
-
-            procedure Default_Test is
-
-               --  Used to test indexed crates
-               Alr_Args : constant AAA.Strings.Vector :=
-                            Empty_Vector &
-                            Regular_Alr_Switches &
-                            "get" &
-                            (if R.Origin.Kind in Alire.Origins.Binary_Archive
-                             then Empty_Vector
-                             else To_Vector ("--build")) &
-                            R.Milestone.Image;
-
-               --  Used to test the local crate
-               Alr_Local : constant AAA.Strings.Vector :=
-                             Empty_Vector &
-                             Regular_Alr_Switches &
-                             "build" &
-                             "--release";
-
-               Alr_Default : constant AAA.Strings.Vector
-                 := (if Local
-                     then "alr" & Alr_Local
-                     else "alr" & Alr_Args);
-
-               Exit_Code : Integer;
-            begin
-               Output.Append_Line ("Spawning: " & Alr_Default.Flatten);
-               Exit_Code := Unchecked_Spawn_And_Capture
-                  (Alr_Default.First_Element,
-                  Alr_Default.Tail,
-                  Output,
-                  Err_To_Out => True);
-
-               if Exit_Code /= 0 then
-                  raise Child_Failed;
-               end if;
-
-               --  Check declared gpr/executables in place
-               if not R.Origin.Is_System and then
-                  not Cmd.Check_Files (Output, R, Local)
-               then
-                  raise Child_Failed with "Declared executable(s) missing";
-               end if;
-            end Default_Test;
-
-            -----------------
-            -- Custom_Test --
-            -----------------
-
-            procedure Custom_Test is
-               Exit_Code : Integer;
-               Alr_Custom_Cmd : constant Vector :=
-                                  "alr"
-                                  & Regular_Alr_Switches
-                                  & "get" & R.Milestone.Image;
-            begin
-
-               --  Fetch the crate if not local test
-
-               if not Local then
-                  Output.Append_Line
-                     ("Spawning: " & Alr_Custom_Cmd.Flatten);
-                  Exit_Code := Unchecked_Spawn_And_Capture
-                     (Alr_Custom_Cmd.First_Element,
-                     Alr_Custom_Cmd.Tail,
-                     Output,
-                     Err_To_Out => True);
-
-                  if Exit_Code /= 0 then
-                     raise Child_Failed;
-                  end if;
-               end if;
-
-               --  And run its actions in its working directory
-
-               declare
-                  Guard : Alire.Directories.Guard
-                    (Alire.Directories.Enter
-                       (if Local
-                        then Cmd.Root.Path
-                        else R.Base_Folder))
-                    with Unreferenced;
-               begin
-                  for Action of R.On_Platform_Actions
-                    (Platform.Properties,
-                     (Alire.Properties.Actions.Test   => True,
-                      others                          => False))
-                  loop
-                     Alire.Properties.Actions.Executor.Execute_Actions
-                       (Release    => R,
-                        Env        => Platform.Properties,
-                        Moment     => Alire.Properties.Actions.Test,
-                        Capture    => True,
-                        Err_To_Out => True,
-                        Code       => Exit_Code,
-                        Output     => Output);
-
-                     if Exit_Code /= 0 then
-                        raise Child_Failed;
-                     end if;
-                  end loop;
-               end;
-            end Custom_Test;
-
-         begin
-
-            --  Run test actions if there are any, or a default get+build
-
-            if R.On_Platform_Actions
-              (Platform.Properties,
-               (Alire.Properties.Actions.Test   => True,
-                others                          => False)).Is_Empty
-            then
-               Default_Test;
-            else
-               Custom_Test;
-            end if;
-         end Test_Action;
-
-      begin
-         Reporters.Start_Test (R);
-
-         Start := Clock;
-
-         Is_Available  := Local or else R.Is_Available (Platform.Properties);
-         Is_Resolvable := Local or else Query.Is_Resolvable
-           (R.Dependencies (Platform.Properties),
-            Platform.Properties,
-            Alire.Solutions.Empty_Valid_Solution);
-
-         if not Is_Available then
-            Reporters.End_Test (R, Testing.Unavailable, Clock - Start, No_Log);
-         elsif not Is_Resolvable then
-            Some_Failed := True;
-            Reporters.End_Test
-              (R, Testing.Unresolvable, Clock - Start, No_Log);
-         elsif not Local and then not R.Origin.Is_System and then
-           Ada.Directories.Exists (R.Base_Folder) and then
-           not Cmd.Redo
-         then
-            Reporters.End_Test (R, Testing.Skip, Clock - Start, No_Log);
-            Trace.Detail ("Skipping already tested " & R.Milestone.Image);
-         else
-            begin
-               --  Perform default or custom actions
-               Test_Action;
-
-               Reporters.End_Test (R, Testing.Pass, Clock - Start, Output);
-               Trace.Detail (Output.Flatten (Newline));
-
-            exception
-               when E : Alire.Checked_Error =>
-                  Reporters.End_Test (R, Testing.Fail, Clock - Start, Output);
-                  Trace.Detail (Output.Flatten (Newline));
-                  Some_Failed := True;
-
-                  Output.Append ("****** Checked Error raised during test:");
-                  Output.Append (Ada.Exceptions.Exception_Information (E));
-                  Output.Append ("****** TRACE END");
-
-               when Child_Failed =>
-                  Reporters.End_Test (R, Testing.Fail, Clock - Start, Output);
-                  Trace.Detail (Output.Flatten (Newline));
-                  Some_Failed := True;
-
-               when E : others =>
-                  Reporters.End_Test (R, Testing.Error, Clock - Start, Output);
-                  Trace.Detail (Output.Flatten (Newline));
-                  Some_Failed := True;
-
-                  Output.Append ("****** UNEXPECTED EXCEPTION FOLLOWS:");
-                  Output.Append (Ada.Exceptions.Exception_Information (E));
-                  Output.Append ("****** TRACE END");
-            end;
-         end if;
-
-         if not Local then
-            Make_Dir
-              (Create (+R.Base_Folder)
-               / Create (+Paths.Working_Folder_Inside_Root));
-            --  Might not exist for system/failed/skipped
-         end if;
-
-         --  For local testing we can already use the local 'alire' folder. For
-         --  batch testing instead we create one folder per release.
-         declare
-            Common_Path : constant Alire.Relative_Path :=
-                            Paths.Working_Folder_Inside_Root
-                            / Test_Name & ".log";
-         begin
-            Output.Write (if Local
-                          then Common_Path
-                          else R.Base_Folder / Common_Path);
-         end;
-      end Test_Release;
-
-   begin
-      if not Local then
-         --  These don't make much sense for single crate testing
-         Reporters.Add (Testing.Console.New_Reporter);
-         Reporters.Add (Testing.Markdown.New_Reporter);
-         Reporters.Add (Testing.Text.New_Reporter);
-      end if;
-
-      Reporters.Add (Testing.JUnit.New_Reporter);
-
-      Reporters.Start_Run
-        ((if Local
-          then Cmd.Root.Working_Folder / Test_Name
-          else Test_Name),
-         Natural (Releases.Length));
-
-      declare
-         Old_Level : constant Simple_Logging.Levels := Alire.Log_Level;
-      begin
-
-         --  While we test the releases we do not want any info level output to
-         --  interfere. So, if the level is set at the default, we temporarily
-         --  silence it.
-
-         if Old_Level = Info then
-            Alire.Log_Level := Simple_Logging.Warning;
-         end if;
-
-         if Local then
-            Test_Release (Cmd.Root.Release);
-         else
-            for R of Releases loop
-               Test_Release (R);
-            end loop;
-         end if;
-
-         Alire.Log_Level := Old_Level;
-      end;
-
-      Reporters.End_Run;
-
-      if Some_Failed then
-         if Local then
-            Reportaise_Command_Failed
-              (Alire.Errors.Wrap (
-               "Local test of "
-               & Cmd.Root.Release.Milestone.TTY_Image & " failed.",
-               "Check " & Alire.TTY.URL
-                 (Alire.Paths.Working_Folder_Inside_Root
-                  / Test_Name & ".log")
-               & " for details."));
-         else
-            Reportaise_Command_Failed ("Some releases failed to pass testing");
-         end if;
-      elsif Local then
-         Alire.Put_Success ("Test ended successfully.");
-         Alire.Put_Info ("Check log at "
-                         & TTY.URL (Cmd.Root.Working_Folder / Test_Name
-                                    & ".log"));
-      end if;
-   end Do_Test;
+      return Res;
+   exception
+      when E : Dirs.Adirs.Use_Error =>
+         pragma Unreferenced (E);
+         --  return failure if there is no parent directory left to search
+         return
+           Roots.Optional.Outcome_Failure
+             (Res.Value.Path & " has no parent directory",
+              Roots.Optional.Outside,
+              Report => False);
+   end Find_Root_With_Tests;
 
    -------------
    -- Execute --
    -------------
 
    overriding
-   procedure Execute (Cmd  : in out Command;
-                      Args :        AAA.Strings.Vector)
-   is
-      No_Args : constant Boolean := Args.Count = 0;
+   procedure Execute (Cmd : in out Command; Args : AAA.Strings.Vector) is
+      use type GNAT.Strings.String_Access;
+      use type Ada.Containers.Count_Type;
+      use Alire.Properties.Tests;
+      use Dirs;
 
-      ---------------
-      -- Not_Empty --
-      ---------------
+      All_Settings : Alire.Properties.Vector;
+   begin
+      Cmd.Requires_Workspace;
 
-      procedure Not_Empty (Item : Ada.Directories.Directory_Entry_Type;
-                           Stop : in out Boolean)
-      is
-         pragma Unreferenced (Item, Stop);
+      if Cmd.Legacy then
+         Cmd.Forbids_Structured_Output
+           ("Cannot use structured output with legacy actions");
+         Execute_Legacy (Cmd.Root);
+         return;
+      end if;
+
+      declare
+         Test_Root : Alire.Roots.Optional.Root := Cmd.Find_Root_With_Tests;
       begin
-         Reportaise_Command_Failed
-           ("Current folder is not empty, testing aborted " &
-              "(use --continue to resume a partial test)");
-      end Not_Empty;
+         if Test_Root.Is_Valid then
+            Cmd.Set (Test_Root.Value);
+         end if;
+      end;
 
-      Candidates : Alire.Releases.Containers.Release_Sets.Set;
+      All_Settings :=
+        Cmd.Root.Release.On_Platform_Properties
+          (Cmd.Root.Environment, Settings'Tag);
 
-      use Alire.Releases.Containers.Release_Sets;
+      if All_Settings.Is_Empty then
+         Trace.Warning ("no test runner defined, running legacy actions");
+         Cmd.Forbids_Structured_Output
+           ("Cannot use structured output with legacy actions");
+         Execute_Legacy (Cmd.Root);
+         return;
+      end if;
 
-      ---------------------
-      -- Find_Candidates --
-      ---------------------
-
-      procedure Find_Candidates is
-
-         --------------
-         -- Is_Match --
-         --------------
-
-         function Is_Match (Name : Alire.Crate_Name) return Boolean is
-           (for some I in Args.First_Index .. Args.Last_Index =>
-               AAA.Strings.Contains (+Name, Args (I)));
-
-      begin
-
-         --  We must go over all crates when listing is requested, or when we
-         --  need to match the search term against crate names. Otherwise, we
-         --  can directly retrieve the given crates.
-
-         if No_Args or else Cmd.Search then
-            for Crate of Alire.Index.All_Crates.all loop
-               if not Crate.Releases.Is_Empty then
-                  if No_Args or else Is_Match (Crate.Name) then
-                     if Cmd.Last then
-                        Candidates.Include (Crate.Releases.Last_Element);
-                     else
-                        for Release of Crate.Releases loop
-                           Candidates.Include (Release);
-                        end loop;
-                     end if;
-                  end if;
+      --  id selection logic
+      if Cmd.By_Id /= null and then Cmd.By_Id.all /= "" then
+         declare
+            Found : Natural := 0;
+         begin
+            for I in All_Settings.First_Index .. All_Settings.Last_Index loop
+               if Settings (All_Settings.Element (I)).Id = Cmd.By_Id.all then
+                  Found := I;
                end if;
             end loop;
-         else
-            for J in Args.First_Index .. Args.Last_Index loop
-               declare
-                  Allowed  : constant Alire.Dependencies.Dependency :=
-                               Alire.Dependencies.From_String (Args (J));
-                  Crate    : constant Alire.Crates.Crate :=
-                               Alire.Index.Crate (Allowed.Crate);
-                  Releases : constant Alire.Releases.Containers.Release_Set :=
-                               Crate.Releases;
-               begin
-                  for I in Releases.Iterate loop
-                     if Allowed.Versions.Contains (Releases (I).Version) then
-                        if not Cmd.Last or else
-                          I = Releases.Last or else
-                          not Allowed.Versions.Contains
-                            (Releases (Next (I)).Version)
-                        then
-                           Candidates.Include (Releases (I));
-                        end if;
-                     end if;
-                  end loop;
-               end;
+
+            if Found = 0 then
+               Reportaise_Command_Failed
+                 ("Could not find test runner with id '"
+                  & Cmd.By_Id.all
+                  & "'");
+            else
+               --  swap to first position and remove the rest
+               All_Settings.Swap (All_Settings.First_Index, Found);
+               All_Settings.Set_Length (1);
+            end if;
+         end;
+      end if;
+
+      if All_Settings.Length > 1 then
+         if Cmd.List then
+            Trace.Error
+              ("The --list flag cannot be used for multiple runners. Select"
+               & " a single test runner with --id. Available runners:");
+            for E of All_Settings loop
+               Trace.Always ("- " & Settings (E).Short_Image);
             end loop;
+            Reportaise_Command_Failed ("");
          end if;
-      end Find_Candidates;
+         if not (Args.Is_Empty and then Cmd.Jobs = -1) then
+            Trace.Warning
+              ("arguments cannot be forwarded to test runners when multiple"
+               & " exist.");
+         end if;
+      end if;
 
-   begin
-      --  Validate command line
-      if not Cmd.Search then
-         for I in Integer range Args.First_Index .. Args.Last_Index loop
+      if All_Settings.Length = 1
+        and then Settings (All_Settings.First_Element).Runner.Kind = External
+      then
+         if Cmd.Jobs >= 0 then
+            Trace.Warning
+              ("the --jobs flag is not forwarded to external commands. If you"
+               & " intended to pass it to an external test runner, put it"
+               & " after ""--"" in the command line.");
+         end if;
+         if Cmd.List then
+            Trace.Warning
+              ("the --list flag is not forwarded to external commands. If you"
+               & " intended to pass it to an external test runner, put it"
+               & " after ""--"" in the command line.");
+         end if;
+      end if;
+
+      for Test_Setting of All_Settings loop
+         if Dirs.Is_Directory
+              (Cmd.Root.Path / Settings (Test_Setting).Directory)
+         then
             declare
-               Cry_Me_A_River : constant Alire.Dependencies.Dependency :=
-                                  Alire.Dependencies.From_String
-                                    (Args (I)) with Unreferenced;
+               function Get_Args return AAA.Strings.Vector
+               is (if All_Settings.Length = 1
+                   then Args
+                   else AAA.Strings.Empty_Vector);
+               --  Only forward arguments if the runner is the only one.
+
+               S        : constant Settings := Settings (Test_Setting);
+               Failures : Integer;
+
+               Guard : Dirs.Guard (Enter (Cmd.Root.Path / S.Directory))
+               with Unreferenced;
+
+               Test_Root : Alire.Roots.Optional.Root :=
+                 Alire.Roots.Optional.Detect_Root
+                   (Cmd.Root.Path / S.Directory);
             begin
-               null; -- Just check that no exception is raised
+               if All_Settings.Length > 1 then
+                  Alire.Put_Info ("running test with " & S.Image);
+               end if;
+
+               case S.Runner.Kind is
+                  when Alire_Runner =>
+                     if not Test_Root.Is_Valid then
+                        Alire.Raise_Checked_Error
+                          ("cannot detect a proper crate in test directory '"
+                           & S.Directory
+                           & "' (error: "
+                           & Test_Root.Message
+                           & ")");
+                     end if;
+
+                     if Cmd.List then
+                        Alire.Test_Runner.Show_List
+                          (Test_Root.Value, Get_Args);
+                        OS_Lib.Bailout;
+                     end if;
+
+                     Failures :=
+                       Alire.Test_Runner.Run
+                         (Test_Root.Value,
+                          Get_Args,
+                          (if Cmd.Jobs < 0 then S.Jobs else Cmd.Jobs));
+
+                  when External     =>
+                     Cmd.Forbids_Structured_Output
+                       ("Cannot output structured output for external runner");
+                     Failures :=
+                       Alire.OS_Lib.Subprocess.Unchecked_Spawn
+                         (S.Runner.Command.First_Element,
+                          S.Runner.Command.Tail.Append (Get_Args),
+                          Dim_Output => False);
+
+               end case;
+
+               if Failures /= 0 then
+                  Reportaise_Command_Failed
+                    (if S.Runner.Kind = Alire_Runner
+                     then ""
+                     else "test failure");
+               end if;
             end;
-         end loop;
-      end if;
-
-      --  Validate exclusive options
-      if Cmd.Full and then (Args.Count /= 0 or else Cmd.Search) then
-         Reportaise_Command_Failed
-           ("Either use --full or specify crate names, but not both");
-      end if;
-
-      --  When doing testing over index contents, we request an empty dir
-      if not No_Args then
-         if Cmd.Cont then
-            Trace.Detail ("Resuming tests");
-         elsif Cmd.Redo then
-            Trace.Detail ("Redoing tests");
          else
-            Alire.Directories.Traverse_Tree
-              (Ada.Directories.Current_Directory, Not_Empty'Access);
+            Trace.Error ("while running " & (Settings (Test_Setting).Image));
+            Reportaise_Command_Failed
+              ("directory '"
+               & (Cmd.Root.Path / Settings (Test_Setting).Directory)
+               & "' does not exist.");
          end if;
-      end if;
+      end loop;
 
-      CLIC.User_Input.Not_Interactive := True;
-
-      --  Start testing
-      if No_Args then
-         if Cmd.Full then
-            if Cmd.Last then
-               Trace.Detail ("Testing newest release of every crate");
-            else
-               Trace.Detail ("Testing all releases");
-            end if;
-         else
-            if Cmd.Has_Root then
-               Alire.Put_Info ("Testing local crate: "
-                               & Cmd.Root.Release.Milestone.TTY_Image);
-            else
-               Reportaise_Wrong_Arguments
-                 ("Not inside a local crate and no releases specified "
-                  & "(use --full to test'em all!)");
-            end if;
-         end if;
-      end if;
-
-      --  Pre-find candidates to not have duplicate tests if overlapping
-      --  requested.
-      if No_Args then
-         Candidates.Include (Cmd.Root.Release);
-      else
-         Find_Candidates;
-
-         if Candidates.Is_Empty then
-            Reportaise_Command_Failed ("No releases for the requested crates");
-         else
-            Trace.Detail ("Testing" & Candidates.Length'Img & " releases");
-         end if;
-      end if;
-
-      Do_Test (Cmd, Candidates, No_Args);
+      Alire.Put_Success ("Successful test run");
    end Execute;
 
    ----------------------
@@ -586,23 +266,26 @@ package body Alr.Commands.Test is
    ----------------------
 
    overriding
-   function Long_Description (Cmd : Command)
-                              return AAA.Strings.Vector
-   is (AAA.Strings.Empty_Vector
-       .Append ("Tests the retrievability and buildability of all or"
-                & " specific releases. Unless "
-                & Formatter.Terminal ("--continue")
-                & " or " & Formatter.Terminal ("--redo") & " is given,"
-                & " the command expects to be run in an empty folder.")
-       .New_Line
-       .Append ("After completion, a report in text, markup and junit format"
-                & " will be available in the current directory. A complete log"
-                & " of each release building process will be available in"
-                & " respective "
-                & Formatter.Terminal ("<release>/alire/alr_test.log")
-                & " files.")
-       .New_Line
-       .Append (Crate_Version_Sets));
+   function Long_Description (Cmd : Command) return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector.Append
+         ("Run the test runner as defined in the manifest.")
+         .Append ("")
+         .Append
+            ("The built-in test runner takes an extra "
+             & Formatter.Terminal ("--jobs") & " parameter, that"
+             & " defines the maximum number of tests to run in parallel.")
+         .Append ("")
+         .Append
+            ("Extra arguments are passed to the runner as-is; in the case of"
+             & " the built-in runner, a basic filtering mechanism only"
+             & " compiles and runs the tests whose names contain one of the"
+             & " arguments.")
+         .Append ("")
+         .Append
+            ("When using a built-in runner, one can pass "
+             & Formatter.Terminal ("--list") & " to get"
+             & " ahead of time a list of tests (optionally matching the"
+             & " command line filter)."));
 
    --------------------
    -- Setup_Switches --
@@ -617,44 +300,39 @@ package body Alr.Commands.Test is
    begin
       Define_Switch
         (Config,
-         Cmd.Cont'Access,
-         Long_Switch => "--continue",
-         Help        => "Skip testing of releases already in folder");
+         Cmd.Jobs'Access,
+         "-j:",
+         "--jobs=",
+         "Run up to N tests in parallel, or as many as there are processors"
+         & " if 0",
+         Initial  => -1,
+         Default  => -1,
+         Argument => "N");
 
       Define_Switch
         (Config,
-         Cmd.Full'Access,
-         Long_Switch => "--full",
-         Help        => "Test all indexed crates");
+         Cmd.By_Id'Access,
+         "",
+         "--id=",
+         "Select a specific test runner by id",
+         Argument => "<id>");
 
       Define_Switch
         (Config,
-         Cmd.Last'Access,
-         Long_Switch => "--newest",
-         Help        => "Test only the newest release in crates");
+         Cmd.Legacy'Access,
+         "",
+         "--legacy",
+         CLIC.TTY.Error ("Deprecated")
+         & ". Force executing the legacy test actions",
+         Value => True);
 
       Define_Switch
         (Config,
-         Cmd.Redo'Access,
-         Long_Switch => "--redo",
-         Help => "Retest releases already in folder (implies "
-           & Formatter.Terminal ("--continue") & ")");
-
-      Define_Switch
-        (Config,
-         Cmd.Search'Access,
-         Long_Switch => "--search",
-         Help        => "Interpret arguments as substrings instead of " &
-           "exact crate names");
-
---        Define_Switch
---          (Config,
---           Cmd.Jobs'Access,
---           "-j:", "--jobs=",
---           "Tests up to N jobs in parallel, or as many as processors " &
---             "if 0 (default)",
---           Default => 0,
---           Argument => "N");
+         Cmd.List'Access,
+         "",
+         "--list",
+         "Show a list of matching tests without running them",
+         Value => True);
    end Setup_Switches;
 
 end Alr.Commands.Test;

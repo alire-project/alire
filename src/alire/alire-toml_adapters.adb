@@ -1,4 +1,34 @@
+with Alire.Utils;
+
 package body Alire.TOML_Adapters is
+
+   ------------
+   -- Escape --
+   ------------
+
+   function Escape (S : String) return String
+   --  We trick the TOML exporter to get a valid escaped string
+   is
+      use TOML;
+      Table : constant TOML_Value := Create_Table;
+   begin
+      Table.Set ("key", TOML.Create_String (S));
+
+      --  Remove excess whitespace and quotation
+      declare
+         Result : constant String :=
+                    Trim
+                      (Trim
+                         (Tail (TOML.Dump_As_String (Table), '='),
+                          ASCII.LF));
+      begin
+         --  Trimming the TOML quotes at the extremes fails for a
+         --  string with quotes at the extremes of the string because
+         --  Ada.Strings.Trim removes those too! So just remove the
+         --  quotes we know are there.
+         return Result (Result'First + 1 .. Result'Last - 1);
+      end;
+   end Escape;
 
    --------------
    -- Finalize --
@@ -10,6 +40,10 @@ package body Alire.TOML_Adapters is
    begin
       --  Manually close this error scope
       Errors.Close;
+
+   exception
+      when E : others =>
+         Alire.Utils.Finalize_Exception (E);
    end Finalize;
 
    ------------
@@ -62,7 +96,7 @@ package body Alire.TOML_Adapters is
    is
    begin
       if Recover then
-         Recoverable_Error (Message, Recover);
+         Recoverable_User_Error (Message, Recover);
       else
          Queue.Checked_Error (Message);
       end if;
@@ -80,7 +114,8 @@ package body Alire.TOML_Adapters is
       Queue.Assert_Key (Key, Kind);
       return Value : TOML.TOML_Value do
          if not Queue.Pop (Key, Value) then
-            raise Program_Error with ("missing key, but it was just checked?");
+            raise Program_Error with
+              "missing key, but it was just checked?";
          end if;
       end return;
    end Checked_Pop;
@@ -103,12 +138,16 @@ package body Alire.TOML_Adapters is
    -- From --
    ----------
 
-   function From (Value   : TOML.TOML_Value;
-                  Context : String) return Key_Queue
+   function From (Value    : TOML.TOML_Value;
+                  Context  : String;
+                  Metadata : Loading.Metadata := Loading.No_Metadata)
+                  return Key_Queue
    is
    begin
       return This : constant Key_Queue :=
-        (Ada.Finalization.Limited_Controlled with Value => Value)
+        (Ada.Finalization.Limited_Controlled with
+           Value    => Value,
+           Metadata => Metadata)
       do
          Errors.Open (Context);
       end return;
@@ -118,11 +157,14 @@ package body Alire.TOML_Adapters is
    -- From --
    ----------
 
-   function From (Key     : String;
-                  Value   : TOML.TOML_Value;
-                  Context : String) return Key_Queue
+   function From (Key      : String;
+                  Value    : TOML.TOML_Value;
+                  Context  : String;
+                  Metadata : Loading.Metadata := Loading.No_Metadata)
+                  return Key_Queue
    is (From (Create_Table (Key, Value),
-             Context));
+             Context,
+             Metadata));
 
    -------------
    -- Descend --
@@ -131,7 +173,7 @@ package body Alire.TOML_Adapters is
    function Descend (Parent  : Key_Queue;
                      Value   : TOML.TOML_Value;
                      Context : String) return Key_Queue is
-     (From (Value, Context));
+     (From (Value, Context, Parent.Metadata));
 
    ------------------
    -- Merge_Tables --
@@ -146,11 +188,12 @@ package body Alire.TOML_Adapters is
       is
          pragma Unreferenced (Key);
       begin
-         if L.Kind = TOML_Table and then R.Kind = L.Kind then
+         if L.Kind = TOML_Table and then R.Kind = TOML_Table then
             return TOML.Merge (L, R, Merge_Internal'Access);
          else
-            Raise_Checked_Error
-              ("Ill-shaped TOML information cannot be merged");
+            raise Program_Error with
+              ("Ill-shaped TOML information cannot be merged: "
+               & "left is " & L.Kind'Image & ", right is " & R.Kind'Image);
          end if;
       end Merge_Internal;
    begin
@@ -257,8 +300,8 @@ package body Alire.TOML_Adapters is
    ----------------------
 
    function Pop_Single_Table (Queue : Key_Queue;
-                              Value : out TOML.TOML_Value;
-                              Kind  : TOML.Any_Value_Kind) return String
+                              Value : out TOML.TOML_Value)
+                              return String
    is
       use TOML;
    begin
@@ -274,14 +317,28 @@ package body Alire.TOML_Adapters is
 
       Value := Queue.Value.Get (Queue.Value.Keys (1));
 
+      return Key : constant String := +Queue.Value.Keys (1) do
+         Queue.Value.Unset (Queue.Value.Keys (1));
+      end return;
+   end Pop_Single_Table;
+
+   ----------------------
+   -- Pop_Single_Table --
+   ----------------------
+
+   function Pop_Single_Table (Queue : Key_Queue;
+                              Value : out TOML.TOML_Value;
+                              Kind  : TOML.Any_Value_Kind) return String
+   is
+      use TOML;
+      Key : constant String := Queue.Pop_Single_Table (Value);
+   begin
       if Value.Kind /= Kind then
          Queue.Checked_Error ("expected a single entry of type "
                               & Kind'Img & ", but got a " & Value.Kind'Img);
       end if;
 
-      return Key : constant String := +Queue.Value.Keys (1) do
-         Queue.Value.Unset (Queue.Value.Keys (1));
-      end return;
+      return Key;
    end Pop_Single_Table;
 
    -----------------------
@@ -307,7 +364,7 @@ package body Alire.TOML_Adapters is
 
       if Errored then
          if Force then
-            Recoverable_Error (+Message);
+            Recoverable_User_Error (+Message);
             return Outcome_Success;
          else
             return Outcome_Failure (+Message);

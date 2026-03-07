@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
 # Import reusable bits
-pushd $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) > /dev/null
+pushd "$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )" > /dev/null || exit 1
     . functions.sh
-popd > /dev/null
+popd > /dev/null || exit 1
 
-export ALIRE_OS=$(get_OS)
+ALIRE_BUILD_JOBS="${ALIRE_BUILD_JOBS:-0}"
+ALIRE_OS=$(get_OS); export ALIRE_OS
 
-echo Building with ALIRE_OS=$ALIRE_OS...
-gprbuild -j0 -r -p -P `dirname $0`/../alr_env.gpr "$@"
+scripts/version-patcher.sh
+
+echo "Building with ALIRE_OS=$ALIRE_OS and $(gnat --version | head -1)"
+gprbuild "-j$ALIRE_BUILD_JOBS" -r -p -P "$(dirname $0)/../alr_env.gpr" "$@"

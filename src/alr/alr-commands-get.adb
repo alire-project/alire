@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.Config.Builtins;
+with Alire.Settings.Builtins;
 with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Index;
@@ -11,6 +11,8 @@ with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
 with Alire.Utils.Switches;
+
+with Alr.Common;
 
 with CLIC.User_Input;
 
@@ -96,7 +98,7 @@ package body Alr.Commands.Get is
             Solution := Query.Resolve
               (Rel.Dependencies (Platform.Properties),
                Platform.Properties,
-               Alire.Solutions.Empty_Valid_Solution);
+               Alire.Solutions.Empty_Valid_Solution).Solution;
             Diff := Alire.Solutions.Empty_Valid_Solution.Changes (Solution);
 
             if not Solution.Is_Complete then
@@ -161,8 +163,8 @@ package body Alr.Commands.Get is
             Trace.Info ("Because --only was used, automatic dependency" &
                           " retrieval is disabled in this workspace:" &
                           " use `alr update` to apply dependency changes");
-            Alire.Config.Builtins.Update_Manually_Only.Set (Alire.Config.Local,
-                                                            True);
+            Alire.Settings.Builtins.Update_Manually_Only.Set
+              (Alire.Settings.Local, True);
 
             if not CLIC.User_Input.Not_Interactive then
                Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
@@ -185,14 +187,24 @@ package body Alr.Commands.Get is
                Build_OK := True;
 
             else
+               --  Require the workspace to ensure the same checks as in a
+               --  manual `get` followed by `cd` and `build` are performed.
+
+               Cmd.Optional_Root.Discard;
+               --  It will be reloaded next. This is needed or otherwise the
+               --  following call would do nothing (it would see a proper root
+               --  already available so it would just return).
+
+               Cmd.Requires_Workspace;
+
                --  Build in release mode for a `get --build`
                Cmd.Root.Set_Build_Profile
-                 (Crate   =>  Cmd.Root.Name,
-                  Profile =>  Alire.Utils.Switches.Release);
+                 (Crate   => Cmd.Root.Name,
+                  Profile => Alire.Utils.Switches.Release);
 
                Build_OK := Cmd.Root.Build
-                 (Cmd_Args         =>  AAA.Strings.Empty_Vector,
-                  Saved_Profiles   => False);
+                 (Cmd_Args       => AAA.Strings.Empty_Vector,
+                  Saved_Profiles => False);
             end if;
          else
             Build_OK := True;
@@ -328,12 +340,12 @@ package body Alr.Commands.Get is
          Allowed : constant Alire.Dependencies.Dependency :=
            Alire.Dependencies.From_String (Args (1));
       begin
-         if Cmd.Build and Cmd.Only then
+         if Cmd.Build and then Cmd.Only then
             Reportaise_Wrong_Arguments
               ("--only is incompatible with --build");
          end if;
 
-         if Cmd.Dirname and (Cmd.Build or else Cmd.Only) then
+         if Cmd.Dirname and then (Cmd.Build or else Cmd.Only) then
             Reportaise_Wrong_Arguments
               ("--dirname is incompatible with other switches");
          end if;
@@ -341,8 +353,18 @@ package body Alr.Commands.Get is
          Cmd.Auto_Update_Index;
 
          if not Alire.Index.Exists (Allowed.Crate) then
-            Reportaise_Command_Failed
-              ("Crate [" & Args (1) & "] does not exist in the index.");
+            --  Even if the crate does not exist, it may be an abstract crate
+            --  provided by some others (e.g. gnat -> gnat_native), so inform
+            --  about it rather than saying it doesn't exist.
+            if Common.Show_Providers (Allowed) then
+               return;
+            else
+               Reportaise_Command_Failed
+                 ("Crate [" & Allowed.Crate.As_String
+                  & "] does not exist in the index. "
+                  & "Use `alr search " & Allowed.Crate.As_String
+                  & "` for similar names.");
+            end if;
          end if;
 
          Check_Unavailable_External (Allowed.Crate);

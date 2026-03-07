@@ -25,7 +25,7 @@ os.system('git ' + gitconfig + ' commit -q -m initialize')
 os.chdir(start)
 
 # Enable the warning we are trying to test
-run_alr("config", "--global", "--set", "warning.old_index", "true")
+run_alr("settings", "--global", "--set", "warning.old_index", "true")
 
 # Run the test. No alr version should use 'master' for the community index.
 # This produces a warning only, because the index version is valid.

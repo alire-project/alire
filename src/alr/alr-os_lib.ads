@@ -19,13 +19,6 @@ package Alr.OS_Lib is
      (GNAT.OS_Lib."/="  (GNAT.OS_Lib.Locate_Exec_On_Path (File), null));
    --  FIXME: memory leak in this call
 
-   --  Process spawning
-
-   procedure Spawn_Raw (Command : String; Arguments : String := "");
-   --  Direct launch, without any shenanigangs on output, for example for
-   --  respawning the canonical version.
-   --  Raises CHILD_FAILED if exit code /= 0.
-
    --  OS PORTABLE FUNCTIONS
 
    procedure Bailout (Code : Integer := 0) renames Alire.OS_Lib.Bailout;

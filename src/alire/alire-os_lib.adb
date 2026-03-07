@@ -6,8 +6,14 @@ package body Alire.OS_Lib is
    -- "/" --
    ---------
 
-   function "/" (L, R : String) return String is
-     (L & GNAT.OS_Lib.Directory_Separator & R);
+   function "/" (L : Any_Path; R : Relative_Path) return Any_Path is
+     (L
+      & (if R /= "" and then L (L'Last) /= GNAT.OS_Lib.Directory_Separator
+         then "" & GNAT.OS_Lib.Directory_Separator
+         else "")
+      & (if R /= ""
+         then  R
+         else ""));
 
    -------------
    -- Bailout --
@@ -60,5 +66,22 @@ package body Alire.OS_Lib is
       Trace.Debug ("Setenv " & Name & "=" & Value);
       GNAT.OS_Lib.Setenv (Name, Value);
    end Setenv;
+
+   -------------------------
+   -- Locate_Exec_On_Path --
+   -------------------------
+
+   function Locate_Exec_On_Path (Exec_Name : String) return String is
+      Located : GNAT.OS_Lib.String_Access :=
+                  GNAT.OS_Lib.Locate_Exec_On_Path (Exec_Name);
+   begin
+      if Located not in null then
+         return Result : constant String := Located.all do
+            GNAT.OS_Lib.Free (Located);
+         end return;
+      else
+         return "";
+      end if;
+   end Locate_Exec_On_Path;
 
 end Alire.OS_Lib;

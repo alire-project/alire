@@ -114,7 +114,8 @@ create_chroot_system() {
   pushd "${_newalire}" > /dev/null
 
 	mkdir -p bin/
-	cp -r "$ALR_INSTALL_DIR"/* .
+  echo "Copying from ${ALR_INSTALL_DIR} to $PWD" | tee -a "${_log}"
+	cp -rv "$ALR_INSTALL_DIR"/* .
 
 	mkdir -p share/alire/
 	cp "${_thisdir}/alr_icon.ico" share/alire/
@@ -126,6 +127,15 @@ then
 	echo "Please set \$ALR_INSTALL_DIR"
 	exit 1
 fi
+
+# Verify it is a folder
+if [ ! -d "$ALR_INSTALL_DIR" ]
+then
+  echo "$ALR_INSTALL_DIR is not a folder"
+  ls -alF "$ALR_INSTALL_DIR"
+  exit 1
+fi
+
 if [[ -z "$ALR_INSTALL_OS" ]]
 then
 	echo "Please set \$ALR_INSTALL_OS"

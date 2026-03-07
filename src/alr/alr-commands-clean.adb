@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.Config.Edit;
+with Alire.Settings.Edit;
 with Alire.Directories;
 with Alire.Paths;
 with Alire.Platforms.Current;
@@ -42,7 +42,7 @@ package body Alr.Commands.Clean is
       -- Add_Target --
       ----------------
 
-      procedure Add_Target (Item        : Ada.Directories.Directory_Entry_Type;
+      procedure Add_Target (Item        : Alire.Any_Path;
                             Unused_Stop : in out Boolean)
       is
          use Ada.Directories;
@@ -66,7 +66,7 @@ package body Alr.Commands.Clean is
       --  Configuration-wide cache, where interrupted binary downloads dwell...
 
       Alire.Directories.Traverse_Tree
-        (Start   => Alire.Config.Edit.Path,
+        (Start   => Alire.Settings.Edit.Path,
          Doing   => Add_Target'Access,
          Recurse => True);
 
@@ -119,6 +119,7 @@ package body Alr.Commands.Clean is
    is
       use AAA.Strings;
    begin
+      Cmd.Forbids_Structured_Output;
 
       if not (Cmd.Cache or else Cmd.Temp) then
          Cmd.Requires_Workspace;

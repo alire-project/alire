@@ -3,6 +3,7 @@ with "ada_toml";
 with "alire";
 with "alire_common";
 with "ajunitgen";
+with "resources";
 with "semantic_versioning";
 with "simple_logging";
 with "uri_ada";
@@ -14,6 +15,7 @@ project Alr is
 
    case Alire_Common.Host_Os is
       when "freebsd" => Src_Dirs := Src_Dirs & ("src/alr/os_linux");
+      when "openbsd" => Src_Dirs := Src_Dirs & ("src/alr/os_linux");
       when "linux"   => Src_Dirs := Src_Dirs & ("src/alr/os_linux");
       when "macos"   => Src_Dirs := Src_Dirs & ("src/alr/os_macos");
       when "windows" => Src_Dirs := Src_Dirs & ("src/alr/os_windows");
@@ -35,6 +37,7 @@ project Alr is
    end Builder;
 
    package Binder renames Alire_Common.Binder;
+   package Linker renames Alire_Common.Linker;
    package Ide renames Alire_Common.Ide;
 
 end Alr;

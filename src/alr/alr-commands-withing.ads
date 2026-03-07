@@ -29,7 +29,8 @@ package Alr.Commands.Withing is
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
      ("[{ [--del] <crate>[versions]..."
       & " | --from <gpr_file>..."
-      & " | <crate>[versions] --use <path> [--commit REF] [--branch NAME]} ]"
+      & " | <crate>[versions] --use <path> "
+      & "[--commit REF] [--branch NAME] [--subdir REL_PATH]} ]"
       & " | --solve | --tree | --versions");
 
 private
@@ -37,6 +38,7 @@ private
    type Command is new Commands.Command with record
       Branch   : aliased GNAT.Strings.String_Access;
       Commit   : aliased GNAT.Strings.String_Access;
+      Subdir   : aliased GNAT.Strings.String_Access;
       Del      : aliased Boolean := False;
       From     : aliased Boolean := False;
       Graph    : aliased Boolean := False;

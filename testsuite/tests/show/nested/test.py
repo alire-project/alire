@@ -17,7 +17,7 @@ assert_match(".*Found 1 nested crate in .*:\n"
 # After entering the crate, it is no longer nested and shouldn't be detected
 
 os.chdir("xxx")
-assert_match("\s*",
+assert_match(r"\s*",
              run_alr("show", "--nested", quiet=False).out)
 
 # If we initialize another crate without entering it, it should again be

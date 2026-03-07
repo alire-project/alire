@@ -1,357 +1,154 @@
 with AAA.Text_IO;
 
-with Ada.Directories;
 with Ada.Wide_Wide_Text_IO;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Alire.Config.Builtins;
+with Alire.Directories;
+with Alire.Paths;
+with Alire.Settings.Builtins;
+with Alire.Roots.Optional;
+with Alire.Templates.Builtins;
 with Alire.Utils.User_Input.Query_Config;
+
 with CLIC.User_Input;
-
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-
-with TOML;
 
 with SPDX;
 with CLIC.TTY; use CLIC.TTY;
 
 package body Alr.Commands.Init is
 
+   package Dirs renames Alire.Directories;
+   package Templates renames Alire.Templates;
+   package TIO renames Ada.Wide_Wide_Text_IO;
    package UI renames Alire.Utils.User_Input;
+
+   subtype Crate_Init_Info is Templates.Builtins.Crate_Init_Info;
 
    type Crate_Kind is (Library, Binary);
 
-   type Crate_Init_Info is record
-      Name         : Unbounded_String;
-      Kind         : Crate_Kind := Library;
-      GitHub_Login : Unbounded_String;
-      Username     : Unbounded_String;
-      Email        : Unbounded_String;
-      Licenses     : Unbounded_String;
-      Description  : Unbounded_String;
-      Website      : Unbounded_String;
-      Tags         : AAA.Strings.Vector;
-   end record;
+   Switch_Github : constant String := "--github";
 
    --------------
    -- Generate --
    --------------
 
    procedure Generate (Cmd  : Command;
-                       Info : Crate_Init_Info)
+                       Info : Alire.Templates.Builtins.Crate_Init_Info)
    is
+      use Dirs.Operators;
 
-      package TIO renames Ada.Wide_Wide_Text_IO;
-      use AAA.Strings;
+      For_Library : constant Boolean := Info.Is_Library;
+      Name        : constant Alire.Crate_Name := +To_String (Info.Name);
 
-      For_Library : constant Boolean := Info.Kind = Library;
-      Name        : constant String := To_String (Info.Name);
-      Lower_Name  : constant String := AAA.Strings.To_Lower_Case (Name);
-      Upper_Name  : constant String := AAA.Strings.To_Upper_Case (Name);
-      Mixed_Name  : constant String := AAA.Strings.To_Mixed_Case (Name);
-
-      Directory     : constant Virtual_File :=
+      Directory   : constant Alire.Absolute_Path :=
         (if Cmd.In_Place
-         then Get_Current_Dir
-         else Create (+Name, Normalize => True));
-      Src_Directory : constant Virtual_File := Directory / "src";
-      Share_Directory : constant Virtual_File :=
-         Directory / "share" / Filesystem_String (Lower_Name);
+         then Dirs.Current
+         else Dirs.Full_Name (Name.As_String));
+      Test_Directory : constant Alire.Absolute_Path :=
+         Directory / Alire.Paths.Default_Tests_Folder;
 
-      File : TIO.File_Type;
+      ---------------------
+      -- Generate_Config --
+      ---------------------
 
-      function Create (Filename : String) return Boolean;
-      --  Return False if the file already exists
-
-      procedure Put_New_Line;
-      procedure Put_Line (S : String);
-      --  Shortcuts to write to File
-
-      function Escape (S : String) return String
-      --  We trick the TOML exporter to get a valid escaped string
-      is
-         use TOML;
-         Table : constant TOML_Value := Create_Table;
+      procedure Generate_Config is
+         Root : Alire.Roots.Optional.Root :=
+                  Alire.Roots.Optional.Detect_Root (Directory);
       begin
-         Table.Set ("key", TOML.Create_String (S));
+         Root.Value.Build_Prepare (Saved_Profiles => False,
+                                   Force_Regen    => False);
+      end Generate_Config;
 
-         --  Remove excess whitespace and quotation
-         return
-           Trim
-             (Trim
-                (Trim (Tail (TOML.Dump_As_String (Table), '=')),
-                 ASCII.LF),
-              '"');
-      end Escape;
+      use Alire;
 
-      function Q (S : String) return String is ("""" & Escape (S) & """");
-      --  Quote string
+      -------------------------
+      -- Generate_Main_Crate --
+      -------------------------
 
-      function Q (S : Unbounded_String) return String
-      is (Q (To_String (S)));
-      --  Quote string
-
-      function Arr (S : String) return String is ("[" & S & "]");
-      --  Wrap string into TOML array
-
-      function Q_Arr (Arr : AAA.Strings.Vector) return String
-      is (if Arr.Is_Empty
-          then "[]"
-          else "[""" & Arr.Flatten (""", """) & """]");
-      --  String vector to TOML array of strings
-
-      procedure Generate_Project_File;
-      --  Generate a project file for this crate
-
-      procedure Generate_Root_Package;
-      --  Generate the specification for the root package of this crate
-
-      procedure Generate_Program_Main;
-      --  Generate the procedure body for the program main of this crate
-
-      procedure Generate_Gitignore;
-      --  Generate or append .gitignore
-
-      procedure Generate_Manifest;
-      --  Generates the initial manifest by hand. This is more legible than
-      --  exporting using To_TOML functions. We still use TOML encoding for
-      --  the generated strings to be on the safe side.
-
-      ---------------------------
-      -- Generate_Project_File --
-      ---------------------------
-
-      procedure Generate_Project_File is
-         Filename : constant String :=
-            +Full_Name (Directory / (+Lower_Name & ".gpr"));
+      procedure Generate_Main_Crate is
       begin
-         --  Use more than 80 columns for more readable strings
-         pragma Style_Checks ("M200");
-
-         --  Main project file
-         if not Create (Filename) then
-            Trace.Warning ("Cannot create '" & Filename & "'");
-            return;
-         end if;
-         Put_Line ("with ""config/" & Lower_Name & "_config.gpr"";");
-         Put_Line ("project " & Mixed_Name & " is");
-         Put_New_Line;
-         if For_Library then
-            Put_Line ("   for Library_Name use """ & Mixed_Name & """;");
-            Put_Line ("   for Library_Version use Project'Library_Name & "".so."" & " & Mixed_Name & "_Config.Crate_Version;");
-            Put_New_Line;
-         end if;
-         Put_Line ("   for Source_Dirs use (""src/"", ""config/"");");
-         Put_Line ("   for Object_Dir use ""obj/"" & " & Mixed_Name & "_Config.Build_Profile;");
-         Put_Line ("   for Create_Missing_Dirs use ""True"";");
-         if For_Library then
-            Put_Line ("   for Library_Dir use ""lib"";");
-            Put_New_Line;
-            Put_Line ("   type Library_Type_Type is " &
-                        "(""relocatable"", ""static"", ""static-pic"");");
-            Put_Line ("   Library_Type : Library_Type_Type :=");
-            Put_Line ("     external (""" & Upper_Name & "_LIBRARY_TYPE"", external (""LIBRARY_TYPE"", ""static""));");
-            Put_Line ("   for Library_Kind use Library_Type;");
-         else
-            Put_Line ("   for Exec_Dir use ""bin"";");
-            Put_Line ("   for Main use (""" & Lower_Name & ".adb"");");
-         end if;
-         Put_New_Line;
-         Put_Line ("   package Compiler is");
-         Put_Line ("      for Default_Switches (""Ada"") use " & Mixed_Name & "_Config.Ada_Compiler_Switches;");
-         Put_Line ("   end Compiler;");
-         Put_New_Line;
-         Put_Line ("   package Binder is");
-         Put_Line ("      for Switches (""Ada"") use (""-Es""); --  Symbolic traceback");
-         Put_Line ("   end Binder;");
-         Put_New_Line;
-         Put_Line ("   package Install is");
-         Put_Line ("      for Artifacts (""."") use (""share"");");
-         Put_Line ("   end Install;");
-         Put_New_Line;
-         TIO.Put (File, WW ("end " & Mixed_Name & ";"));
-         pragma Style_Checks ("M80");
-
-         TIO.Close (File);
-      end Generate_Project_File;
-
-      ---------------------------
-      -- Generate_Root_Package --
-      ---------------------------
-
-      procedure Generate_Root_Package is
-         Filename : constant String :=
-            +Full_Name (Src_Directory / (+Lower_Name & ".ads"));
-      begin
-         if not Create (Filename) then
-            return;
-         end if;
-         Put_Line ("package " & Mixed_Name & " is");
-         Put_New_Line;
-         TIO.Put (File, WW ("end " & Mixed_Name & ";"));
-         TIO.Close (File);
-      end Generate_Root_Package;
-
-      ---------------------------
-      -- Generate_Program_Main --
-      ---------------------------
-
-      procedure Generate_Program_Main is
-         Filename : constant String :=
-            +Full_Name (Src_Directory / (+Lower_Name & ".adb"));
-      begin
-         if not Create (Filename) then
-            return;
-         end if;
-         Put_Line ("procedure " & Mixed_Name & " is");
-         Put_Line ("begin");
-         Put_Line ("   null;");
-         TIO.Put (File, WW ("end " & Mixed_Name & ";"));
-         TIO.Close (File);
-      end Generate_Program_Main;
-
-      ------------------------
-      -- Generate_Gitignore --
-      ------------------------
-
-      procedure Generate_Gitignore is
-         Filename : constant String :=
-            +Full_Name (Directory / ".gitignore");
-      begin
-         if Ada.Directories.Exists (Filename) then
-            TIO.Open (File, TIO.Append_File, Filename);
-         else
-            TIO.Create (File, TIO.Out_File, Filename);
-         end if;
-
-         Put_Line ("/obj/");
-         if For_Library then
-            Put_Line ("/lib/");
-         else
-            Put_Line ("/bin/");
-         end if;
-         Put_Line ("/alire/");
-         Put_Line ("/config/");
-         TIO.Close (File);
-      end Generate_Gitignore;
+         Templates.Translate_Tree
+           (Directory,
+            (if For_Library
+             then Templates.Builtins.Crate_Lib
+             else Templates.Builtins.Crate_Bin),
+            Templates.Builtins.Init_Crate_Translation (Info));
+      end Generate_Main_Crate;
 
       -----------------------
       -- Generate_Manifest --
       -----------------------
 
       procedure Generate_Manifest is
-         use Alire.Config;
       begin
-         if Builtins.User_Email.Is_Empty or else
-           Builtins.User_Name.Is_Empty or else
-           Builtins.User_Github_Login.Is_Empty
-         then
-            AAA.Text_IO.Put_Paragraph
-              ("Alire needs some user information to initialize the crate"
-               & " author and maintainer, for eventual submission to"
-               & " the Alire community index. This information will be"
-               & " interactively requested now.");
-            TIO.New_Line;
-            TIO.Put_Line
-              ("You can edit this information at any time with 'alr config'");
-            TIO.New_Line;
-         end if;
-
-         declare
-            --  Retrieve initial values from config or user. Only the name may
-            --  require encoding, as emails and logins cannot contain strange
-            --  characters.
-            Login    : constant String := To_String (Info.GitHub_Login);
-            Username : constant String := To_String (Info.Username);
-            Email    : constant String := To_String (Info.Email);
-            Filename : constant String :=
-              +Full_Name (Directory / (+Alire.Roots.Crate_File_Name));
-         begin
-            if not Create (Filename) then
-               Reportaise_Command_Failed ("Cannot create '" & Filename & "'");
-            end if;
-            Put_Line ("name = " & Q (Lower_Name));
-            Put_Line ("description = " & Q (Info.Description));
-            Put_Line ("version = " & Q ("0.1.0-dev"));
-            Put_New_Line;
-            Put_Line ("authors = " & Arr (Q (Username)));
-            Put_Line ("maintainers = "
-                      & Arr (Q (Username & " <" & Email & ">")));
-            Put_Line ("maintainers-logins = " & Arr (Q (Login)));
-            Put_Line ("licenses = " & Q (Info.Licenses));
-            Put_Line ("website = " & Q (Info.Website));
-            Put_Line ("tags = " & Q_Arr (Info.Tags));
-         end;
-
-         if Cmd.Bin then
-            Put_New_Line;
-            Put_Line ("executables = " & Arr (Q (Lower_Name)));
-         end if;
-
-         TIO.Close (File);
+         Templates.Translate_Tree
+           (Directory,
+            (if For_Library
+             then Templates.Builtins.Crate_Lib_No_Skel
+             else Templates.Builtins.Crate_Bin_No_Skel),
+            Templates.Builtins.Init_Crate_Translation (Info));
       end Generate_Manifest;
 
-      ------------
-      -- Create --
-      ------------
+      -------------------------
+      -- Generate_Test_Crate --
+      -------------------------
 
-      function Create (Filename : String) return Boolean is
+      procedure Generate_Test_Crate is
       begin
-         if Ada.Directories.Exists (Filename) then
-            Trace.Warning (Filename & " already exists.");
-            return False;
+         if Info.With_Test then
+            Templates.Translate_Tree
+              (Test_Directory,
+               Templates.Builtins.Crate_Test,
+               Templates.Builtins.Init_Crate_Translation (Info));
          end if;
+      end Generate_Test_Crate;
 
-         TIO.Create (File, TIO.Out_File, Filename);
+      ---------------------------
+      -- Generate_Github_Files --
+      ---------------------------
 
-         return True;
-      end Create;
-
-      ------------------
-      -- Put_New_Line --
-      ------------------
-
-      procedure Put_New_Line is
+      procedure Generate_Github_Files is
       begin
-         TIO.New_Line (File);
-      end Put_New_Line;
-
-      --------------
-      -- Put_Line --
-      --------------
-
-      procedure Put_Line (S : String) is
-      begin
-         TIO.Put_Line (File, WW (S));
-      end Put_Line;
+         Templates.Translate_Tree
+           (Directory,
+            Templates.Builtins.Github,
+            Templates.Builtins.Init_Crate_Translation (Info));
+      end Generate_Github_Files;
 
    begin
-      --  Crate dir
-      Directory.Make_Dir;
 
-      if not Cmd.No_Skel then
-         Generate_Project_File;
-         Src_Directory.Make_Dir;
-         Share_Directory.Make_Dir;
-         if For_Library then
-            Generate_Root_Package;
-         else
-            Generate_Program_Main;
-         end if;
-         Generate_Gitignore;
+      if Cmd.No_Skel then
+         Generate_Manifest;
+      else
+         Generate_Main_Crate;
       end if;
 
-      Generate_Manifest;
+      if not Cmd.No_Skel then
+         Generate_Config;
 
-      Alire.Put_Success (TTY.Emph (Lower_Name) & " initialized successfully.");
+         if not Cmd.No_Test then
+            Generate_Test_Crate;
+         end if;
+      end if;
+
+      if To_Boolean (Image   => Cmd.Github,
+                     Switch  => Switch_Github,
+                     Default => Alire.Settings.Builtins.Init_Github_Files.Get)
+      then
+         Generate_Github_Files;
+      end if;
+
+      Alire.Put_Success (TTY.Emph (Name.As_String)
+                         & " initialized successfully.");
    end Generate;
 
    ----------------------
    -- Query_Crate_Name --
    ----------------------
 
-   procedure Query_Crate_Name (Args :        AAA.Strings.Vector;
-                               Info : in out Crate_Init_Info)
+   procedure Query_Crate_Name
+     (Args :        AAA.Strings.Vector;
+      Info : in out Alire.Templates.Builtins.Crate_Init_Info)
    is
    begin
       case Args.Length is
@@ -422,7 +219,8 @@ package body Alr.Commands.Init is
    -- Query_License --
    -------------------
 
-   procedure Query_License (Info : in out Crate_Init_Info) is
+   procedure Query_License (Info : in out Templates.Builtins.Crate_Init_Info)
+   is
       License_Other : constant String := "Other...";
 
       License_Vect : constant AAA.Strings.Vector :=
@@ -433,11 +231,12 @@ package body Alr.Commands.Init is
         .Append ("Apache-2.0")
         .Append ("BSD-3-Clause")
         .Append ("LGPL-3.0-or-later")
-        .Append ("GPL-3.0-or-later WITH GPL-3.0-with-GCC-exception")
+        .Append ("GPL-3.0-or-later WITH GCC-exception-3.1")
         .Append ("GPL-3.0-or-later")
         .Append (License_Other);
 
-      Answer : Natural;
+      Answer : Natural := 0;
+      function Chosen return String is (License_Vect (Answer));
    begin
       Answer := CLIC.User_Input.Query_Multi
         (Question  => "Select a software " & Emph ("license") &
@@ -456,9 +255,30 @@ package body Alr.Commands.Init is
                  Default    => "",
                  Validation => License_Validation'Access));
       else
-         Info.Licenses := To_Unbounded_String (License_Vect (Answer));
+         if not License_Validation (Chosen) then
+            raise Program_Error with
+              "Invalid license among choices: " & Chosen;
+         end if;
+         Info.Licenses := To_Unbounded_String (Chosen);
       end if;
    end Query_License;
+
+   ------------------------
+   -- Query_GitHub_Login --
+   ------------------------
+
+   procedure Query_GitHub_Login (Info : in out Crate_Init_Info) is
+   begin
+      if Alire.Settings.Builtins.User_Github_Login.Is_Empty then
+         AAA.Text_IO.Put_Paragraph
+           ("If you intend to publish this crate to the community index, you "
+            & "will need a GitHub account with which to submit a pull "
+            & "request, which can optionally be configured now (leave blank "
+            & "to skip).");
+      end if;
+      Info.GitHub_Login := To_Unbounded_String
+         (UI.Query_Config.User_GitHub_Login);
+   end Query_GitHub_Login;
 
    ----------------------
    -- Query_Crate_Kind --
@@ -477,7 +297,7 @@ package body Alr.Commands.Init is
            " you want to create:",
          Choices   => Kinds);
 
-      Info.Kind := Crate_Kind'Value (Kinds (Answer));
+      Info.Is_Library := Library = Crate_Kind'Value (Kinds (Answer));
    end Query_Crate_Kind;
 
    ----------------------------
@@ -567,19 +387,34 @@ package body Alr.Commands.Init is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      Info : Crate_Init_Info;
+      use Alire.Settings;
+      Info : Alire.Templates.Builtins.Crate_Init_Info;
+      User_Not_Already_Configured : constant Boolean :=
+         Builtins.User_Email.Is_Empty
+         or else Builtins.User_Name.Is_Empty
+         or else Builtins.User_Github_Login.Is_Empty;
+
+      Unused : Boolean;
    begin
+      Cmd.Forbids_Structured_Output;
 
       if Cmd.Bin and then Cmd.Lib then
          Reportaise_Wrong_Arguments ("Please provide either --bin or --lib");
       end if;
 
+      --  Validate --github (To_Boolean does the checks)
+      Unused := To_Boolean (Image   => Cmd.Github,
+                            Switch  => Switch_Github,
+                            Default => False);
+
+      Info.With_Test := not (Cmd.No_Test or else Cmd.No_Skel);
+
       Query_Crate_Name (Args, Info);
 
       if Cmd.Bin then
-         Info.Kind := Binary;
+         Info.Is_Library := False;
       elsif Cmd.Lib then
-         Info.Kind := Library;
+         Info.Is_Library := True;
       else
          Query_Crate_Kind (Info);
       end if;
@@ -587,10 +422,29 @@ package body Alr.Commands.Init is
       Query_Description (Info);
 
       --  Query User info
+      if User_Not_Already_Configured then
+         TIO.New_Line;
+         AAA.Text_IO.Put_Paragraph
+           ("Alire needs some user information to prepare the crate for "
+            & "eventual submission to an index, which will be interactively "
+            & "requested now.");
+         TIO.New_Line;
+         TIO.Put_Line
+           ("You can edit this information at any time with 'alr settings'");
+         TIO.New_Line;
+      end if;
       Info.Username := To_Unbounded_String (UI.Query_Config.User_Name);
-      Info.GitHub_Login := To_Unbounded_String
-        (UI.Query_Config.User_GitHub_Login);
+      Query_GitHub_Login (Info);
       Info.Email := To_Unbounded_String (UI.Query_Config.User_Email);
+
+      --  Make it clear that the remainder can't be changed with `alr settings`
+      TIO.New_Line;
+      if User_Not_Already_Configured then
+         AAA.Text_IO.Put_Paragraph
+            ("Alire needs some further crate-specific information to help "
+             & "other people who want to use your crate.");
+      end if;
+      TIO.New_Line;
 
       Query_License (Info);
 
@@ -598,10 +452,11 @@ package body Alr.Commands.Init is
 
       Info.Website := To_Unbounded_String
         (CLIC.User_Input.Query_String
-           (Question   => "Enter a opional " & Emph ("Website URL") &
+           (Question   => "Enter an optional " & Emph ("Website URL") &
               " for the crate:",
             Default    => "",
             Validation => null));
+
       Generate (Cmd, Info);
    end Execute;
 
@@ -651,6 +506,19 @@ package body Alr.Commands.Init is
                      Cmd.No_Skel'Access,
                      "", "--no-skel",
                      "Do not generate non-alire skeleton files");
+
+      Define_Switch (Config,
+                     Cmd.No_Test'Access,
+                     "", "--no-test",
+                     "Do not generate a minimal test crate skeleton"
+                     & " (implied by --no-skel)");
+
+      Define_Switch (Config,
+                     Cmd.Github'Access,
+                     "", Switch_Github & "?",
+                     Argument => "=BOOL",
+                     Help     =>
+                       "Generate README and workflows for GitHub projects");
    end Setup_Switches;
 
 end Alr.Commands.Init;

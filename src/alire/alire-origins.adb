@@ -2,11 +2,16 @@ with Ada.Directories;
 
 with AAA.Strings;
 
+with Alire.Features;
+with Alire.Loading;
+with Alire.Origins.Deployers.System;
 with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.URI;
 with Alire.Utils.TTY;
 with Alire.VFS;
+
+with Semantic_Versioning;
 
 package body Alire.Origins is
 
@@ -133,19 +138,26 @@ package body Alire.Origins is
 
    function URL    (This : Origin) return Alire.URL is
      (Alire.URL (+This.Data.Repo_URL));
+
+   ------------------
+   -- Explicit_URL --
+   ------------------
+
+   function Explicit_URL (This : Origin) return Alire.URL
+   is (URI.Make_VCS_Explicit
+         (This.URL,
+          (case This.Kind is
+             when Git => URI.Git,
+             when Hg => URI.Hg,
+             when SVN => URI.SVN,
+             when others => raise Program_Error with "unreachable case")));
+
    ------------
    -- Commit --
    ------------
 
    function Commit (This : Origin) return String is
      (+This.Data.Commit);
-
-   ---------------------
-   -- URL_With_Commit --
-   ---------------------
-
-   function URL_With_Commit (This : Origin) return Alire.URL is
-     (This.URL & "#" & This.Commit);
 
    -------------------------
    -- TTY_URL_With_Commit --
@@ -202,7 +214,7 @@ package body Alire.Origins is
    is (case This.Kind is
           when Filesystem     => This.Path,
           when Source_Archive => This.Archive_URL,
-          when VCS_Kinds      => This.URL,
+          when VCS_Kinds      => This.Explicit_URL,
           when others         => raise Checked_Error with "Origin has no URL");
 
    --------------
@@ -241,6 +253,19 @@ package body Alire.Origins is
              else Hash_Vectors.Empty_Vector),
           when Source_Archive => This.Data.Src_Archive.Hashes,
           when others         => Hash_Vectors.Empty_Vector);
+
+   ----------------
+   -- Unique_Ids --
+   ----------------
+
+   function Unique_Ids (This : Origin) return AAA.Strings.Vector is
+      Result : AAA.Strings.Vector;
+   begin
+      for Hash of Hash_Vectors.Vector'(This.Get_Hashes) loop
+         Result.Append (String (Hash));
+      end loop;
+      return Result;
+   end Unique_Ids;
 
    ----------------
    -- Add_Hashes --
@@ -360,35 +385,19 @@ package body Alire.Origins is
 
       --  We add the "file:" to have a proper URI and simplify things for
       --  Windows absolute paths with drive letter.
-      return (Data => (Source_Archive,
-                       Src_Archive =>
-                         (URL    =>
-                            +(if URI.Scheme (URL) in URI.File_Schemes
-                              then "file:" & Ada.Directories.Full_Name
-                                                         (URI.Local_Path (URL))
-                              else URL),
-                          Name   => +Archive_Name,
-                          Format => Format,
-                          Binary => False,
-                          Hashes => <>)));
+      return (Data =>
+                (Source_Archive,
+                 Src_Archive =>
+                   (URL    =>
+                      +(if URI.URI_Kind (URL) in URI.Local_Other
+                        then URI.To_URL
+                          (Ada.Directories.Full_Name (URI.Local_Path (URL)))
+                        else URL),
+                    Name   => +Archive_Name,
+                    Format => Format,
+                    Binary => False,
+                    Hashes => <>)));
    end New_Source_Archive;
-
-   -----------------
-   -- From_String --
-   -----------------
-
-   function From_String (Image : String) return Origin is
-      Scheme  : constant URI.Schemes := URI.Scheme (Image);
-   begin
-      case Scheme is
-         when URI.File_Schemes =>
-            return New_Filesystem (URI.Local_Path (Image));
-         when URI.HTTP =>
-            return New_Source_Archive (Image);
-         when others =>
-            Raise_Checked_Error ("Unsupported URL scheme: " & Image);
-      end case;
-   end From_String;
 
    -------------
    -- New_VCS --
@@ -397,61 +406,31 @@ package body Alire.Origins is
    function New_VCS (URL    : Alire.URL;
                      Commit : String;
                      Subdir : Relative_Path := "") return Origin is
-      use AAA.Strings;
-      use all type URI.Schemes;
-      Scheme      : constant URI.Schemes := URI.Scheme (URL);
-      Transformed : constant Alire.URL := VCSs.Git.Transform_To_Public (URL);
-      VCS_URL : constant String :=
-                  (if Contains (URL, "+file://") then
-                      Tail (URL, '+') -- strip the VCS proto only
-                   elsif Contains (URL, "+file:") then
-                      Tail (URL, ':') -- Remove file: w.o. // that confuses git
-                   elsif Has_Prefix (URL, "git@") and then
-                      Transformed /= URL -- known and transformable
-                   then
-                      Transformed
-                   elsif Scheme in URI.VCS_Schemes then
-                      Tail (URL, '+') -- remove prefix vcs+
-                   elsif Scheme in URI.HTTP then -- A plain URL... check VCS
-                     (if Has_Suffix (To_Lower_Case (URL), ".git")
-                      then URL
-                      elsif VCSs.Git.Known_Transformable_Hosts.Contains
-                        (URI.Authority (URL))
-                      then URL & ".git"
-                      else raise Checked_Error with
-                        "ambiguous VCS URL: " & URL)
-                   else
-                      raise Checked_Error with "unknown VCS URL: " & URL);
+      URL_Kind : constant URI.URI_Kinds := URI.URI_Kind (URL);
+      VCS_URL : constant String := VCSs.Repo_URL (URL);
 
    begin
-      case Scheme is
-         when Pure_Git =>
-            if Transformed /= URL then
-               return New_VCS (Transformed, Commit);
-            else
-               Raise_Checked_Error
-                 ("Attempting to use a private git@ URL with an unknown host: "
-                  & Utils.TTY.URL (URL));
-            end if;
-         when Git | HTTP =>
-            if Commit'Length /= Git_Commit'Length then
+      case URL_Kind is
+         when URI.Git_URIs =>
+            if not VCSs.Git.Is_Valid_Commit (Commit) then
                Raise_Checked_Error
                  ("invalid git commit id, " &
                     "40 digits hexadecimal expected");
             end if;
             return New_Git (VCS_URL, Commit, Subdir);
-         when Hg =>
-            if Commit'Length /= Hg_Commit'Length then
+         when URI.Hg_URIs =>
+            if not VCSs.Hg.Is_Valid_Commit (Commit) then
                Raise_Checked_Error
                  ("invalid mercurial commit id, " &
                     "40 digits hexadecimal expected");
             end if;
             return New_Hg (VCS_URL, Commit, Subdir);
-         when SVN =>
+         when URI.SVN_URIs =>
             return New_SVN (VCS_URL, Commit, Subdir);
+         when URI.HTTP_Other | URI.SSH_Other =>
+            Raise_Checked_Error ("ambiguous VCS URL: " & URL);
          when others =>
-            Raise_Checked_Error ("Expected a VCS origin but got scheme: "
-                                 & Scheme'Image);
+            Raise_Checked_Error ("unknown VCS URL: " & URL);
       end case;
    end New_VCS;
 
@@ -505,6 +484,42 @@ package body Alire.Origins is
             & Keys.Archive_Name & "'");
    end From_TOML;
 
+   ----------------------
+   -- Binary_From_TOML --
+   ----------------------
+   --  This wrapper is used to make sure that a conditional archive is
+   --  explicitly marked as binary.
+   function Binary_From_TOML (From : TOML_Adapters.Key_Queue)
+                              return Conditional_Archives.Tree
+   is
+      use TOML;
+      use type Semantic_Versioning.Version;
+      Table   : constant TOML_Adapters.Key_Queue :=
+                  From.Descend (From.Unwrap.Get (Keys.Origin),
+                                Context => "binary_archive_data");
+   begin
+      if From.Metadata.Kind not in Loading.None
+      --  When loading from an `alire.toml` manifest outside of an index,
+      --  we won't have version metadata, but this is okay as it either is a
+      --  user manifest (which does not contain an origin) or it is a manifest
+      --  generated by ourselves for internal use (which always contains the
+      --  binary property when needed).
+        and then
+          From.Metadata.Version >= Features.Index.Explicit_Binary_Origin
+        and then
+          (not Table.Unwrap.Has (Keys.Binary) or else
+           not Table.Unwrap.Get (Keys.Binary).As_Boolean)
+      then
+         Raise_Checked_Error
+           ("Dynamic origins must explicitly set the `binary=true` property"
+            & " from index version "
+            & TTY.Bold (Features.Index.Explicit_Binary_Origin.Image)
+            & " onwards.");
+      end if;
+
+      return From_TOML (From);
+   end Binary_From_TOML;
+
    ---------------
    -- From_TOML --
    ---------------
@@ -526,7 +541,7 @@ package body Alire.Origins is
    is
 
       use TOML;
-      use all type URI.Schemes;
+      use all type URI.URI_Kinds;
       Table   : constant TOML_Adapters.Key_Queue :=
                  From.Descend (From.Checked_Pop (Keys.Origin, TOML_Table),
                                Context => Keys.Origin);
@@ -539,6 +554,27 @@ package body Alire.Origins is
       begin
          Data.Binary := True;
       end Mark_Binary;
+
+      -------------------------
+      -- Load_Source_Archive --
+      -------------------------
+
+      procedure Load_Source_Archive (This  : in out Origin;
+                                     Table : TOML_Adapters.Key_Queue;
+                                     URL   : String) is
+      begin
+         --  Reinsert the URL so we can reuse the dynamic archive loader:
+         Table.Unwrap.Set (Keys.URL, Create_String (URL));
+
+         --  And load
+         This := (Data => (Kind        => Source_Archive,
+                           Src_Archive => From_TOML
+                             (Table.Descend
+                                (Keys.Origin,
+                                 Table.Unwrap,
+                                 Context => "source archive")),
+                           Hashes      => <>));
+      end Load_Source_Archive;
 
    begin
       --  Check if we are seeing a conditional binary origin, or a regular
@@ -558,7 +594,7 @@ package body Alire.Origins is
                             (Keys.Origin,
                              Table.Unwrap,
                              Context => "binary archive"),
-                        Loader  => From_TOML'Access,
+                        Loader  => Binary_From_TOML'Access,
                         Resolve => True,
                         Strict  => False) with null record)));
 
@@ -574,53 +610,56 @@ package body Alire.Origins is
       --  Regular static loading of other origin kinds
 
       declare
-         URL     : constant String :=
+         URL      : constant String :=
                      Table.Checked_Pop (Keys.URL, TOML_String).As_String;
-         Scheme  : constant URI.Schemes := URI.Scheme (URL);
-         Hashed  : constant Boolean := Table.Unwrap.Has (Keys.Hashes);
+         URL_Kind : constant URI.URI_Kinds := URI.URI_Kind (URL);
+         Hashed   : constant Boolean := Table.Unwrap.Has (Keys.Hashes);
       begin
-         case Scheme is
-         when External =>
+         case URL_Kind is
+         when External                     =>
             This := New_External (URI.Path (URL));
 
-         when URI.File_Schemes =>
+         when URI.Local_Other              =>
             if URI.Local_Path (URL) = "" then
                From.Checked_Error ("empty path given in local origin");
             end if;
             This := New_Filesystem (URI.Local_Path (URL));
 
-         when URI.VCS_Schemes  =>
-            declare
-               Commit : constant String := Table.Checked_Pop
-                 (Keys.Commit, TOML_String).As_String;
-               Subdir : constant String :=
-                          (if Table.Contains (Keys.Subdir)
-                           then Table.Checked_Pop
-                             (Keys.Subdir, TOML_String).As_String
-                           else "");
-            begin
-               This := New_VCS
-                 (URL,
-                  Commit => Commit,
-                  Subdir => VFS.To_Native (Portable_Path (Subdir)));
-            end;
+         when URI.VCS_URIs                 =>
+            if URL_Kind in URI.Probably_Git and then Hashed then
+               --  To resolve the ambiguity of Probably_Git, assume a source
+               --  archive if the "hashes" field is present.
+               Load_Source_Archive (This, Table, URL);
+            else
+               --  In all other cases, treat this as a git repo.
+               declare
+                  Commit : constant String := Table.Checked_Pop
+                  (Keys.Commit, TOML_String).As_String;
+                  Subdir : constant String :=
+                           (if Table.Contains (Keys.Subdir)
+                              then Table.Checked_Pop
+                              (Keys.Subdir, TOML_String).As_String
+                              else "");
+               begin
+                  This := New_VCS
+                  (URL,
+                     Commit => Commit,
+                     Subdir => VFS.To_Native (Portable_Path (Subdir)));
+               end;
+            end if;
 
-         when HTTP             =>
-            --  Reinsert the URL so we can reuse the dynamic archive loader:
-            Table.Unwrap.Set (Keys.URL, Create_String (URL));
+         when URI.HTTP_Other               =>
+            Load_Source_Archive (This, Table, URL);
 
-            --  And load
-            This := (Data => (Kind        => Source_Archive,
-                              Src_Archive => From_TOML
-                                (Table.Descend
-                                   (Keys.Origin,
-                                    Table.Unwrap,
-                                    Context => "source archive")),
-                              Hashes      => <>));
-         when System =>
+         when SSH_Other                    =>
+            From.Checked_Error ("Pure 'ssh://' URLs are not valid crate "
+                                & "origins. You may want git+" & URL
+                                & " instead.");
+
+         when System                       =>
             This := New_System (URI.Path (URL));
 
-         when Unknown          =>
+         when Unknown                      =>
             From.Checked_Error ("unsupported scheme in URL: " & URL);
          end case;
 
@@ -736,17 +775,10 @@ package body Alire.Origins is
    begin
       case This.Kind is
          when Filesystem =>
-            Table.Set (Keys.URL, +("file:" & This.Path));
+            Table.Set (Keys.URL, +(URI.To_URL (This.Path)));
 
          when VCS_Kinds =>
-            Table.Set (Keys.URL,
-                       +(Prefixes (This.Kind).all
-                         & (if URI.Scheme (This.URL) in URI.None
-                           --  not needed for remote repos, but for testing
-                           --  ones used locally:
-                           then "file:"
-                           else "")
-                         & This.URL));
+            Table.Set (Keys.URL, +This.Explicit_URL);
             Table.Set (Keys.Commit, +This.Commit);
             if This.Subdir /= "" then
                Table.Set (Keys.Subdir,
@@ -755,8 +787,7 @@ package body Alire.Origins is
 
          when External =>
             Table.Set (Keys.URL,
-                       +(Prefixes (This.Kind).all &
-                         (+This.Data.Description)));
+                       +(Prefix_External & (+This.Data.Description)));
 
          when Binary_Archive =>
             Table := TOML_Adapters.Merge_Tables
@@ -770,7 +801,7 @@ package body Alire.Origins is
 
          when System =>
             Table.Set (Keys.URL,
-                       +(Prefixes (This.Kind).all & This.Package_Name));
+                       +(Prefix_System & This.Package_Name));
       end case;
 
       if not This.Get_Hashes.Is_Empty then
@@ -836,5 +867,12 @@ package body Alire.Origins is
    is (This.Kind /= Binary_Archive
        or else
        not This.Data.Bin_Archive.Evaluate (Env).Is_Empty);
+
+   ------------------
+   -- Is_Installed --
+   ------------------
+
+   function Already_Installed (This : Origin) return Boolean
+                               renames Deployers.System.Already_Installed;
 
 end Alire.Origins;

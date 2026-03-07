@@ -102,6 +102,12 @@ package body Alire.Builds.Hashes is
             Add ("profile",
                  Rel.Name.As_String,
                  Root.Configuration.Build_Profile (Rel.Name)'Image);
+         exception
+            when others =>
+               Trace.Error
+                 ("While hashing: missing build profile for "
+                  & Rel.Milestone.TTY_Image);
+               raise;
          end Add_Profile;
 
          ------------------
@@ -123,6 +129,12 @@ package body Alire.Builds.Hashes is
             Add ("switches",
                  Rel.Name.As_String,
                  Switches.To_Vector.Flatten (","));
+         exception
+            when others =>
+               Trace.Error
+                 ("While hashing: missing switches for "
+                  & Rel.Milestone.TTY_Image);
+               raise;
          end Add_Switches;
 
          -------------------

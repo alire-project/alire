@@ -7,14 +7,14 @@ package body Alire.Utils.Did_You_Mean with Preelaborate is
    -------------------------------
 
    function Levenshtein_Edit_Distance (S, T : String) return Natural is
-      D : array (0 .. S'Last, 0 .. T'Last) of Natural;
+      D : array (S'First - 1 .. S'Last, T'First - 1 .. T'Last) of Natural;
    begin
       for I in D'Range (1) loop
-         D (I, 0) := I;
+         D (I, T'First - 1) := I;
       end loop;
 
       for J in D'Range (2) loop
-         D (0, J) := J;
+         D (S'First - 1, J) := J;
       end loop;
 
       for I in S'Range loop
@@ -81,10 +81,10 @@ package body Alire.Utils.Did_You_Mean with Preelaborate is
       for V in Enum loop
          Possible_Values.Append
            (case Transform is
-               when None => V'Img,
+               when None       => V'Img,
                when Lower_Case => AAA.Strings.To_Lower_Case (V'Img),
-               when Upper_Case => AAA.Strings.To_Lower_Case (V'Img),
-               when Tomify => TOML_Adapters.Tomify (V'Img));
+               when Upper_Case => AAA.Strings.To_Upper_Case (V'Img),
+               when Tomify     => TOML_Adapters.Tomify (V'Img));
       end loop;
 
       return Suggestion (Input, Possible_Values);

@@ -188,7 +188,7 @@ package body Alire.Install is
          --  Look for a regular solution to a dependency as fallback if we
          --  didn't find any binary solution.
          procedure Compute_Regular (Dep : Dependencies.Dependency) is
-            Sol : constant Solutions.Solution := Solver.Resolve (Dep);
+            Sol : constant Solutions.Solution := Solver.Resolve (Dep).Solution;
          begin
             if Sol.Is_Complete then
                Result.Insert (Dep.Crate, Sol);
@@ -327,7 +327,7 @@ package body Alire.Install is
 
                --  A different version exists, here we fail unless forced
 
-               Recoverable_Error
+               Recoverable_User_Error
                  (Errors.New_Wrapper
                     ("Release " & Rel.Milestone.TTY_Image
                      & " has another version already installed: ")
@@ -395,7 +395,7 @@ package body Alire.Install is
       Result : Installed_Milestones;
 
       procedure Find
-        (Item : Ada.Directories.Directory_Entry_Type;
+        (Item : Any_Path;
          Stop : in out Boolean)
       is
          Name : constant String := Adirs.Simple_Name (Item);

@@ -1,0 +1,4 @@
+driver: python-script
+build_mode: both
+indexes:
+    gnat_toolchain_index: {}

@@ -10,6 +10,7 @@ import sys
 
 from drivers import alr
 from drivers.alr import run_alr
+from drivers.driver.base_driver import BaseDriver
 
 
 def main():
@@ -34,11 +35,15 @@ def main():
 
     # Set up the environment
 
+    # Copy any received modifiers
+    for modifier in [m for m in BaseDriver.MODIFIERS.items() if m in test_env]:
+        os.environ[modifier] = test_env[modifier]
+
     # alr path
     os.environ["ALR_PATH"] = "/usr/bin/alr" # Must match docker volume mount
 
     # Disable autoconfig of the community index, to prevent unintended use
-    run_alr("config", "--global", "--set", "index.auto_community", "false")
+    run_alr("settings", "--global", "--set", "index.auto_community", "false")
 
     # Disable selection of toolchain. Tests that
     # require a configured compiler will have to set it up explicitly.
@@ -46,7 +51,7 @@ def main():
 
     # Disable warning on old index, to avoid having to update index versions
     # when they're still compatible.
-    run_alr("config", "--global", "--set", "warning.old_index", "false")
+    run_alr("settings", "--global", "--set", "warning.old_index", "false")
 
     # indexes to use
     if 'indexes' in test_env:
