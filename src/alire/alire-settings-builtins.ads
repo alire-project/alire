@@ -134,7 +134,7 @@ package Alire.Settings.Builtins is
       & " The executables and arguments are separated by a single space"
       & " character. The token " & Markup.Terminal ("${DEST}"
       & " is replaced by the destination path,"
-      & " and " & Markup.Terminal ("${URL}") & " by the URL to download.");
+      & " and " & Markup.Terminal ("${URL}") & " by the URL to download."));
 
    Origins_Git_Trusted_Sites : constant Builtin := New_Builtin
      (Key         => "origins.git.trusted_sites",
