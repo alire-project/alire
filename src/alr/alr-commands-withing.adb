@@ -389,13 +389,13 @@ package body Alr.Commands.Withing is
                 & " the pin will be frozen at the commit currently matching"
                 & " the reference. Alternatively, a branch to track can be"
                 & " specified with " & Formatter.Terminal ("--branch")
-                & ". Use '" & Formatter.Terminal ("alr update")
-                & "' to refresh the tracking pin contents.")
+                & ". Use " & Formatter.Terminal ("alr update")
+                & " to refresh the tracking pin contents.")
        .New_Line
        .Append ("* Adding dependencies from a GPR file:")
        .Append ("The project file given with " & Formatter.Terminal ("--from")
                 & " will be scanned looking for comments that contain the"
-                & " sequence '" & Formatter.Terminal ("alr with") & "'. "
+                & " sequence " & Formatter.Terminal ("alr with") & ". "
                 & " These will be processed individually as if they had been"
                 & " given in the command line, starting with no dependencies."
                 & " That is, only dependencies given in the GPR file will be"

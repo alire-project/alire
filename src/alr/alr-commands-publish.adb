@@ -178,10 +178,10 @@ package body Alr.Commands.Publish is
          & "interact with Github (forking, PR creation) on your behalf.")
        .New_Line
        .Append ("Use " & Formatter.Terminal ("--tar")
-         & "to create a source archive ready to be uploaded.")
+         & " to create a source archive ready to be uploaded.")
        .New_Line
        .Append ("Use " & Formatter.Terminal ("--manifest")
-         & "to use metadata in a non-default file.")
+         & " to use metadata in a non-default file.")
        .New_Line
        .Append ("See the above link for help with other scenarios."));
 
