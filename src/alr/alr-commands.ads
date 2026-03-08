@@ -7,7 +7,7 @@ with Alire.Solver;
 with Alire.Version;
 
 with CLIC.Subcommand;
-with CLIC.Formatter;
+with CLIC.Markup;
 
 private with GNAT.IO;
 private with GNAT.Strings;
@@ -151,12 +151,12 @@ private
       Put_Error           => Put_Error,
       Error_Exit          => OS_Lib.Bailout,
       Set_Global_Switches => Set_Global_Switches,
-      TTY_Chapter         => CLIC.Formatter.Chapter,
-      TTY_Description     => CLIC.Formatter.Description,
-      TTY_Version         => CLIC.Formatter.Version,
-      TTY_Underline       => CLIC.Formatter.Underline,
-      TTY_Emph            => CLIC.Formatter.Emph,
-      TTY_Terminal        => CLIC.Formatter.Terminal,
+      TTY_Chapter         => CLIC.Markup.Chapter,
+      TTY_Description     => CLIC.Markup.Description,
+      TTY_Version         => CLIC.Markup.Version,
+      TTY_Underline       => CLIC.Markup.Underline,
+      TTY_Emph            => CLIC.Markup.Emph,
+      TTY_Terminal        => CLIC.Markup.Terminal,
       Global_Options_In_Subcommand_Help => False);
 
    procedure Auto_Update_Index (This : Command);

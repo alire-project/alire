@@ -1998,7 +1998,7 @@ package body Alire.Roots is
             if not Needed.Is_Complete then
                Trace.Warning
                  ("There are missing dependencies"
-                    & " (use " & Formatter.Terminal ("alr with --solve")
+                    & " (use " & Markup.Terminal ("alr with --solve")
                     & " for details).");
             end if;
 

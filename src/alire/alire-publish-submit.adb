@@ -66,14 +66,14 @@ package body Alire.Publish.Submit is
    begin
       if GH_Token = "" then
          Put_Info
-           (TTY.Terminal ("alr") & " requires a GitHub Personal Access "
+           (Markup.Terminal ("alr") & " requires a GitHub Personal Access "
             & "Token (PAT) " & Reason & ". To avoid being asked for it "
             & "every time, you can define the GH_TOKEN environment "
             & "variable.");
          Put_Info
            ("You can create access tokens at " & TTY.URL (GitHub.URL_Tokens));
          Put_Info
-           ("Run " & TTY.Terminal ("alr help publish")
+           ("Run " & Markup.Terminal ("alr help publish")
             & " for further details.");
       end if;
 

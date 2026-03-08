@@ -272,7 +272,7 @@ package body Alr.Commands.Test is
          .Append ("")
          .Append
             ("The built-in test runner takes an extra "
-             & Formatter.Terminal ("--jobs") & " parameter, that"
+             & Markup.Terminal ("--jobs") & " parameter, that"
              & " defines the maximum number of tests to run in parallel.")
          .Append ("")
          .Append
@@ -283,7 +283,7 @@ package body Alr.Commands.Test is
          .Append ("")
          .Append
             ("When using a built-in runner, one can pass "
-             & Formatter.Terminal ("--list") & " to get"
+             & Markup.Terminal ("--list") & " to get"
              & " ahead of time a list of tests (optionally matching the"
              & " command line filter)."));
 

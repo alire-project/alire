@@ -202,7 +202,7 @@ package body Alire is
       if +Err /= "" then
          Err := Err
            & " You can see the complete identifier naming rules"
-           & " with '" & Formatter.Terminal ("alr help identifiers") & "'";
+           & " with '" & Markup.Terminal ("alr help identifiers") & "'";
       end if;
 
       if Err /= "" then
@@ -302,7 +302,7 @@ package body Alire is
                                      Recover : Boolean := Force)
    is
       Info : constant String := " (This error can be overridden with "
-                                & TTY.Terminal ("--force") & ".)";
+                                & Markup.Terminal ("--force") & ".)";
    begin
       if Msg'Length > 0 and then Msg (Msg'Last) /= '.' then
          Recoverable_User_Error (Msg & ".", Recover);

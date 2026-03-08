@@ -4,7 +4,7 @@ with Alire;
 
 with Simple_Logging;
 with CLIC.TTY;
-with CLIC.Formatter;
+with CLIC.Markup;
 
 package Alr with Preelaborate is
 
@@ -27,7 +27,7 @@ package Alr with Preelaborate is
 
    package Trace renames Simple_Logging;
    package TTY renames CLIC.TTY;
-   package Formatter renames CLIC.Formatter;
+   package Markup renames CLIC.Markup;
 
    function "+" (S : Alire.UString) return String
                  renames Alire.UStrings.To_String;

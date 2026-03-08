@@ -200,7 +200,7 @@ package body Alr.Commands.Pin is
                if Cmd.Subdir.all /= "" then
                   Reportaise_Wrong_Arguments
                     ("Pins to local directories do not accept the "
-                     & TTY.Terminal ("--subdir") & " switch");
+                     & Markup.Terminal ("--subdir") & " switch");
                end if;
 
                --  Pin to dir, with a warning if it doesn't look like a path
@@ -272,20 +272,20 @@ package body Alr.Commands.Pin is
       .New_Line
       .Append ("Without arguments, show existing pins.")
       .New_Line
-      .Append ("Use " & Formatter.Terminal ("--all")
+      .Append ("Use " & Markup.Terminal ("--all")
                & " to pin the whole current solution.")
       .New_Line
       .Append ("Specify a single crate to modify its pin.")
       .New_Line
-      .Append ("Use the " & Formatter.Terminal ("--use <PATH|URL>")
+      .Append ("Use the " & Markup.Terminal ("--use <PATH|URL>")
                & " switch to use the target to fulfill a dependency locally"
                & " instead of looking for indexed releases."
                & " An optional reference can be specified with "
-               & Formatter.Terminal ("--commit") & ";"
+               & Markup.Terminal ("--commit") & ";"
                & " the pin will be frozen at the commit currently matching"
                & " the reference.  Alternatively, a branch to track can be"
-               & " specified with " & Formatter.Terminal ("--branch") & ". "
-               & "Use " & Formatter.Terminal ("alr update") & " to refresh the"
+               & " specified with " & Markup.Terminal ("--branch") & ". "
+               & "Use " & Markup.Terminal ("alr update") & " to refresh the"
                & " tracking pin contents.")
      );
 

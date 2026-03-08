@@ -346,10 +346,10 @@ package body Alr.Commands.Search is
      (AAA.Strings.Empty_Vector
       .Append ("Searches the given substring in crate names and properties,"
                & " and shows the most recent release"
-               & " of matching crates (unless " & Formatter.Terminal ("--full")
+               & " of matching crates (unless " & Markup.Terminal ("--full")
                & " is specified).")
       .New_Line
-      .Append ("Use " & Formatter.Terminal ("--crates")
+      .Append ("Use " & Markup.Terminal ("--crates")
                & " to get a simple list of only crate names and "
                & " descriptions. Otherwise,"
                & " besides version, description and release notes, a status"
@@ -359,12 +359,12 @@ package body Alr.Commands.Search is
       .Append ("- S: the release is available through a system package.")
       .Append ("- U: the release is not available in the current platform.")
       .Append ("- ?: the release has dependencies but solving was skipped "
-               & "(see " & Formatter.Terminal ("--solve") & ").")
+               & "(see " & Markup.Terminal ("--solve") & ").")
       .Append ("- X: the release has dependencies that cannot be resolved.")
       .New_Line
       .Append ("The reasons for unavailability (U) can be ascertained with:")
       .New_Line
-      .Append (Formatter.Terminal ("alr show <crate>=<version>"))
+      .Append (Markup.Terminal ("alr show <crate>=<version>"))
       .New_Line
       .Append ("Unresolvable releases (X) should not happen in platforms"
                & " with assigned maintainers. Common reasons are missing"
@@ -395,7 +395,7 @@ package body Alr.Commands.Search is
          Cmd.Detect'Access,
          "", "--external-detect",
          "Detect externally-provided releases (implies "
-         & Formatter.Terminal ("--external") & ")");
+         & Markup.Terminal ("--external") & ")");
 
       Define_Switch (Config,
                      Cmd.Full'Access,

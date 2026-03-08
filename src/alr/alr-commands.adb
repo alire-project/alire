@@ -164,7 +164,7 @@ package body Alr.Commands is
       elsif Stripped_Value /= "auto" and then Stripped_Value /= "" then
          Trace.Warning
            ("Unknown argument in "
-            & TTY.Terminal (Switch)
+            & Markup.Terminal (Switch)
             & Value
             & ". Defaulting to 'auto'."
             & Suggest (Stripped_Value));
@@ -361,8 +361,8 @@ package body Alr.Commands is
             Trace.Error (Custom_Msg);
          end if;
          Reportaise_Wrong_Arguments
-           ("Command " & TTY.Terminal (Cmd.Name) & " does not support the "
-            & TTY.Terminal ("--format") & " switch");
+           ("Command " & Markup.Terminal (Cmd.Name) & " does not support the "
+            & Markup.Terminal ("--format") & " switch");
       end if;
    end Forbids_Structured_Output;
 
@@ -642,7 +642,7 @@ package body Alr.Commands is
       end if;
 
       if No_TTY then
-         CLIC.Formatter.Force_Disable_TTY;
+         CLIC.Markup.Force_Disable_TTY;
       end if;
 
       --  Use CLIC.TTY selection/detection of TTY
@@ -667,11 +667,11 @@ package body Alr.Commands is
          if No_Color then
             Trace.Warning
               ("Deprecated option "
-               & TTY.Terminal ("--no-color")
+               & Markup.Terminal ("--no-color")
                & " passed along "
-               & TTY.Terminal ("--color=always")
+               & Markup.Terminal ("--color=always")
                & ". Only "
-               & TTY.Terminal ("--color")
+               & Markup.Terminal ("--color")
                & " will be followed.");
          end if;
 

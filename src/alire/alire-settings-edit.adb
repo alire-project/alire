@@ -383,7 +383,8 @@ package body Alire.Settings.Edit is
          if Ent.Public then
             Results.Append (String'("- " & TTY.Bold (To_String (Ent.Key))
                             & " [" & TTY.Emph (Image (Ent.Kind)) & "]"
-                            & "[Default:" & TTY.Terminal (To_String (Ent.Def))
+                            & "[Default:"
+                            & Markup.Terminal (To_String (Ent.Def))
                             & "]"));
             Results.Append (To_String (Ent.Help));
             Results.Append ("");

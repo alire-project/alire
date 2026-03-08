@@ -2,7 +2,7 @@ with Ada.Strings.Unbounded;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 with Ada.Finalization;
 
-with CLIC.Formatter;
+with CLIC.Markup;
 
 with Alire.Utils;
 
@@ -50,7 +50,7 @@ package body Alr.Commands.Dev is
             Last_Group := Group;
          end if;
 
-         Put_Line ("## " & Formatter.Terminal ("alr " & Cmd.Name));
+         Put_Line ("## " & Markup.Terminal ("alr " & Cmd.Name));
 
          New_Line;
          Sub_Cmd.Display_Help (Cmd.Name);
@@ -68,7 +68,7 @@ package body Alr.Commands.Dev is
       end Put_MD_Topic;
 
    begin
-      CLIC.Formatter.Enable_Markdown;
+      CLIC.Markup.Enable_Markdown;
 
       Put_Line ("# Usage Help");
       Sub_Cmd.Display_Usage;

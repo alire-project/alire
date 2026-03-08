@@ -23,7 +23,7 @@ package Alr.Commands.Topics.Aliases is
        .Append ("For example the following command:")
        .Append ("""$ alr settings --set --global alias.graph 'show --graph'""")
        .Append ("Defines a global alias for the 'show' command with a ")
-       .Append ("'" & Formatter.Emph ("--graph") & "' switch.")
+       .Append ("'" & Markup.Emph ("--graph") & "' switch.")
        .New_Line
        .Append ("""$ alr graph"" is equivalent to ""alr show --graph"""));
 
