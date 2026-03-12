@@ -608,6 +608,9 @@ package body Alire.Test_Runner is
       Path         : constant Absolute_Path := Root.Path;
       Test_List    : constant Portable_Path_Vector :=
         Get_File_List (Root, Filter);
+
+      function Text (S : String) return LML.Scalar
+      is (LML.Scalars.New_Text (LML.Decode (S)));
    begin
       if Tables.Structured_Output then
          declare
@@ -621,13 +624,11 @@ package body Alire.Test_Runner is
                Builder.Begin_Map;
                Builder.Insert
                  (LML.Decode (TOML_Keys.Test_Report_Display_Name));
-               Builder.Append
-                 (LML.Scalars.New_Text
-                    (LML.Decode (Display_Name (Test, Crate_Prefix))));
+               Builder.Append (Text (Display_Name (Test, Crate_Prefix)));
                Builder.Insert (LML.Decode (TOML_Keys.Test_Report_Path));
                Builder.Append
-                 (LML.Scalars.New_Text
-                    (LML.Decode (Path / "src" / String (Test))));
+                 (Text
+                    (String (VFS.To_Portable (Path / "src" / String (Test)))));
                Builder.End_Map;
             end loop;
             Builder.End_Vec;
@@ -642,7 +643,10 @@ package body Alire.Test_Runner is
               ("   "
                & Display_Name (Test, Crate_Prefix)
                & (if Alire_Early_Elaboration.Switch_V
-                  then " (" & (Path / "src" / String (Test)) & ")"
+                  then
+                    " ("
+                    & String (VFS.To_Portable (Path / "src" / String (Test)))
+                    & ")"
                   else ""));
          end loop;
       end if;
