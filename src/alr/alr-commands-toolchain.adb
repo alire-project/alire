@@ -336,7 +336,7 @@ package body Alr.Commands.Toolchain is
 
       if Complain then
          Trace.Warning ("Please ensure a complete toolchain is available with "
-                        & TTY.Terminal ("alr toolchain --select"));
+                        & Markup.Terminal ("alr toolchain --select"));
       end if;
    end Report_Unavailable_Tools;
 

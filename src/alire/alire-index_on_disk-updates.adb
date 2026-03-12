@@ -46,7 +46,7 @@ package body Alire.Index_On_Disk.Updates is
                    & "future? " & New_Line
 
                    & "(You can update manually with `"
-                   & TTY.Terminal ("alr index --update-all")
+                   & Markup.Terminal ("alr index --update-all")
                    & "` at any time.)",
 
                    Valid    => (Yes | No => True, others => False),

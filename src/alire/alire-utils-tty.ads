@@ -5,7 +5,7 @@ package Alire.Utils.TTY with Preelaborate is
 
    package ANSI renames AnsiAda;
 
-   function Alr return String is (CLIC.TTY.Terminal ("alr"));
+   function Alr return String is (CLIC.Markup.Terminal ("alr"));
 
    function Name (Crate : Crate_Name) return String is
      (CLIC.TTY.Bold (+Crate));

@@ -28,16 +28,18 @@ package Alr.Commands.Toolchain is
          ("Run it without arguments to get a list of downloaded tools.")
        .New_Line
        .Append
-         ("Use --select without arguments to run the assistant to "
+         ("Use " & Markup.Terminal ("--select")
+          & " without arguments to run the assistant to "
           & "select the default toolchain for this configuration. "
-          & "Adding --local will instead make the selection apply "
+          & "Adding " & Markup.Terminal ("--local")
+          & " will instead make the selection apply "
           & "only to the workspace (overriding a possible "
           & "configuration-wide selection). Giving one or more releases"
           & " argument will skip the assistant and set the release as the"
           & " default.")
        .New_Line
        .Append
-         ("Run `" & TTY.Terminal ("alr help toolchains") & "` for further "
+         ("Run " & Markup.Terminal ("alr help toolchains") & " for further "
           & "information about toolchain management and use.")
       );
 
