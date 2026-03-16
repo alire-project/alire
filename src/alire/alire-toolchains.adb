@@ -372,7 +372,7 @@ package body Alire.Toolchains is
          end if;
 
          Trace.Info ("You can select a different toolchain at any time with `"
-                     & TTY.Terminal ("alr toolchain --select") & "`");
+                     & Markup.Terminal ("alr toolchain --select") & "`");
          if not Selected.Is_Empty then
             Trace.Info ("Download will start now:");
          end if;
@@ -664,7 +664,7 @@ package body Alire.Toolchains is
                      & TTY.URL (Path / Tool_Rel.Deployment_Folder)
                      & New_Line
                      & "Afterwards, reconfigure your toolchain with "
-                     & TTY.Terminal ("alr toolchain --select"));
+                     & Markup.Terminal ("alr toolchain --select"));
                end if;
             end;
          end if;
@@ -757,7 +757,7 @@ package body Alire.Toolchains is
                     (Errors.Wrap
                        ("A configured tool is missing on disk and unavailable "
                         & "in the loaded index.",
-                        " Run " & TTY.Terminal ("alr toolchain --select")
+                        " Run " & Markup.Terminal ("alr toolchain --select")
                         & " to select another toolchain"));
                end if;
             end;

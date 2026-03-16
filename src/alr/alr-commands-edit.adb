@@ -24,7 +24,7 @@ package body Alr.Commands.Edit is
    begin
       if Cmd /= "" then
          Settings.Set_Globally (Settings.Builtins.Editor_Cmd, Cmd);
-         Put_Info ("'" & TTY.Terminal (Cmd)
+         Put_Info ("'" & Markup.Terminal (Cmd)
                    & "' is now set as the editor command.");
       else
          Settings.Builtins.Editor_Cmd.Unset (Alire.Settings.Global);
@@ -96,7 +96,7 @@ package body Alr.Commands.Edit is
          Put_Info ("There is no editor currently configured.");
       else
          Put_Info ("The current editor command is: '"
-                   & TTY.Terminal (Builtins.Editor_Cmd.Get) & "'");
+                   & Markup.Terminal (Builtins.Editor_Cmd.Get) & "'");
       end if;
 
       for Ed in Editor_Choice loop

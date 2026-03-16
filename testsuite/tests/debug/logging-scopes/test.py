@@ -26,7 +26,7 @@ p = run_alr('-vv', '-d+dev', 'dev', '--filter', quiet=False)
 assert_match('-->> Early elaboration started\n'
              'Filtering mode: WHITELIST\n'
              'Filtering substring: dev\n'
-             '\[Alr.Commands.Dev.Execute\] \(alr-commands-dev.adb:[0-9]* \)'
+             '\[Alr.Commands.Dev.Execute\] \(alr-commands-dev.adb:[0-9]* *\)'
              ' -->> In dev --filter',
              p.out.strip())
 

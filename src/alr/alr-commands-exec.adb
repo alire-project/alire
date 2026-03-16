@@ -124,7 +124,8 @@ package body Alr.Commands.Exec is
         (Config,
          Cmd.Prj'Access,
          Switch => "-P?",
-         Help => "Add ""-P <PROJECT_FILE>"" to the command switches",
+         Help => "Add """ & Markup.Terminal ("-P <PROJECT_FILE>")
+           & """ to the command switches",
          Argument => "NUM");
    end Setup_Switches;
 
