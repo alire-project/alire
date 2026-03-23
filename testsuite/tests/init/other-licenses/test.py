@@ -4,6 +4,7 @@ Check that the user can specify valid SPDX license expressions
 
 
 import os
+import re
 import shutil
 
 from drivers.alr import run_alr, run_alr_interactive
@@ -16,7 +17,6 @@ valid_licenses = [
     "MIT", "custom-abc",
 ]
 for license_str in valid_licenses:
-    print(license_str)
     # Run interactively
     run_alr_interactive(["init", "--bin", "xxx"],
                         output=["> " for _ in range(8)],
@@ -46,14 +46,18 @@ for license_str in valid_licenses:
 
 # License expressions which should be rejected entirely
 bad_licenses = [
-    "/", "test:test", "MIT WITH test"
+    "", "/", "test:test", "MIT WITH test"
 ]
 for license_str in bad_licenses:
+    # Make sure the invalid expression error is shown only once
+    # (https://github.com/alire-project/alire/issues/2069)
+    invalid_msg = re.escape(f"Invalid SPDX license expression '{license_str}': ")
+    invalid_re = rf"^{re.escape(license_str)}\r?\n{invalid_msg}(?!.*{invalid_msg})"
     # Run interactively
     run_alr_interactive(["init", "--bin", "xxx"],
                         output=(
                             ["> " for _ in range(6)]
-                            + ["Invalid SPDX license expression"]
+                            + [invalid_re]
                             + ["> " for _ in range(3)]
                         ),
                         input=["",          # Description
