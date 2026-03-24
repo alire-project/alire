@@ -416,7 +416,8 @@ package body Alire.Solutions.Diffs is
    procedure Print (This         : Diff;
                     Changed_Only : Boolean      := not Alire.Detailed;
                     Prefix       : String       := "   ";
-                    Level        : Trace.Levels := Trace.Info)
+                    Level        : Trace.Levels := Trace.Info;
+                    Timed_Out    : Boolean      := False)
    is
       Table : Utils.Tables.Table;
       Changed    : Boolean := False;
@@ -491,7 +492,10 @@ package body Alire.Solutions.Diffs is
       Trace.Log ("", Level);
 
       if not This.Latter.Is_Complete then
-         Trace.Log (Prefix & "New solution is " & TTY.Warn ("incomplete."),
+         Trace.Log (Prefix
+                    & "New solution is "
+                    & TTY.Warn ("incomplete")
+                    & (if Timed_Out then " (timed out)." else "."),
                     Level);
       elsif This.Latter.Is_Complete and then not This.Former.Is_Complete then
          Trace.Log (Prefix & "New solution is " & TTY.OK ("complete."),

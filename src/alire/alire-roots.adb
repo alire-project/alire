@@ -1915,7 +1915,7 @@ package body Alire.Roots is
         Containers.Crate_Name_Sets.Empty_Set;
       Options     : Solver.Query_Options :=
         Solver.Default_Options)
-      return Solutions.Solution
+      return Solver.Result
    is
       use type Conditional.Dependencies;
 
@@ -1945,7 +1945,7 @@ package body Alire.Roots is
         (Deps    => Deps,
          Props   => This.Environment,
          Pins    => This.Pins,
-         Options => Options).Solution;
+         Options => Options);
    end Compute_Update;
 
    -------------------------
@@ -1988,19 +1988,25 @@ package body Alire.Roots is
       end loop;
 
       declare
-         Needed : constant Solutions.Solution   := This.Compute_Update
+         Computed_Update : constant Solver.Result        := This.Compute_Update
            (Allowed, Options);
-         Diff   : constant Solutions.Diffs.Diff := Old.Changes (Needed);
+         Diff            : constant Solutions.Diffs.Diff := Old.Changes
+           (Computed_Update.Solution);
       begin
          --  Early exit when there are no changes
 
          if not Alire.Force and then not Diff.Contains_Changes then
-            if not Needed.Is_Complete then
-               Trace.Warning
-                 ("There are missing dependencies"
-                  & " (use `alr with --solve` for details).");
+            if not Computed_Update.Solution.Is_Complete then
+               if Computed_Update.Timed_Out then
+                  Trace.Warning
+                    ("Dependency resolution timed out with missing "
+                     & "dependencies (use `alr with --solve` for details).");
+               else
+                  Trace.Warning
+                    ("There are missing dependencies"
+                     & " (use `alr with --solve` for details).");
+               end if;
             end if;
-
             This.Sync_Manifest_And_Lockfile_Timestamps;
             --  In case manual changes in manifest do not modify the
             --  solution.
@@ -2022,9 +2028,13 @@ package body Alire.Roots is
                      Trace.Log
                        ("Dependencies automatically updated as follows:",
                         Level);
-                     Diff.Print (Level => Level);
+                     Diff.Print
+                       (Level     => Level,
+                        Timed_Out => Computed_Update.Timed_Out);
                   end;
-               elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
+               elsif not Utils.User_Input.Confirm_Solution_Changes
+                           (Diff, Timed_Out => Computed_Update.Timed_Out)
+               then
                   Trace.Detail ("Update abandoned.");
                   return;
                end if;
@@ -2038,7 +2048,7 @@ package body Alire.Roots is
          --  detected, as pin evaluation may have temporarily stored
          --  unsolved dependencies which have been re-solved now.
 
-         This.Set (Solution => Needed);
+         This.Set (Solution => Computed_Update.Solution);
          This.Deploy_Dependencies;
 
          Trace.Detail ("Update completed");

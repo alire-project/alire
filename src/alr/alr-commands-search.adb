@@ -357,7 +357,7 @@ package body Alr.Commands.Search is
       .Append ("S: the release is available through a system package.")
       .Append ("U: the release is not available in the current platform.")
       .Append ("?: the release has dependencies but solving was skipped "
-               & "(see --solve).")
+               & "(see --solve) or timed out.")
       .Append ("X: the release has dependencies that cannot be resolved.")
       .New_Line
       .Append ("The reasons for unavailability (U) can be ascertained with"

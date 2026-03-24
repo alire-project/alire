@@ -15,9 +15,13 @@ package Alire.Solutions.Diffs is
    procedure Print (This         : Diff;
                     Changed_Only : Boolean      := not Alire.Detailed;
                     Prefix       : String       := "   ";
-                    Level        : Trace.Levels := Trace.Info);
+                    Level        : Trace.Levels := Trace.Info;
+                    Timed_Out    : Boolean      := False);
    --  Print a summary of changes between two solutions. Prefix is prepended to
    --  every line.
+   --
+   --  If `Timed_Out` is `True`, the warning for an incomplete solution
+   --  indicates that a timeout occurred.
 
 private
 
