@@ -70,7 +70,7 @@ for license_str in bad_licenses:
                                "",          # Github login
                                "",          # Email
                                "9",         # License (select "Other...")
-                               license_str, # License string
+                               license_str, # License string (invalid)
                                "MIT",       # License string (valid this time)
                                "",          # Tags
                                ""],         # Website
@@ -101,10 +101,10 @@ for license_str in custom_licenses:
                                "",          # Github login
                                "",          # Email
                                "9",         # License (select "Other...")
-                               license_str, # License string
-                               "n",         # Suggested alternative confirmation
-                               license_str, # (again, since we selected "No")
-                               "y",         # (select "Yes" this time)
+                               license_str, # License string (invalid)
+                               "n",         # Reject suggestion the first time
+                               license_str, # Re-enter the same license string
+                               "y",         # Accept suggestion this time
                                "",          # Tags
                                ""],         # Website
                         timeout=3)

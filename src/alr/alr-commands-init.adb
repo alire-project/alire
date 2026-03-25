@@ -201,30 +201,35 @@ package body Alr.Commands.Init is
       loop
          declare
             use CLIC.User_Input;
-            Str    : constant String := Query_String (
-                        Question   => "Enter SPDX license expression" &
-                                    " (https://spdx.dev/use/specifications/):",
-                        Default    => "",
-                        Validation => null
-                     );
+            Str    : constant String :=
+              Query_String
+                (Question   =>
+                   "Enter SPDX license expression"
+                   & " (https://spdx.dev/use/specifications/):",
+                 Default    => "",
+                 Validation => null);
+            SP     : constant SPDX.Expression :=
+              SPDX.Parse (Str, Allow_Custom => True);
+
+            --  In case `SP` is invalid, also try parsing with "LicenseRef-"
+            --  prepended (`Allow_Custom` doesn't make sense in this case).
             LR_Str : constant String := "LicenseRef-" & Str;
-            SP     : constant SPDX.Expression := SPDX.Parse
-                                                 (Str, Allow_Custom => True);
             LR_SP  : constant SPDX.Expression := SPDX.Parse (LR_Str);
          begin
             if SPDX.Valid (SP) then
                return Str;
             end if;
 
-            Put_Line ("Invalid SPDX license expression '" & Str
-                      & "': " & SPDX.Error (SP));
+            Put_Line
+              ("Invalid SPDX license expression '" & Str & "': "
+               & SPDX.Error (SP));
 
             if SPDX.Valid (LR_SP) then
-               if Query (
-                     Question => "Did you mean '" & LR_Str & "'?",
+               if Query
+                    (Question => "Did you mean '" & LR_Str & "'?",
                      Valid    => (Yes | No => True, others => False),
-                     Default  => No
-                  ) = Yes
+                     Default  => No)
+                 = Yes
                then
                   return LR_Str;
                end if;
