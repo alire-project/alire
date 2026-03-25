@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### Updated SPDX license expression support
 
-PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
+PR [#2096](https://github.com/alire-project/alire/pull/2096)
 
 The manifest's `licenses` field now conforms to
 [SPDX v3.0.0 license expression syntax](https://github.com/spdx/spdx-spec/blob/v3.0/docs/annexes/SPDX-license-expressions.md),
