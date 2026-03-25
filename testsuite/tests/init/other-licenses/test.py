@@ -56,14 +56,15 @@ for license_str in bad_licenses:
     # (https://github.com/alire-project/alire/issues/2069)
     invalid_msg = re.escape(f"Invalid SPDX license expression '{license_str}': ")
     expected_out = (
-        rf"^{re.escape(license_str)}\r?\n{default_msg}{invalid_msg}(?!.*{invalid_msg})"
+        rf"^{re.escape(license_str)}\r?\n{default_msg}{invalid_msg}"
+        rf"(?!.*{invalid_msg}).*> "
     )
     # Run interactively
     run_alr_interactive(["init", "--bin", "xxx"],
                         output=(
                             ["> " for _ in range(6)]
                             + [expected_out]
-                            + ["> " for _ in range(3)]
+                            + ["> " for _ in range(2)]
                         ),
                         input=["",          # Description
                                "",          # Full user name

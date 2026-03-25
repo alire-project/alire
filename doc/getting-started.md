@@ -111,17 +111,17 @@ Alire allows you to initialize an empty binary or library crate with ease:
 
    The first time you run this command, `alr` will ask a few questions to
    automatically fill-in information about the crate:
-    - `Short description` : One-line description of the crate
+    - `Short description`: One-line description of the crate
     - `Full name`: Name of the author of the crate
     - `GitHub login`: is used to identify the maintainer of the crate when
          contributed to the community index.
     - `Email address`: Point of contact to author of the crate
-    - `License` : The license(s) applicable to the crate; choose from a list of
+    - `License`: The license(s) applicable to the crate; choose from a list of
          suggested options, or select 'other' and enter a valid
          [SPDX expression](https://spdx.dev/use/specifications/).
-    - `Tags` : List of topics to which the crate relates, to help users find
+    - `Tags`: List of topics to which the crate relates, to help users find
          your crate
-    - `Website URL` : URL of the crate's website
+    - `Website URL`: URL of the crate's website
 
     All the questions are optional, you can just press enter to use the default
     values.
