@@ -153,7 +153,8 @@ single-quotes.
 If you wish to use a `.wgetrc` configuration file instead, the equivalent `wget`
 command is `'wget ${URL} -q -O ${DEST}'`.
 
-This setting only accepts a simple space-separated command, with no scripting
-functionality. If this is not sufficient, you can write more complex logic (or
-commands with arguments containing spaces) to a separate script, for instance
-by setting the value to `'python /path/to/my_script.py ${URL} ${DEST}'`.
+This setting only accepts a simple command (using POSIX-style quoting rules),
+with no environment variable or command substitution performed, and no scripting
+functionality. If this is not sufficient, you can write more complex logic to a
+separate script, for instance by setting the value to
+`'python /path/to/my_script.py ${URL} ${DEST}'`.

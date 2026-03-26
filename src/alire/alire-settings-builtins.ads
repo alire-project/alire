@@ -62,8 +62,8 @@ package Alire.Settings.Builtins is
       Global_Only => True,
       Help        =>
         "Editor command and arguments for editing crate code (alr edit)." &
-        " The executables and arguments are separated by a single space" &
-        " character. The token ${GPR_FILE} is replaced by" &
+        " The executable and arguments are split according to POSIX-style" &
+        " quoting rules. The token ${GPR_FILE} is replaced by" &
         " a path to the project file to open.");
 
    --  INDEX
@@ -131,9 +131,9 @@ package Alire.Settings.Builtins is
       Global_Only => True,
       Help        =>
         "The command used to download crates which are published as archives."
-      & " The executables and arguments are separated by a single space"
-      & " character. The token ${DEST} is replaced by the destination path,"
-      & " and ${URL} by the URL to download.");
+      & " The executable and arguments are split according to POSIX-style"
+      & " quoting rules. The token ${DEST} is replaced by the destination"
+      & " path, and ${URL} by the URL to download.");
 
    Origins_Git_Trusted_Sites : constant Builtin := New_Builtin
      (Key         => "origins.git.trusted_sites",
