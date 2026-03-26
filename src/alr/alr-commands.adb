@@ -193,7 +193,9 @@ package body Alr.Commands is
       Define_Switch (Config,
                      Command_Line_Config_Path'Access,
                      "-s=", "--settings=",
-                     "Override settings folder location",
+                     "Override settings folder location (and that of the"
+                     & " cache, unless the 'cache.dir' setting is explicitly"
+                     & " set)",
                      Argument => "DIR");
 
       Define_Switch (Config,

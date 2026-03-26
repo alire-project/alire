@@ -15,7 +15,8 @@ package Alire.Settings.Builtins is
       Kind => Stn_Absolute_Path,
       Def  => "",
       Help =>
-        "Directory where Alire will store its cache.");
+        "Directory where Alire will store its cache, and its toolchains "
+      & "unless 'toolchain.dir' is also set.");
 
    --  DEPENDENCIES
 

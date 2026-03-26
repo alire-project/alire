@@ -69,8 +69,12 @@ including their default values and a short explanation of their effects.
 
 By default, `alr` stores its global settings at `<user home>/.config/alire`.
 You can use any other location by setting in the environment the variable
-`ALIRE_SETTINGS_DIR=</absolute/path/to/settings/folder>`, or by using the global `-s`
-switch: `alr -s </path/to/settings> <command>`.
+`ALIRE_SETTINGS_DIR=</absolute/path/to/settings/folder>`, or by using the global
+`-s` (or `--settings`) switch: `alr -s </path/to/settings> <command>`.
+
+This also relocates the global cache directory (where shared dependencies are
+cached and built) unless the `cache.dir` setting is explicitly set, and with it
+the toolchain directory unless `toolchain.dir` is explicitly set.
 
 Using pristine default settings can be useful to isolate the source of errors
 by ensuring that a misconfiguration is not at play.
