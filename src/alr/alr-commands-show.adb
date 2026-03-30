@@ -104,15 +104,15 @@ package body Alr.Commands.Show is
 
          if Cmd.Graph or else Cmd.Solve or else Cmd.Tree then
             declare
-               Needed : constant Query.Solution :=
-                          (if Current
-                           then Cmd.Root.Solution
-                           else Query.Resolve
-                             (Rel.Dependencies (Platform.Properties),
-                              Platform.Properties,
-                              Alire.Solutions.Empty_Valid_Solution,
-                              Options => (Age    => Query_Policy,
-                                          others => <>)).Solution);
+               Solver_Result : constant Query.Result :=
+                 (if Current
+                  then (Solution => Cmd.Root.Solution, Timed_Out => False)
+                  else Query.Resolve
+                    (Rel.Dependencies (Platform.Properties),
+                     Platform.Properties,
+                     Alire.Solutions.Empty_Valid_Solution,
+                     Options => (Age => Query_Policy, others => <>)));
+               Needed : constant Query.Solution := Solver_Result.Solution;
             begin
                if Cmd.Solve then
                   Needed.Print (Rel,
@@ -135,7 +135,11 @@ package body Alr.Commands.Show is
                end if;
 
                if not Needed.Is_Complete then
-                  Put_Line ("Dependencies cannot be met");
+                  if Solver_Result.Timed_Out then
+                     Trace.Warning ("Dependency resolution timed out");
+                  else
+                     Trace.Warning ("Dependencies cannot be met");
+                  end if;
                end if;
             end;
          end if;
