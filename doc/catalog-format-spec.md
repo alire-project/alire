@@ -195,8 +195,9 @@ static, i.e. they cannot depend on the context.
    hosting arrangement, or none at all.
 
  - `licenses`: mandatory (for indexing) string. A valid [SPDX
-   expression](https://spdx.org/licenses/). Custom license identifiers are
-   accepted with the format: `custom-[0-9a-zA-Z.-]+`
+   expression](https://spdx.dev/use/specifications/). Custom license identifiers
+   should be specified with the format `LicenseRef-[0-9a-zA-Z.\-]+`, though
+   for backwards compatibility `custom-[0-9a-zA-Z.\-+]+` is also permitted.
 
    ```toml
    licenses = "MIT"
@@ -211,7 +212,7 @@ static, i.e. they cannot depend on the context.
    For a custom license:
 
    ```toml
-   licenses = "custom-my-license-1.2"
+   licenses = "LicenseRef-my-license-1.2"
    ```
 
  - `website`: optional string. URL to the original project's website. For

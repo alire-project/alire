@@ -12,6 +12,8 @@ may change.
 - alr: setting a builtin without `--builtin` will emit a new warning.
 - alr: style checks are now disabled by default in all build profiles.
 - alr: quoting follows shell rules for `editor.cmd` and `alr run -a`
+- manifest: `licenses` now supports SPDX v3.0.0 syntax, with the exception that license and exception identifiers are still matched case-sensitively.
+- manifest: `licenses` now uses v3.24.0 of the SPDX License List.
 
 ### We are here
 

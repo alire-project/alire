@@ -6,6 +6,25 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Updated SPDX license expression support
+
+PR [#2096](https://github.com/alire-project/alire/pull/2096)
+
+The manifest's `licenses` field now conforms to
+[SPDX v3.0.0 license expression syntax](https://github.com/spdx/spdx-spec/blob/v3.0/docs/annexes/SPDX-license-expressions.md),
+with the exception that license and exception identifiers must still match their
+canonical forms case-sensitively. In particular, it now supports `LicenseRef-*`,
+`AdditionRef-*`, and `DocumentRef-*` user defined license/addition references;
+these are now the preferred form for custom licenses, though the `custom-*`
+format is still permitted for backward compatibility.
+
+The `licenses` field now supports identifiers from
+[version 3.24.0 of the SPDX License List](https://github.com/spdx/license-list-XML/releases/tag/v3.24.0).
+
+During `alr init`, if a `LicenseRef-` prefix is necessary and sufficient to make
+a user-specified `licenses` string valid, `alr` will now suggest the corrected
+form.
+
 ### Support for quoting in custom editors, quoting changes for `alr run`
 
 PR [#1993](https://github.com/alire-project/alire/pull/1993)
