@@ -152,7 +152,15 @@ package body Alr.Commands.Init is
    is
    begin
       case Args.Length is
-         when 0 => -- Query crate name
+         when 0 =>
+            if CLIC.User_Input.Not_Interactive then
+               Reportaise_Wrong_Arguments
+                 ("Crate name required (must be supplied as an argument in "
+                  & "non-interactive mode)");
+               --  Otherwise the invalid default results in an infinite loop
+            end if;
+
+            --  Query crate name
             loop
                declare
                   Tentative_Name : constant String :=
