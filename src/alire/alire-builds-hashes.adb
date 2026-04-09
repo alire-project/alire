@@ -257,13 +257,18 @@ package body Alire.Builds.Hashes is
             Add_Externals;     -- GPR externals
             Add_Environment;   -- Environment variables
 
-            --  In the root crate we can skip compiler detection, as it has no
-            --  bearing on the hash or config regeneration. This allows most
-            --  operations in a crate without dependencies to succeed even in
-            --  absence of a configured compiler. Note that for linked crates,
-            --  even if they don't have a proper build dir, the hash is
-            --  important for dependents.
-            if not Root.Is_Root_Release (Rel.Name) then
+            --  We can skip compiler detection for crates not deployed to a
+            --  shared `builds` directory, as it has no bearing on config
+            --  regeneration, and we don't need to propagate any changes to
+            --  shared dependents (since they will hash the compiler version
+            --  directly themselves anyway).
+            --
+            --  This allows most operations in a crate without any indexed
+            --  dependencies to succeed even in absence of a configured
+            --  compiler (or any index at all).
+            if not (Root.Is_Root_Release (Rel.Name)
+                    or else Root.Solution.State (Rel.Name).Is_Linked)
+            then
                Add_Compiler;   -- Compiler version
             end if;
 
