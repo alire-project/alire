@@ -1,0 +1,19 @@
+description = "\"Hello, world!\" demonstration project support library"
+name = "libhello"
+version = "1.2.3"
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+
+[configuration.variables]
+Var1 = {type = "Boolean", default = true}
+
+[gpr-externals]
+SET_LOCALLY = ["val_A", "val_B"]
+SET_BY_ROOT = ["val_C", "val_D"]
+
+[gpr-set-externals]
+SET_LOCALLY = "val_A"
+
+[environment]
+MY_ENV.set = "env_one"

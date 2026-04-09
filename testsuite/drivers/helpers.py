@@ -290,7 +290,7 @@ def md5sum(file):
     return file_hash.hexdigest()
 
 
-def append_to_file(filename : str, lines : []) -> None:
+def append_to_file(filename : Union[str, os.PathLike], lines : list[str]) -> None:
     """
     Append the given lines to a file
     """
@@ -298,7 +298,7 @@ def append_to_file(filename : str, lines : []) -> None:
         file.write("\n".join(lines))
 
 
-def prepend_to_file(filename : str, lines : []) -> None:
+def prepend_to_file(filename : Union[str, os.PathLike], lines : list[str]) -> None:
     """
     Prepend the given lines to a file
     """
@@ -307,7 +307,7 @@ def prepend_to_file(filename : str, lines : []) -> None:
         file.write("\n".join(lines) + "\n" + old_contents)
 
 
-def replace_in_file(filename : str, old : str, new : str):
+def replace_in_file(filename : Union[str, os.PathLike], old : str, new : str):
     """
     Replace all occurrences of a string in a file
     """
