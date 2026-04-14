@@ -137,7 +137,6 @@ package Alire.Settings.Builtins is
       & " is replaced by the destination path, and"
       & Markup.Terminal ("${URL}") & " by the URL to download.");
 
-
    Origins_Git_Trusted_Sites : constant Builtin := New_Builtin
      (Key         => "origins.git.trusted_sites",
       Kind        => Stn_String,
