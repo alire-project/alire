@@ -260,7 +260,8 @@ package body Alr.Commands.Run is
         (Config,
          Cmd.Args'Access,
          "-a:", "--args=",
-         "Arguments to pass through (quote them if more than one)",
+         "A single string of arguments to pass through to the executable;"
+         & " split according to POSIX-style quoting rules",
          Argument => "ARGS");
 
       Define_Switch
