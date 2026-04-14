@@ -212,14 +212,17 @@ package body Alire.TOML_Index is
                   & Alire.Index.Min_Compatible_Version.Image & ASCII.LF
                   & (if Index.Name = Alire.Index.Community_Name then
                        " Resetting the community index ("
-                       & TTY.Terminal ("alr index --reset-community")
+                       & Markup.Terminal ("alr index --reset-community")
                        & ") may solve the issue. " & ASCII.LF
                     else
-                       " Updating your local index might solve the issue "
-                       & "(alr index --update-all). " & ASCII.LF
-                       & "Otherwise, remove the " & "index with name '"
+                       " Updating your local index might solve the issue ("
+                       & Markup.Terminal ("alr index --update-all")
+                       & "). " & ASCII.LF
+                       & "Otherwise, remove the index with name '"
                        & TTY.Emph (Index.Name)
-                       & "' (alr index --del " & Index.Name & ")"));
+                       & "' ("
+                       & Markup.Terminal ("alr index --del " & Index.Name)
+                       & ")"));
             end if;
 
          end if;
@@ -228,7 +231,7 @@ package body Alire.TOML_Index is
             Put_Info
               ("If you experience any problems loading this index, "
                & "you may need to reset the community index with"
-               & " '" & TTY.Terminal ("alr index --reset-community") & "'. "
+               & " '" & Markup.Terminal ("alr index --reset-community") & "'. "
                & "Note that this operation will delete any local"
                & " changes to the community index.");
          end if;

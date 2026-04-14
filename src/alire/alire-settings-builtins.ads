@@ -133,8 +133,9 @@ package Alire.Settings.Builtins is
       Help        =>
         "The command used to download crates which are published as archives."
       & " The executable and arguments are split according to POSIX-style"
-      & " quoting rules. The token ${DEST} is replaced by the destination"
-      & " path, and ${URL} by the URL to download.");
+      & " quoting rules. The token " & Markup.Terminal ("${DEST}")
+      & " is replaced by the destination path, and"
+      & Markup.Terminal ("${URL}") & " by the URL to download.");
 
    Origins_Git_Trusted_Sites : constant Builtin := New_Builtin
      (Key         => "origins.git.trusted_sites",
@@ -142,11 +143,13 @@ package Alire.Settings.Builtins is
       Def         => Community_Trusted_Sites,
       Global_Only => True,
       Help        =>
-        "Space-separated list of trusted sites for Git origins, used by"
-      & " 'alr index --check' and 'alr publish --for-private-index'. If set to"
+        "Space-separated list of trusted sites for Git origins, used by "
+      & Markup.Terminal ("alr index --check") & " and "
+      & Markup.Terminal ("alr publish --for-private-index") & ". If set to"
       & " '...', all origins are trusted. Note that this does not have any"
-      & " effect when using 'alr publish' for submissions to the community"
-      & " index (which only permits the default list, due to vulnerabilities"
+      & " effect when using " & Markup.Terminal ("alr publish")
+      & " for submissions to the community index (which only permits the"
+      & " default list, due to vulnerabilities"
       & " identified in Git's use of SHA1).");
 
    --  SOLVER
@@ -155,7 +158,8 @@ package Alire.Settings.Builtins is
      (Key => "solver.autonarrow",
       Def => True,
       Help =>
-        "If true, `alr with` will replace 'any' dependencies with the"
+        "If true, " & Markup.Terminal ("alr with")
+      & " will replace 'any' dependencies with the"
       & " appropriate caret/tilde dependency.");
 
    Solver_Timeout : constant Builtin := New_Builtin
@@ -218,7 +222,7 @@ package Alire.Settings.Builtins is
         "If true, Alire will not attempt to update dependencies even after "
       & "the manifest is manually edited, or when no valid solution has "
       & "been ever computed. All updates have to be manually requested "
-      & "through `alr update`");
+      & "through " & Markup.Terminal ("alr update"));
 
    --  USER
 

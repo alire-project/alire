@@ -164,7 +164,7 @@ package body Alr.Commands is
       elsif Stripped_Value /= "auto" and then Stripped_Value /= "" then
          Trace.Warning
            ("Unknown argument in "
-            & TTY.Terminal (Switch)
+            & Markup.Terminal (Switch)
             & Value
             & ". Defaulting to 'auto'."
             & Suggest (Stripped_Value));
@@ -363,8 +363,8 @@ package body Alr.Commands is
             Trace.Error (Custom_Msg);
          end if;
          Reportaise_Wrong_Arguments
-           ("Command " & TTY.Terminal (Cmd.Name) & " does not support the "
-            & TTY.Terminal ("--format") & " switch");
+           ("Command " & Markup.Terminal (Cmd.Name) & " does not support the "
+            & Markup.Terminal ("--format") & " switch");
       end if;
    end Forbids_Structured_Output;
 
@@ -644,7 +644,7 @@ package body Alr.Commands is
       end if;
 
       if No_TTY then
-         CLIC.TTY.Force_Disable_TTY;
+         CLIC.Markup.Force_Disable_TTY;
       end if;
 
       --  Use CLIC.TTY selection/detection of TTY
@@ -669,11 +669,11 @@ package body Alr.Commands is
          if No_Color then
             Trace.Warning
               ("Deprecated option "
-               & TTY.Terminal ("--no-color")
+               & Markup.Terminal ("--no-color")
                & " passed along "
-               & TTY.Terminal ("--color=always")
+               & Markup.Terminal ("--color=always")
                & ". Only "
-               & TTY.Terminal ("--color")
+               & Markup.Terminal ("--color")
                & " will be followed.");
          end if;
 
@@ -792,11 +792,12 @@ package body Alr.Commands is
         .Append ("Version selection syntax (global policy applies "
                  & "within the allowed version subsets):")
         .New_Line
-        .Append ("crate        " & ASCII.HT & "Newest/oldest version")
-        .Append ("crate=version" & ASCII.HT & "Exact version")
-        .Append ("crate^version" & ASCII.HT & "Major-compatible version")
-        .Append ("crate~version" & ASCII.HT & "Minor-compatible version")
-        .Append ("crate[op]version " & ASCII.HT
+        -- Additional indentation will enable the preformat mode in markdown
+        .Append ("  crate        " & ASCII.HT & "Newest/oldest version")
+        .Append ("  crate=version" & ASCII.HT & "Exact version")
+        .Append ("  crate^version" & ASCII.HT & "Major-compatible version")
+        .Append ("  crate~version" & ASCII.HT & "Minor-compatible version")
+        .Append ("  crate[op]version " & ASCII.HT
                  & "Newest/oldest in set where [op] can be >, >=, <, <=, /=")
       ;
    end Crate_Version_Sets;

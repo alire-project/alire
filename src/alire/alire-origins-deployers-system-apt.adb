@@ -102,7 +102,7 @@ package body Alire.Origins.Deployers.System.Apt is
    function Install (This : Deployer) return Outcome is
    begin
       if Force then
-         Put_Warning (TTY.Terminal ("--force") & " in effect, removal of "
+         Put_Warning (Markup.Terminal ("--force") & " in effect, removal of "
                       & "system packages by apt is allowed");
       end if;
 

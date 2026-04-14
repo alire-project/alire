@@ -346,19 +346,23 @@ package body Alr.Commands.Show is
        .Append ("Shows information found in the loaded indexes about a"
                 & " specific release (see below to narrow the searched"
                 & " milestones). By default, only direct dependencies are"
-                & " reported. With --solve, a full solution is resolved and"
+                & " reported. With " & Markup.Terminal ("--solve")
+                & ", a full solution is resolved and"
                 & " reported in list and graph form.")
        .New_Line
-       .Append ("With --external, the external definitions for a crate are"
+       .Append ("With " & Markup.Terminal ("--external")
+                & ", the external definitions for a crate are"
                 & " shown, instead of information about a particular release")
        .New_Line
-       .Append ("The --dependents switch accepts these values:")
-       .Append ("   * " & TTY.Terminal ("direct")
+       .Append ("The " & Markup.Terminal ("--dependents")
+                & " switch accepts these values:")
+       .New_Line
+       .Append ("* " & Markup.Terminal ("direct")
          & " (default) shows direct dependents.")
-       .Append ("   * " & TTY.Terminal ("all")
+       .Append ("* " & Markup.Terminal ("all")
          & " shows all dependents, including indirect ones, "
          & "and all dependency chains.")
-       .Append ("   * " & TTY.Terminal ("shortest")
+       .Append ("* " & Markup.Terminal ("shortest")
          & " shows all dependents, including "
          & "indirect ones, but only once, and a shortest-length chain.")
        .New_Line
@@ -378,7 +382,8 @@ package body Alr.Commands.Show is
       Define_Switch (Config,
                      Cmd.Dependents'Access,
                      "", "--dependents?",
-                     "Show dependent crates (WHICH=direct|shortest|all)",
+                     "Show dependent crates ("
+                     & Markup.Terminal ("WHICH=direct|shortest|all") & ")",
                      Argument => "=WHICH");
 
       Define_Switch (Config,

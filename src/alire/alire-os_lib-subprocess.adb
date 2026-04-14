@@ -348,7 +348,7 @@ package body Alire.OS_Lib.Subprocess is
          if Full_Path = "" then
             Alire.Raise_Checked_Error
               ("Executable not found in PATH when spawning: "
-               & TTY.Terminal (Image (Command, Arguments)));
+               & Markup.Terminal (Image (Command, Arguments)));
          end if;
 
          Code := GNAT.OS_Lib.Spawn (Full_Path, Parsed_Arguments.all);
@@ -419,7 +419,7 @@ package body Alire.OS_Lib.Subprocess is
             Dim (Off);
             Raise_Checked_Error
               ("Executable not found in PATH when spawning: "
-               & TTY.Terminal (Command & " " & Arguments.Flatten (" ")));
+               & Markup.Terminal (Command & " " & Arguments.Flatten (" ")));
          end if;
 
          Exit_Code := GNAT.OS_Lib.Spawn
@@ -502,7 +502,7 @@ package body Alire.OS_Lib.Subprocess is
          if Full_Path = "" then
             Raise_Checked_Error
               ("Executable not found in PATH when spawning: "
-               & TTY.Terminal (Command & " " & Arguments.Flatten (" ")));
+               & Markup.Terminal (Command & " " & Arguments.Flatten (" ")));
          end if;
 
          Spawn (Program_Name           => Full_Path,
