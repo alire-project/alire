@@ -56,7 +56,7 @@ package Alire.Roots.Editable is
    procedure Add_Dependency (This          : in out Root;
                              Dep           : Dependencies.Dependency;
                              Allow_Unknown : Boolean := Alire.Force);
-   --  Add a dependency, or raise Checked_Error is Dep is already among direct
+   --  Add a dependency, or raise Checked_Error if Dep is already among direct
    --  dependencies. Recoverable error if Dep is unknown, unless Allow_Unknown.
 
    procedure Remove_Dependency (This  : in out Root;
