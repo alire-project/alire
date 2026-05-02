@@ -864,10 +864,9 @@ provides = "another_crate_name"
 
 Systems that have their own package manager (e.g. Linux) can readily provide
 many complex dependencies still unpackaged as source code in Alire. Alire can
-use these on supported platforms during resolution. At this time, the supported
-platforms are Arch, CentOS, Debian, Fedora, Homebrew, MacPorts, MSYS2, RHEL,
-SUSE/openSUSE, and Ubuntu; do not hesitate to contact us if you would like to
-maintain other distributions.
+use these on supported platforms during resolution. See the list of supported
+distributions in the [Parameters](#parameters) section below; do not hesitate
+to contact us if you would like to maintain other distributions.
 
 A system external gives a list of platform package names that supply the
 dependency natively. The platform package manager will be used to detect their
@@ -897,9 +896,13 @@ available.'case(toolchain)'.user = false
 
  - `distribution`: name of the Linux distribution or name of the software
    distribution platform if running on a different OS. Currently supported
-   values are: `arch`, `centos`, `debian`, `fedora`,
+   values are: `arch`, `centos`, `debian`, `fedora`, `gentoo`,
    `homebrew`, `macports`, `msys2`, `rhel`, `suse`, `ubuntu`, and
    `distribution-unknown`.
+
+ - `host-arch`: name of the host architecture. Currently supported values
+   are: `x86-64`, `aarch64`, `aarch64-be`, `arm`, `i386`, `i686`, and
+   `architecture-unknown`.
 
  - `toolchain`: takes `system` value in distributions with the system Ada
    compiler first in PATH (GNAT FSF in Debian/Ubuntu), `user` otherwise (GNAT
