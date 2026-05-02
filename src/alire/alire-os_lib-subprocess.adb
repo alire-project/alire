@@ -254,15 +254,25 @@ package body Alire.OS_Lib.Subprocess is
      (Command             : String;
       Arguments           : AAA.Strings.Vector;
       Understands_Verbose : Boolean := False;
-      Dim_Output          : Boolean := True)
+      Dim_Output          : Boolean := True;
+      Run_Privileged      : Boolean := False)
    is
-      Exit_Code : constant Integer :=
-                    Spawn
-                      (Command, Arguments, Understands_Verbose, Dim_Output);
+      Needs_Sudo  : constant Boolean :=
+                      Run_Privileged and then not Running_As_Root;
+      Actual_Cmd  : constant String :=
+                      (if Needs_Sudo then "sudo" else Command);
+      Actual_Args : constant AAA.Strings.Vector :=
+                      (if Needs_Sudo
+                       then AAA.Strings.To_Vector (Command) & Arguments
+                       else Arguments);
+      Exit_Code   : constant Integer :=
+                      Spawn
+                        (Actual_Cmd, Actual_Args,
+                         Understands_Verbose, Dim_Output);
    begin
       if Exit_Code /= 0 then
          Raise_Checked_Error
-           ("Command " & Image (Command, Arguments) &
+           ("Command " & Image (Actual_Cmd, Actual_Args) &
               " exited with code " & AAA.Strings.Trim (Exit_Code'Image));
       end if;
    end Checked_Spawn;

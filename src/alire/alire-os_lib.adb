@@ -1,5 +1,7 @@
 with GNAT.OS_Lib;
 
+with Interfaces.C;
+
 package body Alire.OS_Lib is
 
    ---------
@@ -83,5 +85,25 @@ package body Alire.OS_Lib is
          return "";
       end if;
    end Locate_Exec_On_Path;
+
+   ---------------------
+   -- Running_As_Root --
+   ---------------------
+
+   function Running_As_Root return Boolean is
+      use GNATCOLL.OS.Constants;
+   begin
+      case OS is
+         when MacOS | Unix =>
+            declare
+               function Geteuid return Interfaces.C.unsigned
+                 with Import, Convention => C, External_Name => "geteuid";
+            begin
+               return Geteuid in 0;
+            end;
+         when Windows =>
+            return False;
+      end case;
+   end Running_As_Root;
 
 end Alire.OS_Lib;
