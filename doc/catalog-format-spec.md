@@ -908,10 +908,9 @@ provides = "another_crate_name"
 
 Systems that have their own package manager (e.g. Linux) can readily provide
 many complex dependencies still unpackaged as source code in Alire. Alire can
-use these on supported platforms during resolution. At this time, the supported
-platforms are Arch, CentOS, Debian, Fedora, Homebrew, MacPorts, MSYS2, RHEL,
-SUSE/openSUSE, and Ubuntu; do not hesitate to contact us if you would like to
-maintain other distributions.
+use these on supported platforms during resolution. See the list of supported
+distributions in the [Parameters](#parameters) section below; do not hesitate
+to contact us if you would like to maintain other distributions.
 
 A system external gives a list of platform package names that supply the
 dependency natively. The platform package manager will be used to detect their
