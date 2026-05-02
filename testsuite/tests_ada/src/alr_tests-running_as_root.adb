@@ -1,16 +1,19 @@
+with Alire.OS_Lib;
 with Alire.Platforms.Current;
-
-with Interfaces.C;
 
 procedure Alr_Tests.Running_As_Root is
 
-   use type Interfaces.C.unsigned;
-
-   function Geteuid return Interfaces.C.unsigned
-     with Import, Convention => C, External_Name => "geteuid";
+   EUID : constant String :=
+     Alire.OS_Lib.Getenv ("EUID");
 
 begin
-   pragma Assert
-     (Alire.Platforms.Current.Running_As_Root = (Geteuid = 0),
-      "Running_As_Root should match geteuid () = 0");
+  if Alire.Platforms.Current.On_Windows then
+    pragma Assert
+      (not Alire.Platforms.Current.Running_As_Root,
+      "Running_As_Root should always be False on Windows");
+  elsif EUID /= "" then
+    pragma Assert
+      (Alire.Platforms.Current.Running_As_Root = (EUID = "0"),
+      "Running_As_Root result does not match EUID env var");
+  end if;
 end Alr_Tests.Running_As_Root;
