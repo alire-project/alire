@@ -27,10 +27,6 @@ package Alire.OS_Lib with Preelaborate is
    --  Return the location of an executable if found on PATH, or "" otherwise.
    --  On Windows, no need to append ".exe" as it will be found without it.
 
-   function Running_As_Root return Boolean;
-   --  Returns True if the current process has superuser privileges (euid = 0).
-   --  Always returns False on Windows.
-
    Forbidden_Dir_Separator : constant Character :=
                                (case GNATCOLL.OS.Constants.Dir_Sep is
                                    when '/' => '\',

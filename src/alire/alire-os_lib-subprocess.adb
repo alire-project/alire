@@ -3,6 +3,7 @@ with Ada.Strings.Maps;
 with Ada.Text_IO;
 
 with Alire.Directories;
+with Alire.Platforms.Current;
 
 with AnsiAda; use AnsiAda;
 
@@ -258,7 +259,8 @@ package body Alire.OS_Lib.Subprocess is
       Run_Privileged      : Boolean := False)
    is
       Needs_Sudo  : constant Boolean :=
-                      Run_Privileged and then not Running_As_Root;
+                      Run_Privileged
+                      and then not Platforms.Current.Running_As_Root;
       Actual_Cmd  : constant String :=
                       (if Needs_Sudo then "sudo" else Command);
       Actual_Args : constant AAA.Strings.Vector :=

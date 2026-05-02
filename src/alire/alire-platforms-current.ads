@@ -21,6 +21,10 @@ package Alire.Platforms.Current is
    --  Root directory of the distribution; on unixes it is "/", on Windows it
    --  is the root of our msys2 installation.
 
+   function Running_As_Root return Boolean;
+   --  Returns True if the current process has superuser privileges.
+   --  Always returns False on Windows.
+
    procedure Load_Environment (Ctx : in out Alire.Environment.Context);
    --  Set environment variables from the platform. Used by Windows to
    --  initialize msys2 environment, and by macOS to initialize which,
