@@ -260,6 +260,9 @@ package body Alire.OS_Lib.Subprocess is
    is
       Needs_Sudo  : constant Boolean :=
                       Run_Privileged
+                      and then not Platforms.Current.On_Windows
+                      --  This is never called with Run_Privileged on Windows,
+                      --  but just in case.
                       and then not Platforms.Current.Running_As_Root;
       Actual_Cmd  : constant String :=
                       (if Needs_Sudo then "sudo" else Command);
