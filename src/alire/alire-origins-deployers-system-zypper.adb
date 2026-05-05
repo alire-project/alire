@@ -96,15 +96,16 @@ package body Alire.Origins.Deployers.System.Zypper is
    function Install (This : Deployer) return Outcome is
    begin
       Subprocess.Checked_Spawn
-        ("sudo", Empty_Vector &
-           "zypper" &
+        ("zypper",
+         Empty_Vector &
            "--no-refresh" &
            "--non-interactive" &
            "--quiet" &
            "install" &
            "--name" &
            "--auto-agree-with-licenses" &
-           This.Base.Package_Name);
+           This.Base.Package_Name,
+         Run_Privileged => True);
 
       return Outcome_Success;
    exception

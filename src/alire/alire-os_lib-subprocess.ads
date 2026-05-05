@@ -10,9 +10,11 @@ package Alire.OS_Lib.Subprocess is
    procedure Checked_Spawn
      (Command             : String;
       Arguments           : AAA.Strings.Vector;
-      Understands_Verbose : Boolean := False);
+      Understands_Verbose : Boolean := False;
+      Run_Privileged      : Boolean := False);
    --  Either succeeds or raises Checked_Error with the code and output as
-   --  info.
+   --  info. When Run_Privileged is True and the process is not already running
+   --  as superuser, the command is automatically prefixed with sudo.
 
    type Code_Array is array (Positive range <>) of Integer;
    --  An array of exit codes that won't cause the following calls to raise

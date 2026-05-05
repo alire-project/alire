@@ -3,12 +3,11 @@ Publish a crate that contains pins, and verify pins are removed in the process
 """
 
 import os
-import shutil
 
-from drivers.alr import run_alr, init_local_crate, alr_pin, alr_publish, \
-   alr_manifest
-from drivers.helpers import content_of, init_git_repo
-from drivers.asserts import assert_eq, assert_match
+from drivers.alr import init_local_crate, alr_pin, alr_publish, alr_manifest
+from drivers.asserts import assert_match
+from drivers.helpers import content_of, init_git_repo, on_windows
+
 from subprocess import run
 
 crate = "pinner"
@@ -19,7 +18,7 @@ start_dir = os.getcwd()
 init_local_crate(crate, with_maintainer_login=True)
 
 # And add the pin directly in the remote
-alr_pin("unobtanium", path="/")
+alr_pin("unobtanium", path=("c:/" if on_windows() else "/"))
 
 # We can now create the upstream repo
 os.chdir("..")
@@ -33,7 +32,7 @@ assert run(["git", "clone", f"{crate}.upstream", crate]).returncode == 0
 os.chdir(crate)
 
 # Verify the pin is there
-assert_match(".*\[\[pins\]\].*", content_of(alr_manifest()))
+assert_match(r".*\[\[pins\]\].*", content_of(alr_manifest()))
 
 # We publish with the pin in the manifest
 p = alr_publish(crate, "0.1.0-dev",
