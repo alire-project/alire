@@ -11,8 +11,9 @@ on:
       - '**.md'
       - '**.rst'
       - '**.txt'
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
@@ -186,18 +187,20 @@ jobs:
 
   release-info:
     name: Info for release uploads
-    if: github.event_name == 'release'
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     outputs:
-      upload-url: ${{ steps.get_release.outputs.upload_url }}
+      upload-url: ${{ steps.create_release.outputs.upload_url }}
       version-without-v: ${{ steps.get_version.outputs.version-without-v }}
 
     steps:
-      - name: Retrieve upload URL for the release
-        id: get_release
-        uses: bruceadams/get-release@v1.3.2
+      - name: Create draft release
+        id: create_release
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ github.token }}
+        with:
+          draft: true
 
       - name: Get release version
         id: get_version
@@ -211,7 +214,7 @@ jobs:
 
   release:
     name: Release on ${{ matrix.platform.id }}
-    if: github.event_name == 'release'
+    if: github.ref_type == 'tag'
     needs: [build, build-macos-universal, release-info]
     runs-on: ${{ matrix.platform.os }}
 
@@ -357,7 +360,7 @@ jobs:
 
   release-windows-installer:
     name: Release Windows installer
-    if: github.event_name == 'release'
+    if: github.ref_type == 'tag'
     needs: [build, release-info, windows-installer]
     runs-on: windows-latest
 
@@ -455,7 +458,7 @@ jobs:
 
   release-appimage:
     name: Release AppImage
-    if: github.event_name == 'release'
+    if: github.ref_type == 'tag'
     needs: [appimage, release-info]
     runs-on: ubuntu-22.04
 
@@ -470,7 +473,7 @@ jobs:
         run: chmod +x alr.AppImage
 
       - name: Upload AppImage asset
-        if: (github.event_name == 'release')
+        if: github.ref_type == 'tag'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
