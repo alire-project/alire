@@ -1,6 +1,9 @@
+with Ada.Directories;
+
 with Alire.Environment;
 with Alire.OS_Lib;
-with Ada.Directories;
+with Alire.Platforms.Posix;
+
 with GNAT.OS_Lib;
 
 package body Alire.Platforms.Current is
@@ -79,5 +82,12 @@ package body Alire.Platforms.Current is
    ----------------
 
    procedure Initialize is null;
+
+   ---------------------
+   -- Running_As_Root --
+   ---------------------
+
+   function Running_As_Root return Boolean
+   is (Posix.Running_As_Root);
 
 end Alire.Platforms.Current;
