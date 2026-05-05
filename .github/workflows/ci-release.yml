@@ -188,6 +188,7 @@ jobs:
   release-info:
     name: Info for release uploads
     if: github.ref_type == 'tag'
+    needs: [build, build-macos-universal, windows-installer, appimage]
     runs-on: ubuntu-latest
     outputs:
       upload-url: ${{ steps.create_release.outputs.upload_url }}
@@ -320,7 +321,7 @@ jobs:
       shell: bash
 
     - name: Install zip in msys2
-      run: ${{env.MSYS2_PACMAN}} --noconfirm -S zip
+      run: ${{env.MSYS2_PACMAN}} -S zip
 
     - name: Add msys2 /usr/bin to the path (for zip)
       run: echo '${{env.MSYS2_PATH}}' >> $GITHUB_PATH
@@ -473,7 +474,6 @@ jobs:
         run: chmod +x alr.AppImage
 
       - name: Upload AppImage asset
-        if: github.ref_type == 'tag'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
