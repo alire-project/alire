@@ -1,5 +1,3 @@
-pragma Ada_2022;
-
 with Ada.Directories;
 with Ada.Text_IO;
 
@@ -13,7 +11,6 @@ with Alire.Utils.Text_Files;
 with Alire.Version;
 with Alire.Warnings;
 
-with CLIC.Config.Edit;
 with CLIC.Config.Load;
 
 package body Alire.Settings.Edit is
@@ -36,8 +33,16 @@ package body Alire.Settings.Edit is
                           Check : CLIC.Config.Check_Import := null)
    is
    begin
-      if not CLIC.Config.Edit.Set (Filepath (Local), Key, Value, Check) then
-         Raise_Checked_Error ("Cannot set local settings key");
+      if Key = "user.github_login" then
+         if not Set_User_GitHub_Login (Filepath (Local), Key, Value, Check)
+         then
+            Raise_Checked_Error
+              ("Cannot set local settings key user.github_login");
+         end if;
+      else
+         if not CLIC.Config.Edit.Set (Filepath (Local), Key, Value, Check) then
+            Raise_Checked_Error ("Cannot set local settings key");
+         end if;
       end if;
 
       --  Reload after change
@@ -52,15 +57,9 @@ package body Alire.Settings.Edit is
                            Value : String;
                            Check : CLIC.Config.Check_Import := null)
    is
-
-      function Set_User_Github_Login is new CLIC.Config.Edit.Set_Typed (
-        Value_Type => String,
-        TOML_Type => TOML_String,
-        Image => String'Image);
-
    begin
       if Key = "user.github_login" then
-         if not Set_User_Github_Login (Filepath (Global), Key, Value, Check)
+         if not Set_User_GitHub_Login (Filepath (Global), Key, Value, Check)
          then
             Raise_Checked_Error
               ("Cannot set global settings key user.github_login");

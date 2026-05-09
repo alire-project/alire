@@ -1,8 +1,11 @@
+pragma Ada_2022;
+
 with AAA.Strings;
 
 with Alire.Directories;
 
 with CLIC.Config;
+with CLIC.Config.Edit;
 
 with TOML;
 
@@ -73,7 +76,7 @@ package Alire.Settings.Edit is
    function Valid_Builtin (Key    : CLIC.Config.Config_Key;
                            Value  : TOML.TOML_Value;
                            Global : Boolean)
-                           return Boolean;
+     return Boolean;
    --  Check that the combination satisfies builtin rules
    --
    --  Global_Only settings will be ignored (with an error message) if Global
@@ -83,6 +86,12 @@ package Alire.Settings.Edit is
    --  Return the appropriate Check_Import procedure for a given Level
 
 private
+   function Set_User_GitHub_Login is new CLIC.Config.Edit.Set_Typed (
+     Value_Type => String,
+     TOML_Type => TOML.TOML_String,
+     Image => String'Image);
+   --  In some cases a valid GitHub login is also a number. We have to
+   --  explicilty tell to save it as a String and not an Integer type.
 
    procedure Load_Settings;
    --  Clear and reload all settings. Also set some values elsewhere
