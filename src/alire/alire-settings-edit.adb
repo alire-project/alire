@@ -1,3 +1,5 @@
+pragma Ada_2022;
+
 with Ada.Directories;
 with Ada.Text_IO;
 
@@ -47,12 +49,28 @@ package body Alire.Settings.Edit is
    ------------------
 
    procedure Set_Globally (Key   : CLIC.Config.Config_Key;
-                          Value : String;
+                           Value : String;
                            Check : CLIC.Config.Check_Import := null)
    is
+
+      function Set_User_Github_Login is new CLIC.Config.Edit.Set_Typed (
+        Value_Type => String,
+        TOML_Type => TOML_String,
+        Image => String'Image);
+
    begin
-      if not CLIC.Config.Edit.Set (Filepath (Global), Key, Value, Check) then
-         Raise_Checked_Error ("Cannot set global settings key");
+      if Key = "user.github_login" then
+         if not Set_User_Github_Login (Filepath (Global), Key, Value, Check)
+         then
+            Raise_Checked_Error
+              ("Cannot set global settings key user.github_login");
+         end if;
+
+      else
+         if not CLIC.Config.Edit.Set (Filepath (Global), Key, Value, Check)
+         then
+            Raise_Checked_Error ("Cannot set global settings key");
+         end if;
       end if;
 
       --  Reload after change
@@ -275,6 +293,8 @@ package body Alire.Settings.Edit is
       Result : Boolean := True;
    begin
       for Ent of All_Builtins loop
+         --  Trace.Error ("Ent.Key: " & To_String (Ent.Key)
+         --             & "\tValue: " & CLIC.Config.Image (Value));
          if To_String (Ent.Key) = Key then
 
             --  Verify the type/specific constraints
