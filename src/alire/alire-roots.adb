@@ -1,3 +1,4 @@
+with Ada.Characters.Latin_1;
 with Ada.Directories;
 with Ada.Unchecked_Deallocation;
 
@@ -997,6 +998,7 @@ package body Alire.Roots is
          procedure Add_Link_Pin (Crate : Crate_Name;
                                  Pin   : in out User_Pins.Pin)
          is
+            package Latin_1 renames Ada.Characters.Latin_1;
             use type User_Pins.Pin;
          begin
 
@@ -1008,7 +1010,7 @@ package body Alire.Roots is
                  ("Pin circularity detected when adding pin "
                   & Utils.TTY.Name (This.Name) & " --> " &
                     Utils.TTY.Name (Crate)
-                  & ASCII.LF & "Last manifest in the cycle is "
+                  & Latin_1.LF & "Last manifest in the cycle is "
                   & TTY.URL (This.Crate_File));
             end if;
 

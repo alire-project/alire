@@ -1,3 +1,4 @@
+with Ada.Characters.Latin_1;
 with Ada.Containers;
 with Ada.Directories;
 
@@ -308,6 +309,7 @@ package body Alire.Install is
                              Rel    : Releases.Release)
                              return Actions
    is
+      package Latin_1 renames Ada.Characters.Latin_1;
    begin
 
       --  Crates declaring executables can only be installed once
@@ -340,7 +342,7 @@ package body Alire.Install is
                     ("Release " & Rel.Milestone.TTY_Image
                      & " has another version already installed: ")
                   .Wrap (To_Image_Vector (Find_Installed
-                    (Prefix, Rel.Name)).Flatten (ASCII.LF))
+                    (Prefix, Rel.Name)).Flatten (Latin_1.LF))
                   .Wrap ("Releases installing executables can be "
                     & "installed only once")
                   .Wrap ("Forcing this install will overwrite the "

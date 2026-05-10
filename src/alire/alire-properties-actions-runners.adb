@@ -1,4 +1,7 @@
 with AAA.Enum_Tools;
+
+with Ada.Characters.Latin_1;
+
 with Alire.Utils.Did_You_Mean;
 
 package body Alire.Properties.Actions.Runners is
@@ -40,6 +43,7 @@ package body Alire.Properties.Actions.Runners is
 
       --  Actions come in a TOML array.
 
+      package Latin_1 renames Ada.Characters.Latin_1;
       use Conditional.For_Properties;
       use TOML;
 
@@ -104,7 +108,7 @@ package body Alire.Properties.Actions.Runners is
               ("action name must be a string made of "
                & "'a' .. 'z', '0' .. '9', '-', starting with a letter and not "
                & "ending with a dash nor containing consecutive dashes"
-               & ASCII.LF & "Offending name is: " & Name.As_String);
+               & Latin_1.LF & "Offending name is: " & Name.As_String);
          end if;
 
          if Command.Kind /= TOML_Array

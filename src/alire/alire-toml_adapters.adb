@@ -1,3 +1,5 @@
+with Ada.Characters.Latin_1;
+
 with Alire.Utils;
 
 package body Alire.TOML_Adapters is
@@ -9,6 +11,7 @@ package body Alire.TOML_Adapters is
    function Escape (S : String) return String
    --  We trick the TOML exporter to get a valid escaped string
    is
+      package Latin_1 renames Ada.Characters.Latin_1;
       use TOML;
       Table : constant TOML_Value := Create_Table;
    begin
@@ -20,7 +23,7 @@ package body Alire.TOML_Adapters is
                     Trim
                       (Trim
                          (Tail (TOML.Dump_As_String (Table), '='),
-                          ASCII.LF));
+                          Latin_1.LF));
       begin
          --  Trimming the TOML quotes at the extremes fails for a
          --  string with quotes at the extremes of the string because

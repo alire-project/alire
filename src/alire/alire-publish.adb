@@ -1,3 +1,4 @@
+with Ada.Characters.Latin_1;
 with Ada.Directories;
 with Ada.Text_IO;
 
@@ -233,6 +234,8 @@ package body Alire.Publish is
    --  Checks the presence of recommended/mandatory fields in the release
    procedure Check_Release (Release : Releases.Release; Context : in out Data)
    is
+      package Latin_1 renames Ada.Characters.Latin_1;
+
       Recommend : AAA.Strings.Vector; -- Optional
       Missing   : AAA.Strings.Vector; -- Mandatory
 
@@ -322,7 +325,7 @@ package body Alire.Publish is
          Ada.Text_IO.New_Line;
          Trace.Warning ("The release "
                         & TTY.Warn ("version ends with '-dev'") & "."
-                        & ASCII.LF
+                        & Latin_1.LF
                         & "Releases submitted to an index should usually"
                         & " not be pre-release versions.");
       end if;
@@ -665,6 +668,7 @@ package body Alire.Publish is
    --  plain tar otherwise.
 
    procedure Prepare_Archive (Context : in out Data) is
+      package Latin_1 renames Ada.Characters.Latin_1;
       use CLIC.User_Input;
 
       Target_Dir : constant Relative_Path :=
@@ -810,7 +814,7 @@ package body Alire.Publish is
                           "Please upload the archive generated"
                           & " at " & TTY.URL (Archive)
                           & " to its definitive online storage location."
-                          & ASCII.LF
+                          & Latin_1.LF
                           & "Once you have uploaded the file, enter its URL:",
                        Prompt   => "Enter URL> ",
                        Valid    => (Yes | No => True, others => False),
@@ -850,6 +854,7 @@ package body Alire.Publish is
    -------------------
 
    procedure Verify_Github (Context : in out Data) is
+      package Latin_1 renames Ada.Characters.Latin_1;
    begin
 
       --  Early return if forcing
@@ -892,7 +897,7 @@ package body Alire.Publish is
             if not Submit.Ask_To_Fork (Context) then
                Recoverable_User_Error
                  ("You must fork the community index to your GitHub account"
-               & ASCII.LF & "Please visit "
+               & Latin_1.LF & "Please visit "
                & TTY.URL (Tail (Index.Community_Repo, '+'))
                & " if you want to fork manually.");
             end if;

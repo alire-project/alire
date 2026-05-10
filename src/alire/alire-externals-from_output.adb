@@ -1,5 +1,7 @@
 with AAA.Strings; use AAA.Strings;
 
+with Ada.Characters.Latin_1;
+
 with Alire.Directories;
 with Alire.Index;
 with Alire.Origins;
@@ -24,6 +26,7 @@ package body Alire.Externals.From_Output is
    function Detect (This : External;
                     Name : Crate_Name) return Releases.Containers.Release_Set
    is
+      package Latin_1 renames Ada.Characters.Latin_1;
       use Directories.Operators;
       Location : GNAT.OS_Lib.String_Access :=
                    GNAT.OS_Lib.Locate_Exec_On_Path
@@ -55,7 +58,7 @@ package body Alire.Externals.From_Output is
                        (This.Command.First_Element,
                         This.Command.Tail,
                         Lines);
-         Output  : constant String := Lines.Flatten ("" & ASCII.LF);
+         Output  : constant String := Lines.Flatten ("" & Latin_1.LF);
          --  ASCII.LF is used by Regpat for new lines
       begin
          if Status /= 0 then

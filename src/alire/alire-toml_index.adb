@@ -1,3 +1,4 @@
+with Ada.Characters.Latin_1;
 with Ada.Directories;
 
 with Alire.Settings.Builtins;
@@ -105,6 +106,8 @@ package body Alire.TOML_Index is
    procedure Check_Index (Index  : Index_On_Disk.Index'Class;
                           Root   : Any_Path;
                           Result : out Load_Result) is
+      package Latin_1 renames Ada.Characters.Latin_1;
+
       Filename : constant String := Dirs.Compose (Root, "index.toml");
       Value    : TOML.TOML_Value;
       Key      : constant String := "version";
@@ -209,14 +212,14 @@ package body Alire.TOML_Index is
                  (Result, Filename,
                   "index version (" & Loading_Index_Version.Image
                   & ") is too old. The minimum compatible version is "
-                  & Alire.Index.Min_Compatible_Version.Image & ASCII.LF
+                  & Alire.Index.Min_Compatible_Version.Image & Latin_1.LF
                   & (if Index.Name = Alire.Index.Community_Name then
                        " Resetting the community index ("
                        & TTY.Terminal ("alr index --reset-community")
-                       & ") may solve the issue. " & ASCII.LF
+                       & ") may solve the issue. " & Latin_1.LF
                     else
                        " Updating your local index might solve the issue "
-                       & "(alr index --update-all). " & ASCII.LF
+                       & "(alr index --update-all). " & Latin_1.LF
                        & "Otherwise, remove the " & "index with name '"
                        & TTY.Emph (Index.Name)
                        & "' (alr index --del " & Index.Name & ")"));
