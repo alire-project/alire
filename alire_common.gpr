@@ -73,6 +73,8 @@ abstract project Alire_Common is
      );
 
    package Compiler is
+      for Local_Configuration_Pragmas use "src/alire.adc";
+
       case Build_Mode is
          when "debug" =>
             for Default_Switches ("Ada") use Ada_Common_Switches &
