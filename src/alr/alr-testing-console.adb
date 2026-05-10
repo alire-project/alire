@@ -1,3 +1,4 @@
+with Ada.Characters.Latin_1;
 with Alr.Commands.Version;
 
 with GNAT.IO; use GNAT.IO;
@@ -6,7 +7,7 @@ with Stopwatch;
 
 package body Alr.Testing.Console is
 
-   Tab : constant Character := ASCII.HT;
+   Tab : constant Character := Ada.Characters.Latin_1.HT;
 
    ---------------
    -- Start_Run --

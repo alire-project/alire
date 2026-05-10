@@ -1,3 +1,4 @@
+with Ada.Characters.Latin_1;
 with Ada.Containers;
 
 with Alire; use Alire;
@@ -40,19 +41,20 @@ package body Alr.Commands.Edit is
    -----------------------------
 
    procedure Report_If_Not_Installed (Exec : String) is
+      LF : Character renames Ada.Characters.Latin_1.LF;
    begin
       if Alire.OS_Lib.Subprocess.Locate_In_Path (Exec) = "" then
          --  Executable not in PATH, report an error
          if Exec = "gnatstudio" or else Exec = "gnatstudio.exe" then
             Reportaise_Command_Failed
-              ("GNAT Studio not available or not in PATH. " & ASCII.LF &
-                 "You can download it at: " & ASCII.LF &
+              ("GNAT Studio not available or not in PATH. " & LF &
+                 "You can download it at: " & LF &
                  "https://github.com/AdaCore/gnatstudio/releases");
          elsif Exec = "code" or else Exec = "code.exe" then
             Reportaise_Command_Failed
-              ("VS Code not available or not in PATH. " & ASCII.LF &
-                 "You can download it at: " & ASCII.LF &
-                 "https://code.visualstudio.com/download"  & ASCII.LF &
+              ("VS Code not available or not in PATH. " & LF &
+                 "You can download it at: " & LF &
+                 "https://code.visualstudio.com/download"  & LF &
                  "We also recomend installing the 'AdaCore.ada' extension.");
          else
             Reportaise_Command_Failed

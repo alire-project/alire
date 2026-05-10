@@ -1,3 +1,4 @@
+with Ada.Characters.Latin_1;
 
 with Alire.Settings.Edit;
 with Alire.Containers;
@@ -64,6 +65,7 @@ package body Alr.Commands.Toolchain is
    is
       use Alire;
       use all type Origins.Kinds;
+      LF : Character renames Ada.Characters.Latin_1.LF;
 
       Dep : constant Dependencies.Dependency :=
               Dependencies.From_String (Request);
@@ -216,7 +218,7 @@ package body Alr.Commands.Toolchain is
               ("Currently configured " & Utils.TTY.Name (The_Other (Dep.Crate))
                & " has origin " & TTY.Emph (Origin_Kind'Image)
                & " but newly selected " & Utils.TTY.Name (Dep.Crate)
-               & " has origin " & TTY.Emph (Rel.Origin.Kind'Image) & ASCII.LF
+               & " has origin " & TTY.Emph (Rel.Origin.Kind'Image) & LF
                & "Mixing tool origins may result in a broken toolchain");
          end if;
 

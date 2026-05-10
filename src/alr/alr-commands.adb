@@ -1,4 +1,5 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Latin_1;
 with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Environment_Variables;
@@ -787,16 +788,17 @@ package body Alr.Commands is
    ------------------------
 
    function Crate_Version_Sets return AAA.Strings.Vector is
+      package Latin_1 renames Ada.Characters.Latin_1;
    begin
       return AAA.Strings.Empty_Vector
         .Append ("Version selection syntax (global policy applies "
                  & "within the allowed version subsets):")
         .New_Line
-        .Append ("crate        " & ASCII.HT & "Newest/oldest version")
-        .Append ("crate=version" & ASCII.HT & "Exact version")
-        .Append ("crate^version" & ASCII.HT & "Major-compatible version")
-        .Append ("crate~version" & ASCII.HT & "Minor-compatible version")
-        .Append ("crate[op]version " & ASCII.HT
+        .Append ("crate        " & Latin_1.HT & "Newest/oldest version")
+        .Append ("crate=version" & Latin_1.HT & "Exact version")
+        .Append ("crate^version" & Latin_1.HT & "Major-compatible version")
+        .Append ("crate~version" & Latin_1.HT & "Minor-compatible version")
+        .Append ("crate[op]version " & Latin_1.HT
                  & "Newest/oldest in set where [op] can be >, >=, <, <=, /=")
       ;
    end Crate_Version_Sets;
