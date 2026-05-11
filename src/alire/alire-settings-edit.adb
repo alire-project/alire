@@ -292,8 +292,6 @@ package body Alire.Settings.Edit is
       Result : Boolean := True;
    begin
       for Ent of All_Builtins loop
-         --  Trace.Error ("Ent.Key: " & To_String (Ent.Key)
-         --             & "\tValue: " & CLIC.Config.Image (Value));
          if To_String (Ent.Key) = Key then
 
             --  Verify the type/specific constraints
