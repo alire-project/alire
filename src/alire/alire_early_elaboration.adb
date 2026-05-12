@@ -20,6 +20,8 @@ with Simple_Logging.Filtering;
 
 package body Alire_Early_Elaboration is
 
+   package Latin_1 renames Ada.Characters.Latin_1;
+
    Real_Starting_Dir : constant Alire.Absolute_Path :=
      Ada.Directories.Current_Directory;
 
@@ -92,7 +94,6 @@ package body Alire_Early_Elaboration is
    ----------------------------
 
    procedure Early_Switch_Detection is
-      package Latin_1 renames Ada.Characters.Latin_1;
       use GNAT.Command_Line;
 
       Subcommand_Seen : Boolean := False;

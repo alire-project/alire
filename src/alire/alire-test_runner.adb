@@ -1,5 +1,4 @@
 with Ada.Calendar;
-with Ada.Characters.Latin_1;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Fixed;
@@ -199,7 +198,7 @@ package body Alire.Test_Runner is
       ------------
 
       procedure Report is
-         CR : Character renames Ada.Characters.Latin_1.CR;
+         CR : Character renames Latin_1.CR;
       begin
          if Structured_Output then
             --  finalize report according to format
@@ -331,7 +330,7 @@ package body Alire.Test_Runner is
    procedure Run_All_Tests
      (Root : Roots.Root; Test_List : Portable_Path_Vector; Jobs : Positive)
    is
-      CR : Character renames Ada.Characters.Latin_1.CR;
+      CR : Character renames Latin_1.CR;
       use GNAT.OS_Lib;
 
       ---------

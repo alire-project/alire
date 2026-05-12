@@ -1,5 +1,4 @@
 with Ada.Calendar;
-with Ada.Characters.Latin_1;
 with Ada.Exceptions;
 
 with Alire.Errors;
@@ -72,8 +71,6 @@ package body Alire.GitHub is
    is
       --  We receive either JSON Args or a Raw body to send
       pragma Assert (Raw = "" or else Args = Minirest.No_Arguments);
-
-      package Latin_1 renames Ada.Characters.Latin_1;
 
       Full_URL : constant String :=
                    Base_URL
@@ -166,8 +163,6 @@ package body Alire.GitHub is
                       Error  : String := "GitHub API call failed")
                       return GNATCOLL.JSON.JSON_Value
    is
-      package Latin_1 renames Ada.Characters.Latin_1;
-
       Response : constant Minirest.Response
         := API_Call (Proc   => Proc,
                      Args   => Args,
@@ -419,7 +414,6 @@ package body Alire.GitHub is
                              Node_ID : String)
    is
       pragma Unreferenced (Number);
-      package Latin_1 renames Ada.Characters.Latin_1;
       use AAA.Strings;
 
       --  Unfortunately, removing the draft flag isn't available through REST.

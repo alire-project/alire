@@ -1,7 +1,5 @@
 with AAA.Enum_Tools;
 
-with Ada.Characters.Latin_1;
-
 with Alire.Utils.Did_You_Mean;
 
 package body Alire.Properties.Actions.Runners is
@@ -43,7 +41,6 @@ package body Alire.Properties.Actions.Runners is
 
       --  Actions come in a TOML array.
 
-      package Latin_1 renames Ada.Characters.Latin_1;
       use Conditional.For_Properties;
       use TOML;
 

@@ -1,5 +1,3 @@
-with Ada.Characters.Latin_1;
-
 with Alire.Settings.Edit;
 with Alire.Root;
 
@@ -16,8 +14,6 @@ package body Alr.Commands.Settings is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      package Latin_1 renames Ada.Characters.Latin_1;
-
       Enabled : Natural := 0;
 
       Lvl : constant Alire.Settings.Level := (if Cmd.Global

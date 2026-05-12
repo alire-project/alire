@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with Ada.Containers;
 with Ada.Directories;
 
@@ -309,7 +308,6 @@ package body Alire.Install is
                              Rel    : Releases.Release)
                              return Actions
    is
-      package Latin_1 renames Ada.Characters.Latin_1;
    begin
 
       --  Crates declaring executables can only be installed once

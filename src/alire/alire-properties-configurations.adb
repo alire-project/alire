@@ -6,7 +6,6 @@ with Alire.Utils.YAML;
 with Alire.Utils.Did_You_Mean;
 
 with Ada.Characters.Handling;
-with Ada.Characters.Latin_1;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
@@ -318,7 +317,6 @@ package body Alire.Properties.Configurations is
 
    overriding
    function To_YAML (This : Config_Value_Assignment) return String is
-      package Latin_1 renames Ada.Characters.Latin_1;
       Ret : Unbounded_String;
       First : Boolean := True;
    begin
@@ -439,7 +437,7 @@ package body Alire.Properties.Configurations is
                                 Value : TOML.TOML_Value)
                                 return String
    is
-      use Ada.Characters.Latin_1;
+      use Latin_1;
       Name : constant String := +This.Name;
       Indent : constant String := "   ";
    begin
@@ -507,7 +505,7 @@ package body Alire.Properties.Configurations is
                                 Value : TOML.TOML_Value)
                                 return String
    is
-      use Ada.Characters.Latin_1;
+      use Latin_1;
       Name : constant String := +This.Name;
       Indent : constant String := "   ";
    begin
@@ -554,7 +552,7 @@ package body Alire.Properties.Configurations is
                               Value : TOML.TOML_Value)
                               return String
    is
-      use Ada.Characters.Latin_1;
+      use Latin_1;
       Name : constant String := To_Upper_Case (+This.Name);
 
    begin

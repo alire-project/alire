@@ -1,11 +1,10 @@
-with Ada.Characters.Latin_1;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alr.Commands.Version;
 
 package body Alr.Testing.JUnit is
 
-   Newline : constant String := "" & Ada.Characters.Latin_1.LF;
+   Newline : constant String := "" & Latin_1.LF;
 
    ---------------
    -- Start_Run --

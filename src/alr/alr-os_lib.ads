@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with Ada.Directories;
 
 with Alire.Directories;
@@ -66,7 +65,7 @@ package Alr.OS_Lib is
 
 private
 
-   Line_Separator : constant String := Ada.Characters.Latin_1.LF & "";
+   Line_Separator : constant String := Latin_1.LF & "";
    --  This should be made OS independent
 
    function "/" (L, R : String) return String is

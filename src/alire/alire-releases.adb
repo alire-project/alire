@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with Ada.Directories;
 with Ada.Text_IO;
 
@@ -86,7 +85,6 @@ package body Alire.Releases is
    -------------------------
    --  Warn of ^0.x dependencies that probably should be ~0.x
    function Check_Caret_Warning (This : Release) return Boolean is
-      package Latin_1 renames Ada.Characters.Latin_1;
       Newline    : constant String := Latin_1.LF & "   ";
    begin
       for Dep of This.Flat_Dependencies loop
@@ -1262,7 +1260,7 @@ package body Alire.Releases is
 
    overriding
    function To_YAML (R : Release) return String is
-      LF : Character renames Ada.Characters.Latin_1.LF;
+      LF : Character renames Latin_1.LF;
 
       function Props_To_YAML
       is new Utils.YAML.To_YAML (Alire.Properties.Property'Class,

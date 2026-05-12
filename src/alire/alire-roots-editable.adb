@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with Ada.Directories;
 
 with Alire.Conditional;
@@ -261,8 +260,6 @@ package body Alire.Roots.Editable is
                                   Path  : Any_Path)
                                   return Crate_Name
    is
-      package Latin_1 renames Ada.Characters.Latin_1;
-
       Pin_Root : Optional.Root := Optional.Detect_Root (Path);
 
       -------------------------

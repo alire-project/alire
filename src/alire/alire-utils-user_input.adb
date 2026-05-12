@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with Ada.Directories;
 
 with GNAT.OS_Lib;
@@ -17,7 +16,6 @@ package body Alire.Utils.User_Input is
                          Force : Boolean := Alire.Force)
                          return Boolean
    is
-      package Latin_1 renames Ada.Characters.Latin_1;
    begin
       if not GNAT.OS_Lib.Is_Directory (Dir) then
          return Query

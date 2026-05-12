@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with Ada.Containers;
 
 with Alire; use Alire;
@@ -41,7 +40,7 @@ package body Alr.Commands.Edit is
    -----------------------------
 
    procedure Report_If_Not_Installed (Exec : String) is
-      LF : Character renames Ada.Characters.Latin_1.LF;
+      LF : Character renames Latin_1.LF;
    begin
       if Alire.OS_Lib.Subprocess.Locate_In_Path (Exec) = "" then
          --  Executable not in PATH, report an error

@@ -1,5 +1,4 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Characters.Latin_1;
 with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Environment_Variables;
@@ -788,7 +787,6 @@ package body Alr.Commands is
    ------------------------
 
    function Crate_Version_Sets return AAA.Strings.Vector is
-      package Latin_1 renames Ada.Characters.Latin_1;
    begin
       return AAA.Strings.Empty_Vector
         .Append ("Version selection syntax (global policy applies "

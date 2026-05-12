@@ -1,5 +1,3 @@
-with Ada.Characters.Latin_1;
-
 package body Alire.Utils.YAML is
 
    -------------
@@ -8,7 +6,6 @@ package body Alire.Utils.YAML is
 
    function To_YAML (V : Vector) return String is
 
-      package Latin_1 renames Ada.Characters.Latin_1;
       use all type Vectors.Index_Type;
 
       function Image (V : Vector; Pos : Vectors.Index_Type) return String is
@@ -30,8 +27,6 @@ package body Alire.Utils.YAML is
    --------------------
 
    function YAML_Stringify (Input : String) return String is
-      package Latin_1 renames Ada.Characters.Latin_1;
-
       --  Inspired by AdaYaml, (c) 2017 Felix Krause
 
       Result : String (1 .. Input'Length * 4 + 2);

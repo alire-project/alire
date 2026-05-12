@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with Ada.Directories;
 with Ada.Containers;
 
@@ -545,7 +544,6 @@ package body Alire.VCSs.Git is
                         return String
    is
       pragma Unreferenced (This);
-      package Latin_1 renames Ada.Characters.Latin_1;
       Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
       Output : constant AAA.Strings.Vector :=
                  Run_Git_And_Capture (Empty_Vector & "remote" & "-v");
@@ -588,7 +586,6 @@ package body Alire.VCSs.Git is
                            From : URL;
                            Ref  : String := "HEAD") return String
    is
-      package Latin_1 renames Ada.Characters.Latin_1;
       Output : constant AAA.Strings.Vector :=
         Run_Git_And_Capture (Empty_Vector & "ls-remote" & Repo_URL (From));
    begin

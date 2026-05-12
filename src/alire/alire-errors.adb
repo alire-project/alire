@@ -1,15 +1,12 @@
 with AAA.Debug;
 with AAA.Strings;
 
-with Ada.Characters.Latin_1;
 with Ada.Containers.Indefinite_Ordered_Maps;
 
 with Alire.OS_Lib;
 with Alire.Utils;
 
 package body Alire.Errors is
-
-   package Latin_1 renames Ada.Characters.Latin_1;
 
    use AAA.Strings;
 

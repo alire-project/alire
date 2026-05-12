@@ -1,3 +1,4 @@
+with Ada.Characters.Latin_1;
 private with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with Alire;
@@ -6,6 +7,8 @@ with Simple_Logging;
 with CLIC.TTY;
 
 package Alr with Preelaborate is
+
+   package Latin_1 renames Ada.Characters.Latin_1;
 
    --  Nothing of note in this root package. Entities declared here are
    --  generally useful everywhere or in many packages: Exceptions for

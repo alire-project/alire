@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with Ada.Directories;
 
 with Alire.Settings.Builtins;
@@ -106,8 +105,6 @@ package body Alire.TOML_Index is
    procedure Check_Index (Index  : Index_On_Disk.Index'Class;
                           Root   : Any_Path;
                           Result : out Load_Result) is
-      package Latin_1 renames Ada.Characters.Latin_1;
-
       Filename : constant String := Dirs.Compose (Root, "index.toml");
       Value    : TOML.TOML_Value;
       Key      : constant String := "version";

@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with Ada.Directories;
 with Ada.Text_IO;
 
@@ -234,8 +233,6 @@ package body Alire.Publish is
    --  Checks the presence of recommended/mandatory fields in the release
    procedure Check_Release (Release : Releases.Release; Context : in out Data)
    is
-      package Latin_1 renames Ada.Characters.Latin_1;
-
       Recommend : AAA.Strings.Vector; -- Optional
       Missing   : AAA.Strings.Vector; -- Mandatory
 
@@ -668,7 +665,6 @@ package body Alire.Publish is
    --  plain tar otherwise.
 
    procedure Prepare_Archive (Context : in out Data) is
-      package Latin_1 renames Ada.Characters.Latin_1;
       use CLIC.User_Input;
 
       Target_Dir : constant Relative_Path :=
@@ -854,7 +850,6 @@ package body Alire.Publish is
    -------------------
 
    procedure Verify_Github (Context : in out Data) is
-      package Latin_1 renames Ada.Characters.Latin_1;
    begin
 
       --  Early return if forcing

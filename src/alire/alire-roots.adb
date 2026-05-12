@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with Ada.Directories;
 with Ada.Unchecked_Deallocation;
 
@@ -998,7 +997,6 @@ package body Alire.Roots is
          procedure Add_Link_Pin (Crate : Crate_Name;
                                  Pin   : in out User_Pins.Pin)
          is
-            package Latin_1 renames Ada.Characters.Latin_1;
             use type User_Pins.Pin;
          begin
 

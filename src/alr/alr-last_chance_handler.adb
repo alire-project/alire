@@ -1,6 +1,5 @@
 with AAA.Strings;
 
-with Ada.Characters.Latin_1;
 with Ada.Exceptions;
 
 with Alire.Errors;
@@ -8,7 +7,6 @@ with Alire.Errors;
 with Alr.OS_Lib;
 
 procedure Alr.Last_Chance_Handler (E : Ada.Exceptions.Exception_Occurrence) is
-   package Latin_1 renames Ada.Characters.Latin_1;
 
    Stack : constant AAA.Strings.Vector :=
              AAA.Strings.Split (Ada.Exceptions.Exception_Information (E),

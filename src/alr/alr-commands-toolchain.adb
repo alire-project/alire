@@ -1,5 +1,3 @@
-with Ada.Characters.Latin_1;
-
 with Alire.Settings.Edit;
 with Alire.Containers;
 with Alire.Dependencies;
@@ -65,7 +63,7 @@ package body Alr.Commands.Toolchain is
    is
       use Alire;
       use all type Origins.Kinds;
-      LF : Character renames Ada.Characters.Latin_1.LF;
+      LF : Character renames Latin_1.LF;
 
       Dep : constant Dependencies.Dependency :=
               Dependencies.From_String (Request);
