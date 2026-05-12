@@ -29,18 +29,21 @@ def pretty_diff(expected, actual):
     return "\n".join(diff)
 
 
-def assert_eq(expected, actual, label=None):
+def assert_eq(expected, actual, label=None, show_escaped=False):
     if expected != actual:
         if isinstance(actual, str) and isinstance(expected, str):
             diff = '\nDiff:\n' + pretty_diff(expected, actual)
         else:
             diff = ''
 
+        def display(value):
+            return repr(value) if show_escaped else str(value)
+
         text = ['Unexpected {}:'.format(label or 'output'),
                 'Expecting:',
-                indent(str(expected)),
+                indent(display(expected)),
                 'But got:',
-                indent(str(actual))]
+                indent(display(actual))]
         assert False, '\n'.join(text) + diff
 
 
