@@ -63,6 +63,13 @@ class Testsuite(e3.testsuite.Testsuite):
         # during the tests (e.g. submitting a release by accident)
         os.environ["ALR_TESTSUITE"] = "TRUE"
 
+        # Report alr being used
+        alr_path = self.main.args.alr_path
+        print(f"Testsuite using alr at {alr_path} with version:")
+        print(subprocess.run([alr_path, 'version'],
+                             stdout=subprocess.PIPE).stdout.decode())
+        sys.stdout.flush()
+
         # Ensure toolchain is in scope, or err early instead of during tests
         # Locate gnat and gprbuild in path and report their location
         required_executables = ['gnat', 'gprbuild']
