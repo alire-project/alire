@@ -13,7 +13,7 @@ on:
       - '**.txt'
   push:
     tags:
-      - 'v[0-9]*.[0-9]*.[0-9]*'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
@@ -197,7 +197,7 @@ jobs:
     steps:
       - name: Create draft release
         id: create_release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
@@ -421,7 +421,7 @@ jobs:
         sudo apt-get install -y libfuse2
 
     - name: Install AppImage's linuxdeploy
-      uses: miurahr/install-linuxdeploy-action@v1
+      uses: miurahr/install-linuxdeploy-action@c776300d621bfc9510fc400abf5dff5fa728ac14 # v1 branch
       with:
         plugins: appimage
 
@@ -554,7 +554,7 @@ jobs:
           python-version: '3.x'
 
       - name: Upload to release
-        uses: pyTooling/Actions/releaser/composite@r4
+        uses: pyTooling/Actions/releaser/composite@a1509493ae13d21f384ec0abe66e81af52b38046 # r4 branch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
@@ -588,7 +588,7 @@ jobs:
           mv alr.AppImage alr-nightly-x86_64.AppImage
 
       - name: Upload to release
-        uses: pyTooling/Actions/releaser/composite@r4
+        uses: pyTooling/Actions/releaser/composite@a1509493ae13d21f384ec0abe66e81af52b38046 # r4 branch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: nightly
