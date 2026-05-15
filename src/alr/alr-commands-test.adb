@@ -82,6 +82,11 @@ package body Alr.Commands.Test is
           Res.Value.Release.On_Platform_Properties
             (Res.Value.Environment, Properties.Tests.Settings'Tag)
             .Is_Empty
+        and then
+          Res.Value.Release.On_Platform_Actions
+            (Res.Value.Environment,
+             (Properties.Actions.Test => True, others => False))
+            .Is_Empty
       loop
          Res := Roots.Optional.Search_Root (Dirs.Parent (Res.Value.Path));
       end loop;
