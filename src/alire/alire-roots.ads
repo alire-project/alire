@@ -106,6 +106,7 @@ package Alire.Roots is
    --  Crate name of the root release
 
    function Path (This : Root) return Absolute_Path;
+   --
 
    function Project_Paths (This : in out Root)
                            return AAA.Strings.Set;
