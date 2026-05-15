@@ -140,13 +140,18 @@ package body Alr.Commands.Test is
          return;
       end if;
 
-      declare
-         Test_Root : Alire.Roots.Optional.Root := Cmd.Find_Root_With_Tests;
-      begin
-         if Test_Root.Is_Valid then
-            Cmd.Set (Test_Root.Value);
-         end if;
-      end;
+      --  Run tests for the first containing crate that has either legacy or
+      --  modern testsuite definitions, unless `--here` is passed to disable
+      --  detection.
+      if not Cmd.Here then
+         declare
+            Test_Root : Alire.Roots.Optional.Root := Cmd.Find_Root_With_Tests;
+         begin
+            if Test_Root.Is_Valid then
+               Cmd.Set (Test_Root.Value);
+            end if;
+         end;
+      end if;
 
       All_Settings :=
         Cmd.Root.Release.On_Platform_Properties
@@ -321,9 +326,16 @@ package body Alr.Commands.Test is
             ("When using a built-in runner, one can pass --list to get"
              & " ahead of time a list of tests (optionally matching the"
              & " command line filter).")
+         .Append ("")
          .Append
             ("The --build-only and --build-arg switches allow finer control"
-             & " over the test build process."));
+             & " over the test build process.")
+         .Append ("")
+         .Append
+            ("By default, nested crates without tests inherit the closest"
+             & " parent crate test runner. Use --here to only consider the"
+             & " current crate.")
+             );
 
    --------------------
    -- Setup_Switches --
@@ -356,6 +368,15 @@ package body Alr.Commands.Test is
          Long_Switch => "--id=",
          Help        => "Select a specific test runner by id",
          Argument    => "<id>");
+
+      Define_Switch
+        (Config,
+         Cmd.Here'Access,
+         Switch      => "",
+         Long_Switch => "--here",
+         Help        => "Do not try to automatically locate a "
+                        & "containing test runner",
+         Value       => True);
 
       Define_Switch
         (Config,
