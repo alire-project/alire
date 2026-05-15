@@ -9,10 +9,17 @@ trap 'echo "Interrupted" >&2 ; exit 1' INT
 set -o errexit
 set -o nounset
 
-# Function that recursively hashes a directory and prints the hash
-function hashdir() {
-    local dir="$1" # Directory to hash
-    find "$dir" -type f -exec sha256sum {} + | cut -d' ' -f1 | sort | sha256sum | cut -d' ' -f1
+# Function that hashes each file individually, printing "relative/path hash"
+# per line, sorted
+function hashfiles() {
+    local dir="$1"   # Directory to scan
+    local base="$2"  # Base dir for computing relative paths
+    find "$dir" -type f | sort | while read -r f; do
+        local rel="${f#"${base}/"}"
+        local hash
+        hash=$(sha256sum "$f" | cut -d' ' -f1)
+        echo "$rel $hash"
+    done
 }
 
 # Start by entering the directory of the script
@@ -26,15 +33,14 @@ base=$(git rev-parse --show-toplevel)
 # Check whether we need to regenerate, based on the hash of the templates
 # stored in ./templates.hash
 
-old_hash=$(cat ./templates.hash 2>/dev/null || echo "missing")
-new_hash=$(hashdir "$base/templates")
-if [ "$old_hash" = "$new_hash" ]; then
+old_hashes=$(cat ./templates.hash 2>/dev/null || echo "")
+new_hashes=$(hashfiles "$base/templates" "$base")
+if [ "$old_hashes" = "$new_hashes" ]; then
     echo "No changes in templates, skipping generation"
     exit 0
 else
     echo "Changes detected in templates, regenerating"
-    echo "Old hash: $old_hash"
-    echo "New hash: $new_hash"
+    diff <(echo "$old_hashes") <(echo "$new_hashes") || true
 fi
 
 # Location of generated files
@@ -117,7 +123,7 @@ find $generated -type f -exec \
 # GENERATION DONE
 
 # Write hash after successful generation
-echo "$new_hash" > "$scriptdir"/templates.hash
-echo "Templates hash updated in $scriptdir/templates.hash with value $new_hash"
+echo "$new_hashes" > "$scriptdir"/templates.hash
+echo "Templates hash updated in $scriptdir/templates.hash"
 
 echo "Resources created successfully"
