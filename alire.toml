@@ -71,8 +71,8 @@ url    = "https://github.com/mosteo/cstrings"
 commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 
 [pins.clic]
-url    = "https://github.com/alire-project/clic"
-commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
+url    = "https://github.com/mgrojo/clic"
+commit = "a76fad6e3be0101966e2c6274a2af64f13b50c63"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"
