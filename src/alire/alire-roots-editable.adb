@@ -46,6 +46,8 @@ package body Alire.Roots.Editable is
                          .Dependencies (Original.Environment),
                          Latter => Release (Edited)
                          .Dependencies (Edited.Environment));
+
+         Solver_Result : Solver.Result;
       begin
 
          --  First show requested changes
@@ -58,13 +60,15 @@ package body Alire.Roots.Editable is
 
          --  Compute the new solution
 
-         Edited.Set (Solution => Edited.Compute_Update);
+         Solver_Result := Edited.Compute_Update;
+         Edited.Set (Solution => Solver_Result.Solution);
 
          --  Then show the effects on the solution
 
          if Alire.Utils.User_Input.Confirm_Solution_Changes
            (Original.Solution.Changes (Edited.Solution),
-            Changed_Only => not Alire.Detailed)
+            Changed_Only => not Alire.Detailed,
+            Timed_Out    => Solver_Result.Timed_Out)
          then
             Edited.Commit;
             Edited.Deploy_Dependencies;

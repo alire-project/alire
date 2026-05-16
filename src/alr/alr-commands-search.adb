@@ -355,12 +355,12 @@ package body Alr.Commands.Search is
                & " besides version, description and release notes, a status"
                & " column with the following status flags is provided:")
       .New_Line
-      .Append ("- E: the release is externally provided.")
-      .Append ("- S: the release is available through a system package.")
-      .Append ("- U: the release is not available in the current platform.")
-      .Append ("- ?: the release has dependencies but solving was skipped "
-               & "(see " & Markup.Terminal ("--solve") & ").")
-      .Append ("- X: the release has dependencies that cannot be resolved.")
+      .Append ("E: the release is externally provided.")
+      .Append ("S: the release is available through a system package.")
+      .Append ("U: the release is not available in the current platform.")
+      .Append ("?: the release has dependencies but solving was skipped "
+               & "(see " & Markup.Terminal ("--solve") & ") or timed out.")
+      .Append ("X: the release has dependencies that cannot be resolved.")
       .New_Line
       .Append ("The reasons for unavailability (U) can be ascertained with:")
       .New_Line

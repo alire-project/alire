@@ -112,8 +112,9 @@ package body Alire.Origins.Deployers.System.Macports is
    begin
       Trace.Debug ("hoping to install: " & This.Base.Image);
       Subprocess.Checked_Spawn
-        ("sudo",
-         Empty_Vector & "port" & "install" & This.Base.Package_Name);
+        ("port",
+         Empty_Vector & "install" & This.Base.Package_Name,
+         Run_Privileged => True);
 
       return Outcome_Success;
    exception

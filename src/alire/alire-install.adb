@@ -188,13 +188,21 @@ package body Alire.Install is
          --  Look for a regular solution to a dependency as fallback if we
          --  didn't find any binary solution.
          procedure Compute_Regular (Dep : Dependencies.Dependency) is
-            Sol : constant Solutions.Solution := Solver.Resolve (Dep).Solution;
+            Solver_Result : constant Solver.Result := Solver.Resolve (Dep);
+            Sol : constant Solutions.Solution := Solver_Result.Solution;
          begin
             if Sol.Is_Complete then
                Result.Insert (Dep.Crate, Sol);
             else
-               Trace.Error ("Could not find a complete solution for "
-                            & Dep.TTY_Image);
+               if Solver_Result.Timed_Out then
+                  Trace.Error
+                    ("Timed out before finding a complete solution for "
+                     & Dep.TTY_Image);
+               else
+                  Trace.Error
+                    ("Could not find a complete solution for "
+                     & Dep.TTY_Image);
+               end if;
 
                --  If we found a release for the root dependency we can print
                --  the partial solution. Otherwise nothing was solved.

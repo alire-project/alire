@@ -33,10 +33,14 @@ library project Alire is
 
    --  OS-dependent source files
    case Alire_Common.Host_Os is
-      when "freebsd" => Src_Dirs := Src_Dirs & ("src/alire/os_freebsd");
-      when "openbsd" => Src_Dirs := Src_Dirs & ("src/alire/os_openbsd");
-      when "linux"   => Src_Dirs := Src_Dirs & ("src/alire/os_linux");
-      when "macos"   => Src_Dirs := Src_Dirs & ("src/alire/os_macos");
+      when "freebsd" => Src_Dirs := Src_Dirs & ("src/alire/os_freebsd",
+                                                "src/alire/os_posix");
+      when "openbsd" => Src_Dirs := Src_Dirs & ("src/alire/os_openbsd",
+                                                "src/alire/os_posix");
+      when "linux"   => Src_Dirs := Src_Dirs & ("src/alire/os_linux",
+                                                "src/alire/os_posix");
+      when "macos"   => Src_Dirs := Src_Dirs & ("src/alire/os_macos",
+                                                "src/alire/os_posix");
       when "windows" => Src_Dirs := Src_Dirs & ("src/alire/os_windows");
    end case;
 
