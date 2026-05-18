@@ -23,6 +23,7 @@ assert_eq('Hello, world!\n', p.out)
 # Clean it
 assert os.listdir('obj')
 run_alr('clean')
-assert not os.listdir('obj')
+assert not os.listdir('obj'), \
+    "Expected empty obj/ but contents are:" + str(os.listdir('obj'))
 
 print('SUCCESS')
