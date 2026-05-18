@@ -12,10 +12,20 @@ package Alire.Templates with Elaborate_Body is
    --  Wrapper of Templates_Parser mappings for cleaner syntax here and in
    --  Alire.Templates.Builtins
 
+   function Translate_String (Template : String;
+                              Map : Translations)
+                              return String;
+   --  Apply templating to a single String
+
+   procedure Translate_File (Src : Any_Path;
+                             Dst : Relative_File;
+                             Map : Translations);
+   --  Apply templating to a single file on the file system
+
    procedure Translate_File (Src : Embedded;
                              Dst : Relative_File;
                              Map : Translations);
-   --  Apply templating to a single file
+   --  Apply templating to a single file embedded in the Alire binary
 
    --  Types to support generation of filesystem trees from templates, which is
    --  our main need with `alr init` at present.
@@ -58,6 +68,11 @@ package Alire.Templates with Elaborate_Body is
                              Map    : Translations);
    --  Will create all files under Parent dir, respecting their relative path
    --  and applying the given translations to both contents and paths.
+
+   procedure Translate_Tree (Root : Absolute_Path;
+                             Map  : Translations);
+   --  Translate all files and directories with the "_tmplt" suffix under Root
+   --  dir, applying the given translations to both contents and paths.
 
    --  Builders for use in child packages
 
