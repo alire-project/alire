@@ -52,10 +52,11 @@ package Alire.Directories is
    --  sit well with Ada.Directories.Delete_Tree.
 
    procedure Force_Delete (Path : Absolute_Path);
-   --  Calls Ensure_Deletable and then uses GNATCOLL.VFS deletion
+   --  Calls Ensure_Deletable and then uses Den for exhaustive deletion even in
+   --  presence of bad softlinks
 
    procedure Delete_Tree (Path : Absolute_Path) renames Force_Delete;
-   --  Delete Path, and anythin below if it was a dir
+   --  Delete Path, and anything below if it was a dir
 
    function Find_Files_Under (Folder    : String;
                               Name      : String;
