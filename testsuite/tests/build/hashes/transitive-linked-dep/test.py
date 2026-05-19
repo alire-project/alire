@@ -41,7 +41,8 @@ def assert_new_hash() -> None:
     actual = count_hello_dirs()
     assert actual == expected, "new shared build directory not created"
     # Check `gprbuild` reports a rebuild of `hello.adb`.
-    assert_match(r".*\[Ada\]\s+hello\.adb\n", p.out)
+    # gprbuild < 26: '[Ada]   hello.adb'; gprbuild >= 26: '[Ada Compile]   hello.adb'
+    assert_match(r".*\[Ada(?: Compile)?\]\s+hello\.adb", p.out)
 
 
 def assert_build_reused() -> None:
