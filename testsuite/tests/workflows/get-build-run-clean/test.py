@@ -40,4 +40,12 @@ spurious = [f for f in contents('obj')
 assert not spurious, \
     "Unexpected files after clean: " + str(spurious)
 
+# Assert no empty directories remain after clean. alr prunes them, so any
+# empty dir here means the pruning step didn't run or missed a case.
+empty_dirs = [f for f in contents('obj')
+              if os.path.isdir(f)
+              and not os.listdir(f)]
+assert not empty_dirs, \
+    "Empty directories remain after clean: " + str(empty_dirs)
+
 print('SUCCESS')
