@@ -1,5 +1,6 @@
 with AAA.Strings;
 
+with Ada.Characters.Latin_1;
 with Ada.Command_Line;
 with Ada.Directories;
 
@@ -18,6 +19,8 @@ with r;
 with Simple_Logging.Filtering;
 
 package body Alire_Early_Elaboration is
+
+   package Latin_1 renames Ada.Characters.Latin_1;
 
    Real_Starting_Dir : constant Alire.Absolute_Path :=
      Ada.Directories.Current_Directory;
@@ -225,7 +228,7 @@ package body Alire_Early_Elaboration is
             Option := Getopt
               ("* d? --debug? q v c= --config= s= --settings= C= --chdir=");
             case Option is
-               when ASCII.NUL =>
+               when Latin_1.NUL =>
                   exit;
                when '*' =>
                   if not Subcommand_Seen then
