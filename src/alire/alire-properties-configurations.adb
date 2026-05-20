@@ -324,7 +324,7 @@ package body Alire.Properties.Configurations is
 
       for Elt of This.List loop
          if not First then
-            Append (Ret, ", " & ASCII.LF);
+            Append (Ret, ", " & Latin_1.LF);
          else
             First := False;
          end if;
@@ -437,7 +437,7 @@ package body Alire.Properties.Configurations is
                                 Value : TOML.TOML_Value)
                                 return String
    is
-      use ASCII;
+      use Latin_1;
       Name : constant String := +This.Name;
       Indent : constant String := "   ";
    begin
@@ -505,7 +505,7 @@ package body Alire.Properties.Configurations is
                                 Value : TOML.TOML_Value)
                                 return String
    is
-      use ASCII;
+      use Latin_1;
       Name : constant String := +This.Name;
       Indent : constant String := "   ";
    begin
@@ -552,7 +552,7 @@ package body Alire.Properties.Configurations is
                               Value : TOML.TOML_Value)
                               return String
    is
-      use ASCII;
+      use Latin_1;
       Name : constant String := To_Upper_Case (+This.Name);
 
    begin

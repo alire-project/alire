@@ -20,7 +20,7 @@ package body Alire.TOML_Adapters is
                     Trim
                       (Trim
                          (Tail (TOML.Dump_As_String (Table), '='),
-                          ASCII.LF));
+                          Latin_1.LF));
       begin
          --  Trimming the TOML quotes at the extremes fails for a
          --  string with quotes at the extremes of the string because

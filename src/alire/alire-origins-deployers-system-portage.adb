@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with AAA.Strings; use AAA.Strings;
 
 with Alire.Errors;
@@ -7,7 +6,6 @@ with Alire.OS_Lib.Subprocess;
 
 package body Alire.Origins.Deployers.System.Portage is
 
-   package L1         renames Ada.Characters.Latin_1;
    package Subprocess renames Alire.OS_Lib.Subprocess;
 
    -----------------------
@@ -50,8 +48,8 @@ package body Alire.Origins.Deployers.System.Portage is
    begin
       for C in Tmp'Range loop
          --  Format: 0.0.0_release-rc9
-         if Tmp (C) = L1.Low_Line then
-            Tmp (C) := L1.Hyphen;
+         if Tmp (C) = Latin_1.Low_Line then
+            Tmp (C) := Latin_1.Hyphen;
 
             Trace.Debug ("To_Semantic_Version: " & Tmp);
 
@@ -74,7 +72,7 @@ package body Alire.Origins.Deployers.System.Portage is
       function Split_Version (Gentoo_Package_Version : String) return String is
       begin
          for Index in Gentoo_Package_Version'Range loop
-            if Gentoo_Package_Version (Index) = L1.Hyphen then
+            if Gentoo_Package_Version (Index) = Latin_1.Hyphen then
                return Gentoo_Package_Version
                  (Index + 1 .. Gentoo_Package_Version'Last);
             end if;

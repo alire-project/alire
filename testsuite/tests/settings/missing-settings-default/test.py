@@ -85,7 +85,9 @@ alr_touch_manifest()
 # It should succeed now (it fails, because there are no actual project/sources)
 p = run_alr("build", complain_on_error=False)
 assert p.status != 0, "Build should have failed"
-assert_match('.*gprbuild(.exe)?: project file .*hello.gpr" not found.*', p.out)
+# gprbuild < 26: 'gprbuild: project file "hello.gpr" not found'
+# gprbuild >= 26: 'hello.gpr: error: project file "...hello.gpr" not found'
+assert_match('.*project file .*hello\.gpr.* not found.*', p.out)
 
 
 # New test from scratch, one can "with" a library with values without defaults

@@ -1,5 +1,3 @@
-with Ada.Characters.Latin_1;
-
 with Alire.Directories;
 with Alire.Errors;
 with Alire.Utils.Text_Files;
@@ -105,7 +103,7 @@ package body Alire.Templates is
                        Report       => Parsing_Error'Access);
          Content : AAA.Strings.Vector
            := AAA.Strings.Split (Parsed,
-                                 Ada.Characters.Latin_1.LF);
+                                 Latin_1.LF);
          File : Utils.Text_Files.File := Utils.Text_Files.Create (Dst);
       begin
          --  Remove a possibly empty last line

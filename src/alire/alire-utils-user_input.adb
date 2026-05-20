@@ -21,7 +21,7 @@ package body Alire.Utils.User_Input is
          return Query
            (Question => TTY.Error (if TTY.Color_Enabled then U ("⚠") else "!")
                         & " Given path does not exist: " & TTY.URL (Dir)
-                        & ASCII.LF & "Do you want to continue anyway?",
+                        & Latin_1.LF & "Do you want to continue anyway?",
             Valid    => (Yes | No => True, others => False),
             Default  => (if Force then Yes else No))
            = Yes;
