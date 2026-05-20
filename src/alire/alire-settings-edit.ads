@@ -92,7 +92,7 @@ private
      TOML_Type => TOML.TOML_String,
      Image => String_Image);
    --  In some cases a valid GitHub login is also a number. We have to
-   --  explicilty tell to save it as a String and not an Integer type.
+   --  explicitly tell to save it as a String and not an Integer type.
 
    procedure Load_Settings;
    --  Clear and reload all settings. Also set some values elsewhere

@@ -33,7 +33,7 @@ package body Alire.Settings.Edit is
                           Check : CLIC.Config.Check_Import := null)
    is
    begin
-      if Key = "user.github_login" then
+      if Key = Alire.Settings.Builtins.User_Github_Login.Key then
          if not Set_User_GitHub_Login (Filepath (Local), Key, Value, Check)
          then
             Raise_Checked_Error
@@ -58,7 +58,7 @@ package body Alire.Settings.Edit is
                            Check : CLIC.Config.Check_Import := null)
    is
    begin
-      if Key = "user.github_login" then
+      if Key = Alire.Settings.Builtins.User_Github_Login.Key then
          if not Set_User_GitHub_Login (Filepath (Global), Key, Value, Check)
          then
             Raise_Checked_Error
