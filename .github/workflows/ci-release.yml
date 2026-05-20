@@ -11,8 +11,9 @@ on:
       - '**.md'
       - '**.rst'
       - '**.txt'
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
@@ -187,22 +188,26 @@ jobs:
 
   release-info:
     name: Info for release uploads
-    if: github.event_name == 'release'
+    if: github.ref_type == 'tag'
+    needs: [build, build-macos-universal, windows-installer, appimage]
     runs-on: ubuntu-latest
     outputs:
-      upload-url: ${{ steps.get_release.outputs.upload_url }}
+      upload-url: ${{ steps.create_release.outputs.upload_url }}
       version-without-v: ${{ steps.get_version.outputs.version-without-v }}
 
     steps:
-      - name: Retrieve upload URL for the release
-        id: get_release
-        uses: bruceadams/get-release@v1.3.2
+      - name: Create draft release
+        id: create_release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         env:
           GITHUB_TOKEN: ${{ github.token }}
+        with:
+          draft: true
 
       - name: Get release version
         id: get_version
-        uses: battila7/get-version-action@v2
+        run: echo "version-without-v=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+        shell: bash
 
 
   ###########
@@ -212,7 +217,7 @@ jobs:
 
   release:
     name: Release on ${{ matrix.platform.id }}
-    if: github.event_name == 'release'
+    if: github.ref_type == 'tag'
     needs: [build, build-macos-universal, release-info]
     runs-on: ${{ matrix.platform.os }}
 
@@ -318,7 +323,7 @@ jobs:
       shell: bash
 
     - name: Install zip in msys2
-      run: ${{env.MSYS2_PACMAN}} --noconfirm -S zip
+      run: ${{env.MSYS2_PACMAN}} -S zip
 
     - name: Add msys2 /usr/bin to the path (for zip)
       run: echo '${{env.MSYS2_PATH}}' >> $GITHUB_PATH
@@ -358,7 +363,7 @@ jobs:
 
   release-windows-installer:
     name: Release Windows installer
-    if: github.event_name == 'release'
+    if: github.ref_type == 'tag'
     needs: [build, release-info, windows-installer]
     runs-on: windows-latest
 
@@ -417,7 +422,7 @@ jobs:
         sudo apt-get install -y libfuse2
 
     - name: Install AppImage's linuxdeploy
-      uses: miurahr/install-linuxdeploy-action@v1
+      uses: miurahr/install-linuxdeploy-action@c776300d621bfc9510fc400abf5dff5fa728ac14 # v1 branch
       with:
         plugins: appimage
 
@@ -456,7 +461,7 @@ jobs:
 
   release-appimage:
     name: Release AppImage
-    if: github.event_name == 'release'
+    if: github.ref_type == 'tag'
     needs: [appimage, release-info]
     runs-on: ubuntu-22.04
 
@@ -471,7 +476,6 @@ jobs:
         run: chmod +x alr.AppImage
 
       - name: Upload AppImage asset
-        if: (github.event_name == 'release')
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -551,7 +555,7 @@ jobs:
           python-version: '3.x'
 
       - name: Upload to release
-        uses: pyTooling/Actions/releaser/composite@r4
+        uses: pyTooling/Actions/releaser/composite@a1509493ae13d21f384ec0abe66e81af52b38046 # r4 branch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
@@ -585,7 +589,7 @@ jobs:
           mv alr.AppImage alr-nightly-x86_64.AppImage
 
       - name: Upload to release
-        uses: pyTooling/Actions/releaser/composite@r4
+        uses: pyTooling/Actions/releaser/composite@a1509493ae13d21f384ec0abe66e81af52b38046 # r4 branch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: nightly
