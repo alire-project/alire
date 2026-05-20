@@ -120,9 +120,9 @@ package body Alire.GitHub is
          Trace.Debug
            ("GitHub API response: " & This.Status_Line);
          Trace.Debug
-           ("Headers: " & This.Raw_Headers.Flatten (ASCII.LF));
+           ("Headers: " & This.Raw_Headers.Flatten (Latin_1.LF));
          Trace.Debug
-           ("Data: " & This.Content.Flatten (ASCII.LF));
+           ("Data: " & This.Content.Flatten (Latin_1.LF));
 
          if not This.Succeeded then
 
@@ -177,7 +177,7 @@ package body Alire.GitHub is
             .Wrap (Error)
             .Wrap ("Status line: " & Response.Status_Line)
             .Wrap ("Response body:")
-            .Wrap (Response.Content.Flatten (ASCII.LF))
+            .Wrap (Response.Content.Flatten (Latin_1.LF))
             .Get);
       end if;
    end API_Call;
@@ -455,7 +455,7 @@ package body Alire.GitHub is
             .Wrap ("Error updating PR using GitHub GraphQL API")
             .Wrap ("Status line: " & Response.Status_Line)
             .Wrap ("Response body:")
-            .Wrap (Response.Content.Flatten (ASCII.LF))
+            .Wrap (Response.Content.Flatten (Latin_1.LF))
             .Get);
       end if;
 

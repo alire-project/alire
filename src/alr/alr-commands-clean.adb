@@ -1,11 +1,13 @@
 with Ada.Directories;
 
 with Alire.Builds;
-with Alire.Settings.Edit;
 with Alire.Directories;
 with Alire.Paths;
 with Alire.Platforms.Current;
+with Alire.Settings.Edit;
 with Alire.Spawn;
+
+with Den.Filesystem;
 
 package body Alr.Commands.Clean is
 
@@ -119,6 +121,7 @@ package body Alr.Commands.Clean is
                       Args :        AAA.Strings.Vector)
    is
       use AAA.Strings;
+      use Alire.Directories.Operators;
    begin
       Cmd.Forbids_Structured_Output;
 
@@ -150,6 +153,16 @@ package body Alr.Commands.Clean is
                                    "-P" & Gpr_File &
                                    Args,
                                  Understands_Verbose => True);
+
+            --  To preserve varying behavior of gprclean across versions, we
+            --  delete empty dirs within an `obj` folder in the project file
+            --  dir.
+            declare
+               Target : constant Alire.Absolute_Path :=
+                  Den.Parent (Den.Scrub (Cmd.Root.Path / Gpr_File)) / "obj";
+            begin
+               Den.Filesystem.Prune_Tree (Target, Delete_Root => False);
+            end;
          end loop;
 
          return;

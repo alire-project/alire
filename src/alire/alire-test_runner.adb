@@ -198,6 +198,7 @@ package body Alire.Test_Runner is
       ------------
 
       procedure Report is
+         CR : Character renames Latin_1.CR;
       begin
          if Structured_Output then
             --  finalize report according to format
@@ -218,7 +219,7 @@ package body Alire.Test_Runner is
                --  clear line to avoid messing up
                --  progress display (on stderr)
                Ada.Text_IO.Put
-                 (Ada.Text_IO.Standard_Error, (1 .. 8 => ' ', 9 => ASCII.CR));
+                 (Ada.Text_IO.Standard_Error, (1 .. 8 => ' ', 9 => CR));
                Ada.Text_IO.Flush (Ada.Text_IO.Standard_Error);
             end if;
             Trace.Always (LML.Encode (Builder.To_Text));
@@ -329,6 +330,7 @@ package body Alire.Test_Runner is
    procedure Run_All_Tests
      (Root : Roots.Root; Test_List : Portable_Path_Vector; Jobs : Positive)
    is
+      CR : Character renames Latin_1.CR;
       use GNAT.OS_Lib;
 
       ---------
@@ -430,7 +432,7 @@ package body Alire.Test_Runner is
          Percentage : constant Long_Integer :=
            (if Len = 0 then 0 else (Completed * 100 + Len / 2) / Len);
       begin
-         Ada.Text_IO.Put ("[" & Tail (Percentage'Image, 4) & "% ]" & ASCII.CR);
+         Ada.Text_IO.Put ("[" & Tail (Percentage'Image, 4) & "% ]" & CR);
          Ada.Text_IO.Flush;
          Completed := Completed + 1;
       end Put_Progress;
@@ -552,9 +554,11 @@ package body Alire.Test_Runner is
    ---------
 
    function Run
-     (Root   : in out Roots.Root;
-      Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
-      Jobs   : Natural := 0) return Integer
+     (Root       : in out Roots.Root;
+      Filter     : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+      Jobs       : Natural := 0;
+      Build_Args : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+      Build_Only : Boolean := False) return Integer
    is
       Job_Count : constant Positive :=
         (if Jobs = 0
@@ -581,9 +585,14 @@ package body Alire.Test_Runner is
          Alire_Early_Elaboration.Switch_Q := True;
       end if;
 
-      if Roots.Build (Root, AAA.Strings.Empty_Vector) then
+      if Roots.Build (Root, Build_Args) then
          Alire_Early_Elaboration.Switch_Q := Original_Switch_Q;
          --  restore original value of `-q` switch
+
+         if Build_Only then
+            Put_Info ("Built " & Test_List.Length'Image & " tests");
+            return 0;
+         end if;
 
          Put_Info ("Running" & Test_List.Length'Image & " tests");
          Run_All_Tests (Root, Test_List, Job_Count);

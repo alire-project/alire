@@ -26,9 +26,9 @@ assert_match('ERROR: Unrecognized option \'-X\'.*',
 p = run_alr('build', '--', '--this-is-not-a-valid-switch',
             complain_on_error=False, debug=False)
 
-assert_match('.*gprbuild: illegal option'
-             ' "--this-is-not-a-valid-switch"'
-             ' on the command line.*',
+# There's different wording from gprbuild 26 on.
+assert_match('.*gprbuild: (?:illegal|unrecognized) option'
+             ' .--this-is-not-a-valid-switch..*',
              p.out,
              flags=re.S)
 
