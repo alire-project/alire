@@ -4,7 +4,7 @@ with Alr.Commands.Version;
 
 package body Alr.Testing.JUnit is
 
-   Newline : constant String := "" & ASCII.LF;
+   Newline : constant String := "" & Latin_1.LF;
 
    ---------------
    -- Start_Run --
