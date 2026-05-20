@@ -65,7 +65,7 @@ package Alr.OS_Lib is
 
 private
 
-   Line_Separator : constant String := ASCII.LF & "";
+   Line_Separator : constant String := Latin_1.LF & "";
    --  This should be made OS independent
 
    function "/" (L, R : String) return String is

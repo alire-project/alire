@@ -6,7 +6,7 @@ with Stopwatch;
 
 package body Alr.Testing.Console is
 
-   Tab : constant Character := ASCII.HT;
+   Tab : constant Character := Latin_1.HT;
 
    ---------------
    -- Start_Run --
