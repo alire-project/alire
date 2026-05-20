@@ -4,7 +4,7 @@ package body Alr.Testing.Text is
 
    use Ada.Text_IO;
 
-   Tab : constant Character := ASCII.HT;
+   Tab : constant Character := Latin_1.HT;
 
    ---------------
    -- Start_Run --

@@ -284,7 +284,7 @@ package body Alire.Roots.Editable is
       if Crate.Is_Empty and then not Pin_Root.Is_Valid then
          Raise_Checked_Error
            ("No crate name given and link target is not an Alire crate:"
-            & ASCII.LF & " Please provide an explicit crate name.");
+            & Latin_1.LF & " Please provide an explicit crate name.");
       end if;
 
       --  No need to check that Pin_Root.Name and Crate agree, as this will be

@@ -14,6 +14,20 @@ package body Alr.Commands.Test is
 
    package Dirs renames Alire.Directories;
 
+   Build_Args : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+   --  A (private) global in which we can accumulate build arguments with a
+   --  procedure access.
+
+   ----------------------
+   -- Append_Build_Arg --
+   ----------------------
+
+   procedure Append_Build_Arg (Switch, Value : String) is
+      pragma Unreferenced (Switch);
+   begin
+      Build_Args.Append_Line (Value);
+   end Append_Build_Arg;
+
    --------------------
    -- Execute_Legacy --
    --------------------
@@ -83,6 +97,20 @@ package body Alr.Commands.Test is
               Report => False);
    end Find_Root_With_Tests;
 
+   --------------------------------
+   -- Warn_Builtin_Not_Forwarded --
+   --------------------------------
+
+   procedure Warn_Builtin_Not_Forwarded (Flag : String) is
+   begin
+      Trace.Warning
+        ("the "
+         & Flag
+         & " flag is not forwarded to external commands. If you"
+         & " intended to pass it to an external test runner, put it"
+         & " after ""--"" in the command line.");
+   end Warn_Builtin_Not_Forwarded;
+
    -------------
    -- Execute --
    -------------
@@ -96,6 +124,8 @@ package body Alr.Commands.Test is
 
       All_Settings : Alire.Properties.Vector;
    begin
+      Cmd.Build_Args.Move (Build_Args);
+      --  move the build args into the command struct
       Cmd.Requires_Workspace;
 
       if Cmd.Legacy then
@@ -166,20 +196,19 @@ package body Alr.Commands.Test is
          end if;
       end if;
 
-      if All_Settings.Length = 1
-        and then Settings (All_Settings.First_Element).Runner.Kind = External
+      if (for some S of All_Settings => Settings (S).Runner.Kind = External)
       then
          if Cmd.Jobs >= 0 then
-            Trace.Warning
-              ("the --jobs flag is not forwarded to external commands. If you"
-               & " intended to pass it to an external test runner, put it"
-               & " after ""--"" in the command line.");
+            Warn_Builtin_Not_Forwarded ("--jobs");
          end if;
          if Cmd.List then
-            Trace.Warning
-              ("the --list flag is not forwarded to external commands. If you"
-               & " intended to pass it to an external test runner, put it"
-               & " after ""--"" in the command line.");
+            Warn_Builtin_Not_Forwarded ("--list");
+         end if;
+         if Cmd.Build_Only then
+            Warn_Builtin_Not_Forwarded ("--build-only");
+         end if;
+         if not Cmd.Build_Args.Is_Empty then
+            Warn_Builtin_Not_Forwarded ("-B/--build-arg");
          end if;
       end if;
 
@@ -227,9 +256,12 @@ package body Alr.Commands.Test is
 
                      Failures :=
                        Alire.Test_Runner.Run
-                         (Test_Root.Value,
-                          Get_Args,
-                          (if Cmd.Jobs < 0 then S.Jobs else Cmd.Jobs));
+                         (Root       => Test_Root.Value,
+                          Filter     => Get_Args,
+                          Jobs       =>
+                            (if Cmd.Jobs < 0 then S.Jobs else Cmd.Jobs),
+                          Build_Only => Cmd.Build_Only,
+                          Build_Args => Cmd.Build_Args);
 
                   when External     =>
                      Cmd.Forbids_Structured_Output
@@ -281,9 +313,12 @@ package body Alr.Commands.Test is
              & " arguments.")
          .Append ("")
          .Append
-            ("When using a built-in runner, one can pass `--list` to get"
+            ("When using a built-in runner, one can pass --list to get"
              & " ahead of time a list of tests (optionally matching the"
-             & " command line filter)."));
+             & " command line filter).")
+         .Append
+            ("The --build-only and --build-arg switches allow finer control"
+             & " over the test build process."));
 
    --------------------
    -- Setup_Switches --
@@ -295,42 +330,60 @@ package body Alr.Commands.Test is
       Config : in out CLIC.Subcommand.Switches_Configuration)
    is
       use CLIC.Subcommand;
+
    begin
       Define_Switch
         (Config,
          Cmd.Jobs'Access,
-         "-j:",
-         "--jobs=",
-         "Run up to N tests in parallel, or as many as there are processors"
-         & " if 0",
-         Initial  => -1,
-         Default  => -1,
-         Argument => "N");
+         Switch      => "-j:",
+         Long_Switch => "--jobs=",
+         Help        =>
+           "Run up to N tests in parallel, or as many as there are processors"
+           & " if 0",
+         Initial     => -1,
+         Default     => -1,
+         Argument    => "N");
 
       Define_Switch
         (Config,
          Cmd.By_Id'Access,
-         "",
-         "--id=",
-         "Select a specific test runner by id",
-         Argument => "<id>");
+         Switch      => "",
+         Long_Switch => "--id=",
+         Help        => "Select a specific test runner by id",
+         Argument    => "<id>");
 
       Define_Switch
         (Config,
          Cmd.Legacy'Access,
-         "",
-         "--legacy",
-         CLIC.TTY.Error ("Deprecated")
-         & ". Force executing the legacy test actions",
-         Value => True);
+         Switch      => "",
+         Long_Switch => "--legacy",
+         Help        =>
+           CLIC.TTY.Error ("Deprecated")
+           & ". Force executing the legacy test actions",
+         Value       => True);
 
       Define_Switch
         (Config,
          Cmd.List'Access,
-         "",
-         "--list",
-         "Show a list of matching tests without running them",
-         Value => True);
+         Switch      => "",
+         Long_Switch => "--list",
+         Help        => "Show a list of matching tests without running them",
+         Value       => True);
+
+      Define_Switch
+        (Config,
+         Cmd.Build_Only'Access,
+         Switch      => "",
+         Long_Switch => "--build-only",
+         Help        => "Stop the runner right after building the tests",
+         Value       => True);
+
+      Define_Switch
+        (Config,
+         Callback    => Append_Build_Arg'Access,
+         Switch      => "-B:",
+         Long_Switch => "--build-arg=",
+         Help        => "Argument to forward to GPRbuild");
    end Setup_Switches;
 
 end Alr.Commands.Test;
