@@ -8,7 +8,7 @@ with CLIC.TTY;
 
 package Alr with Preelaborate is
 
-   package Latin_1 renames Ada.Characters.Latin_1;
+   package Latin_1 renames Alire.Latin_1;
 
    --  Nothing of note in this root package. Entities declared here are
    --  generally useful everywhere or in many packages: Exceptions for
