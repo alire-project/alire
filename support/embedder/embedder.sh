@@ -30,6 +30,9 @@ scriptdir=$PWD
 # Identify the base dir of the project
 base=$(git rev-parse --show-toplevel)
 
+# In case `alr` was just built and not in path, we need it below
+export PATH+=:"$base"/bin
+
 # Check whether we need to regenerate, based on the hash of the templates
 # stored in ./templates.hash
 
