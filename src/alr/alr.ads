@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 private with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with Alire;
