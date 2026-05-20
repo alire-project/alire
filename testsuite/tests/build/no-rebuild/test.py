@@ -16,7 +16,9 @@ init_local_crate()
 alr_with("libhello")
 run_alr("build")
 p = run_alr("build", quiet=False)
-assert_substring (f'gprbuild: "{exe_name("xxx")}" up to date', p.out)
+# gprbuild < 26: 'gprbuild: "xxx.exe" up to date'
+# gprbuild >= 26: '"xxx.exe" up to date' (prefix dropped)
+assert_substring (f'"{exe_name("xxx")}" up to date', p.out)
 
 # Check that removing and re-adding a dependency does not trigger a rebuild
 # (since the build folders already exist).
@@ -24,7 +26,7 @@ assert_substring (f'gprbuild: "{exe_name("xxx")}" up to date', p.out)
 run_alr("with", "--del", "libhello")
 run_alr("with", "libhello")
 p = run_alr("build", quiet=False)
-assert_substring (f'gprbuild: "{exe_name("xxx")}" up to date', p.out)
+assert_substring (f'"{exe_name("xxx")}" up to date', p.out)
 
 
 print("SUCCESS")

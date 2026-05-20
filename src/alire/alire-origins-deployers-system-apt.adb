@@ -107,14 +107,15 @@ package body Alire.Origins.Deployers.System.Apt is
       end if;
 
       Subprocess.Checked_Spawn
-        ("sudo", Empty_Vector &
-           "apt-get" &
+        ("apt-get",
+         Empty_Vector &
            "install" &
            (if Force then Empty_Vector else To_Vector ("--no-remove")) &
            "-q" &
            "-q" &
            "-y" &
-           This.Base.Package_Name);
+           This.Base.Package_Name,
+         Run_Privileged => True);
 
       return Outcome_Success;
    exception

@@ -200,11 +200,12 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
 
    begin
       Subprocess.Checked_Spawn
-        ("sudo", Empty_Vector &
-           Wrapper &
+        (Wrapper,
+         Empty_Vector &
            "-y" &
            "install" &
-           This.Base.Package_Name);
+           This.Base.Package_Name,
+         Run_Privileged => True);
 
       return Outcome_Success;
    exception

@@ -134,10 +134,11 @@ package body Alire.Origins.Deployers.System.Portage is
       Trace.Debug ("Install: " & This.Base.Package_Name);
 
       Subprocess.Checked_Spawn
-        ("sudo", Empty_Vector &
-           "emerge" &
+        ("emerge",
+         Empty_Vector &
            "-v" &
-           This.Base.Package_Name);
+           This.Base.Package_Name,
+         Run_Privileged => True);
 
       return Outcome_Success;
    exception

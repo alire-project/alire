@@ -552,9 +552,11 @@ package body Alire.Test_Runner is
    ---------
 
    function Run
-     (Root   : in out Roots.Root;
-      Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
-      Jobs   : Natural := 0) return Integer
+     (Root       : in out Roots.Root;
+      Filter     : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+      Jobs       : Natural := 0;
+      Build_Args : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+      Build_Only : Boolean := False) return Integer
    is
       Job_Count : constant Positive :=
         (if Jobs = 0
@@ -581,9 +583,14 @@ package body Alire.Test_Runner is
          Alire_Early_Elaboration.Switch_Q := True;
       end if;
 
-      if Roots.Build (Root, AAA.Strings.Empty_Vector) then
+      if Roots.Build (Root, Build_Args) then
          Alire_Early_Elaboration.Switch_Q := Original_Switch_Q;
          --  restore original value of `-q` switch
+
+         if Build_Only then
+            Put_Info ("Built " & Test_List.Length'Image & " tests");
+            return 0;
+         end if;
 
          Put_Info ("Running" & Test_List.Length'Image & " tests");
          Run_All_Tests (Root, Test_List, Job_Count);

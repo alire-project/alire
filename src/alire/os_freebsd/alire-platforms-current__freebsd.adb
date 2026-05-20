@@ -1,3 +1,4 @@
+with Alire.Platforms.Posix;
 
 package body Alire.Platforms.Current is
 
@@ -36,5 +37,12 @@ package body Alire.Platforms.Current is
    ----------------
 
    procedure Initialize is null;
+
+   ---------------------
+   -- Running_As_Root --
+   ---------------------
+
+   function Running_As_Root return Boolean
+   is (Posix.Running_As_Root);
 
 end Alire.Platforms.Current;
