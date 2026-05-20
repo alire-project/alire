@@ -322,7 +322,7 @@ package body Alire.Publish is
          Ada.Text_IO.New_Line;
          Trace.Warning ("The release "
                         & TTY.Warn ("version ends with '-dev'") & "."
-                        & ASCII.LF
+                        & Latin_1.LF
                         & "Releases submitted to an index should usually"
                         & " not be pre-release versions.");
       end if;
@@ -810,7 +810,7 @@ package body Alire.Publish is
                           "Please upload the archive generated"
                           & " at " & TTY.URL (Archive)
                           & " to its definitive online storage location."
-                          & ASCII.LF
+                          & Latin_1.LF
                           & "Once you have uploaded the file, enter its URL:",
                        Prompt   => "Enter URL> ",
                        Valid    => (Yes | No => True, others => False),
@@ -892,7 +892,7 @@ package body Alire.Publish is
             if not Submit.Ask_To_Fork (Context) then
                Recoverable_User_Error
                  ("You must fork the community index to your GitHub account"
-               & ASCII.LF & "Please visit "
+               & Latin_1.LF & "Please visit "
                & TTY.URL (Tail (Index.Community_Repo, '+'))
                & " if you want to fork manually.");
             end if;

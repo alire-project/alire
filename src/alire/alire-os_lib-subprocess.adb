@@ -1,4 +1,3 @@
-with Ada.Characters.Latin_1;
 with Ada.Strings.Maps;
 with Ada.Text_IO;
 
@@ -114,7 +113,7 @@ package body Alire.OS_Lib.Subprocess is
       function Is_Blank (Char : Character) return Boolean is
          Blank_Set : constant Ada.Strings.Maps.Character_Set
                       := Ada.Strings.Maps.To_Set
-                         (" " & Ada.Characters.Latin_1.HT);
+                         (" " & Latin_1.HT);
          --  The <blank> character class in POSIX locale contains <tab>,
          --  <space> per chapter 3 (V1) section 3.45 of:
          --  https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/

@@ -55,7 +55,7 @@ package body Alire.Externals.From_Output is
                        (This.Command.First_Element,
                         This.Command.Tail,
                         Lines);
-         Output  : constant String := Lines.Flatten ("" & ASCII.LF);
+         Output  : constant String := Lines.Flatten ("" & Latin_1.LF);
          --  ASCII.LF is used by Regpat for new lines
       begin
          if Status /= 0 then

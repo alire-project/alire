@@ -12,7 +12,7 @@ package body Alire.Utils.YAML is
         (T'Class (V.Element (Pos)).To_YAML &
          (if Pos = V.Last_Index
           then ""
-          else "," & ASCII.LF & Image (V, Pos + 1)));
+          else "," & Latin_1.LF & Image (V, Pos + 1)));
 
    begin
       if V.Is_Empty then
@@ -72,13 +72,13 @@ package body Alire.Utils.YAML is
       Result (Last) := '"';
       for C of Input loop
          case C is
-            when ASCII.LF              => Escape ('l');
-            when ASCII.CR              => Escape ('c');
-            when '"' | '\'             => Escape (C);
-            when ASCII.HT              => Escape ('t');
-            when ASCII.NUL .. ASCII.BS
-               | ASCII.VT  .. ASCII.FF
-               | ASCII.SO  .. ASCII.US => Escape_To_Hex (C);
+            when Latin_1.LF              => Escape ('l');
+            when Latin_1.CR              => Escape ('c');
+            when '"' | '\'               => Escape (C);
+            when Latin_1.HT              => Escape ('t');
+            when Latin_1.NUL .. Latin_1.BS
+               | Latin_1.VT  .. Latin_1.FF
+               | Latin_1.SO  .. Latin_1.US => Escape_To_Hex (C);
 
             when others =>
                Last := Last + 1;

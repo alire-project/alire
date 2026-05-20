@@ -1008,7 +1008,7 @@ package body Alire.Roots is
                  ("Pin circularity detected when adding pin "
                   & Utils.TTY.Name (This.Name) & " --> " &
                     Utils.TTY.Name (Crate)
-                  & ASCII.LF & "Last manifest in the cycle is "
+                  & Latin_1.LF & "Last manifest in the cycle is "
                   & TTY.URL (This.Crate_File));
             end if;
 
