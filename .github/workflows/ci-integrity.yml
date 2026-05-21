@@ -23,6 +23,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # `alr` is needed to build `awsres` from `templates_parser`
+      - name: Install Alire
+        uses: alire-project/setup-alire@v5
+
       - name: Verify templates are up to date
         run: |
           ( support/embedder/embedder.sh | \
