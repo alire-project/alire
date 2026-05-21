@@ -333,7 +333,7 @@ package body Alr.Commands.Test is
          .Append ("")
          .Append
             ("By default, nested crates without tests inherit the closest"
-             & " parent crate test runner. Use --here to only consider the"
+             & " parent crate test definitions. Use --here to only consider the"
              & " current crate.")
              );
 
@@ -375,7 +375,7 @@ package body Alr.Commands.Test is
          Switch      => "",
          Long_Switch => "--here",
          Help        => "Do not try to automatically locate a "
-                        & "containing test runner",
+                        & "parent crate with test definitions",
          Value       => True);
 
       Define_Switch
