@@ -56,7 +56,10 @@ jobs:
 
     - name: Fix testsuite output permissions (on failure)
       if: failure()
-      run: sudo chmod -R a+r testsuite/out
+      run: |
+        if [ -d "testsuite/out" ]; then
+          sudo chmod -R a+rX testsuite/out
+        fi
 
     - name: Upload logs (on failure)
       if: failure()

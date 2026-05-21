@@ -120,12 +120,12 @@ def distribution():
         for key in ['id', 'id_like']:
             with open("/etc/os-release") as f:
                 for line in f:
-                    split = line.strip().split('=')
+                    split = line.lower().strip().split('=')
                     if len(split) == 2:
-                        val = split[1].lower().strip('"' + "'")
-                        if split[0].lower() == key:
+                        val = split[1].strip('"' + "'")
+                        if split[0] == key:
                             for token in val.split():
-                                if token.lower() in known_distro:
+                                if token in known_distro:
                                     return token
 
         return 'DISTRIBUTION_UNKNOWN'
