@@ -108,6 +108,24 @@ package body Alr.Commands.Index is
               ("Specify exactly one index subcommand");
       end case;
 
+      --  Check that --name is only used with --add before dispatching, as the
+      --  default action is to list indexes.
+      if Cmd.Name.all /= "" and then Cmd.Add.all = "" then
+         if Cmd.Del.all /= "" then
+            Reportaise_Wrong_Arguments
+              ("--name is only valid with --add, not with --del");
+         else
+            Reportaise_Wrong_Arguments
+              ("--name is only valid with --add");
+         end if;
+      end if;
+
+      --  Check that --before is only used with --add before dispatching.
+      if Cmd.Bfr.all /= "" and then Cmd.Add.all = "" then
+         Reportaise_Wrong_Arguments
+            ("--before is only valid with --add");
+      end if;
+
       --  Dispatch to selected action
       if Cmd.Add.all /= "" then
          if Cmd.Name.all = "" then
