@@ -18,7 +18,7 @@ function hashfiles() {
         local rel="${f#"${base}/"}"
         local hash
         hash=$(sha256sum "$f" | cut -d' ' -f1)
-        echo "$rel $hash"
+        echo "$hash $rel"
     done
 }
 
