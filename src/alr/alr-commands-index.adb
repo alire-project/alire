@@ -120,6 +120,12 @@ package body Alr.Commands.Index is
          end if;
       end if;
 
+      --  Check that --before is only used with --add before dispatching.
+      if Cmd.Bfr.all /= "" and then Cmd.Add.all = "" then
+         Reportaise_Wrong_Arguments
+            ("--before is only valid with --add");
+      end if;
+
       --  Dispatch to selected action
       if Cmd.Add.all /= "" then
          if Cmd.Name.all = "" then
