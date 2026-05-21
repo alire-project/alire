@@ -9,7 +9,7 @@ trap 'echo "Interrupted" >&2 ; exit 1' INT
 set -o errexit
 set -o nounset
 
-# Function that hashes each file individually, printing "relative/path hash"
+# Function that hashes each file individually, printing "sha256 relative/path"
 # per line, sorted by relative path.
 function hashfiles() {
     local dir="$1"   # Directory to scan
@@ -19,7 +19,7 @@ function hashfiles() {
         local hash
         hash=$(sha256sum "$f" | cut -d' ' -f1)
         echo "$hash $rel"
-    done | sort -k2
+    done | LC_ALL=C sort -k2
 }
 
 # Start by entering the directory of the script
@@ -43,6 +43,9 @@ if [ "$old_hashes" = "$new_hashes" ]; then
     exit 0
 else
     echo "Changes detected in templates, regenerating..." | tee /dev/stderr
+    echo "Locale: LC_ALL=${LC_ALL:-unset} LANG=${LANG:-unset}" >&2
+    echo "Old hashes: $(echo "$old_hashes" | wc -l) lines" >&2
+    echo "New hashes: $(echo "$new_hashes" | wc -l) lines" >&2
     diff <(echo "$old_hashes") <(echo "$new_hashes") >&2 || true
 fi
 
