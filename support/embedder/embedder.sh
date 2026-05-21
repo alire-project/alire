@@ -42,8 +42,8 @@ if [ "$old_hashes" = "$new_hashes" ]; then
     echo "No changes in templates, skipping generation"
     exit 0
 else
-    echo "Changes detected in templates, regenerating"
-    diff <(echo "$old_hashes") <(echo "$new_hashes") || true
+    echo "Changes detected in templates, regenerating..." | tee /dev/stderr
+    diff <(echo "$old_hashes") <(echo "$new_hashes") >&2 || true
 fi
 
 # Location of generated files
@@ -60,7 +60,13 @@ if [ ! -f awsres ]; then
     pushd "$tmp"
 
     unset GNATCOLL_ALIRE_PREFIX
-    alr get --build aws^24
+
+    # Install awsres from AWS
+    if ! alr get --build aws^24; then
+        echo "Failed to build awsres from AWS" >&2
+        exit 1
+    fi
+
     find . -name awsres -exec cp {} "$workdir" \;
 
     # Clean up
