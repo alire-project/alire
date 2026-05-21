@@ -54,9 +54,16 @@ jobs:
           -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
         # Token required for self-update tests to not hit GH API rate limits
 
-    - name: Upload logs (if failed)
+    - name: Fix testsuite output permissions (on failure)
       if: failure()
-      uses: actions/upload-artifact@v4
+      run: |
+        if [ -d "testsuite/out" ]; then
+          sudo chmod -R a+rX testsuite/out
+        fi
+
+    - name: Upload logs (on failure)
+      if: failure()
+      uses: actions/upload-artifact@v7
       with:
         name: e3-log-docker-${{ matrix.tag }}.zip
         path: testsuite/out
