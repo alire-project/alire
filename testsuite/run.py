@@ -66,8 +66,14 @@ class Testsuite(e3.testsuite.Testsuite):
         # Report alr being used
         alr_path = self.main.args.alr_path
         print(f"Testsuite using alr at {alr_path} with version:")
-        print(subprocess.run([alr_path, 'version'],
-                             stdout=subprocess.PIPE).stdout.decode())
+        result = subprocess.run(
+            [alr_path, 'version'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=True,
+        )
+        print(result.stdout)
         sys.stdout.flush()
 
         # Ensure toolchain is in scope, or err early instead of during tests
