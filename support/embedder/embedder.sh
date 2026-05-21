@@ -44,9 +44,11 @@ if [ "$old_hashes" = "$new_hashes" ]; then
 else
     echo "Changes detected in templates, regenerating..." | tee /dev/stderr
     echo "Locale: LC_ALL=${LC_ALL:-unset} LANG=${LANG:-unset}" >&2
-    echo "Old hashes: $(echo "$old_hashes" | wc -l) lines" >&2
-    echo "New hashes: $(echo "$new_hashes" | wc -l) lines" >&2
-    diff <(echo "$old_hashes") <(echo "$new_hashes") >&2 || true
+    hashes_count() { [ -z "$1" ] && echo 0 || printf '%s\n' "$1" | wc -l; }
+    hashes_body()  { [ -n "$1" ] && printf '%s\n' "$1"; }
+    echo "Old hashes: $(hashes_count "$old_hashes") lines" >&2
+    echo "New hashes: $(hashes_count "$new_hashes") lines" >&2
+    diff <(hashes_body "$old_hashes") <(hashes_body "$new_hashes") >&2 || true
 fi
 
 # Location of generated files
