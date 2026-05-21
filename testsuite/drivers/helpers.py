@@ -122,11 +122,10 @@ def distribution():
                 for line in f:
                     split = line.strip().split('=')
                     if len(split) == 2:
-                        val = split[1].lower().strip('"')
-                        print("val = '%s'" % val)
+                        val = split[1].lower().strip('"' + "'")
                         if split[0].lower() == key:
                             for token in val.split():
-                                if token in known_distro:
+                                if token.lower() in known_distro:
                                     return token
 
         return 'DISTRIBUTION_UNKNOWN'
