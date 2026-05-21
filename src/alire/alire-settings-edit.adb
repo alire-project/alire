@@ -11,7 +11,6 @@ with Alire.Utils.Text_Files;
 with Alire.Version;
 with Alire.Warnings;
 
-with CLIC.Config.Edit;
 with CLIC.Config.Load;
 
 package body Alire.Settings.Edit is
@@ -34,8 +33,16 @@ package body Alire.Settings.Edit is
                           Check : CLIC.Config.Check_Import := null)
    is
    begin
-      if not CLIC.Config.Edit.Set (Filepath (Local), Key, Value, Check) then
-         Raise_Checked_Error ("Cannot set local settings key");
+      if Key = Alire.Settings.Builtins.User_Github_Login.Key then
+         if not Set_User_GitHub_Login (Filepath (Local), Key, Value, Check)
+         then
+            Raise_Checked_Error
+              ("Cannot set local settings key user.github_login");
+         end if;
+      else
+         if not CLIC.Config.Edit.Set (Filepath (Local), Key, Value, Check) then
+            Raise_Checked_Error ("Cannot set local settings key");
+         end if;
       end if;
 
       --  Reload after change
@@ -47,12 +54,22 @@ package body Alire.Settings.Edit is
    ------------------
 
    procedure Set_Globally (Key   : CLIC.Config.Config_Key;
-                          Value : String;
+                           Value : String;
                            Check : CLIC.Config.Check_Import := null)
    is
    begin
-      if not CLIC.Config.Edit.Set (Filepath (Global), Key, Value, Check) then
-         Raise_Checked_Error ("Cannot set global settings key");
+      if Key = Alire.Settings.Builtins.User_Github_Login.Key then
+         if not Set_User_GitHub_Login (Filepath (Global), Key, Value, Check)
+         then
+            Raise_Checked_Error
+              ("Cannot set global settings key user.github_login");
+         end if;
+
+      else
+         if not CLIC.Config.Edit.Set (Filepath (Global), Key, Value, Check)
+         then
+            Raise_Checked_Error ("Cannot set global settings key");
+         end if;
       end if;
 
       --  Reload after change

@@ -72,7 +72,7 @@ commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 
 [pins.clic]
 url    = "https://github.com/alire-project/clic"
-commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
+commit = "7f3af9f2d6bf0f3e41dc0ab61907364c6acc5b1c"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"

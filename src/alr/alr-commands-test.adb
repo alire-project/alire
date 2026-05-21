@@ -333,8 +333,8 @@ package body Alr.Commands.Test is
          .Append ("")
          .Append
             ("By default, nested crates without tests inherit the closest"
-             & " parent crate test definitions. Use --here to only consider the"
-             & " current crate.")
+             & " parent crate test definitions. Use --here to only consider"
+             & " the current crate.")
              );
 
    --------------------
