@@ -97,7 +97,20 @@ assert_eq(
 )
 with open(os.path.join("xxx", "alire.toml")) as f:
     assert_substring('maintainers-logins = ["valid-user-name"]', f.read())
+
+# Clean up for next test
 shutil.rmtree("xxx")
+
+# Test numbers as names for user.github_login
+list_of_number_names = ["0b1000", "0o1000", "0x1000", "1e4", "1000"]
+
+for name in list_of_number_names:
+    run_alr("settings", "--set", "--global", "--builtin", "user.github_login", name)
+    assert_eq(
+        f"user.github_login={name}\n",
+        run_alr("settings", "--global", "user.github_login").out
+    )
+
 
 
 print('SUCCESS')
