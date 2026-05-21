@@ -31,13 +31,14 @@ def pretty_diff(expected, actual):
 
 def assert_eq(expected, actual, label=None, show_escaped=False):
     if expected != actual:
-        if isinstance(actual, str) and isinstance(expected, str):
-            diff = '\nDiff:\n' + pretty_diff(expected, actual)
-        else:
-            diff = ''
-
         def display(value):
             return repr(value) if show_escaped else str(value)
+
+        raw_diff = pretty_diff(display(expected), display(actual))
+        # Fallback for when differences are in whitespace
+        diff = ('\nDiff:\n' + raw_diff if raw_diff
+                else '\nDiff (repr, showing hidden chars):\n'
+                     + pretty_diff(repr(expected), repr(actual)))
 
         text = ['Unexpected {}:'.format(label or 'output'),
                 'Expecting:',
