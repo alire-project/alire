@@ -10,16 +10,16 @@ set -o errexit
 set -o nounset
 
 # Function that hashes each file individually, printing "relative/path hash"
-# per line, sorted
+# per line, sorted by relative path.
 function hashfiles() {
     local dir="$1"   # Directory to scan
     local base="$2"  # Base dir for computing relative paths
-    find "$dir" -type f | sort | while read -r f; do
+    find "$dir" -type f | while read -r f; do
         local rel="${f#"${base}/"}"
         local hash
         hash=$(sha256sum "$f" | cut -d' ' -f1)
         echo "$hash $rel"
-    done
+    done | sort -k2
 }
 
 # Start by entering the directory of the script
