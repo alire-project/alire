@@ -8,6 +8,8 @@ import platform
 import pexpect
 import re
 import sys
+import random
+import time
 
 from e3.fs import mkdir
 from e3.os.process import Run, quote_arg
@@ -88,6 +90,18 @@ def prepare_env(settings_dir, env):
                 "--set", "distribution.disable_detection", "true")
 
 
+_PKG_LOCK_PATTERNS = [
+    'unable to lock database',   # pacman (msys2/Windows)
+    'could not lock database',   # pacman (msys2/Windows)
+    'unable to lock',            # dpkg/apt
+    'could not get lock',        # apt
+]
+
+
+def _is_pkg_lock_error(output: str) -> bool:
+    return any(p.lower() in output.lower() for p in _PKG_LOCK_PATTERNS)
+
+
 def run_alr(*args, **kwargs):
     """
     Run "alr" with the given arguments.
@@ -122,7 +136,24 @@ def run_alr(*args, **kwargs):
     if quiet:
         argv.insert(1, '-q')
     argv.extend(args)
-    p = Run(argv)
+
+    # Concurrent tests may encounter package manager locks, so we introduce
+    # some randomized backoff.
+    _PKG_LOCK_DELAYS = [15.0, 30.0, 60.0]
+    attempt = 0
+    while True:
+        p = Run(argv)
+        if (p.status != 0
+                and attempt < len(_PKG_LOCK_DELAYS)
+                and _is_pkg_lock_error(p.out)):
+            delay = _PKG_LOCK_DELAYS[attempt] + random.uniform(-5.0, 5.0)
+            attempt += 1
+            print(f'Package manager lock detected, retrying in {delay:.0f}s'
+                  f' ({attempt}/{len(_PKG_LOCK_DELAYS)})...')
+            time.sleep(delay)
+            continue
+        break
+
     _report_unexpected_exit_status(p.status, complain_on_error, argv, p.out)
 
     # Convert CRLF line endings (Windows-style) to LF (Unix-style). This
