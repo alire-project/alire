@@ -37,6 +37,7 @@ private
    type Command is new Commands.Command with record
       Jobs       : aliased Integer := 0;
       By_Id      : aliased GNAT.Strings.String_Access;
+      Here       : aliased Boolean := False;
       Legacy     : aliased Boolean := False;
       List       : aliased Boolean := False;
       Build_Only : aliased Boolean := False;

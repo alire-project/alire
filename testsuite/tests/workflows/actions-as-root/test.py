@@ -40,7 +40,9 @@ os.remove('./test_post_fetch')
 os.mkdir('src')
 Path('src/empty.adb').touch()
 p = run_alr('build', complain_on_error=False)
-assert_match(".*compilation of empty.adb failed.*", p.out)
+# gprbuild < 26: 'compilation of empty.adb failed'
+# gprbuild >= 26: '[Ada Compile] empty.adb (...) failed with status 1'
+assert_match(".*empty\.adb.*failed.*", p.out)
 
 # Post fetch should not have come back
 # Post build shouldn't be here because of build failure

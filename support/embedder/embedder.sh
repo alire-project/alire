@@ -9,10 +9,17 @@ trap 'echo "Interrupted" >&2 ; exit 1' INT
 set -o errexit
 set -o nounset
 
-# Function that recursively hashes a directory and prints the hash
-function hashdir() {
-    local dir="$1" # Directory to hash
-    find "$dir" -type f -exec sha256sum {} + | cut -d' ' -f1 | sort | sha256sum | cut -d' ' -f1
+# Function that hashes each file individually, printing "sha256 relative/path"
+# per line, sorted by relative path.
+function hashfiles() {
+    local dir="$1"   # Directory to scan
+    local base="$2"  # Base dir for computing relative paths
+    find "$dir" -type f | while read -r f; do
+        local rel="${f#"${base}/"}"
+        local hash
+        hash=$(sha256sum "$f" | cut -d' ' -f1)
+        echo "$hash $rel"
+    done | LC_ALL=C sort -k2
 }
 
 # Start by entering the directory of the script
@@ -23,18 +30,25 @@ scriptdir=$PWD
 # Identify the base dir of the project
 base=$(git rev-parse --show-toplevel)
 
+# In case `alr` was just built and not in path, we need it below
+export PATH+=:"$base"/bin
+
 # Check whether we need to regenerate, based on the hash of the templates
 # stored in ./templates.hash
 
-old_hash=$(cat ./templates.hash 2>/dev/null || echo "missing")
-new_hash=$(hashdir "$base/templates")
-if [ "$old_hash" = "$new_hash" ]; then
+old_hashes=$(cat ./templates.hash 2>/dev/null || echo "")
+new_hashes=$(hashfiles "$base/templates" "$base")
+if [ "$old_hashes" = "$new_hashes" ]; then
     echo "No changes in templates, skipping generation"
     exit 0
 else
-    echo "Changes detected in templates, regenerating"
-    echo "Old hash: $old_hash"
-    echo "New hash: $new_hash"
+    echo "Changes detected in templates, regenerating..." | tee /dev/stderr
+    echo "Locale: LC_ALL=${LC_ALL:-unset} LANG=${LANG:-unset}" >&2
+    hashes_count() { [ -z "$1" ] && echo 0 || printf '%s\n' "$1" | wc -l; }
+    hashes_body()  { [ -n "$1" ] && printf '%s\n' "$1"; }
+    echo "Old hashes: $(hashes_count "$old_hashes") lines" >&2
+    echo "New hashes: $(hashes_count "$new_hashes") lines" >&2
+    diff <(hashes_body "$old_hashes") <(hashes_body "$new_hashes") >&2 || true
 fi
 
 # Location of generated files
@@ -51,7 +65,13 @@ if [ ! -f awsres ]; then
     pushd "$tmp"
 
     unset GNATCOLL_ALIRE_PREFIX
-    alr get --build aws^24
+
+    # Install awsres from AWS
+    if ! alr get --build aws^24; then
+        echo "Failed to build awsres from AWS" >&2
+        exit 1
+    fi
+
     find . -name awsres -exec cp {} "$workdir" \;
 
     # Clean up
@@ -117,7 +137,7 @@ find $generated -type f -exec \
 # GENERATION DONE
 
 # Write hash after successful generation
-echo "$new_hash" > "$scriptdir"/templates.hash
-echo "Templates hash updated in $scriptdir/templates.hash with value $new_hash"
+echo "$new_hashes" > "$scriptdir"/templates.hash
+echo "Templates hash updated in $scriptdir/templates.hash"
 
 echo "Resources created successfully"

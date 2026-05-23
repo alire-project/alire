@@ -2,15 +2,17 @@ package Alire.Platforms with Preelaborate is
 
    --  Platform information necessary for some releases
 
+   --  PLEASE KEEP THE ENUMS IN ALPHABETICAL ORDER (except for guard values)
+
    type Extended_Architectures is
      (AMD64, -- Equivalent to X86_64 (FreeBSD/OpenBSD)
       ARM64, -- Equivalent to AARCH64
       End_Of_Duplicates,
       --  Up to this point, these are architectures that we want to rename to
       --  some of the following because they are equivalent.
-      ARM,
       AARCH64,
       AARCH64_BE,
+      ARM,
       I386,
       I686,
       X86_64,
@@ -21,9 +23,9 @@ package Alire.Platforms with Preelaborate is
    --  See e.g. https://stackoverflow.com/a/45125525/761390
 
    type Operating_Systems is (FreeBSD,
-                              OpenBSD,
                               Linux,
                               MacOS,
+                              OpenBSD,
                               Windows,
                               OS_Unknown);
    subtype Known_Operating_Systems is
@@ -34,17 +36,17 @@ package Alire.Platforms with Preelaborate is
                     Unknown_Cross_Target);
    --  Minimal preparations for cross-compiling
 
-   type Distributions is (Debian,
-                          Ubuntu,
-                          Msys2,
-                          Arch,
-                          Rhel, -- RedHat Enterprise Linux
+   type Distributions is (Arch,
                           Centos,
+                          Debian,
                           Fedora,
-                          Suse,
+                          Gentoo,
                           Homebrew,
                           Macports,
-                          Gentoo,
+                          Msys2,
+                          Rhel, -- RedHat Enterprise Linux
+                          Suse,
+                          Ubuntu,
                           Distribution_Unknown);
 
    subtype Known_Distributions is
@@ -56,25 +58,25 @@ package Alire.Platforms with Preelaborate is
                        Bits_Unknown);
 
    type Package_Managers is (Apt,
-                             Pacman,
-                             Yum,
                              Dnf,
-                             Zypper,
                              Homebrew,
                              Macports,
+                             Pacman,
                              Portage,
+                             Yum,
+                             Zypper,
                              Packager_Unknown);
 
    Distro_Manager : constant array (Distributions) of Package_Managers :=
-     (Debian | Ubuntu => Apt,
-      Msys2 | Arch    => Pacman,
-      Rhel            => Yum,
+     (Arch   | Msys2  => Pacman,
       Centos | Fedora => Dnf,
-      Suse            => Zypper,
+      Debian | Ubuntu => Apt,
+      Gentoo          => Portage,
       Homebrew        => Homebrew,
       Macports        => Macports,
-      Gentoo          => Portage,
-      Distribution_Unknown  => Packager_Unknown);
+      Rhel            => Yum,
+      Suse            => Zypper,
+      Distribution_Unknown => Packager_Unknown);
 
    type Toolchains is (System,
                        --  Provided through system packages, able to use other
@@ -84,7 +86,7 @@ package Alire.Platforms with Preelaborate is
                        --  Provided by the user
                       );
 
-   type Shells is (Unix, PowerShell, WinCmd);
+   type Shells is (PowerShell, Unix, WinCmd);
 
 private
 

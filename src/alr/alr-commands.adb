@@ -793,11 +793,11 @@ package body Alr.Commands is
                  & "within the allowed version subsets):")
         .New_Line
         -- Additional indentation will enable the preformat mode in markdown
-        .Append ("  crate        " & ASCII.HT & "Newest/oldest version")
-        .Append ("  crate=version" & ASCII.HT & "Exact version")
-        .Append ("  crate^version" & ASCII.HT & "Major-compatible version")
-        .Append ("  crate~version" & ASCII.HT & "Minor-compatible version")
-        .Append ("  crate[op]version " & ASCII.HT
+        .Append ("  crate        " & Latin_1.HT & "Newest/oldest version")
+        .Append ("  crate=version" & Latin_1.HT & "Exact version")
+        .Append ("  crate^version" & Latin_1.HT & "Major-compatible version")
+        .Append ("  crate~version" & Latin_1.HT & "Minor-compatible version")
+        .Append ("  crate[op]version " & Latin_1.HT
                  & "Newest/oldest in set where [op] can be >, >=, <, <=, /=")
       ;
    end Crate_Version_Sets;

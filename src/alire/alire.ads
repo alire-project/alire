@@ -1,4 +1,5 @@
 with Ada.Assertions;
+with Ada.Characters.Latin_1;
 with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 private with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
@@ -19,6 +20,8 @@ with CLIC.TTY;
 with CLIC.Markup;
 
 package Alire with Preelaborate is
+
+   package Latin_1 renames Ada.Characters.Latin_1;
 
    Checked_Error : exception;
    --  A Checked_Error is an explicitly diagnosed error condition, usually in

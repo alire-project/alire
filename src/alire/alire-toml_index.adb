@@ -209,15 +209,15 @@ package body Alire.TOML_Index is
                  (Result, Filename,
                   "index version (" & Loading_Index_Version.Image
                   & ") is too old. The minimum compatible version is "
-                  & Alire.Index.Min_Compatible_Version.Image & ASCII.LF
+                  & Alire.Index.Min_Compatible_Version.Image & Latin_1.LF
                   & (if Index.Name = Alire.Index.Community_Name then
                        " Resetting the community index ("
                        & Markup.Terminal ("alr index --reset-community")
-                       & ") may solve the issue. " & ASCII.LF
+                       & ") may solve the issue. " & Latin_1.LF
                     else
                        " Updating your local index might solve the issue ("
                        & Markup.Terminal ("alr index --update-all")
-                       & "). " & ASCII.LF
+                       & "). " & Latin_1.LF
                        & "Otherwise, remove the index with name '"
                        & TTY.Emph (Index.Name)
                        & "' ("

@@ -8,6 +8,8 @@ with CLIC.Markup;
 
 package Alr with Preelaborate is
 
+   package Latin_1 renames Alire.Latin_1;
+
    --  Nothing of note in this root package. Entities declared here are
    --  generally useful everywhere or in many packages: Exceptions for
    --  commands, tracing for all
