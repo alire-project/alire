@@ -2000,14 +2000,11 @@ package body Alire.Roots is
                if Computed_Update.Timed_Out then
                   Trace.Warning
                     ("Dependency resolution timed out with missing "
-                     & "dependencies (use "
-                     & Markup.Terminal ("alr with --solve")
-                     & " for details).");
+                     & "dependencies (use `alr with --solve` for details).");
                else
                   Trace.Warning
                     ("There are missing dependencies"
-                     & " (use " & Markup.Terminal ("alr with --solve")
-                     & " for details).");
+                     & " (use `alr with --solve` for details).");
                end if;
             end if;
             This.Sync_Manifest_And_Lockfile_Timestamps;
