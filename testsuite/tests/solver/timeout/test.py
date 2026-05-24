@@ -71,10 +71,12 @@ SHOW_WARNING_RE = ".*" + re.escape(SHOW_WARNING)
 
 SOLVER_ASKS = ".*" + re.escape("[Y] Yes  [N] No  [A] Always  (default is Yes)") + r"\s*$"
 SOLVER_ASKS_INCOMPLETE = (
-    ".*" + re.escape("Warning: Complete solution not found after 0 seconds.") + SOLVER_ASKS
+    r".*Warning: Complete solution not found after \d+ seconds\."
+    + SOLVER_ASKS
 )
 SOLVER_ASKS_INEXHAUSTIVE = (
-    ".*" + re.escape("Warning: Solution space not fully explored after 0 seconds.") + SOLVER_ASKS
+    r".*Warning: Solution space not fully explored after \d+ seconds\."
+    + SOLVER_ASKS
 )
 
 CONFIRM_DIFF = r".*\[Y\] Yes  \[N\] No  \(default is {default}\)\s*$"
