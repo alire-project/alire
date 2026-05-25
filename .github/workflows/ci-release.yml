@@ -485,6 +485,51 @@ jobs:
           asset_name: alr-${{ needs.release-info.outputs.version-without-v }}-x86_64.AppImage
           asset_content_type: application/x-elf
 
+  ###########
+  # tarball #
+  ###########
+  # Full sources zip including submodules (not in GitHub's auto-tarballs)
+
+  tarball:
+    name: Full sources tarball
+    if: github.ref_type == 'tag'
+    needs: [release-info]
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Install Python 3.x
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install git-archive-all
+        run: pip install git-archive-all
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Create full tarball
+        run: >
+          git-archive-all -9
+          alr-${{ needs.release-info.outputs.version-without-v }}.zip
+
+      - name: Upload asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release-info.outputs.upload-url }}
+          asset_path: >-
+            alr-${{ needs.release-info.outputs.version-without-v }}.zip
+          asset_name: >-
+            alr-${{
+            needs.release-info.outputs.version-without-v
+            }}-full-sources.zip
+          asset_content_type: application/zip
+
   ###################
   # release-nightly #
   ###################
