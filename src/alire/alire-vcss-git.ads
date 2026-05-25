@@ -12,7 +12,8 @@ package Alire.VCSs.Git is
        (for all Char of Git_Commit => Char in Utils.Hexadecimal_Character);
 
    function Is_Valid_Commit (S : String) return Boolean
-   is (S in Git_Commit);
+   is (S'Length = Git_Commit'Length and then
+         (for all Char of S => Char in Utils.Hexadecimal_Character));
 
    No_Commit : constant Git_Commit := (others => '0');
    --  This is actually returned by e.g. `git worktree`, even if it could be a

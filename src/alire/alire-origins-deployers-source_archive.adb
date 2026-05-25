@@ -150,8 +150,8 @@ package body Alire.Origins.Deployers.Source_Archive is
       --  verbosity if warranted by the logging level.
       Download_Cmd : constant String :=
         (if Log_Level >= Trace.Info
-           and then Configured_Download_Cmd = "curl ${URL} -L -s -o ${DEST}"
-         then "curl ${URL} -L --progress-bar -o ${DEST}"
+           and then Configured_Download_Cmd = "curl ${URL} -sSfL -o ${DEST}"
+         then "curl ${URL} -fL --progress-bar -o ${DEST}"
          else Configured_Download_Cmd);
 
       procedure Exec_Check (Exec : String) is

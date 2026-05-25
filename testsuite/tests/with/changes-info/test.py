@@ -5,7 +5,7 @@ Check summary of changes shown to the user when modifying dependencies
 import os
 import re
 
-from drivers.alr import run_alr
+from drivers.alr import alr_with, run_alr
 from drivers.asserts import assert_match
 
 # Initialize a workspace for the test
@@ -51,6 +51,23 @@ assert_match(".*Cannot add crate 'unobtanium' not found in index",
              p.out)
 
 ###############################################################################
+# Check adding a missing crate manually, then running `alr with` without args
+alr_with("unobtanium", update=False, manual=True)
+p = run_alr('with', quiet=False)
+assert_match(".*" +
+             re.escape("""\
+Dependencies automatically updated as follows:
+
+   New solution is incomplete.
+   Missing:
+   +!       unobtanium * (new,missing:unknown)\
+""") + ".*",
+             p.out, flags=re.S)
+
+# Remove the missing crate for following tests
+run_alr("with", "--del", "unobtanium")
+
+###############################################################################
 # Check adding a pinned dir (the dir must exist)
 os.mkdir("local_crate")
 p = run_alr('with', 'local_crate', '--use=local_crate', quiet=False)
@@ -80,6 +97,19 @@ assert_match(".*" +
              re.escape("""Changes to dependency solution:
 
    o libhello 2.0.0 (unpinned)""") + ".*",
+             p.out, flags=re.S)
+
+###############################################################################
+# Pinning a crate to a non-existent version
+p = run_alr('pin', 'libhello=2.999.0', quiet=False)
+assert_match(".*" +
+             re.escape("""\
+Changes to dependency solution:
+
+   New solution is incomplete.
+   Missing:
+   .!       libhello (=2.999.0) & (^2.0.0) (pin=2.999.0,missing:unavailable)\
+""") + ".*",
              p.out, flags=re.S)
 
 ###############################################################################

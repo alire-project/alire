@@ -587,7 +587,7 @@ package body Alire.VCSs.Git is
                            Ref  : String := "HEAD") return String
    is
       Output : constant AAA.Strings.Vector :=
-                 Run_Git_And_Capture (Empty_Vector & "ls-remote" & From);
+        Run_Git_And_Capture (Empty_Vector & "ls-remote" & Repo_URL (From));
    begin
       --  Sample output from git (space is tab):
       --  95818710c1a2bea0cbfa617a67972fe984761227        HEAD

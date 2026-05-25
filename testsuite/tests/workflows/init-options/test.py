@@ -27,6 +27,7 @@ compare(contents('xxx'), ['xxx/.gitignore',
                           'xxx/alire/alire.lock',
                           'xxx/alire/build_hash_inputs',
                           'xxx/alire/settings.toml',
+                          'xxx/alire/tmp',
                           'xxx/config',
                           'xxx/config/xxx_config.ads',
                           'xxx/config/xxx_config.gpr',
@@ -47,6 +48,7 @@ compare(contents('aaa'), ['aaa/.gitignore',
                           'aaa/alire/alire.lock',
                           'aaa/alire/build_hash_inputs',
                           'aaa/alire/settings.toml',
+                          'aaa/alire/tmp',
                           'aaa/config',
                           'aaa/config/aaa_config.ads',
                           'aaa/config/aaa_config.gpr',
@@ -60,6 +62,7 @@ compare(contents('aaa'), ['aaa/.gitignore',
 run_alr('init', '--bin', '--no-skel', 'yyy')
 compare(contents('yyy'), ['yyy/alire.toml',
                           ])
+
 
 # Init with existing crate
 os.chdir('yyy')
@@ -90,6 +93,7 @@ compare(contents('.'), ['./.gitignore',
                         './alire/alire.lock',
                         './alire/build_hash_inputs',
                         './alire/settings.toml',
+                        './alire/tmp',
                         './config',
                         './config/zzz_config.ads',
                         './config/zzz_config.gpr',

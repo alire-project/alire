@@ -401,4 +401,12 @@ package body Alire.Platforms.Current is
       Setup_Msys2;
    end Initialize;
 
+   ---------------------
+   -- Running_As_Root --
+   ---------------------
+
+   function Running_As_Root return Boolean is (False);
+   --  Perhaps we can do something better here in the future, for now we use it
+   --  only on UNIXes to not add `sudo` when unneeded.
+
 end Alire.Platforms.Current;

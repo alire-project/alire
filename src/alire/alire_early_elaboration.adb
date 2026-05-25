@@ -1,5 +1,6 @@
 with AAA.Strings;
 
+with Ada.Command_Line;
 with Ada.Directories;
 
 with Alire.Features;
@@ -15,6 +16,31 @@ with Interfaces.C_Streams;
 with Simple_Logging.Filtering;
 
 package body Alire_Early_Elaboration is
+
+   Real_Starting_Dir : constant Alire.Absolute_Path :=
+     Ada.Directories.Current_Directory;
+
+   Effective_Starting_Dir : Alire.Unbounded_Absolute_Path :=
+     Alire."+" (Ada.Directories.Current_Directory);
+
+   ----------------------
+   -- Get_Starting_Dir --
+   ----------------------
+
+   function Get_Starting_Dir return Alire.Absolute_Path is
+   begin
+      return Real_Starting_Dir;
+   end Get_Starting_Dir;
+
+   -----------------------
+   -- Get_Effective_Dir --
+   -----------------------
+
+   function Get_Effective_Dir return Alire.Absolute_Path is
+      use Alire;
+   begin
+      return +Effective_Starting_Dir;
+   end Get_Effective_Dir;
 
    -----------------
    -- Early_Error --
@@ -104,6 +130,29 @@ package body Alire_Early_Elaboration is
             end if;
          end Set_Config_Path;
 
+         -------------------
+         -- Set_Chdir_Dir --
+         -------------------
+
+         procedure Set_Chdir_Dir (Switch, Path : String) is
+            package Adirs renames Ada.Directories;
+            use Alire;
+         begin
+            if Path = "" then
+               Early_Error ("Switch " & Switch & " requires argument.");
+            elsif not Adirs.Exists (Path) then
+               Early_Error
+                 ("switch " & Switch & ": directory """ & Path
+                  & """ does not exist.");
+            elsif Adirs.Kind (Path) not in Adirs.Directory then
+               Early_Error
+                 ("Given --chdir path is not a directory: " & Path);
+            else
+               Effective_Starting_Dir := +Adirs.Full_Name (Path);
+               Adirs.Set_Directory (Path);
+            end if;
+         end Set_Chdir_Dir;
+
          -----------------------------
          -- Check_Config_Deprecated --
          -----------------------------
@@ -143,8 +192,8 @@ package body Alire_Early_Elaboration is
          -----------------------
          -- Check_Long_Switch --
          -----------------------
-         --  Take care manually of the -debug[ARG] optional ARG, since the
-         --  simple Getopt below doesn't for us:
+         --  Take care manually of long switches since the simple Getopt below
+         --  doesn't do it for us:
          procedure Check_Long_Switch (Switch : String) is
             use AAA.Strings;
          begin
@@ -153,6 +202,8 @@ package body Alire_Early_Elaboration is
             elsif Has_Prefix (Switch, "--debug") then
                Switch_D := True;
                Add_Scopes (Tail (Switch, "="));
+            elsif Has_Prefix (Switch, "--chdir") then
+               Set_Chdir_Dir (Switch, Tail (Switch, "="));
             elsif Has_Prefix (Switch, "--config") then
                Check_Config_Deprecated;
                Check_Settings_Seen;
@@ -169,13 +220,18 @@ package body Alire_Early_Elaboration is
          loop
             --  We use the simpler Getopt form to avoid built-in help and other
             --  shenanigans.
-            Option := Getopt ("* d? --debug? q v c= --config= s= --settings=");
+            Option := Getopt
+              ("* d? --debug? q v c= --config= s= --settings= C= --chdir=");
             case Option is
                when ASCII.NUL =>
                   exit;
                when '*' =>
                   if not Subcommand_Seen then
                      Check_Long_Switch (Full_Switch);
+                  end if;
+               when 'C' =>
+                  if not Subcommand_Seen then
+                     Set_Chdir_Dir ("-C", Parameter);
                   end if;
                when 'c' | 's' =>
                   if not Subcommand_Seen then
@@ -261,9 +317,23 @@ package body Alire_Early_Elaboration is
    end TTY_Detection;
 
 begin
+   --  Custom log level for this earliest of messages
+   if (for some I in 1 .. Ada.Command_Line.Argument_Count =>
+         Ada.Command_Line.Argument (I) = "-vv")
+     or else
+      (for some I in 1 .. Ada.Command_Line.Argument_Count =>
+         Ada.Command_Line.Argument (I) = "-v" and then
+         (for some J in 1 .. Ada.Command_Line.Argument_Count =>
+            Ada.Command_Line.Argument (J) = "-v" and then J /= I))
+   then
+      Simple_Logging.Always ("-->> Early elaboration started");
+   end if;
+
    Simple_Logging.Stdout_Level := Simple_Logging.Info;
    --  Display warnings and errors to stderr
 
    TTY_Detection;
    Early_Switch_Detection;
+
+   Simple_Logging.Debug ("Early elaboration finished");
 end Alire_Early_Elaboration;

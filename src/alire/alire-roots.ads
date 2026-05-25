@@ -106,6 +106,7 @@ package Alire.Roots is
    --  Crate name of the root release
 
    function Path (This : Root) return Absolute_Path;
+   --  Root path of the crate
 
    function Project_Paths (This : in out Root)
                            return AAA.Strings.Set;
@@ -447,7 +448,7 @@ private
       Allowed     : Containers.Crate_Name_Sets.Set :=
         Containers.Crate_Name_Sets.Empty_Set;
       Options     : Solver.Query_Options := Solver.Default_Options)
-      return Solutions.Solution;
+      return Solver.Result;
    --  Compute a new solution for the workspace. If Allowed is not empty,
    --  crates not appearing in Allowed are held back at their current version.
    --  This function loads configured indexes from disk. No changes are applied

@@ -10,11 +10,15 @@ package Alire.Utils.User_Input is
    function Confirm_Solution_Changes
      (Changes        : Solutions.Diffs.Diff;
       Changed_Only   : Boolean            := not Alire.Detailed;
-      Level          : Alire.Trace.Levels := Info)
+      Level          : Alire.Trace.Levels := Info;
+      Timed_Out      : Boolean            := False)
       return Boolean;
    --  Present a summary of changes and ask the user for confirmation. Returns
    --  True when the user answers positively. Defaults to Yes when the new
    --  solution is complete, or when Alire.Force.
+   --
+   --  If `Timed_Out` is `True`, the warning for an incomplete solution
+   --  indicates that a timeout occurred.
 
    function Approve_Dir (Dir   : Any_Path;
                          Force : Boolean := Alire.Force)
