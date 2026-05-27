@@ -32,7 +32,9 @@ package body Alire.Test_Runner is
    --  test source. Pragma fields default when absent.
 
    type Test_Case is record
-      Path        : Portable_Path;
+      Path        : Unbounded_String;
+      --  Stores a Portable_Path value; held as Unbounded_String so the
+      --  record stays definite. Use Path_Of to retrieve as Portable_Path.
       Name        : Unbounded_String;
       --  Display-name override from `pragma Alire_Test (Name, "...");`.
       --  Empty when the pragma is not present; callers then fall back to
@@ -40,6 +42,9 @@ package body Alire.Test_Runner is
       Timeout     : Natural := 30;
       Should_Fail : Boolean := False;
    end record;
+
+   function Path_Of (TC : Test_Case) return Portable_Path
+   is (Portable_Path (To_String (TC.Path)));
 
    package Test_Case_Vectors is new
      Ada.Containers.Indefinite_Vectors (Positive, Test_Case);
@@ -291,7 +296,7 @@ package body Alire.Test_Runner is
    function Display_Name (TC : Test_Case; Root_Prefix : String) return String
    is (if Length (TC.Name) > 0
        then To_String (TC.Name)
-       else Display_Name (TC.Path, Root_Prefix));
+       else Display_Name (Path_Of (TC), Root_Prefix));
    --  Prefer the pragma-supplied name when present; otherwise derive it
    --  from the on-disk path the way base did.
 
@@ -400,7 +405,8 @@ package body Alire.Test_Runner is
          else
             Lines.Append_To_Last_Line (",");
          end if;
-         Lines.Append_To_Last_Line ("""" & VFS.Simple_Name (TC.Path) & """");
+         Lines.Append_To_Last_Line
+           ("""" & VFS.Simple_Name (Path_Of (TC)) & """");
       end loop;
 
       Lines.Append_Line (Indent & ");");
@@ -464,7 +470,7 @@ package body Alire.Test_Runner is
 
       procedure Spawn_Test (TC : Test_Case) is
          Simple_Name : constant String :=
-           Utils.Strip_Suffix (VFS.Simple_Name (TC.Path), ".adb");
+           Utils.Strip_Suffix (VFS.Simple_Name (Path_Of (TC)), ".adb");
          --  Contains package name, e.g. crate_tests-my_test
 
          Full_Print_Name : constant String :=
@@ -560,7 +566,8 @@ package body Alire.Test_Runner is
             Test : constant Test_Info := Running_Tests (Pid);
             --  A test passes when its outcome matches the expectation
             --  expressed by Should_Fail: Success xor Should_Fail.
-            Expected_Outcome : constant Boolean := Success xor Test.Should_Fail;
+            Expected_Outcome : constant Boolean :=
+              Success xor Test.Should_Fail;
          begin
             if Expected_Outcome then
                Driver.Pass (Test.Name, Test.Start_Time);
@@ -636,7 +643,8 @@ package body Alire.Test_Runner is
       begin
          if AAA.Strings.Has_Suffix (String (Name), ".adb") then
             declare
-               TC : Test_Case := (Path => Name, others => <>);
+               TC : Test_Case :=
+                 (Path => To_Unbounded_String (String (Name)), others => <>);
             begin
                Load_Test_Case_Pragmas (This.Path, TC);
                if Matches_Filter (TC) then
@@ -739,7 +747,8 @@ package body Alire.Test_Runner is
                Builder.Append
                  (Text
                     (String
-                       (VFS.To_Portable (Path / "src" / String (TC.Path)))));
+                       (VFS.To_Portable
+                          (Path / "src" / String (Path_Of (TC))))));
                Builder.End_Map;
             end loop;
             Builder.End_Vec;
@@ -757,7 +766,8 @@ package body Alire.Test_Runner is
                   then
                     " ("
                     & String
-                        (VFS.To_Portable (Path / "src" / String (TC.Path)))
+                        (VFS.To_Portable
+                           (Path / "src" / String (Path_Of (TC))))
                     & ")"
                   else ""));
          end loop;
