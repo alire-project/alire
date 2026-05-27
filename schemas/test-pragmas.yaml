@@ -17,14 +17,26 @@ properties:
     description: Keys and values from pragma Alire_Test (...) occurrences.
     type: object
     properties:
+      Auxiliary_File:
+        description: >
+          When True (or omitted, which is equivalent to True), the file is a
+          support unit and must not be turned into a test main.
+          Mutually exclusive with all other keys.
+        type: boolean
+        default: true
+        examples:
+          - true
       Name:
         description: Human-readable test name.
         type: string
         examples:
           - "A test"
       Should_Fail:
-        description: Whether the test is expected to fail.
+        description: >
+          Whether the test is expected to fail. Omitting the value is
+          equivalent to True.
         type: boolean
+        default: true
         examples:
           - true
       Timeout:
@@ -33,10 +45,19 @@ properties:
         examples:
           - 11.1
     additionalProperties: false
+    if:
+      properties:
+        Auxiliary_File:
+          const: true
+      required: [Auxiliary_File]
+    then:
+      maxProperties: 1
 
 additionalProperties: false
 
 examples:
+  - Alire_Test:
+      Auxiliary_File: true
   - Alire_Test:
       Name: "A test"
       Should_Fail: true

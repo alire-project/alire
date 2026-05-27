@@ -428,8 +428,6 @@ package body Alire.Test_Runner is
          --  TODO: for keys with unexpected typed values, behave as with
          --  unknown pragma keys.
 
-         --  TODO: new Auxiliary_File key
-
          --  TODO: use --format in test
 
          --  Diagnose any pragma key that is not part of the documented
