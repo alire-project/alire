@@ -322,7 +322,7 @@ package body Alire.Publish is
          Ada.Text_IO.New_Line;
          Trace.Warning ("The release "
                         & TTY.Warn ("version ends with '-dev'") & "."
-                        & ASCII.LF
+                        & Latin_1.LF
                         & "Releases submitted to an index should usually"
                         & " not be pre-release versions.");
       end if;
@@ -810,7 +810,7 @@ package body Alire.Publish is
                           "Please upload the archive generated"
                           & " at " & TTY.URL (Archive)
                           & " to its definitive online storage location."
-                          & ASCII.LF
+                          & Latin_1.LF
                           & "Once you have uploaded the file, enter its URL:",
                        Prompt   => "Enter URL> ",
                        Valid    => (Yes | No => True, others => False),
@@ -892,7 +892,7 @@ package body Alire.Publish is
             if not Submit.Ask_To_Fork (Context) then
                Recoverable_User_Error
                  ("You must fork the community index to your GitHub account"
-               & ASCII.LF & "Please visit "
+               & Latin_1.LF & "Please visit "
                & TTY.URL (Tail (Index.Community_Repo, '+'))
                & " if you want to fork manually.");
             end if;
@@ -942,8 +942,21 @@ package body Alire.Publish is
             Put_Success ("Origin is hosted on trusted site: "
                          & URI.Host (URL));
          else
-            Raise_Checked_Error ("Origin is hosted on unknown site: "
-                                 & URI.Host (URL));
+            Raise_Checked_Error
+              (Errors.New_Wrapper.Wrap
+                 ("Origin host '"
+                  & URI.Host (URL)
+                  & "' is not a trusted site.")
+                 .Wrap
+                    (if Context.Options.For_Private_Index
+                     then
+                       "This can be configured using the "
+                       & "'origins.git.trusted_sites' setting."
+                     else
+                       "Please open an issue at "
+                       & "https://github.com/alire-project/alire/issues/new "
+                       & "if you think it should be added to the list.")
+                 .Get);
          end if;
       end if;
 

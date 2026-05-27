@@ -85,7 +85,7 @@ package body Alire.Releases is
    -------------------------
    --  Warn of ^0.x dependencies that probably should be ~0.x
    function Check_Caret_Warning (This : Release) return Boolean is
-      Newline    : constant String := ASCII.LF & "   ";
+      Newline    : constant String := Latin_1.LF & "   ";
    begin
       for Dep of This.Flat_Dependencies loop
          if Settings.Builtins.Warning_Caret.Get
@@ -287,9 +287,9 @@ package body Alire.Releases is
                     (Directories.Full_Name (Upstream_File));
                end if;
                --  And rename the original manifest into upstream
-               Ada.Directories.Rename
-                 (Old_Name => Paths.Crate_File_Name,
-                  New_Name => Upstream_File);
+               Directories.Rename
+                 (Source      => Paths.Crate_File_Name,
+                  Destination => Upstream_File);
             end;
          end if;
       end Backup_Upstream_Manifest;
@@ -1260,6 +1260,7 @@ package body Alire.Releases is
 
    overriding
    function To_YAML (R : Release) return String is
+      LF : Character renames Latin_1.LF;
 
       function Props_To_YAML
       is new Utils.YAML.To_YAML (Alire.Properties.Property'Class,
@@ -1269,15 +1270,15 @@ package body Alire.Releases is
       Deps : constant String := R.Dependencies.To_YAML;
    begin
       return
-        "crate: " & Utils.YAML.YAML_Stringify (R.Name_Str) & ASCII.LF &
-        "authors: " & Props_To_YAML (R.Author) & ASCII.LF &
-        "maintainers: " & Props_To_YAML (R.Maintainer) & ASCII.LF &
-        "licenses: " & Props_To_YAML (R.License) & ASCII.LF &
-        "websites: " & Props_To_YAML (R.Website) & ASCII.LF &
-        "tags: " & Props_To_YAML (R.Tag) & ASCII.LF &
-        "version: " & Utils.YAML.YAML_Stringify (R.Version_Image) & ASCII.LF &
+        "crate: " & Utils.YAML.YAML_Stringify (R.Name_Str) & LF &
+        "authors: " & Props_To_YAML (R.Author) & LF &
+        "maintainers: " & Props_To_YAML (R.Maintainer) & LF &
+        "licenses: " & Props_To_YAML (R.License) & LF &
+        "websites: " & Props_To_YAML (R.Website) & LF &
+        "tags: " & Props_To_YAML (R.Tag) & LF &
+        "version: " & Utils.YAML.YAML_Stringify (R.Version_Image) & LF &
         "short_description: " & Utils.YAML.YAML_Stringify (R.Description) &
-        ASCII.LF &
+        LF &
 
         "dependencies: " &  (if Deps'Length = 0
                                or else
@@ -1287,12 +1288,12 @@ package body Alire.Releases is
                                 --  dependency or no dependency.
                                 "[" & Deps & "]"
                              else
-                                Deps) & ASCII.LF &
+                                Deps) & LF &
 
         "configuration_variables: " &
-           Props_To_YAML (R.Config_Variables) & ASCII.LF &
+           Props_To_YAML (R.Config_Variables) & LF &
         "configuration_values: " &
-           Props_To_YAML (R.Config_Settings) & ASCII.LF;
+           Props_To_YAML (R.Config_Settings) & LF;
    end To_YAML;
 
    -------------

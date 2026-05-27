@@ -98,6 +98,7 @@ private
       Help        : Ada.Strings.Unbounded.Unbounded_String;
       Check       : CLIC.Config.Check_Import := null;
       Global_Only : Boolean := False;
+      Public      : Boolean := True;
    end record;
 
    --------------

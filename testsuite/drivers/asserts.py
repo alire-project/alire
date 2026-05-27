@@ -29,18 +29,22 @@ def pretty_diff(expected, actual):
     return "\n".join(diff)
 
 
-def assert_eq(expected, actual, label=None):
+def assert_eq(expected, actual, label=None, show_escaped=False):
     if expected != actual:
-        if isinstance(actual, str) and isinstance(expected, str):
-            diff = '\nDiff:\n' + pretty_diff(expected, actual)
-        else:
-            diff = ''
+        def display(value):
+            return repr(value) if show_escaped else str(value)
+
+        raw_diff = pretty_diff(display(expected), display(actual))
+        # Fallback for when differences are in whitespace
+        diff = ('\nDiff:\n' + raw_diff if raw_diff
+                else '\nDiff (repr, showing hidden chars):\n'
+                     + pretty_diff(repr(expected), repr(actual)))
 
         text = ['Unexpected {}:'.format(label or 'output'),
                 'Expecting:',
-                indent(str(expected)),
+                indent(display(expected)),
                 'But got:',
-                indent(str(actual))]
+                indent(display(actual))]
         assert False, '\n'.join(text) + diff
 
 
@@ -139,7 +143,7 @@ def match_deploy_dir(crate : str, path_fragment : str):
 
 def assert_substring(target: str, text: str):
     """
-    Check that a string is contained in another string
+    Check that a target string is contained in a given text
     """
     assert target in text, \
         f"Missing expected string '{target}' in text:\n{text}"

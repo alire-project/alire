@@ -18,25 +18,59 @@ if [[ -n "$alr_version" ]]; then
     fi
 fi
 
-# Disable index auto-update to avoid interference with commands below
-if alr settings --global | grep -q index.auto_update= ; then
-    update_period=$(alr settings --global | grep index.auto_update= | cut -f2 -d=)
-else
-    update_period=unset
-fi
-alr settings --global --set $builtin index.auto_update 0
+# Variables to store completion data
+_alr_commands=""
+_alr_global_switches=""
+_alr_crates=""
+_alr_initialized=false
 
-# Commands/Topics: all line-first words not starting with capital letter, after # COMMANDS
-_alr_commands=$(alr | grep COMMANDS -A 99 | awk '{print $1}' | grep -v '[[:upper:]]' | xargs)
+# Function to initialize completion data
+_alr_initialize_completion() {
+    # Only run once
+    if $_alr_initialized; then
+        return
+    fi
 
-# Long global switches
-_alr_global_switches=$(alr -h | grep -Eo -- '--[[:alnum:]-]+' | xargs)
+    # Detect ANSI availability
+    ansi=$(if tput setaf 1 &>/dev/null; then echo true; else echo false; fi)
 
-# Crate names
-_alr_crates=$(alr search --crates | cut -f1 -d' ')
+    # Save cursor position and notify user that initialization is happening
+    $ansi && echo -n -e "\033[s\033[1;33mInitializing alr completion...\033[0m" >&2
+
+    # Disable index auto-update to avoid interference with commands below
+    if alr settings --global | grep -q index.auto_update= ; then
+        update_period=$(alr settings --global | grep index.auto_update= | cut -f2 -d=)
+    else
+        update_period=unset
+    fi
+    alr settings --global --set $builtin index.auto_update 0
+
+    # Commands/Topics: all line-first words not starting with capital letter, after # COMMANDS
+    _alr_commands=$(alr | grep COMMANDS -A 99 | awk '{print $1}' | grep -v '[[:upper:]]' | xargs)
+
+    # Long global switches
+    _alr_global_switches=$(alr -h | grep -Eo -- '--[[:alnum:]-]+' | xargs)
+
+    # Crate names
+    _alr_crates=$(alr search --crates | cut -f1 -d' ')
+
+    # Re-enable index auto-update
+    if [ "$update_period" != "unset" ]; then
+        alr settings --global --set $builtin index.auto_update $update_period
+    fi
+
+    # Mark as initialized
+    _alr_initialized=true
+
+    # Restore cursor position (clearing the initialization message)
+    $ansi && echo -n -e "\033[u\033[K" >&2
+}
 
 # Command-aware long switches
 function _alr_completion() {
+    # Initialize completion data on first use
+    _alr_initialize_completion
+
     curr=$2
     prev=$3
 
@@ -101,8 +135,3 @@ function _alr_completion() {
 
 # Bind the function that performs context-aware completion
 complete -F _alr_completion alr
-
-# Re-enable index auto-update to avoid interference with commands below
-if [ "$update_period" != "unset" ]; then
-    alr settings --global --set $builtin index.auto_update $update_period
-fi

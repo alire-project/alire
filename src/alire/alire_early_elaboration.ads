@@ -1,5 +1,7 @@
 with Ada.Calendar;
 
+with Alire;
+
 package Alire_Early_Elaboration with Elaborate_Body is
 
    --  This body should be elaborated among the first ones.
@@ -23,5 +25,13 @@ package Alire_Early_Elaboration with Elaborate_Body is
 
    Start : constant Ada.Calendar.Time := Ada.Calendar.Clock;
    --  Out of curiosity
+
+   function Get_Starting_Dir return Alire.Absolute_Path;
+   --  The cwd from which `alr` was called, before any -C/--chdir processing
+
+   function Get_Effective_Dir return Alire.Absolute_Path;
+   --  The effective starting directory: the one set by -C/--chdir, or else
+   --  the one where `alr` was run from. This is used during the latter pro-
+   --  cessing of switches, to verify that we are at the intended location.
 
 end Alire_Early_Elaboration;

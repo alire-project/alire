@@ -160,7 +160,14 @@ package body Alire.User_Pins is
                           Commit : String := "")
       is
          package Adirs renames Ada.Directories;
-         Temp : Directories.Temp_File;
+         use Directories.Operators;
+
+         --  Ensure the temporary pin location is in the same directory as the
+         --  final one, so a plain rename should always succeed.
+         Temp : constant Directories.Temp_File :=
+                  Directories.With_Name
+                    (Adirs.Containing_Directory (Destination)
+                     / Directories.Temp_Name);
       begin
 
          --  Skip checkout of existing commit
@@ -168,6 +175,12 @@ package body Alire.User_Pins is
          if Commit /= "" and then Adirs.Exists (Destination) then
             Trace.Debug ("Skipping checkout of commit pin at " & Destination);
             return;
+         end if;
+
+         --  Create parent for a first pin
+
+         if not Adirs.Exists (Adirs.Containing_Directory (Destination)) then
+            Adirs.Create_Path (Adirs.Containing_Directory (Destination));
          end if;
 
          --  Check out the branch or commit
@@ -193,13 +206,10 @@ package body Alire.User_Pins is
                & " failed, re-run with -vv -d for details");
          end if;
 
-         --  Successful checkout
+         --  Successful checkout, rename into final destination
 
-         if not Adirs.Exists (Adirs.Containing_Directory (Destination)) then
-            Adirs.Create_Path (Adirs.Containing_Directory (Destination));
-         end if;
-         Adirs.Rename (Temp.Filename, Destination);
-         Temp.Keep;
+         Directories.Rename (Temp.Filename,
+                             Destination);
       end Checkout;
 
       ------------

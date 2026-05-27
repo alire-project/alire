@@ -1,0 +1,5 @@
+driver: python-script
+indexes:
+    compiler_only_index: {}
+control:
+    - [SKIP, "skip_network", "Network disabled"]

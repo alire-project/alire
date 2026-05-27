@@ -15,7 +15,8 @@ package Alire.Settings.Builtins is
       Kind => Stn_Absolute_Path,
       Def  => "",
       Help =>
-        "Directory where Alire will store its cache.");
+        "Directory where Alire will store its cache, and its toolchains "
+      & "unless 'toolchain.dir' is also set.");
 
    --  DEPENDENCIES
 
@@ -62,8 +63,8 @@ package Alire.Settings.Builtins is
       Global_Only => True,
       Help        =>
         "Editor command and arguments for editing crate code (alr edit)." &
-        " The executables and arguments are separated by a single space" &
-        " character. The token ${GPR_FILE} is replaced by" &
+        " The executable and arguments are split according to POSIX-style" &
+        " quoting rules. The token ${GPR_FILE} is replaced by" &
         " a path to the project file to open.");
 
    --  INDEX
@@ -113,18 +114,27 @@ package Alire.Settings.Builtins is
       Def  => "alire-index",
       Help => "Name of the index repository.");
 
+   --  INIT
+
+   Init_Github_Files : constant Builtin := New_Builtin
+     (Key  => "init.github_files",
+      Def  => False,
+      Help =>
+        "When True, a README and workflows for GitHub will be created by "
+        & "default during `alr init` (equivalent to `alr init --github`)");
+
    --  ORIGINS
 
    Origins_Archive_Download_Cmd : constant Builtin := New_Builtin
      (Key         => "origins.archive.download_cmd",
       Kind        => Stn_String,
-      Def         => "curl ${URL} -L -s -o ${DEST}",
+      Def         => "curl ${URL} -sSfL -o ${DEST}",
       Global_Only => True,
       Help        =>
         "The command used to download crates which are published as archives."
-      & " The executables and arguments are separated by a single space"
-      & " character. The token ${DEST} is replaced by the destination path,"
-      & " and ${URL} by the URL to download.");
+      & " The executable and arguments are split according to POSIX-style"
+      & " quoting rules. The token ${DEST} is replaced by the destination"
+      & " path, and ${URL} by the URL to download.");
 
    Origins_Git_Trusted_Sites : constant Builtin := New_Builtin
      (Key         => "origins.git.trusted_sites",
@@ -136,7 +146,8 @@ package Alire.Settings.Builtins is
       & " 'alr index --check' and 'alr publish --for-private-index'. If set to"
       & " '...', all origins are trusted. Note that this does not have any"
       & " effect when using 'alr publish' for submissions to the community"
-      & " index (which only permits the default list).");
+      & " index (which only permits the default list, due to vulnerabilities"
+      & " identified in Git's use of SHA1).");
 
    --  SOLVER
 
@@ -150,7 +161,7 @@ package Alire.Settings.Builtins is
    Solver_Timeout : constant Builtin := New_Builtin
      (Key    => "solver.timeout",
       Kind   => Stn_Int,
-      Def    => "5",
+      Def    => "10",
       Help   => "Seconds until solver first timeout (-1 to disable)");
 
    Solver_Grace_Period : constant Builtin := New_Builtin

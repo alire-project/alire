@@ -3,6 +3,7 @@ with "ada_toml";
 with "alire";
 with "alire_common";
 with "ajunitgen";
+with "resources";
 with "semantic_versioning";
 with "simple_logging";
 with "uri_ada";

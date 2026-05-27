@@ -550,7 +550,7 @@ package body Alire.VCSs.Git is
    begin
       for Line of Output loop
          declare
-            Cols : constant Vector := Split (Line, ASCII.HT, Trim => True);
+            Cols : constant Vector := Split (Line, Latin_1.HT, Trim => True);
          begin
             if Cols (1) = Remote then
                return AAA.Strings.Split (Cols (2), ' ').First_Element;
@@ -587,7 +587,7 @@ package body Alire.VCSs.Git is
                            Ref  : String := "HEAD") return String
    is
       Output : constant AAA.Strings.Vector :=
-                 Run_Git_And_Capture (Empty_Vector & "ls-remote" & From);
+        Run_Git_And_Capture (Empty_Vector & "ls-remote" & Repo_URL (From));
    begin
       --  Sample output from git (space is tab):
       --  95818710c1a2bea0cbfa617a67972fe984761227        HEAD
@@ -601,8 +601,8 @@ package body Alire.VCSs.Git is
       --  Prepare Ref to make it less ambiguous
 
       if Ref in "HEAD" | "" then
-         return This.Remote_Commit (From, ASCII.HT & "HEAD");
-      elsif Ref (Ref'First) not in '/' | ASCII.HT then
+         return This.Remote_Commit (From, Latin_1.HT & "HEAD");
+      elsif Ref (Ref'First) not in '/' | Latin_1.HT then
          return This.Remote_Commit (From, '/' & Ref);
       end if;
 
@@ -615,7 +615,7 @@ package body Alire.VCSs.Git is
          for Line of Output loop
             if Has_Suffix (Line, Ref) then
                if Result = Not_Found then
-                  Result := Head (Line, ASCII.HT);
+                  Result := Head (Line, Latin_1.HT);
                else
                   Raise_Checked_Error ("Reference is ambiguous: "
                                        & TTY.Emph (Ref));

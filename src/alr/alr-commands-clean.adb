@@ -1,10 +1,13 @@
 with Ada.Directories;
 
-with Alire.Settings.Edit;
+with Alire.Builds;
 with Alire.Directories;
 with Alire.Paths;
 with Alire.Platforms.Current;
+with Alire.Settings.Edit;
 with Alire.Spawn;
+
+with Den.Filesystem;
 
 package body Alr.Commands.Clean is
 
@@ -118,12 +121,24 @@ package body Alr.Commands.Clean is
                       Args :        AAA.Strings.Vector)
    is
       use AAA.Strings;
+      use Alire.Directories.Operators;
    begin
       Cmd.Forbids_Structured_Output;
 
       if not (Cmd.Cache or else Cmd.Temp) then
          Cmd.Requires_Workspace;
          Cmd.Root.Export_Build_Environment;
+
+         --  We also want to leave the workspace ready to edit, so generate the
+         --  configuration that would be used by an `alr build`.
+
+         if not Cmd.Root.Build
+           (AAA.Strings.Empty_Vector,
+            Stop_After => Alire.Builds.Generation)
+         then
+            Trace.Warning
+              ("Failed to generate build configuration, cleaning anyway...");
+         end if;
 
          Trace.Detail ("Cleaning project and dependencies...");
 
@@ -138,6 +153,16 @@ package body Alr.Commands.Clean is
                                    "-P" & Gpr_File &
                                    Args,
                                  Understands_Verbose => True);
+
+            --  To preserve varying behavior of gprclean across versions, we
+            --  delete empty dirs within an `obj` folder in the project file
+            --  dir.
+            declare
+               Target : constant Alire.Absolute_Path :=
+                  Den.Parent (Den.Scrub (Cmd.Root.Path / Gpr_File)) / "obj";
+            begin
+               Den.Filesystem.Prune_Tree (Target, Delete_Root => False);
+            end;
          end loop;
 
          return;

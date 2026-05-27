@@ -1,0 +1,34 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      # Remove to cancel all jobs upon the first failure
+
+      matrix:
+        runner:
+          # These are the most recent configurations supported by Alire.
+          # Remove or add runners as needed, see available runners at
+          # https://docs.github.com/en/actions/how-tos/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+          - ubuntu-latest     # Linux x86_64
+          - ubuntu-24.04-arm  # Linux ARM64
+          - macos-15-intel    # macOS x86_64
+          - macos-latest      # macOS ARM64
+          - windows-latest    # Windows x86_64
+
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Alire
+        uses: alire-project/setup-alire@v5
+
+      - name: Build and run tests
+        run: alr test

@@ -1,11 +1,11 @@
 with Ada.Containers;
 
 with Alire.OS_Lib;
+with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
 
 with Alr.Commands.Build;
 with Alr.Files;
-with Alr.OS_Lib;
 with Alire.Utils;
 
 with GNAT.OS_Lib;
@@ -71,7 +71,7 @@ package body Alr.Commands.Run is
          if Declared.Is_Empty then
             Put_Line
               ("Crate " & Name &
-                 " does not explicitly declares to build any executable");
+                 " does not explicitly declare to build any executable");
 
             if Candidates.Is_Empty then
                Put_Line ("No default executable has been automatically " &
@@ -220,7 +220,9 @@ package body Alr.Commands.Run is
             else
                Trace.Detail ("Launching " & Target_Exes.First_Element);
                Trace.Detail ("...");
-               OS_Lib.Spawn_Raw (Target_Exes.First_Element, Cmd.Args.all);
+               Alire.OS_Lib.Subprocess.Spawn_Raw
+                 (Target_Exes.First_Element,
+                  Alire.OS_Lib.Subprocess.Split_Arguments (Cmd.Args.all));
             end if;
          end;
       end;
@@ -258,7 +260,8 @@ package body Alr.Commands.Run is
         (Config,
          Cmd.Args'Access,
          "-a:", "--args=",
-         "Arguments to pass through (quote them if more than one)",
+         "A single string of arguments to pass through to the executable;"
+         & " split according to POSIX-style quoting rules",
          Argument => "ARGS");
 
       Define_Switch

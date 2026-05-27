@@ -16,10 +16,10 @@
 .*sw?
 
 /alire/
-bin/
+/bin/
 /config/
-lib/
-obj/
+/lib/
+/obj/
 out/
 stress/*/
 /testsuite/out/

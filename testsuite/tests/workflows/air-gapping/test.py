@@ -29,10 +29,11 @@ for tool in TOOLS:
     mock_commands[tool].enable()
 # Changes to `PATH` are overridden in the case of MSYS2 tools, so we also
 # redirect `msys2.install_dir` to an empty directory.
-msys2_dir = run_alr("settings", "--global", "msys2.install_dir").out.strip()
-msys2_dir = msys2_dir.removeprefix("msys2.install_dir=")
-empty_dir = os.path.join(os.getcwd(), "empty-dir")
-alr_settings_set("msys2.install_dir", empty_dir)
+if on_windows():
+    msys2_dir = run_alr("settings", "--global", "msys2.install_dir").out.strip()
+    msys2_dir = msys2_dir.removeprefix("msys2.install_dir=")
+    empty_dir = os.path.join(os.getcwd(), "empty-dir")
+    alr_settings_set("msys2.install_dir", empty_dir)
 
 # Run `alr get hello`. This will fail because tar is unavailable.
 p = run_alr("get", "hello", quiet=False, complain_on_error=False)
@@ -42,7 +43,7 @@ assert_match(".*Deployment of path .* to .* failed", p.out)
 # Disable tar mocking. If tar is provided by msys2, we need to make it available
 # explicitly because we have redirected `msys2.install_dir`.
 mock_commands["tar"].disable()
-msys2_tar = os.path.join(msys2_dir, "usr", "bin", "tar.exe")
+msys2_tar = os.path.join(msys2_dir, "usr", "bin", "tar.exe") if on_windows() else ""
 if on_windows() and os.path.isfile(msys2_tar):
     unmocked_tar = MockCommand(
         "tar",

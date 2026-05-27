@@ -84,26 +84,51 @@ def on_windows():
     return platform.system() == "Windows"
 
 
+def distributions_from_alire():
+    """Parse known distros from alire-platforms.ads Distributions type."""
+    ads = os.path.join(
+        os.path.dirname(__file__),
+        "..", "..", "src", "alire", "alire-platforms.ads")
+
+    with open(ads) as f:
+        src = f.read()
+
+    # Locate the Distributions enumeration type
+    m = re.search(r'type Distributions is\s*\((.+?)\);', src, re.DOTALL)
+    if not m:
+        raise RuntimeError("Could not parse Distributions from " + ads)
+
+    # Strip Ada inline comments, then collect all identifiers
+    defined = re.sub(r'--[^\n]*', '', m.group(1))
+    entries = re.findall(r'\b([A-Za-z]\w*)\b', defined)
+    skip = {"Distribution_Unknown", "Homebrew", "Macports"}
+
+    return [e.lower() for e in entries if e not in skip]
+
+
 def distribution():
 
     if 'ALIRE_TESTSUITE_DISABLE_DISTRO' in os.environ:
-        return 'DISTRO_UNKNOWN'
+        return 'DISTRIBUTION_UNKNOWN'
 
-    known_distro = ["debian", "ubuntu", "msys2", "arch", "rhel", "centos", "fedora"]
+    known_distro = distributions_from_alire()
 
     if os.path.exists("/etc/os-release"):
 
+        # Check 'id' first (exact distro), then 'id_like' (space-separated
+        # ancestor list) until a known distro token is found.
         for key in ['id', 'id_like']:
             with open("/etc/os-release") as f:
                 for line in f:
-                    split = line.strip().split('=')
+                    split = line.lower().strip().split('=')
                     if len(split) == 2:
-                        val = split[1].lower().strip('"')
-                        print("val = '%s'" % val)
-                        if split[0].lower() == key and val in known_distro:
-                            return val
+                        val = split[1].strip('"' + "'")
+                        if split[0] == key:
+                            for token in val.split():
+                                if token in known_distro:
+                                    return token
 
-        return 'DISTRO_UNKNOWN'
+        return 'DISTRIBUTION_UNKNOWN'
 
     elif on_macos():
         if shutil.which('brew'):
@@ -111,12 +136,12 @@ def distribution():
         elif shutil.which('port'):
             return 'MACPORTS'
         else:
-            return 'DISTRO_UNKNOWN'
+            return 'DISTRIBUTION_UNKNOWN'
 
     elif on_windows():
         return 'MSYS2'
     else:
-        return 'DISTRO_UNKNOWN'
+        return 'DISTRIBUTION_UNKNOWN'
 
 
 def path_separator():
@@ -279,7 +304,7 @@ def md5sum(file):
     return file_hash.hexdigest()
 
 
-def append_to_file(filename : str, lines : []) -> None:
+def append_to_file(filename : Union[str, os.PathLike], lines : list[str]) -> None:
     """
     Append the given lines to a file
     """
@@ -287,7 +312,7 @@ def append_to_file(filename : str, lines : []) -> None:
         file.write("\n".join(lines))
 
 
-def prepend_to_file(filename : str, lines : []) -> None:
+def prepend_to_file(filename : Union[str, os.PathLike], lines : list[str]) -> None:
     """
     Prepend the given lines to a file
     """
@@ -296,7 +321,7 @@ def prepend_to_file(filename : str, lines : []) -> None:
         file.write("\n".join(lines) + "\n" + old_contents)
 
 
-def replace_in_file(filename : str, old : str, new : str):
+def replace_in_file(filename : Union[str, os.PathLike], old : str, new : str):
     """
     Replace all occurrences of a string in a file
     """

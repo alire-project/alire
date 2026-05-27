@@ -18,7 +18,6 @@ package body Alr.Commands.Exec is
       use GNAT.Strings;
       use Ada.Containers;
       use AAA.Strings;
-
    begin
       Cmd.Forbids_Structured_Output;
 

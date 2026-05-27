@@ -6,6 +6,79 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Updated SPDX license expression support
+
+PR [#2096](https://github.com/alire-project/alire/pull/2096)
+
+The manifest's `licenses` field now conforms to
+[SPDX v3.0.0 license expression syntax](https://github.com/spdx/spdx-spec/blob/v3.0/docs/annexes/SPDX-license-expressions.md),
+with the exception that license and exception identifiers must still match their
+canonical forms case-sensitively. In particular, it now supports `LicenseRef-*`,
+`AdditionRef-*`, and `DocumentRef-*` user defined license/addition references;
+these are now the preferred form for custom licenses, though the `custom-*`
+format is still permitted for backward compatibility.
+
+The `licenses` field now supports identifiers from
+[version 3.24.0 of the SPDX License List](https://github.com/spdx/license-list-XML/releases/tag/v3.24.0).
+
+During `alr init`, if a `LicenseRef-` prefix is necessary and sufficient to make
+a user-specified `licenses` string valid, `alr` will now suggest the corrected
+form.
+
+### Support for quoting in custom editors, quoting changes for `alr run`
+
+PR [#1993](https://github.com/alire-project/alire/pull/1993)
+
+The `alr edit --set-editor` command now supports double quotes, single quotes,
+and backslash escaping within `editor.cmd` using shell quoting rules.
+
+```shell
+$ alr config --set --global editor.cmd "command with 'quoted arguments'"
+```
+
+`${CRATE_ROOT}` and `${GPR_FILE}` are still replaced directly
+
+Arguments passed using `alr run -a arguments` now use the same quoting format.
+
+```shell
+$ alr run -a "list of 'quoted arguments'"
+```
+
+The `origins.archive.download_cmd` setting also uses this quoting format.
+
+### Longer default solver timeout
+
+The solver timeout has been increased from 5 seconds to 10 seconds by default.
+This should avoid hitting it on complex dependencies on slower machines.
+
+### Replace `--no-color` with a new `--color[=WHEN]` switch
+
+The new global switch allows specifying `--color=always`, for instance when
+one wants to keep color output in a redirection. The default value is `auto`,
+which has the same behavior as before without the `--no-color` switch.
+
+Disabling colors is done with the `never` value. It also follows the
+`NO_COLOR` environment variable, like before, but the `always` value has
+priority.
+
+The `--no-color` switch will still work, but is deprecated and will be removed
+in the next version.
+
+### Gentoo support
+
+Add Gentoo's Portage support via sudo, if the base package contains a section
+for gentoo, see libsdl2 for example, emerge will be called if the package is
+not installed.
+
+### New `--github` switch for `alr init` command
+
+PR [#1972](https://github.com/alire-project/alire/pull/1972)
+
+The `alr init` command now supports a `--github` switch to automatically
+generate GitHub files (README.md, workflows) for new crates. This can be
+controlled with `--github[=true/false]` or by setting the new built-in
+`init.github_files` setting.
+
 ### Style checks disabled by default in all build profiles
 
 PR [#1919](https://github.com/alire-project/alire/pull/1919)
@@ -64,6 +137,23 @@ with `alr init` (this can be prevented with the `--no-test` flag).
 For backwards compatibility, running `alr test` without a `[test]` section in
 the manifest will still run local test actions, but they should be considered
 deprecated. The remote testing capabilities of `alr test` have been removed.
+
+### New self-update helper
+
+The `alr self-update` command will help users update the Alire binary more
+easily. It takes several optional command line flags:
+
+- `--location=<path/to/alr>` to specify where to install the new binary
+- `--release=<version>` to download and install a specific version (provided
+  that Alire builds binaries for this version on your platform)
+- `--nightly` to install a pre-release version of Alire.
+
+  **Disclaimer**: nightly versions may have incomplete features, unresolved
+  bugs and may delete features or break compatibility without warning.
+
+On Windows, updating the binary will launch a separate console window to
+perform the update. This is expected behavior, needed because Windows does not
+allow us to overwrite a running binary easily.
 
 ## Release `2.1`
 
@@ -1178,3 +1268,15 @@ $ alr with indexed_crate
 $ alr pin indexed_crate --use /path/to/gpr/containing/folder
 # To pin a previously added dependency.
 ```
+
+### Crate names cannot be reserved keywords anymore
+
+PR [#2051](https://github.com/alire-project/alire/pull/2051)
+
+It is no longer possible to create a Crate with a reserved keyword as its name.
+The reserved keywords are the same as Ada2022 and the ones defined by GPR.
+See the [GPR config](https://docs.adacore.com/gprbuild-docs/pdf/gprbuild_ug.pdf)
+definition in 2.9.1 and
+[Ada2022](https://www.adaic.org/resources/add_content/standards/22rm/html/RM-2-9.html)
+definition.
+

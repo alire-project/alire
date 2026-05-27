@@ -159,11 +159,10 @@ package body Alire.Settings is
                                                   Def         => +Def,
                                                   Help        => +Help,
                                                   Global_Only => Global_Only,
-                                                  Check       => Check)
+                                                  Check       => Check,
+                                                  Public      => Public)
       do
-         if Public then
-            All_Builtins.Insert (Key, Result);
-         end if;
+         All_Builtins.Insert (Key, Result);
       end return;
    end New_Builtin;
 

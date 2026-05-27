@@ -21,7 +21,7 @@ package body Alire.Utils.User_Input is
          return Query
            (Question => TTY.Error (if TTY.Color_Enabled then U ("⚠") else "!")
                         & " Given path does not exist: " & TTY.URL (Dir)
-                        & ASCII.LF & "Do you want to continue anyway?",
+                        & Latin_1.LF & "Do you want to continue anyway?",
             Valid    => (Yes | No => True, others => False),
             Default  => (if Force then Yes else No))
            = Yes;
@@ -37,7 +37,8 @@ package body Alire.Utils.User_Input is
    function Confirm_Solution_Changes
      (Changes        : Alire.Solutions.Diffs.Diff;
       Changed_Only   : Boolean            := not Alire.Detailed;
-      Level          : Alire.Trace.Levels := Info)
+      Level          : Alire.Trace.Levels := Info;
+      Timed_Out      : Boolean            := False)
       return Boolean
    is
       package UI renames CLIC.User_Input;
@@ -46,7 +47,7 @@ package body Alire.Utils.User_Input is
 
       if Changes.Contains_Changes then
          Trace.Log ("Changes to dependency solution:", Level);
-         Changes.Print (Changed_Only => Changed_Only);
+         Changes.Print (Changed_Only => Changed_Only, Timed_Out => Timed_Out);
 
          Trace.Log ("", Level);
 

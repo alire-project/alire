@@ -5,8 +5,10 @@ with Alire.Errors;
 with Alire.OS_Lib;
 with Alire.Publish;
 with Alire.URI;
+with Alire.Utils.Regex;
 with Alire.Utils.TTY;
 with Alire.Version;
+with Alire.VCSs.Git;
 
 with GNATCOLL.JSON.Utility;
 with GNATCOLL.Strings;
@@ -23,6 +25,8 @@ package body Alire.GitHub is
 
    Repos       : constant String := "repos";
    Pulls       : constant String := "pulls";
+   Releases    : constant String := "releases";
+   Latest      : constant String := "latest";
 
    -------------------
    -- Community_API --
@@ -32,6 +36,13 @@ package body Alire.GitHub is
    is (Repos
        / Index.Community_Organization
        / Index.Community_Repo_Name);
+
+   --------------------
+   -- Alire_Repo_API --
+   --------------------
+
+   function Alire_Repo_API return String
+   is (Repos / Index.Community_Organization / "alire");
 
    -----------------
    -- JSON_Escape --
@@ -109,9 +120,9 @@ package body Alire.GitHub is
          Trace.Debug
            ("GitHub API response: " & This.Status_Line);
          Trace.Debug
-           ("Headers: " & This.Raw_Headers.Flatten (ASCII.LF));
+           ("Headers: " & This.Raw_Headers.Flatten (Latin_1.LF));
          Trace.Debug
-           ("Data: " & This.Content.Flatten (ASCII.LF));
+           ("Data: " & This.Content.Flatten (Latin_1.LF));
 
          if not This.Succeeded then
 
@@ -166,7 +177,7 @@ package body Alire.GitHub is
             .Wrap (Error)
             .Wrap ("Status line: " & Response.Status_Line)
             .Wrap ("Response body:")
-            .Wrap (Response.Content.Flatten (ASCII.LF))
+            .Wrap (Response.Content.Flatten (Latin_1.LF))
             .Get);
       end if;
    end API_Call;
@@ -444,12 +455,85 @@ package body Alire.GitHub is
             .Wrap ("Error updating PR using GitHub GraphQL API")
             .Wrap ("Status line: " & Response.Status_Line)
             .Wrap ("Response body:")
-            .Wrap (Response.Content.Flatten (ASCII.LF))
+            .Wrap (Response.Content.Flatten (Latin_1.LF))
             .Get);
       end if;
 
       --  TODO: do we need to additionally request a review, or simply by
       --  removing the draft status we'll get a notification?
    end Request_Review;
+
+   ------------------------------
+   -- Get_Latest_Alire_Release --
+   ------------------------------
+
+   function Get_Latest_Alire_Release return String is
+      Response : constant GNATCOLL.JSON.JSON_Value :=
+        API_Call (Alire_Repo_API / Releases / Latest);
+      --  public endpoint
+   begin
+      return Response.Get ("tag_name");
+   end Get_Latest_Alire_Release;
+
+   --------------------------------
+   -- Check_Alire_Binary_Release --
+   --------------------------------
+
+   function Check_Alire_Binary_Release (Tag, Archive : String) return Outcome
+   is
+      Response : constant Minirest.Response :=
+        API_Call (Alire_Repo_API / Releases / "tags" / Tag);
+   begin
+      if Response.Succeeded then
+         declare
+            use GNATCOLL.JSON;
+
+            Data   : constant JSON_Value :=
+              GNATCOLL.JSON.Read (Response.Content.Flatten (""));
+            Assets : constant JSON_Array := Data.Get ("assets");
+            Len    : constant Natural := Length (Assets);
+         begin
+            if (for some I in 1 .. Len
+                => Get (Assets, I).Get ("name") = Archive)
+            then
+               return Outcome_Success;
+            else
+               return
+                 Outcome_Failure
+                   ("could not find artifact '"
+                    & Archive
+                    & "' in release "
+                    & Tag,
+                    Report => False);
+            end if;
+         end;
+      else
+         return
+           Outcome_Failure ("could not find release " & Tag, Report => False);
+      end if;
+   end Check_Alire_Binary_Release;
+
+   -------------------------
+   -- Is_Possibly_A_Token --
+   -------------------------
+
+   function Is_Possibly_A_Token (S : String) return Boolean
+   is
+   begin
+      --  https://docs.github.com/en/authentication/
+      --  keeping-your-account-and-data-secure/about-authentication-to-github
+      --  ?utm_source=chatgpt.com#githubs-token-formats
+
+      --  Classic PAT, just a 40 hexa string
+      if S in VCSs.Git.Git_Commit then
+         return True;
+      end if;
+
+      --  Newer PATs that start with gh?_ or github_pat_. Probably not all of
+      --  those can work, this would require further digging.
+      return Utils.Regex.Fully_Matches
+        (Regex => "(github_pat|gh[pours])_[a-f0-9]+",
+         Text  => S);
+   end Is_Possibly_A_Token;
 
 end Alire.GitHub;

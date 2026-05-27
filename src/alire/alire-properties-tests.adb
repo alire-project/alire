@@ -139,9 +139,16 @@ package body Alire.Properties.Tests is
 
             if Local.Pop (TOML_Keys.Test_Id, Val) then
                if Val.Kind /= TOML_String
-                  or else Id_Set.Contains (Val.As_String)
+                 or else Id_Set.Contains (Val.As_String)
                then
                   Local.Checked_Error ("id must be a non-empty unique string");
+               end if;
+               if (for some C of Val.As_String =>
+                     C not in 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '-')
+               then
+                  Local.Checked_Error
+                    ("id must only have characters in range 'a'..'z' |"
+                     & " 'A'..'Z' | '0'..'9' | '_' | '-'.");
                end if;
                Id_Set.Insert (Val.As_String);
                Res.Id := Val.As_Unbounded_String;

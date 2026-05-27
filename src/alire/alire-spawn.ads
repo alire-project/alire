@@ -22,7 +22,7 @@ package Alire.Spawn is
    --  Launches a command from a string, according to the conventions used by
    --  commands configurable with `alr settings`.
    --
-   --  Parses a space-separated string and performs ${} pattern replacements
+   --  Parses a shell-style quoted string and performs ${} pattern replacements
    --  (on arguments only).
    --
    --  Exec_Check is called with the executable name between parsing Cmd into
@@ -48,5 +48,8 @@ package Alire.Spawn is
    --             --mode=usage -P Project_File --prefix=Prefix -- Extra_Args \
    --             --install-name=Release.Milestone.Image \
    --             --link-lib-dir=Prefix/bin
+
+   function Recreate_Global_Options return AAA.Strings.Vector;
+   --  Recreate the global options used in this alr invocation (-v, -n, ...)
 
 end Alire.Spawn;

@@ -19,7 +19,7 @@ end Xxx_Tests.Assertions_Enabled;
 """)
 
 p = run_alr("test", complain_on_error=False)
-assert_match(".*\[ FAIL \] assertions_enabled.*", p.out)
+assert_match(".*\[ FAIL \] *\d+[smh]\d+ assertions_enabled.*", p.out)
 
 # Check with plain assertion (verify that assertions are evaluated)
 
@@ -31,6 +31,6 @@ end Xxx_Tests.Assertions_Enabled;
 """)
 
 p = run_alr("test", complain_on_error=False)
-assert_match(".*\[ FAIL \] assertions_enabled.*", p.out)
+assert_match(".*\[ FAIL \] *\d+[smh]\d+ assertions_enabled.*", p.out)
 
 print('SUCCESS')

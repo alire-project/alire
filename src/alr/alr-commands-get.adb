@@ -36,14 +36,15 @@ package body Alr.Commands.Get is
       --  resolve the release as part of the dependencies at this point so if
       --  the latest release is not solvable we get another one that is. We
       --  should warn in that case that newer releases exist.
-      Rel      : constant Alire.Index.Release :=
-                   Query.Find (Name, Versions, Query_Policy);
+      Rel              : constant Alire.Index.Release :=
+                           Query.Find (Name, Versions, Query_Policy);
 
-      Diff     : Alire.Solutions.Diffs.Diff;
+      Diff             : Alire.Solutions.Diffs.Diff;
       --  Used to present dependencies to the user
 
-      Build_OK : Boolean := False;
-      Solution : Alire.Solutions.Solution;
+      Build_OK         : Boolean := False;
+      Solver_Timed_out : Boolean := False;
+      Solution         : Alire.Solutions.Solution;
 
       use all type Alire.Origins.Kinds;
    begin
@@ -94,19 +95,28 @@ package body Alr.Commands.Get is
       if not Cmd.Only then
          declare
             use CLIC.User_Input;
+            Solver_Result : constant Query.Result :=
+              Query.Resolve
+                (Rel.Dependencies (Platform.Properties),
+                 Platform.Properties,
+                 Alire.Solutions.Empty_Valid_Solution);
          begin
-            Solution := Query.Resolve
-              (Rel.Dependencies (Platform.Properties),
-               Platform.Properties,
-               Alire.Solutions.Empty_Valid_Solution).Solution;
+            Solver_Timed_out := Solver_Result.Timed_Out;
+            Solution := Solver_Result.Solution;
             Diff := Alire.Solutions.Empty_Valid_Solution.Changes (Solution);
 
             if not Solution.Is_Complete then
                Diff.Print (Changed_Only => False,
-                           Level        => Warning);
+                           Level        => Warning,
+                           Timed_Out    => Solver_Timed_out);
                Trace.Warning ("");
-               Trace.Warning ("Could not find a complete solution for "
-                              & Rel.Milestone.TTY_Image);
+               if Solver_Timed_out then
+                  Trace.Warning ("Timed out before finding a complete "
+                                 & "solution for " & Rel.Milestone.TTY_Image);
+               else
+                  Trace.Warning ("Could not find a complete solution for "
+                                 & Rel.Milestone.TTY_Image);
+               end if;
 
                if CLIC.User_Input.Query
                  (Question =>
@@ -237,7 +247,7 @@ package body Alr.Commands.Get is
 
       if Diff.Contains_Changes then
          Trace.Info ("Dependencies were solved as follows:");
-         Diff.Print (Changed_Only => False);
+         Diff.Print (Changed_Only => False, Timed_Out => Solver_Timed_out);
       else
          Trace.Info ("There are no dependencies.");
       end if;

@@ -1,4 +1,5 @@
 with Alire.Origins.Deployers.System.Apt;
+with Alire.Origins.Deployers.System.Portage;
 with Alire.Origins.Deployers.System.Homebrew;
 with Alire.Origins.Deployers.System.Macports;
 with Alire.Origins.Deployers.System.Pacman;
@@ -11,6 +12,7 @@ with Alire.Toolchains;
 with CLIC.User_Input;
 
 with GNAT.IO;
+--  with System;
 
 package body Alire.Origins.Deployers.System is
 
@@ -118,6 +120,9 @@ package body Alire.Origins.Deployers.System is
          when Platforms.Macports =>
             System.Macports.Deployer'(Deployers.Deployer'(Base => From)
                                       with others => <>),
+         when Platforms.Portage =>
+            System.Portage.Deployer'(Deployers.Deployer'(Base => From)
+                                        with others => <>),
          when Platforms.Packager_Unknown =>
             System.Unknown.Deployer'(Deployers.Deployer'(Base => From)
                                      with others => <>)

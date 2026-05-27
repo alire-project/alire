@@ -8,6 +8,10 @@ package Alire.Utils with Preelaborate is
    subtype Hexadecimal_Character is Character with
      Static_Predicate => Hexadecimal_Character in '0' .. '9' | 'a' .. 'f';
 
+   subtype Hexadecimal_String is String with
+     Predicate => (for all Char of Hexadecimal_String =>
+                     Char in Hexadecimal_Character);
+
    function Command_Line_Contains (Prefix : String) return Boolean;
    --  Say if any of the command-line arguments begins with Prefix. This is
    --  needed for string arguments, that even when not supplied are initialized
@@ -105,9 +109,48 @@ package Alire.Utils with Preelaborate is
    --         Alire.Utils.Finalize_Exception (E);
    --   end Finalize;
 
+   function Has_Duplicates
+     (V         : AAA.Strings.Vector;
+      Transform : access function (S : String) return String := null)
+      return Boolean;
+
+   function Strip_Prefix (Src, Prefix : String) return String;
+   --  Return the string Src without the given Prefix if it exists.
+   --  Only removes the prefix once.
+
+   function Strip_Suffix (Src, Suffix : String) return String;
+   --  Return the string Src without the given Suffix if it exists.
+   --  Only removes the suffix once.
+
+   function Left_Pad
+     (Src : String; Length : Natural; Char : Character := ' ') return String;
+   --  Pad the string Src to the left with Char so that the resulting string
+   --  is at least Length characters.
+   --  Unlike Ada.Strings.Fixed.Tail, it does not truncate.
+
+   function Right_Pad
+     (Src : String; Length : Natural; Char : Character := ' ') return String;
+   --  Pad the string Src to the right with Char so that the resulting string
+   --  is at least Length characters.
+   --  Unlike Ada.Strings.Fixed.Head, it does not truncate.
+
+   function Format_Duration (D : Duration) return String;
+   --  Format (small) durations in a human readable way:
+   --  under one minute: <seconds>s<milliseconds>
+   --  under one hour:   <minutes>m<seconds>
+   --  above:            <hours>h<minutes>
+
 private
 
    function Quote (S : String) return String
    is ("""" & S & """");
+
+   function Left_Pad
+     (Src : String; Length : Natural; Char : Character := ' ') return String
+   is ((1 .. Length - Natural'Min (Src'Length, Length) => Char) & Src);
+
+   function Right_Pad
+     (Src : String; Length : Natural; Char : Character := ' ') return String
+   is (Src & (1 .. Length - Natural'Min (Src'Length, Length) => Char));
 
 end Alire.Utils;

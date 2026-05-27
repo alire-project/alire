@@ -10,13 +10,16 @@ trap 'echo "Interrupted" >&2 ; exit 1' INT
 
 set -o errexit
 set -o nounset
+shopt -s expand_aliases
 
 export PATH+=:${PWD}/bin
 
 # Import reusable bits
 pushd "$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-    . ../dev/functions.sh
+    source ../dev/functions.sh
 popd
+
+echo "Running as user: $(whoami) (uid: $(id -u), gid: $(id -g))"
 
 # Mark location safe to assuage git if necessary (happens under docker as we
 # run with a different user).

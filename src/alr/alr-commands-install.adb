@@ -126,7 +126,8 @@ package body Alr.Commands.Install is
        .New_Line
        .Append ("You can use the --force global option to reinstall "
          & "already installed releases.")
-      );
+       .New_Line
+       .Append (Crate_Version_Sets));
 
    --------------------
    -- Setup_Switches --

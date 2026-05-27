@@ -20,21 +20,22 @@ ajunitgen = "^1.0.1"
 ansiada = "^1.1"
 c_strings = "^1.0"
 clic = "~0.3"
-den = "~0.1"
+den = "~0.2"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
 gnatcoll = "^21"
 lml = "~0.2"
 minirest = "~0.3"
 optional = "~0.1.1"
+resources = "~0.1"
 semantic_versioning = "^3.0"
 simple_logging = "^2.0"
 si_units = "~0.2.2"
+spdx = "^26"
 stopwatch = "~0.1"
 templates_parser = "^24" # Latests pre-Ada 2022 version
 toml_slicer = "~0.1"
 uri_ada = "^2.0"
-spdx = "~0.2"
 
 [gpr-set-externals]
 CLIC_LIBRARY_TYPE="static"  # Has problems with "static-pic" for some reason
@@ -58,8 +59,8 @@ url    = "https://github.com/mosteo/aaa"
 commit = "73d99ae1ff2f5210dc41c2ea7afebe600f9e9916"
 
 [pins.ada_toml]
-url    = "https://github.com/pmderodat/ada-toml"
-commit = "e760110ad2b5b776a44dace31b8421532e429fbb"
+url    = "https://github.com/mosteo/ada-toml"
+commit = "33eaab64b9d531e240c3f525ad80a1f3eb8b9633"
 
 [pins.ansiada]
 url    = "https://github.com/mosteo/ansi-ada"
@@ -71,11 +72,11 @@ commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 
 [pins.clic]
 url    = "https://github.com/alire-project/clic"
-commit = "56bbdc008e16996b6f76e443fd0165a240de1b13"
+commit = "7f3af9f2d6bf0f3e41dc0ab61907364c6acc5b1c"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"
-commit = "7732f9247f7436cd264a10a7e2a8a16c47a0fb57"
+commit = "32225955994267799495262f7cac479b6cd22fd3"
 
 [pins.dirty_booleans]
 url    = "https://github.com/mosteo/dirty_booleans"
@@ -101,13 +102,17 @@ commit = "9a9c660f9c6f27f5ef75417e7fac7061dff14d78"
 url    = "https://github.com/mosteo/optional.git"
 commit = "7b8132a09a6c3c467409ab15d34fac605b1e5711"
 
+[pins.resources]
+url    = "https://github.com/alire-project/resources"
+commit = "d3a83f35d7c0b586119fc19a568289cf21c87aa0"
+
 [pins.semantic_versioning]
 url    = "https://github.com/alire-project/semantic_versioning"
 commit = "4861e32bd8a2f0df038d3ecc9a72b6381e7a34cc"
 
 [pins.simple_logging]
 url    = "https://github.com/alire-project/simple_logging"
-commit = "3505dc645f3eef6799a486aae223d37e88cfc4d5"
+commit = "f45bf378588dc1d0479cc24eb0eb41dc99f69cb4"
 
 [pins.si_units]
 url    = "https://github.com/mosteo/si_units"

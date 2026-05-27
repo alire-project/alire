@@ -1,4 +1,3 @@
-
 with Alire.Settings.Edit;
 with Alire.Containers;
 with Alire.Dependencies;
@@ -8,6 +7,7 @@ with Alire.Origins.Deployers;
 with Alire.Releases.Containers;
 with Alire.Solver;
 with Alire.Toolchains;
+with Alire.Utils;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
 with Alire.Warnings;
@@ -63,6 +63,7 @@ package body Alr.Commands.Toolchain is
    is
       use Alire;
       use all type Origins.Kinds;
+      LF : Character renames Latin_1.LF;
 
       Dep : constant Dependencies.Dependency :=
               Dependencies.From_String (Request);
@@ -215,7 +216,7 @@ package body Alr.Commands.Toolchain is
               ("Currently configured " & Utils.TTY.Name (The_Other (Dep.Crate))
                & " has origin " & TTY.Emph (Origin_Kind'Image)
                & " but newly selected " & Utils.TTY.Name (Dep.Crate)
-               & " has origin " & TTY.Emph (Rel.Origin.Kind'Image) & ASCII.LF
+               & " has origin " & TTY.Emph (Rel.Origin.Kind'Image) & LF
                & "Mixing tool origins may result in a broken toolchain");
          end if;
 
@@ -351,7 +352,6 @@ package body Alr.Commands.Toolchain is
       --  We do not want tools that are later in the command-line to be taken
       --  into account prematurely for compatibility of origins. We store here
       --  crates still to be dealt with.
-
    begin
 
       --  Validation
@@ -365,6 +365,19 @@ package body Alr.Commands.Toolchain is
          Reportaise_Wrong_Arguments
            ("--local requires --select or --disable-assistant");
       end if;
+
+      declare
+         function As_Crate (S : String) return String is
+            (Alire.Dependencies.From_String (S).Crate.As_String);
+      begin
+         if Cmd.S_Select
+           and then
+            Alire.Utils.Has_Duplicates (Args, As_Crate'Access)
+         then
+            Reportaise_Wrong_Arguments
+              ("Release arguments contain duplicated crates");
+         end if;
+      end;
 
       --  Dispatch to subcommands
 

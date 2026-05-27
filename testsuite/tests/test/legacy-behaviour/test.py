@@ -30,5 +30,14 @@ os.chdir("src")
 run_alr("test")
 assert_file_exists(os.path.join("..", "success.txt"))
 
+# Check that a nested crate with a legacy test action does not inherit a
+# modern test runner from a parent crate.
+os.chdir("../..")
+init_local_crate("parent", with_test=True)
+init_local_crate("child", with_test=False)
+add_action("test", ["touch", "child-success.txt"])
+run_alr("test")
+assert_file_exists("child-success.txt")
+
 
 print('SUCCESS')

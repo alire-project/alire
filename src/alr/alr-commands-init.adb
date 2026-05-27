@@ -26,6 +26,8 @@ package body Alr.Commands.Init is
 
    type Crate_Kind is (Library, Binary);
 
+   Switch_Github : constant String := "--github";
+
    --------------
    -- Generate --
    --------------
@@ -101,6 +103,18 @@ package body Alr.Commands.Init is
          end if;
       end Generate_Test_Crate;
 
+      ---------------------------
+      -- Generate_Github_Files --
+      ---------------------------
+
+      procedure Generate_Github_Files is
+      begin
+         Templates.Translate_Tree
+           (Directory,
+            Templates.Builtins.Github,
+            Templates.Builtins.Init_Crate_Translation (Info));
+      end Generate_Github_Files;
+
    begin
 
       if Cmd.No_Skel then
@@ -117,6 +131,13 @@ package body Alr.Commands.Init is
          end if;
       end if;
 
+      if To_Boolean (Image   => Cmd.Github,
+                     Switch  => Switch_Github,
+                     Default => Alire.Settings.Builtins.Init_Github_Files.Get)
+      then
+         Generate_Github_Files;
+      end if;
+
       Alire.Put_Success (TTY.Emph (Name.As_String)
                          & " initialized successfully.");
    end Generate;
@@ -131,7 +152,15 @@ package body Alr.Commands.Init is
    is
    begin
       case Args.Length is
-         when 0 => -- Query crate name
+         when 0 =>
+            if CLIC.User_Input.Not_Interactive then
+               Reportaise_Wrong_Arguments
+                 ("Crate name required (must be supplied as an argument in "
+                  & "non-interactive mode)");
+               --  Otherwise the invalid default results in an infinite loop
+            end if;
+
+            --  Query crate name
             loop
                declare
                   Tentative_Name : constant String :=
@@ -171,28 +200,51 @@ package body Alr.Commands.Init is
       end case;
    end Query_Crate_Name;
 
-   ------------------------
-   -- License_Validation --
-   ------------------------
+   -------------------------
+   -- Query_Other_License --
+   -------------------------
 
-   function License_Validation (Str : String) return Boolean is
-      SP : constant SPDX.Expression := SPDX.Parse (Str,
-                                                   Allow_Custom => True);
+   function Query_Other_License return String is
    begin
-      if SPDX.Valid (SP) then
-         return True;
-      else
-         Put_Line
-           ("Invalid SPDX license expression '" & Str
-            & "': " & SPDX.Error (SP));
-         Put_Line
-           ("SPDX expression expected (https://spdx.org/licenses/).");
-         Put_Line ("(Use 'custom-' prefix for custom"
-                   & " license identifier)");
+      loop
+         declare
+            use CLIC.User_Input;
+            Str    : constant String :=
+              Query_String
+                (Question   =>
+                   "Enter SPDX license expression"
+                   & " (https://spdx.dev/use/specifications/):",
+                 Default    => "",
+                 Validation => null);
+            SP     : constant SPDX.Expression :=
+              SPDX.Parse (Str, Allow_Custom => True);
 
-         return False;
-      end if;
-   end License_Validation;
+            --  In case `SP` is invalid, also try parsing with "LicenseRef-"
+            --  prepended (`Allow_Custom` doesn't make sense in this case).
+            LR_Str : constant String := "LicenseRef-" & Str;
+            LR_SP  : constant SPDX.Expression := SPDX.Parse (LR_Str);
+         begin
+            if SPDX.Valid (SP) then
+               return Str;
+            end if;
+
+            Put_Line
+              ("Invalid SPDX license expression '" & Str & "': "
+               & SPDX.Error (SP));
+
+            if SPDX.Valid (LR_SP) then
+               if Query
+                    (Question => "Did you mean '" & LR_Str & "'?",
+                     Valid    => (Yes | No => True, others => False),
+                     Default  => No)
+                 = Yes
+               then
+                  return LR_Str;
+               end if;
+            end if;
+         end;
+      end loop;
+   end Query_Other_License;
 
    -------------------
    -- Query_License --
@@ -226,15 +278,9 @@ package body Alr.Commands.Init is
         or else
           License_Vect (Answer) = License_Other
       then
-         Info.Licenses :=
-           To_Unbounded_String
-             (CLIC.User_Input.Query_String
-                (Question   => "Enter SPDX license expression" &
-                     " (https://spdx.org/licenses/):",
-                 Default    => "",
-                 Validation => License_Validation'Access));
+         Info.Licenses := To_Unbounded_String (Query_Other_License);
       else
-         if not License_Validation (Chosen) then
+         if not SPDX.Valid (SPDX.Parse (Chosen)) then
             raise Program_Error with
               "Invalid license among choices: " & Chosen;
          end if;
@@ -372,12 +418,19 @@ package body Alr.Commands.Init is
          Builtins.User_Email.Is_Empty
          or else Builtins.User_Name.Is_Empty
          or else Builtins.User_Github_Login.Is_Empty;
+
+      Unused : Boolean;
    begin
       Cmd.Forbids_Structured_Output;
 
       if Cmd.Bin and then Cmd.Lib then
          Reportaise_Wrong_Arguments ("Please provide either --bin or --lib");
       end if;
+
+      --  Validate --github (To_Boolean does the checks)
+      Unused := To_Boolean (Image   => Cmd.Github,
+                            Switch  => Switch_Github,
+                            Default => False);
 
       Info.With_Test := not (Cmd.No_Test or else Cmd.No_Skel);
 
@@ -428,6 +481,7 @@ package body Alr.Commands.Init is
               " for the crate:",
             Default    => "",
             Validation => null));
+
       Generate (Cmd, Info);
    end Execute;
 
@@ -483,6 +537,13 @@ package body Alr.Commands.Init is
                      "", "--no-test",
                      "Do not generate a minimal test crate skeleton"
                      & " (implied by --no-skel)");
+
+      Define_Switch (Config,
+                     Cmd.Github'Access,
+                     "", Switch_Github & "?",
+                     Argument => "=BOOL",
+                     Help     =>
+                       "Generate README and workflows for GitHub projects");
    end Setup_Switches;
 
 end Alr.Commands.Init;

@@ -11,7 +11,6 @@ with Alire.Utils.Text_Files;
 with Alire.Version;
 with Alire.Warnings;
 
-with CLIC.Config.Edit;
 with CLIC.Config.Load;
 
 package body Alire.Settings.Edit is
@@ -34,8 +33,16 @@ package body Alire.Settings.Edit is
                           Check : CLIC.Config.Check_Import := null)
    is
    begin
-      if not CLIC.Config.Edit.Set (Filepath (Local), Key, Value, Check) then
-         Raise_Checked_Error ("Cannot set local settings key");
+      if Key = Alire.Settings.Builtins.User_Github_Login.Key then
+         if not Set_User_GitHub_Login (Filepath (Local), Key, Value, Check)
+         then
+            Raise_Checked_Error
+              ("Cannot set local settings key user.github_login");
+         end if;
+      else
+         if not CLIC.Config.Edit.Set (Filepath (Local), Key, Value, Check) then
+            Raise_Checked_Error ("Cannot set local settings key");
+         end if;
       end if;
 
       --  Reload after change
@@ -47,12 +54,22 @@ package body Alire.Settings.Edit is
    ------------------
 
    procedure Set_Globally (Key   : CLIC.Config.Config_Key;
-                          Value : String;
+                           Value : String;
                            Check : CLIC.Config.Check_Import := null)
    is
    begin
-      if not CLIC.Config.Edit.Set (Filepath (Global), Key, Value, Check) then
-         Raise_Checked_Error ("Cannot set global settings key");
+      if Key = Alire.Settings.Builtins.User_Github_Login.Key then
+         if not Set_User_GitHub_Login (Filepath (Global), Key, Value, Check)
+         then
+            Raise_Checked_Error
+              ("Cannot set global settings key user.github_login");
+         end if;
+
+      else
+         if not CLIC.Config.Edit.Set (Filepath (Global), Key, Value, Check)
+         then
+            Raise_Checked_Error ("Cannot set global settings key");
+         end if;
       end if;
 
       --  Reload after change
@@ -190,6 +207,7 @@ package body Alire.Settings.Edit is
 
       for Lvl in Level loop
          if Lvl /= Local or else Directories.Detect_Root_Path /= "" then
+            Trace.Debug ("Loading settings from " & Filepath (Lvl));
             CLIC.Config.Load.From_TOML (C      => DB_Instance,
                                         Origin => Lvl'Img,
                                         Path   => Filepath (Lvl),
@@ -379,12 +397,14 @@ package body Alire.Settings.Edit is
       Results : AAA.Strings.Vector;
    begin
       for Ent of All_Builtins loop
-         Results.Append (String'("- " & TTY.Bold (To_String (Ent.Key))
-                         & " [" & TTY.Emph (Image (Ent.Kind)) & "]"
-                         & "[Default:" & TTY.Terminal (To_String (Ent.Def))
-                         & "]"));
-         Results.Append (To_String (Ent.Help));
-         Results.Append ("");
+         if Ent.Public then
+            Results.Append (String'("- " & TTY.Bold (To_String (Ent.Key))
+                            & " [" & TTY.Emph (Image (Ent.Kind)) & "]"
+                            & "[Default:" & TTY.Terminal (To_String (Ent.Def))
+                            & "]"));
+            Results.Append (To_String (Ent.Help));
+            Results.Append ("");
+         end if;
       end loop;
       return Results;
    end Builtins_Info;
@@ -397,11 +417,13 @@ package body Alire.Settings.Edit is
       use Ada.Text_IO;
    begin
       for Ent of All_Builtins loop
-         Put (" - **`" & To_String (Ent.Key) & "`** ");
-         Put ("[" & Image (Ent.Kind) & "]");
-         Put_Line ("[Default:" & To_String (Ent.Def) & "]:");
-         Put_Line ("   " & To_String (Ent.Help));
-         New_Line;
+         if Ent.Public then
+            Put (" - **`" & To_String (Ent.Key) & "`** ");
+            Put ("[" & Image (Ent.Kind) & "]");
+            Put_Line ("[Default:" & To_String (Ent.Def) & "]:");
+            Put_Line ("   " & To_String (Ent.Help));
+            New_Line;
+         end if;
       end loop;
    end Print_Builtins_Doc;
 

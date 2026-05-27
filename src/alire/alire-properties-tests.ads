@@ -45,6 +45,8 @@ is
 
    function Id (S : Settings) return String;
 
+   function Short_Image (S : Settings) return String;
+
    function Default return Settings;
 
 private
@@ -58,16 +60,20 @@ private
 
    overriding
    function Image (S : Settings) return String
-   is (" test runner"
-       & (if Id (S) = "" then "" else (" '" & Id (S) & "'"))
+   is ("Test runner "
+       & S.Short_Image
+       & ", directory: "
+       & Directory (S)
+       & (if S.Runner.Kind = Alire_Runner
+          then (", jobs:" & S.Jobs'Image)
+          else ""));
+
+   function Short_Image (S : Settings) return String
+   is ((if Id (S) = "" then "<NO ID>" else "'" & Id (S) & "'")
        & ": "
        & (case S.Runner.Kind is
             when Alire_Runner => "alire",
-            when External => "`" & S.Runner.Command.Flatten & "`")
-       & ", directory: "
-       & Directory (S)
-       & (if S.Runner.Kind = Alire_Runner then (", jobs:" & S.Jobs'Image)
-          else ""));
+            when External     => "`" & S.Runner.Command.Flatten & "`"));
 
    overriding
    function To_Yaml (S : Settings) return String
@@ -75,7 +81,7 @@ private
        & Alire.Utils.YAML.YAML_Stringify
            (case S.Runner.Kind is
               when Alire_Runner => "alire",
-              when External => S.Runner.Command.Flatten)
+              when External     => S.Runner.Command.Flatten)
        & New_Line
        & "directory: "
        & Alire.Utils.YAML.YAML_Stringify (Directory (S))

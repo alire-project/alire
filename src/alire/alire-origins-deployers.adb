@@ -101,7 +101,9 @@ package body Alire.Origins.Deployers is
                            / Directories.Temp_Name);
       --  We use a temporary location to fetch and verify, as otherwise any
       --  failure before final deployment may result in considering a crate
-      --  already deployed.
+      --  already deployed. This folder is a sibling of the final destination
+      --  so a simple renaming should work (space already taken in the same
+      --  drive).
 
       The_Deployer  : constant Deployer'Class := New_Deployer (From);
       Result        : Outcome;
@@ -136,8 +138,8 @@ package body Alire.Origins.Deployers is
 
          Trace.Debug ("Renaming into place " & TTY.URL (Temp_Dir.Filename)
                       & " as " & TTY.URL (Folder));
-         Ada.Directories.Rename (Old_Name => Temp_Dir.Filename,
-                                 New_Name => Folder);
+         Directories.Rename (Source      => Temp_Dir.Filename,
+                             Destination => Folder);
       end if;
 
       --  Add an info file for monorepos to make explicit where a release is

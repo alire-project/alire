@@ -55,11 +55,11 @@ package body Alire.Publish.Submit is
 
    function Ask_For_Token (Reason : String) return String is
 
-      --------------
-      -- Validate --
-      --------------
+      ---------------
+      -- Non_Empty --
+      ---------------
 
-      function Validate (S : String) return Boolean
+      function Non_Empty (S : String) return Boolean
       is (S /= "");
 
       GH_Token : constant String := OS_Lib.Getenv (GitHub.Env_GH_Token, "");
@@ -81,9 +81,14 @@ package body Alire.Publish.Submit is
               then GH_Token
               else
                  CLIC.User_Input.Query_String
-                ("Please provide your GitHub Personal Access Token: ",
+                ("Please provide your GitHub Personal Access Token "
+                   & "(full value): ",
                  Default    => "",
-                 Validation => Validate'Unrestricted_Access));
+                 Validation =>
+                 --  Allow bypassing in case some day GitHub introduces new
+                 --  token formats so not to stop everybody completely.
+                   (if Force then Non_Empty'Unrestricted_Access
+                    else GitHub.Is_Possibly_A_Token'Access)));
    end Ask_For_Token;
 
    ------------

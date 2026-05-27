@@ -129,7 +129,7 @@ package body Alire.Errors is
    procedure Pretty_Print (Error : String;
                            Level : Trace.Levels := Trace.Error)
    is
-      Lines : constant AAA.Strings.Vector := Split (Error, ASCII.LF);
+      Lines : constant AAA.Strings.Vector := Split (Error, Latin_1.LF);
    begin
       for I in Lines.First_Index .. Lines.Last_Index loop
          declare
@@ -163,7 +163,7 @@ package body Alire.Errors is
    ----------
 
    function Wrap (Upper, Lower : String) return String
-   is (Upper & ASCII.LF & Lower);
+   is (Upper & Latin_1.LF & Lower);
 
    -----------
    -- Print --
@@ -231,14 +231,14 @@ package body Alire.Errors is
       Msg : UString;
       use UStrings;
    begin
-      --  Remove duplicates that may have creeped in when generating the final
+      --  Remove duplicates that may have crept in when generating the final
       --  stack:
 
       for I in Error_Stack.First_Index .. Error_Stack.Last_Index loop
          if I = Error_Stack.First_Index
            or else Error_Stack (I) /= Error_Stack (I - 1)
          then
-            Append (Msg, Error_Stack (I) & ASCII.LF);
+            Append (Msg, Error_Stack (I) & Latin_1.LF);
          end if;
       end loop;
 
@@ -259,7 +259,7 @@ package body Alire.Errors is
                    ((if Stack_Trace /= ""
                     then Stack_Trace
                     else AAA.Debug.Stack_Trace),
-                    ASCII.LF);
+                    Latin_1.LF);
 
       Caller : constant Positive :=
                  5 + Stack_Offset - (if Stack_Trace /= "" then 2 else 0);

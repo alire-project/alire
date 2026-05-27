@@ -37,6 +37,7 @@ private
       In_Place,
       No_Skel,
       No_Test : aliased Boolean := False;
+      Github  : aliased GNAT_String := new String'(Unset);
    end record;
 
 end Alr.Commands.Init;
