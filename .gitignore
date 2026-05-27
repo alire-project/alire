@@ -3,6 +3,7 @@
 .clang-format
 .clangd/
 .repomix
+.venv/
 .vscode
 
 *.cgpr
