@@ -17,4 +17,25 @@ package body Alire.Settings.Checks is
    is (Value.Kind in TOML.TOML_String
        and then Is_Valid (Value.As_String));
 
+   ----------------------------------------
+   -- Valid_Tests_On_Unknown_Parameter --
+   ----------------------------------------
+
+   function Valid_Tests_On_Unknown_Parameter
+     (Key   : CLIC.Config.Config_Key;
+      Value : TOML.TOML_Value)
+      return Boolean
+   is
+   begin
+      if Value.Kind in TOML.TOML_String
+         and then Value.As_String in "ignore" | "fail" | "skip"
+      then
+         return True;
+      else
+         Trace.Error ("invalid value for " & Key & ": " & Value.As_String
+                      & " (expected 'ignore', 'fail' or 'skip')");
+         return False;
+      end if;
+   end Valid_Tests_On_Unknown_Parameter;
+
 end Alire.Settings.Checks;

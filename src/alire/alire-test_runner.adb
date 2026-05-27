@@ -12,6 +12,7 @@ with Alire_Early_Elaboration;
 with Alire.Directories; use Alire.Directories;
 with Alire.OS_Lib;
 with Alire.Paths;
+with Alire.Settings.Builtins;
 with Alire.TOML_Keys;
 with Alire.Utils.Tables;
 with Alire.Utils.Text_Files;
@@ -31,6 +32,11 @@ package body Alire.Test_Runner is
    --  configuration parsed from `pragma Alire_Test (...)` clauses in the
    --  test source. Pragma fields default when absent.
 
+   function Default_Timeout return Duration
+   is (Duration (Settings.Builtins.Tests_Timeout.Get_Int));
+   --  Read from the `tests.timeout` setting at the moment a Test_Case is
+   --  constructed. A value of -1 disables the per-test deadline.
+
    type Test_Case is record
       Path        : Unbounded_String;
       --  Stores a Portable_Path value; held as Unbounded_String so the
@@ -39,8 +45,18 @@ package body Alire.Test_Runner is
       --  Display-name override from `pragma Alire_Test (Name, "...");`.
       --  Empty when the pragma is not present; callers then fall back to
       --  the path-derived display name.
-      Timeout     : Natural := 30;
+      Timeout     : Duration := Default_Timeout;
       Should_Fail : Boolean := False;
+      Skip        : Boolean := False;
+      --  When true, the test must be dropped from the test list before
+      --  running. Set by Load_Test_Case_Pragmas when an unknown Alire_Test
+      --  pragma key is found and tests.on_unknown_parameter = "skip".
+      Pre_Fail    : Boolean := False;
+      --  When true, the test must be reported as failed without being
+      --  spawned. Set by Load_Test_Case_Pragmas when an unknown Alire_Test
+      --  pragma key is found and tests.on_unknown_parameter = "fail".
+      Fail_Reason : Unbounded_String;
+      --  Failure message that accompanies Pre_Fail.
    end record;
 
    function Path_Of (TC : Test_Case) return Portable_Path
@@ -313,6 +329,9 @@ package body Alire.Test_Runner is
       function Key (S : Yeison.Text) return Yeison.Any
       is (Yeison.Make.Str (S));
 
+      Known_Keys : constant array (Positive range <>) of Yeison.Any :=
+        (Key ("Name"), Key ("Timeout"), Key ("Should_Fail"));
+
       Builder     : LML.Output.Yeison.Builder;
       All_Pragmas : Yeison.Any;
    begin
@@ -339,14 +358,58 @@ package body Alire.Test_Runner is
             end if;
 
             if Timeout_Value.Kind = Int_Kind then
-               TC.Timeout := Natural (Timeout_Value.As_Int);
+               TC.Timeout := Duration (Timeout_Value.As_Int);
             elsif Timeout_Value.Kind = Real_Kind then
-               TC.Timeout := Natural (Timeout_Value.As_Real.Value);
+               TC.Timeout := Duration (Timeout_Value.As_Real.Value);
             end if;
 
             if Should_Fail_Value.Kind = Bool_Kind then
                TC.Should_Fail := Should_Fail_Value.As_Bool;
             end if;
+         end;
+
+         --  Diagnose any pragma key that is not part of the documented
+         --  schema (see scripts/schemas/test-pragmas.yaml). The behaviour is
+         --  driven by the tests.on_unknown_parameter setting.
+         --
+         --  Note: reading the well-known keys above through Variable_Indexing
+         --  adds Nil entries to Alire_Test for any key the source did not
+         --  supply, so a Nil-kind entry here marks an absent (and therefore
+         --  uninteresting) pragma -- not an unknown one.
+         declare
+            Action : constant String :=
+              Settings.Builtins.Tests_On_Unknown_Parameter.Get;
+         begin
+            for K of Alire_Test.Keys loop
+               if K.Kind /= Nil_Kind
+                 and then
+                   (for all Known of Known_Keys =>
+                      K.As_Text /= Known.As_Text)
+               then
+                  declare
+                     Unknown : constant String := LML.Encode (K.As_Text);
+                     Message : constant String :=
+                       Filename & ": unknown Alire_Test pragma key '"
+                       & Unknown & "'";
+                  begin
+                     if Action = "ignore" then
+                        null;
+                     elsif Action = "skip" then
+                        Trace.Warning (Message & " (skipping test)");
+                        TC.Skip := True;
+                     else
+                        --  "fail" (the default) and any invalid value land
+                        --  here. The Check on the builtin rejects invalid
+                        --  values at write time, so reaching this branch
+                        --  with anything else is a programmer error.
+                        Trace.Error (Message);
+                        TC.Pre_Fail := True;
+                        TC.Fail_Reason :=
+                          +("unknown Alire_Test pragma key: " & Unknown);
+                     end if;
+                  end;
+               end if;
+            end loop;
          end;
       end;
 
@@ -487,6 +550,19 @@ package body Alire.Test_Runner is
          Args : constant Argument_List := (1 .. 0 => <>);
          Pid  : Process_Id;
       begin
+         --  Pre-failed tests (e.g. unknown Alire_Test pragma key with
+         --  tests.on_unknown_parameter = "fail") are reported as failures
+         --  without running the binary: the runner already knows the
+         --  configuration is bad, so there is no point exercising the test.
+         if TC.Pre_Fail then
+            Driver.Fail
+              (Full_Print_Name,
+               To_String (TC.Fail_Reason),
+               Ada.Calendar.Clock,
+               AAA.Strings.Empty_Vector);
+            return;
+         end if;
+
          Pid :=
            Non_Blocking_Spawn
              (Root.Path / "bin" / Exe_Name,
@@ -647,7 +723,7 @@ package body Alire.Test_Runner is
                  (Path => To_Unbounded_String (String (Name)), others => <>);
             begin
                Load_Test_Case_Pragmas (This.Path, TC);
-               if Matches_Filter (TC) then
+               if not TC.Skip and then Matches_Filter (TC) then
                   Test_List.Append (TC);
                end if;
             end;

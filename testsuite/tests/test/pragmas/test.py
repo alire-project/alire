@@ -10,7 +10,12 @@ import os
 import shutil
 
 from drivers.alr import init_local_crate, run_alr
-from drivers.asserts import assert_eq, assert_match, assert_substring
+from drivers.asserts import (
+    assert_eq,
+    assert_match,
+    assert_not_substring,
+    assert_substring,
+)
 
 
 def write_test(stem: str, body: str, prelude: str = "") -> None:
@@ -169,5 +174,55 @@ p = run_alr("test", quiet=False)
 assert_substring("duplicate Alire_Test pragma key", p.out)
 # Display name falls back to the path-derived form, not "first" / "second".
 assert_match(r".*\[ PASS \] *\d+[smh]\d+ dup_key.*", p.out)
+
+# --- unrecognized Alire_Test key: only Name, Should_Fail and Timeout are
+# defined by the schema (see scripts/schemas/test-pragmas.yaml). Any other
+# key is diagnosed; the action is driven by tests.on_unknown_parameter,
+# which can be 'ignore', 'fail' (default) or 'skip'. We exercise all three
+# values against the same source tree. ---
+os.chdir("..")
+shutil.rmtree("xxx")
+
+init_local_crate("xxx", with_test=True)
+os.remove("./tests/src/xxx_tests-assertions_enabled.adb")
+write_test(
+    "bogus_key",
+    "null;",
+    prelude='pragma Alire_Test (Bogus, "anything");\n',
+)
+
+# Default ('fail'): the test is reported as a failure without running, and
+# the runner exits non-zero. The diagnostic names the offending key.
+p = run_alr("test", quiet=False, complain_on_error=False)
+assert_substring("unknown Alire_Test pragma key", p.out)
+assert_substring("Bogus", p.out)
+assert_match(r".*\[ FAIL \] *\d+[smh]\d+ bogus_key.*", p.out)
+
+# 'ignore': the test runs to completion as if no unknown key were there.
+run_alr(
+    "settings", "--global", "--set",
+    "tests.on_unknown_parameter", "ignore",
+)
+p = run_alr("test", quiet=False)
+assert_not_substring("unknown Alire_Test pragma key", p.out)
+assert_match(r".*\[ PASS \] *\d+[smh]\d+ bogus_key.*", p.out)
+
+# 'skip': the test is dropped from the list with a warning, leaving zero
+# tests to run.
+run_alr(
+    "settings", "--global", "--set",
+    "tests.on_unknown_parameter", "skip",
+)
+p = run_alr("test", quiet=False)
+assert_substring("unknown Alire_Test pragma key", p.out)
+assert_substring("skipping test", p.out)
+assert_not_substring("[ PASS ]", p.out)
+assert_not_substring("[ FAIL ]", p.out)
+
+# Restore the default for any subsequent tests sharing the settings dir.
+run_alr(
+    "settings", "--global", "--set",
+    "tests.on_unknown_parameter", "fail",
+)
 
 print("SUCCESS")
