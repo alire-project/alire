@@ -10,4 +10,14 @@ package Alire.Test with Preelaborate is
    --  Valid values for the `tests.on_unknown_parameter` setting, which
    --  selects how the runner reacts to unrecognized Alire_Test pragma keys.
 
+   type Pragmas is
+     (Name,
+      --  Override the displayed test name.
+      Timeout,
+      --  Per-test deadline in seconds (Integer or Real).
+      Should_Fail);
+      --  When True, the test is expected to fail and a failure counts as pass.
+   --  Documented keys accepted in `pragma Alire_Test (<key>, <value>);`.
+   --  See scripts/schemas/test-pragmas.yaml for the canonical schema.
+
 end Alire.Test;

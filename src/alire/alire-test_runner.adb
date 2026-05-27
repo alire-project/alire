@@ -8,11 +8,14 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 with System.Multiprocessors;
 
+with AAA.Enum_Tools;
+
 with Alire_Early_Elaboration;
 with Alire.Directories; use Alire.Directories;
 with Alire.OS_Lib;
 with Alire.Paths;
 with Alire.Settings.Builtins;
+with Alire.Test;
 with Alire.TOML_Keys;
 with Alire.Utils.Tables;
 with Alire.Utils.Text_Files;
@@ -380,8 +383,9 @@ package body Alire.Test_Runner is
       function Key (S : Yeison.Text) return Yeison.Any
       is (Yeison.Make.Str (S));
 
-      Known_Keys : constant array (Positive range <>) of Yeison.Any :=
-        (Key ("Name"), Key ("Timeout"), Key ("Should_Fail"));
+      function Is_Known_Pragma is new AAA.Enum_Tools.Is_Valid (Test.Pragmas);
+      --  Match each pragma key text against the documented enum literals.
+      --  Ada's case-insensitive 'Value handles any source casing.
 
       Builder     : LML.Output.Yeison.Builder;
       All_Pragmas : Yeison.Any;
@@ -393,6 +397,8 @@ package body Alire.Test_Runner is
          Alire_Test : constant Yeison.Any := All_Pragmas (Key ("Alire_Test"));
       begin
          if Alire_Test.Kind /= Map_Kind then
+            --  TODO: don't silently return, apply the same policy as for
+            --  unknown pragmas.
             return;
          end if;
 
@@ -419,11 +425,18 @@ package body Alire.Test_Runner is
             end if;
          end;
 
+         --  TODO: for keys with unexpected typed values, behave as with
+         --  unknown pragma keys.
+
+         --  TODO: new Auxiliary_File key
+
+         --  TODO: use --format in test
+
          --  Diagnose any pragma key that is not part of the documented
          --  schema (see scripts/schemas/test-pragmas.yaml). The behaviour is
          --  driven by the tests.on_unknown_parameter setting.
          --
-         --  Note: reading the well-known keys above through Variable_Indexing
+         --  Note: reading the known keys above through Variable_Indexing
          --  adds Nil entries to Alire_Test for any key the source did not
          --  supply, so a Nil-kind entry here marks an absent (and therefore
          --  uninteresting) pragma -- not an unknown one.
@@ -433,9 +446,7 @@ package body Alire.Test_Runner is
          begin
             for K of Alire_Test.Keys loop
                if K.Kind /= Nil_Kind
-                 and then
-                   (for all Known of Known_Keys =>
-                      K.As_Text /= Known.As_Text)
+                 and then not Is_Known_Pragma (LML.Encode (K.As_Text))
                then
                   declare
                      Unknown : constant String := LML.Encode (K.As_Text);
