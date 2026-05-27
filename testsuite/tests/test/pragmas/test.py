@@ -207,17 +207,33 @@ p = run_alr("test", quiet=False)
 assert_not_substring("unknown Alire_Test pragma key", p.out)
 assert_match(r".*\[ PASS \] *\d+[smh]\d+ bogus_key.*", p.out)
 
-# 'skip': the test is dropped from the list with a warning, leaving zero
-# tests to run.
+# 'skip': the test is reported as SKIP with the reason, and does not count
+# towards failures.
 run_alr(
     "settings", "--global", "--set",
     "tests.on_unknown_parameter", "skip",
 )
 p = run_alr("test", quiet=False)
 assert_substring("unknown Alire_Test pragma key", p.out)
-assert_substring("skipping test", p.out)
+assert_match(
+    r".*\[ SKIP \].*bogus_key \(unknown Alire_Test pragma key: Bogus\).*",
+    p.out,
+)
 assert_not_substring("[ PASS ]", p.out)
 assert_not_substring("[ FAIL ]", p.out)
+
+# Structured output exposes the skip in both the per-test entry and the
+# summary.
+p = run_alr("--format=json", "test")
+data = json.loads(p.out)
+assert_eq(1, data["summary"]["total"])
+assert_eq(0, data["summary"]["failures"])
+assert_eq(1, data["summary"]["skipped"])
+assert_eq("skip", find_test(data["tests"], "bogus_key")["status"])
+assert_substring(
+    "unknown Alire_Test pragma key: Bogus",
+    find_test(data["tests"], "bogus_key")["reason"],
+)
 
 # Restore the default for any subsequent tests sharing the settings dir.
 run_alr(

@@ -48,15 +48,15 @@ package body Alire.Test_Runner is
       Timeout     : Duration := Default_Timeout;
       Should_Fail : Boolean := False;
       Skip        : Boolean := False;
-      --  When true, the test must be dropped from the test list before
-      --  running. Set by Load_Test_Case_Pragmas when an unknown Alire_Test
+      --  When true, the test must be reported as skipped without being
+      --  spawned. Set by Load_Test_Case_Pragmas when an unknown Alire_Test
       --  pragma key is found and tests.on_unknown_parameter = "skip".
       Pre_Fail    : Boolean := False;
       --  When true, the test must be reported as failed without being
       --  spawned. Set by Load_Test_Case_Pragmas when an unknown Alire_Test
       --  pragma key is found and tests.on_unknown_parameter = "fail".
-      Fail_Reason : Unbounded_String;
-      --  Failure message that accompanies Pre_Fail.
+      Reason      : Unbounded_String;
+      --  Diagnostic shown alongside Skip or Pre_Fail.
    end record;
 
    function Path_Of (TC : Test_Case) return Portable_Path
@@ -78,10 +78,15 @@ package body Alire.Test_Runner is
          Start_Time        : Ada.Calendar.Time;
          Output            : AAA.Strings.Vector);
       --  Report a failing test with a message and its output
+      procedure Skip (Test_Name, Reason : String);
+      --  Report a test that was not run (no duration, no output). Does not
+      --  count towards Fail_Count.
       function Total_Count return Natural;
-      --  Get the total number of tests that have been run
+      --  Get the total number of tests that have been processed
       function Fail_Count return Natural;
       --  Get the number of failed tests
+      function Skip_Count return Natural;
+      --  Get the number of skipped tests
       procedure Report;
       --  Print a report of tests and finalize the driver
 
@@ -100,8 +105,9 @@ package body Alire.Test_Runner is
       Structured_Output_Format : Tables.Formats renames
         Tables.Structured_Output_Format;
 
-      Passed : Natural := 0;
-      Failed : Natural := 0;
+      Passed  : Natural := 0;
+      Failed  : Natural := 0;
+      Skipped : Natural := 0;
 
       Builder : Builder_Access := null;
    end Driver;
@@ -222,12 +228,43 @@ package body Alire.Test_Runner is
          end if;
       end Fail;
 
+      ----------
+      -- Skip --
+      ----------
+
+      procedure Skip (Test_Name, Reason : String) is
+         No_Time : constant String := (1 .. 6 => '-');
+      begin
+         Skipped := Skipped + 1;
+         if Structured_Output then
+            Builder.Begin_Map;
+            Builder.Insert (+TOML_Keys.Test_Report_Display_Name);
+            Builder.Append (LML.Scalars.New_Text (+Test_Name));
+            Builder.Insert (+TOML_Keys.Test_Report_Status);
+            Builder.Append (LML.Scalars.New_Text ("skip"));
+            Builder.Insert (+TOML_Keys.Test_Report_Reason);
+            Builder.Append (LML.Scalars.New_Text (+Reason));
+            Builder.End_Map;
+         else
+            Trace.Always
+              ("[ "
+               & CLIC.TTY.Warn ("SKIP")
+               & " ] "
+               & CLIC.TTY.Dim (No_Time)
+               & " "
+               & Test_Name
+               & " ("
+               & Reason
+               & ")");
+         end if;
+      end Skip;
+
       -----------------
       -- Total_Count --
       -----------------
 
       function Total_Count return Natural
-      is (Passed + Failed);
+      is (Passed + Failed + Skipped);
 
       ----------------
       -- Fail_Count --
@@ -235,6 +272,13 @@ package body Alire.Test_Runner is
 
       function Fail_Count return Natural
       is (Failed);
+
+      ----------------
+      -- Skip_Count --
+      ----------------
+
+      function Skip_Count return Natural
+      is (Skipped);
 
       ------------
       -- Report --
@@ -254,6 +298,9 @@ package body Alire.Test_Runner is
             Builder.Insert (+TOML_Keys.Test_Report_Failures);
             Builder.Append
               (LML.Scalars.New_Int (Long_Long_Integer (Driver.Fail_Count)));
+            Builder.Insert (+TOML_Keys.Test_Report_Skipped);
+            Builder.Append
+              (LML.Scalars.New_Int (Long_Long_Integer (Driver.Skip_Count)));
             Builder.End_Map;
             Builder.End_Map;
 
@@ -272,6 +319,10 @@ package body Alire.Test_Runner is
             --  put a summary of test runs
             Trace.Always ("Total:" & Driver.Total_Count'Image & " tests");
             Ada.Text_IO.Flush;
+            if Driver.Skip_Count /= 0 then
+               Trace.Warning
+                 ("skipped" & Driver.Skip_Count'Image & " tests");
+            end if;
             if Driver.Fail_Count /= 0 then
                Trace.Error ("failed" & Driver.Fail_Count'Image & " tests");
             end if;
@@ -395,8 +446,10 @@ package body Alire.Test_Runner is
                      if Action = "ignore" then
                         null;
                      elsif Action = "skip" then
-                        Trace.Warning (Message & " (skipping test)");
+                        Trace.Warning (Message);
                         TC.Skip := True;
+                        TC.Reason :=
+                          +("unknown Alire_Test pragma key: " & Unknown);
                      else
                         --  "fail" (the default) and any invalid value land
                         --  here. The Check on the builtin rejects invalid
@@ -404,7 +457,7 @@ package body Alire.Test_Runner is
                         --  with anything else is a programmer error.
                         Trace.Error (Message);
                         TC.Pre_Fail := True;
-                        TC.Fail_Reason :=
+                        TC.Reason :=
                           +("unknown Alire_Test pragma key: " & Unknown);
                      end if;
                   end;
@@ -550,14 +603,17 @@ package body Alire.Test_Runner is
          Args : constant Argument_List := (1 .. 0 => <>);
          Pid  : Process_Id;
       begin
-         --  Pre-failed tests (e.g. unknown Alire_Test pragma key with
-         --  tests.on_unknown_parameter = "fail") are reported as failures
-         --  without running the binary: the runner already knows the
-         --  configuration is bad, so there is no point exercising the test.
-         if TC.Pre_Fail then
+         --  Tests configured to fail or skip without running (e.g. an
+         --  unknown Alire_Test pragma key combined with
+         --  tests.on_unknown_parameter = "fail" or "skip") are reported
+         --  directly without launching the binary.
+         if TC.Skip then
+            Driver.Skip (Full_Print_Name, To_String (TC.Reason));
+            return;
+         elsif TC.Pre_Fail then
             Driver.Fail
               (Full_Print_Name,
-               To_String (TC.Fail_Reason),
+               To_String (TC.Reason),
                Ada.Calendar.Clock,
                AAA.Strings.Empty_Vector);
             return;
@@ -612,13 +668,15 @@ package body Alire.Test_Runner is
 
    begin
 
+      --  Init before spawning so the structured-output builder exists when
+      --  pre-fail / skip cases report directly from Spawn_Test.
+      Driver.Init;
+
       --  start the first `Jobs` tests
       for I in 1 .. Natural'Min (Jobs, Natural (Test_Cases.Length)) loop
          Spawn_Test (Remaining.Last_Element);
          Remaining.Delete_Last;
       end loop;
-
-      Driver.Init;
 
       loop
          if CLIC.TTY.Is_TTY and then not Alire_Early_Elaboration.Switch_Q then
@@ -723,7 +781,7 @@ package body Alire.Test_Runner is
                  (Path => To_Unbounded_String (String (Name)), others => <>);
             begin
                Load_Test_Case_Pragmas (This.Path, TC);
-               if not TC.Skip and then Matches_Filter (TC) then
+               if Matches_Filter (TC) then
                   Test_List.Append (TC);
                end if;
             end;
