@@ -43,14 +43,32 @@ def find_test(tests, name):
     raise AssertionError(f"no test named {name!r} in {[t['name'] for t in tests]}")
 
 
+def parse_json_result(p):
+    """Return the parsed JSON object from p.out.
+
+    Trace.Error/Warning go to stderr, which e3 merges with stdout, so p.out may
+    contain diagnostic lines before the JSON blob. The JSON itself may be
+    pretty-printed across multiple lines, so we find the first line that starts
+    with '{' and parse from there to end of output.
+    """
+    lines = p.out.splitlines()
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("{"):
+            return json.loads("\n".join(lines[i:]))
+    raise AssertionError(
+        f"no JSON object found in output:\n{p.out}"
+    )
+
+
 init_local_crate("xxx", with_test=True)
 
 # Drop the default failing test that init seeds.
 os.remove("./tests/src/xxx_tests-assertions_enabled.adb")
 
-# --- supported triple: Name, Should_Fail, Timeout in a single prelude ---
+# Supported triple: Name, Should_Fail, Timeout in a single prelude.
 # Body raises, but Should_Fail=True means this counts as a pass; the
 # Timeout value must be accepted without breaking the runner.
+
 write_test(
     "triple",
     "raise Program_Error;",
@@ -61,28 +79,32 @@ write_test(
     ),
 )
 
-# --- compact: no extra whitespace ---
+# Compact: no extra whitespace.
+
 write_test(
     "compact",
     "null;",
     prelude='pragma Alire_Test(Name,"pragma_compact");\n',
 )
 
-# --- extra spaces around punctuation ---
+# Extra spaces around punctuation.
+
 write_test(
     "spaced",
     "null;",
     prelude='pragma   Alire_Test  (  Name  ,  "pragma_spaced"  )  ;\n',
 )
 
-# --- tab-separated tokens ---
+# Tab-separated tokens.
+
 write_test(
     "tabbed",
     "null;",
     prelude='pragma Alire_Test\t(Name\t,"pragma_tabbed");\n',
 )
 
-# --- pragma body split across lines ---
+# Pragma body split across lines.
+
 write_test(
     "multiline",
     "null;",
@@ -94,7 +116,8 @@ write_test(
     ),
 )
 
-# --- comments between tokens ---
+# Comments between tokens.
+
 write_test(
     "annotated",
     "null;",
@@ -106,7 +129,8 @@ write_test(
     ),
 )
 
-# --- two distinct pragma names: only Alire_Test should be applied ---
+# Two distinct pragma names: only Alire_Test should be applied.
+
 write_test(
     "other_pragma",
     "null;",
@@ -116,7 +140,8 @@ write_test(
     ),
 )
 
-# --- Should_Fail=False (explicit) with a passing body ---
+# Should_Fail=False (explicit) with a passing body.
+
 write_test(
     "explicit_no_fail",
     "null;",
@@ -127,10 +152,14 @@ write_test(
 )
 
 p = run_alr("--format=json", "test")
-data = json.loads(p.out)
+data = parse_json_result(p)
+
+# Verify no failures in testing
 
 assert_eq(8, data["summary"]["total"])
 assert_eq(0, data["summary"]["failures"])
+
+# Verify names of tests
 
 tests = data["tests"]
 names = sorted(t["name"] for t in tests)
@@ -149,11 +178,13 @@ assert_eq(
 )
 
 # Should_Fail=True must turn a raising test into a pass.
+
 assert_eq("pass", find_test(tests, "pragma_triple")["status"])
 
-# --- duplicate Alire_Test key: parser raises, runner logs an error and
+# Duplicate Alire_Test key: parser raises, runner logs an error and
 # falls back to defaults (test name derived from the file). The run still
-# completes; we just want to see the error and the fallback name. ---
+# completes; we just want to see the error and the fallback name.
+
 os.chdir("..")
 shutil.rmtree("xxx")
 
@@ -170,16 +201,18 @@ write_test(
 
 # The runner logs an error but still runs the test with defaults, so exit
 # status stays zero. quiet=False keeps the error line in the captured output.
+
 p = run_alr("test", quiet=False)
 assert_substring("duplicate Alire_Test pragma key", p.out)
 # Display name falls back to the path-derived form, not "first" / "second".
 assert_match(r".*\[ PASS \] *\d+[smh]\d+ dup_key.*", p.out)
 
-# --- unrecognized Alire_Test key: only Name, Should_Fail and Timeout are
+# Unrecognized Alire_Test key: only Name, Should_Fail and Timeout are
 # defined by the schema (see scripts/schemas/test-pragmas.yaml). Any other
 # key is diagnosed; the action is driven by tests.on_unknown_parameter,
 # which can be 'ignore', 'fail' (default) or 'skip'. We exercise all three
-# values against the same source tree. ---
+# values against the same source tree.
+
 os.chdir("..")
 shutil.rmtree("xxx")
 
@@ -193,12 +226,14 @@ write_test(
 
 # Default ('fail'): the test is reported as a failure without running, and
 # the runner exits non-zero. The diagnostic names the offending key.
+
 p = run_alr("test", quiet=False, complain_on_error=False)
 assert_substring("unknown Alire_Test pragma key", p.out)
 assert_substring("Bogus", p.out)
 assert_match(r".*\[ FAIL \] *\d+[smh]\d+ bogus_key.*", p.out)
 
 # 'ignore': the test runs to completion as if no unknown key were there.
+
 run_alr(
     "settings", "--global", "--set",
     "tests.on_unknown_parameter", "ignore",
@@ -209,6 +244,7 @@ assert_match(r".*\[ PASS \] *\d+[smh]\d+ bogus_key.*", p.out)
 
 # 'skip': the test is reported as SKIP with the reason, and does not count
 # towards failures.
+
 run_alr(
     "settings", "--global", "--set",
     "tests.on_unknown_parameter", "skip",
@@ -224,8 +260,9 @@ assert_not_substring("[ FAIL ]", p.out)
 
 # Structured output exposes the skip in both the per-test entry and the
 # summary.
+
 p = run_alr("--format=json", "test")
-data = json.loads(p.out)
+data = parse_json_result(p)
 assert_eq(1, data["summary"]["total"])
 assert_eq(0, data["summary"]["failures"])
 assert_eq(1, data["summary"]["skipped"])
@@ -235,10 +272,5 @@ assert_substring(
     find_test(data["tests"], "bogus_key")["reason"],
 )
 
-# Restore the default for any subsequent tests sharing the settings dir.
-run_alr(
-    "settings", "--global", "--set",
-    "tests.on_unknown_parameter", "fail",
-)
 
 print("SUCCESS")

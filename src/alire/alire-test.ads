@@ -13,18 +13,15 @@ package Alire.Test with Preelaborate is
    type Pragmas is
      (Auxiliary_File,
       --  When True, the file is a support unit (not a test main) and must
-      --  not be turned into a test.
+      --  not be turned into a test. (TODO: recognized but not yet implemented.)
       Name,
       --  Override the displayed test name.
       Should_Fail,
       --  When True, the test is expected to fail and a failure counts as pass.
       Timeout);
       --  Per-test deadline in seconds (Integer or Real).
+      --  (TODO: recognized but not yet implemented.)
    --  Documented keys accepted in `pragma Alire_Test (<key>, <value>);`.
    --  See scripts/schemas/test-pragmas.yaml for the canonical schema.
-   --
-   --  TODO: the previous values are currently only recognized (so they do
-   --  not trigger the unknown-pragma policy) but their behavior is not yet
-   --  implemented.
 
 end Alire.Test;
