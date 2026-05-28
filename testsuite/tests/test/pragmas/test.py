@@ -151,12 +151,21 @@ write_test(
     ),
 )
 
+# Named form: `pragma Alire_Test (Key => Value)` is accepted as
+# equivalent to the positional `(Key, Value)` form.
+
+write_test(
+    "named",
+    "null;",
+    prelude='pragma Alire_Test (Name => "pragma_named");\n',
+)
+
 p = run_alr("--format=json", "test")
 data = parse_json_result(p)
 
 # Verify no failures in testing
 
-assert_eq(8, data["summary"]["total"])
+assert_eq(9, data["summary"]["total"])
 assert_eq(0, data["summary"]["failures"])
 
 # Verify names of tests
@@ -168,6 +177,7 @@ assert_eq(
         "pragma_annotated",
         "pragma_compact",
         "pragma_multiline",
+        "pragma_named",
         "pragma_no_fail",
         "pragma_spaced",
         "pragma_tabbed",
@@ -206,6 +216,26 @@ p = run_alr("test", quiet=False)
 assert_substring("duplicate Alire_Test pragma key", p.out)
 # Display name falls back to the path-derived form, not "first" / "second".
 assert_match(r".*\[ PASS \] *\d+[smh]\d+ dup_key.*", p.out)
+
+# Malformed Alire_Test pragma: strict mode causes Invalid_Pragma_Syntax,
+# which the runner translates to a pre-run failure. The test is marked
+# FAIL without being spawned. We exercise both the positional form with
+# an unsupported value expression, and the named form (`=>`) with the
+# same problem -- strict parsing must catch either shape.
+for stem, prelude in (
+    ("bad_syntax_pos", 'pragma Alire_Test (Timeout, 1.0 * 60.0);\n'),
+    ("bad_syntax_named", 'pragma Alire_Test (Timeout => 1.0 * 60.0);\n'),
+):
+    os.chdir("..")
+    shutil.rmtree("xxx")
+
+    init_local_crate("xxx", with_test=True)
+    os.remove("./tests/src/xxx_tests-assertions_enabled.adb")
+    write_test(stem, "null;", prelude=prelude)
+
+    p = run_alr("test", quiet=False, complain_on_error=False)
+    assert_substring("failed to parse strict pragma", p.out)
+    assert_match(rf".*\[ FAIL \] *\d+[smh]\d+ {stem}.*", p.out)
 
 # Unrecognized Alire_Test key: only Name, Should_Fail and Timeout are
 # defined by the schema (see scripts/schemas/test-pragmas.yaml). Any other

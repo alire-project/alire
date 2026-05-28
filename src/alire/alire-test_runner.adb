@@ -1,4 +1,5 @@
 with Ada.Calendar;
+with Ada.Exceptions;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Fixed;
@@ -22,10 +23,13 @@ with Alire.Utils.Text_Files;
 with Alire.VFS;
 
 with CLIC.TTY;
+
 with Den.Walk;
+
 with LML.Input.Pragmas.File_IO;
 with LML.Output.Factory;
 with LML.Output.Yeison;
+with LML.Options.Pragmas;
 
 package body Alire.Test_Runner is
    use Alire.Utils;
@@ -158,6 +162,10 @@ package body Alire.Test_Runner is
       is (LML.Scalars.New_Real
             (LML.Yeison.Reals.New_Real
                (Long_Long_Float (Duration_Since (Start_Time)))));
+
+      --  TODO: have an xplicit XFAIL or similar in the output to distinguish
+      --  from PASS/FAIL (or maybe annotate the test name with a trailing
+      --  [with expected failure] when Should_Fail). Now PASS is printed.
 
       ----------
       -- Pass --
@@ -383,6 +391,13 @@ package body Alire.Test_Runner is
       function Key (S : Yeison.Text) return Yeison.Any
       is (Yeison.Make.Str (S));
 
+      function Has_Key (Map : Yeison.Any; Name : String) return Boolean
+      is (for some K of Map.Keys =>
+            K.Kind = Str_Kind and then LML.Encode (K.As_Text) = Name);
+      --  Non-mutating presence test. Indexing a map with Variable_Indexing
+      --  auto-inserts a Nil entry for an absent key, so it cannot tell an
+      --  absent key from a genuinely valueless one; Keys does not mutate.
+
       function Is_Known_Pragma is new AAA.Enum_Tools.Is_Valid (Test.Pragmas);
       --  Match each pragma key text against the documented enum literals.
       --  Ada's case-insensitive 'Value handles any source casing.
@@ -390,7 +405,9 @@ package body Alire.Test_Runner is
       Builder     : LML.Output.Yeison.Builder;
       All_Pragmas : Yeison.Any;
    begin
-      LML.Input.Pragmas.File_IO.From_File (Filename, Builder);
+      LML.Input.Pragmas.File_IO.From_File
+        (Filename, Builder,
+         LML.Options.Pragmas.Strict_On (Test.Pragma_Name));
       All_Pragmas := Builder.To_Yeison;
 
       declare
@@ -407,8 +424,6 @@ package body Alire.Test_Runner is
                                   Alire_Test (Key ("Name"));
             Timeout_Value     : constant Yeison.Any :=
                                   Alire_Test (Key ("Timeout"));
-            Should_Fail_Value : constant Yeison.Any :=
-                                  Alire_Test (Key ("Should_Fail"));
          begin
             if Name_Value.Kind = Str_Kind then
                TC.Name := +LML.Encode (Name_Value.As_Text);
@@ -420,8 +435,22 @@ package body Alire.Test_Runner is
                TC.Timeout := Duration (Timeout_Value.As_Real.Value);
             end if;
 
-            if Should_Fail_Value.Kind = Bool_Kind then
-               TC.Should_Fail := Should_Fail_Value.As_Bool;
+            --  Should_Fail has three states: absent (keep the default
+            --  False), present-but-valueless (bare key, e.g.
+            --  `pragma Alire_Test (Should_Fail);` => True), and an explicit
+            --  Boolean. The first two both read as Nil through indexing, so
+            --  presence must be checked separately before reading.
+            if Has_Key (Alire_Test, "Should_Fail") then
+               declare
+                  Should_Fail_Value : constant Yeison.Any :=
+                                        Alire_Test (Key ("Should_Fail"));
+               begin
+                  if Should_Fail_Value.Kind = Nil_Kind then
+                     TC.Should_Fail := True;
+                  elsif Should_Fail_Value.Kind = Bool_Kind then
+                     TC.Should_Fail := Should_Fail_Value.As_Bool;
+                  end if;
+               end;
             end if;
          end;
 
@@ -478,6 +507,12 @@ package body Alire.Test_Runner is
    exception
       when LML.Duplicate_Pragma =>
          Trace.Error (Filename & ": duplicate Alire_Test pragma key");
+      when E : LML.Invalid_Pragma_Syntax =>
+         Trace.Error (Filename & ": " & LML.Encode (LML.Decode
+           (Ada.Exceptions.Exception_Message (E))));
+         TC.Pre_Fail := True;
+         TC.Reason   := +LML.Encode (LML.Decode
+           (Ada.Exceptions.Exception_Message (E)));
    end Load_Test_Case_Pragmas;
 
    ---------------------

@@ -10,10 +10,16 @@ package Alire.Test with Preelaborate is
    --  Valid values for the `tests.on_unknown_parameter` setting, which
    --  selects how the runner reacts to unrecognized Alire_Test pragma keys.
 
+   Pragma_Name : constant String := "Alire_Test";
+   --  The pragma name recognized by the alr test runner.
+
+   --  TODO: explain here the morphology of a pragma: name, key, value, if
+   --  possible with bit of ascii art arrows.
+
    type Pragmas is
      (Auxiliary_File,
-      --  When True, the file is a support unit (not a test main) and must
-      --  not be turned into a test. (TODO: recognized but not yet implemented.)
+      --  When True, the file is a support unit (not a test main) and must not
+      --  be turned into a test. (TODO: recognized but not yet implemented.)
       Name,
       --  Override the displayed test name.
       Should_Fail,
