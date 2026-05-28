@@ -16,12 +16,16 @@ package Alire.Flags is
    function Post_Fetch (Base : Absolute_Path) return Flag;
    --  Signals that post-fetch has been run for the release
 
+   function Template_Instantiation (Base : Absolute_Path) return Flag;
+   --  Signals that templated release has been instantiated
+
 private
 
    --  The following names directly translate into lowercase filenames
    type Names is
      (Complete_Copy,
-      Post_Fetch_Done);
+      Post_Fetch_Done,
+      Template_Instantiated);
 
    function New_Flag (Name : Names;
                       Base : Absolute_Path)
@@ -34,5 +38,8 @@ private
 
    function Post_Fetch (Base : Absolute_Path) return Flag
    is (New_Flag (Post_Fetch_Done, Base));
+
+   function Template_Instantiation (Base : Absolute_Path) return Flag
+   is (New_Flag (Template_Instantiated, Base));
 
 end Alire.Flags;

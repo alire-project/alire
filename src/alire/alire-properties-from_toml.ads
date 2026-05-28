@@ -11,6 +11,7 @@ with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.Properties.Scenarios;
 with Alire.Properties.Bool;
+with Alire.Properties.Templates;
 with Alire.Properties.Tests;
 with Alire.TOML_Adapters;
 
@@ -41,6 +42,8 @@ package Alire.Properties.From_TOML is
                           Notes,
                           Project_Files,
                           Tags,
+                          Template,
+                          Template_Inputs,
                           Test,
                           Version,
                           Website);
@@ -118,6 +121,8 @@ package Alire.Properties.From_TOML is
                     Version            => Unique,
                     Website            => Unique,
                     Tags               => Multiple,
+                    Template           => Unique,
+                    Template_Inputs    => Unique,
                     Test               => Multiple);
 
    type Loader_Array is array (Property_Keys range <>) of Property_Loader;
@@ -149,23 +154,25 @@ package Alire.Properties.From_TOML is
    --  provide, shared by all external definitions found therein
 
    Release_Loaders : constant Loader_Array (Property_Keys) :=
-     (Actions        => Properties.Actions.From_TOML'Access,
-      Authors        => Labeled.From_TOML'Access,
-      Auto_GPR_With  => Bool.From_TOML'Access,
-      Build_Profiles => Properties.Build_Profiles.From_TOML'Access,
-      Build_Switches => Properties.Build_Switches.From_TOML'Access,
-      Description    => Labeled.From_TOML'Access,
-      Configuration  =>
+     (Actions         => Properties.Actions.From_TOML'Access,
+      Authors         => Labeled.From_TOML'Access,
+      Auto_GPR_With |
+      Template        => Bool.From_TOML'Access,
+      Build_Profiles  => Properties.Build_Profiles.From_TOML'Access,
+      Build_Switches  => Properties.Build_Switches.From_TOML'Access,
+      Description     => Labeled.From_TOML'Access,
+      Configuration   =>
         Properties.Configurations.Config_Entry_From_TOML'Access,
-      Environment    =>
+      Environment     =>
         Properties.Environment.From_TOML'Access,
-      Executables    => Labeled.From_TOML'Access,
-      Future         => Properties.Future.From_TOML'Access,
+      Executables     => Labeled.From_TOML'Access,
+      Future          => Properties.Future.From_TOML'Access,
       GPR_Externals |
       GPR_Set_Externals
-                     => Scenarios.From_TOML'Access,
-      Hint           => null,
-      Licenses       => Properties.Licenses.From_TOML'Access,
+                      => Scenarios.From_TOML'Access,
+      Hint            => null,
+      Licenses        => Properties.Licenses.From_TOML'Access,
+      Template_Inputs => Properties.Templates.Templates_From_TOML'Access,
       Long_Description   |
       Maintainers        |
       Maintainers_Logins |
@@ -174,8 +181,8 @@ package Alire.Properties.From_TOML is
       Project_Files      |
       Tags               |
       Version            |
-      Website        => Labeled.From_TOML'Access,
-      Test           => Tests.From_TOML'Access);
+      Website         => Labeled.From_TOML'Access,
+      Test            => Tests.From_TOML'Access);
    --  This loader applies to a normal release manifest
 
    --  The following array determines which properties accept dynamic

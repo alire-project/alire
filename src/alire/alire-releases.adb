@@ -811,6 +811,23 @@ package body Alire.Releases is
       end if;
    end Auto_GPR_With;
 
+   -----------------
+   -- Is_Template --
+   -----------------
+
+   function Is_Template (R : Release) return Boolean is
+      Vect : constant Alire.Properties.Vector :=
+        Conditional.Enumerate (R.Properties).Filter
+        (Alire.TOML_Keys.Template);
+   begin
+      if not Vect.Is_Empty then
+         return Alire.Properties.Bool.Property (Vect.First_Element).Value;
+      else
+         --  If there is no property, the release is not a template
+         return False;
+      end if;
+   end Is_Template;
+
    ------------------
    -- Has_Property --
    ------------------

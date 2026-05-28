@@ -302,6 +302,8 @@ package Alire.Releases is
 
    function Auto_GPR_With (R : Release) return Boolean;
 
+   function Is_Template (R : Release) return Boolean;
+
    procedure Print (R : Release);
    --  Dump info to console
 

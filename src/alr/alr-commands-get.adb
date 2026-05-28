@@ -1,5 +1,6 @@
 with Ada.Directories;
 
+with Alire.Roots;
 with Alire.Settings.Builtins;
 with Alire.Dependencies;
 with Alire.Directories;
@@ -11,6 +12,9 @@ with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
 with Alire.Utils.Switches;
+with Alire.Flags;
+with Alire.Templates;
+with Alire.Templates.Builtins;
 
 with Alr.Common;
 
@@ -146,6 +150,61 @@ package body Alr.Commands.Get is
          --  dependencies can still occur, but these are outside of the
          --  retrieved crate and might be corrected manipulating dependencies
          --  and updating.
+
+         if Cmd.Root.Release.Is_Template then
+            Trace.Debug ("This crate is a template.");
+
+            if not Alire.Flags.Template_Instantiation
+              (Root_Dir.Filename).Exists
+            then
+               declare
+                  Info : constant Alire.Templates.Builtins.Crate_Init_Info
+                    :=
+                      (Name => Alire.UStrings.To_Unbounded_String ("Test"),
+                          Is_Library => False,
+                          With_Test => True,
+                          Tags => AAA.Strings.Empty_Vector,
+                       others =>
+                         Alire.UStrings.To_Unbounded_String ("Test"));
+
+                  Map : constant Alire.Templates.Translations :=
+                    Alire.Templates.Builtins.Init_Crate_Translation (Info);
+
+                  --  use Alire.Properties.Configurations;
+                  --
+                  --  type LOL is (A, B, C, This_Is_A_Test);
+                  --  function Plop
+                  --  is new Alire.Properties.Configurations.Typedef_From_Enum
+                  --    (LOL, "Lol_Type");
+                  --
+                  --  package CUI renames
+                  --    Alire.Properties.Configurations.User_Input;
+                  --
+               begin
+                  --  Trace.Always ("User answer str: " &
+                  --              CUI.Query (String_Typedef ("Test", "LOL")));
+                  --  Trace.Always ("User answer enum: " &
+                  --                  CUI.Query (Plop (True, C)));
+                  --  Trace.Always ("User answer int: " &
+                  --              CUI.Query (Int_Typedef ("Test_Int", 0, 64,
+                  --                  True, 22)));
+                  --  Trace.Always ("User answer real: " &
+                  --                  CUI.Query (Real_Typedef ("Test_Real",
+                  --                                           0.0, 64.0,
+                  --                                           True, 22.0)));
+                  --
+                  --  Trace.Always ("User answer bool: " &
+                  --                  CUI.Query (Bool_Typedef ("Test_Real",
+                  --                                           True, True)));
+
+                  Alire.Templates.Translate_Tree (Root_Dir.Filename, Map);
+                  Alire.Flags.Template_Instantiation
+                    (Root_Dir.Filename).Mark_Done;
+               end;
+            else
+               Trace.Always ("Template already instantiated.");
+            end if;
+         end if;
 
          Root_Dir.Keep;
       end;

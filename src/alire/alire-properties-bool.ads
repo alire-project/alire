@@ -5,9 +5,12 @@ with Alire.TOML_Keys;
 package Alire.Properties.Bool with Preelaborate is
 
    type Labels is
-     (Auto_GPR_With
+     (Auto_GPR_With,
       --  Boolean to specify if a crate is compatible with the auto-gpr-with
       --  feature.
+
+      Template
+      --  Is the crate a template
      );
 
    type Property is new Properties.Property with private;
@@ -33,7 +36,8 @@ private
 
    function Key (L : Labels) return String
    is (case L is
-          when Auto_GPR_With => TOML_Keys.Auto_GPR_With);
+          when Auto_GPR_With => TOML_Keys.Auto_GPR_With,
+          when Template      => TOML_Keys.Template);
 
    type Property is new Properties.Property with record
       Name  : Labels;
