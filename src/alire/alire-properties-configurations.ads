@@ -99,9 +99,30 @@ package Alire.Properties.Configurations with Preelaborate is
       type T is (<>);
       Type_Name : String;
       Lower_Case : Boolean := False;
-   function Typedef_From_Enum return Config_Type_Definition;
+   function Typedef_From_Enum (Has_Default : Boolean := False;
+                               Default : T := T'First)
+                               return Config_Type_Definition;
 
    function String_Typedef (Name : String) return Config_Type_Definition;
+   function String_Typedef (Name : String; Default : String)
+                            return Config_Type_Definition;
+
+   function Int_Typedef (Type_Name   : String;
+                         First, Last : TOML.Any_Integer;
+                         Has_Default : Boolean := False;
+                         Default     : TOML.Any_Integer := 0)
+                         return Config_Type_Definition;
+
+   function Real_Typedef (Type_Name   : String;
+                          First, Last : TOML.Valid_Float;
+                          Has_Default : Boolean := False;
+                          Default     : TOML.Valid_Float := 0.0)
+                          return Config_Type_Definition;
+
+   function Bool_Typedef (Type_Name : String;
+                          Has_Default : Boolean := False;
+                          Default     : Boolean := False)
+                          return Config_Type_Definition;
 
    function Image (Val : TOML.TOML_Value) return String;
 
@@ -149,7 +170,11 @@ private
    type Config_Type_Kind is (Real, Int, Enum, Str, Bool);
 
    subtype Config_Integer is TOML.Any_Integer;
+
+   function Image (This : Config_Integer) return String;
+
    subtype Config_Real is TOML.Any_Float;
+   function Image (This : Config_Real) return String;
 
    type Config_Type_Definition (Kind : Config_Type_Kind)
    is new Properties.Property

@@ -915,9 +915,12 @@ package body Alire.Properties.Configurations is
    -- Builtin_From_Enum --
    -----------------------
 
-   function Typedef_From_Enum return Config_Type_Definition is
+   function Typedef_From_Enum (Has_Default : Boolean := False;
+                               Default : T := T'First)
+                               return Config_Type_Definition
+   is
 
-      Ret : constant Config_Type_Definition :=
+      Ret : Config_Type_Definition :=
         (Kind    => Enum,
          Name    => +Type_Name,
          Default => No_TOML_Value,
@@ -930,6 +933,15 @@ package body Alire.Properties.Configurations is
             Ret.Values.Append (TOML.Create_String (P'Img));
          end if;
       end loop;
+
+      if Has_Default then
+         if Lower_Case then
+            Ret.Default := TOML.Create_String (To_Lower_Case (Default'Img));
+         else
+            Ret.Default := TOML.Create_String (Default'Img);
+         end if;
+      end if;
+
       return Ret;
    end Typedef_From_Enum;
 
@@ -941,5 +953,72 @@ package body Alire.Properties.Configurations is
    is (Kind    => Str,
        Name    => +Name,
        Default => No_TOML_Value);
+
+   -----------------
+   -- Int_Typedef --
+   -----------------
+
+   function Int_Typedef (Type_Name   : String;
+                         First, Last : TOML.Any_Integer;
+                         Has_Default : Boolean := False;
+                         Default     : TOML.Any_Integer := 0)
+                         return Config_Type_Definition
+   is
+   begin
+      return (Kind      => Int,
+              Name      => +Type_Name,
+              Default   => (if Has_Default
+                            then TOML.Create_Integer (Default)
+                            else No_TOML_Value),
+              Int_First => First,
+              Int_Last  => Last);
+   end Int_Typedef;
+
+   ------------------
+   -- Real_Typedef --
+   ------------------
+
+   function Real_Typedef (Type_Name   : String;
+                          First, Last : TOML.Valid_Float;
+                          Has_Default : Boolean := False;
+                          Default     : TOML.Valid_Float := 0.0)
+                          return Config_Type_Definition
+   is
+   begin
+      return (Kind      => Real,
+              Name      => +Type_Name,
+              Default   => (if Has_Default
+                            then TOML.Create_Float ((TOML.Regular, Default))
+                            else No_TOML_Value),
+              Real_First => (TOML.Regular, First),
+              Real_Last  => (TOML.Regular, Last));
+   end Real_Typedef;
+
+   ------------------
+   -- Bool_Typedef --
+   ------------------
+
+   function Bool_Typedef (Type_Name : String;
+                          Has_Default : Boolean := False;
+                          Default     : Boolean := False)
+                          return Config_Type_Definition
+   is
+   begin
+      return (Kind      => Bool,
+              Name      => +Type_Name,
+              Default   => (if Has_Default
+                            then TOML.Create_Boolean (Default)
+                            else No_TOML_Value));
+   end Bool_Typedef;
+
+   --------------------
+   -- String_Typedef --
+   --------------------
+
+   function String_Typedef (Name : String; Default : String)
+                            return Config_Type_Definition
+   is (Kind    => Str,
+       Name    => +Name,
+       Default => TOML.Create_String (Default));
 
 end Alire.Properties.Configurations;
