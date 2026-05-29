@@ -1,4 +1,5 @@
 with Ada.Calendar;
+with Ada.Characters.Handling;
 with Ada.Exceptions;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
@@ -388,19 +389,78 @@ package body Alire.Test_Runner is
       package Yeison renames LML.Yeison;
       use all type Yeison.Kinds;
 
+      function Lower (S : String) return String
+                      renames Ada.Characters.Handling.To_Lower;
+
+      function Img (P : Test.Pragmas) return String
+      is (Lower (P'Image));
+      --  The stored key spelling for a documented pragma. The pragma parser
+      --  normalizes identifier keys to lower case, so the enum literal is
+      --  matched in lower case too.
+
       function Key (S : Yeison.Text) return Yeison.Any
       is (Yeison.Make.Str (S));
 
-      function Has_Key (Map : Yeison.Any; Name : String) return Boolean
-      is (for some K of Map.Keys =>
-            K.Kind = Str_Kind and then LML.Encode (K.As_Text) = Name);
-      --  Non-mutating presence test. Indexing a map with Variable_Indexing
-      --  auto-inserts a Nil entry for an absent key, so it cannot tell an
-      --  absent key from a genuinely valueless one; Keys does not mutate.
+      function Key (S : String) return Yeison.Any
+      is (Key (LML.Decode (S)));
+
+      function Key (P : Test.Pragmas) return Yeison.Any
+      is (Key (Img (P)));
 
       function Is_Known_Pragma is new AAA.Enum_Tools.Is_Valid (Test.Pragmas);
       --  Match each pragma key text against the documented enum literals.
       --  Ada's case-insensitive 'Value handles any source casing.
+
+      ----------------
+      -- Get_Action --
+      ----------------
+
+      function Get_Action return Test.Unknown_Parameter_Action is
+      --  Decode the tests.on_unknown_parameter setting. 'Value can raise if
+      --  the stored value was hand-edited or written by another alr version
+      --  with a different enum, so fall back to the safe default in that case.
+      --  Read afresh on each use so a runtime change is honoured.
+         Raw : constant String :=
+           Settings.Builtins.Tests_On_Unknown_Parameter.Get;
+      begin
+         return Test.Unknown_Parameter_Action'Value (Raw);
+      exception
+         when Constraint_Error =>
+            Trace.Warning
+              ("Invalid tests.on_unknown_parameter value '" & Raw
+               & "', defaulting to 'fail'");
+            return Test.Fail;
+      end Get_Action;
+
+      --------------
+      -- Diagnose --
+      --------------
+
+      procedure Diagnose (Log_Msg, Reason : String) is
+      --  Apply the tests.on_unknown_parameter policy to a problematic key.
+      begin
+         case Get_Action is
+            when Test.Ignore =>
+               null;
+            when Test.Skip =>
+               Trace.Warning (Log_Msg);
+               TC.Skip   := True;
+               TC.Reason := +Reason;
+            when Test.Fail =>
+               Trace.Error (Log_Msg);
+               TC.Pre_Fail := True;
+               TC.Reason   := +Reason;
+         end case;
+      end Diagnose;
+
+      procedure Wrong_Type (P : Test.Pragmas) is
+      --  A known key is present but carries an unexpected value type.
+         Reason : constant String :=
+           Test.Pragma_Name & " pragma key '" & Img (P)
+           & "' has an unexpected value type";
+      begin
+         Diagnose (Filename & ": " & Reason, Reason);
+      end Wrong_Type;
 
       Builder     : LML.Output.Yeison.Builder;
       All_Pragmas : Yeison.Any;
@@ -410,8 +470,18 @@ package body Alire.Test_Runner is
          LML.Options.Pragmas.Strict_On (Test.Pragma_Name));
       All_Pragmas := Builder.To_Yeison;
 
+      --  Most test sources carry no Alire_Test pragma at all, so the outer
+      --  key is commonly absent; guard before indexing (constant indexing
+      --  of a missing key would raise).
+      if All_Pragmas.Kind /= Map_Kind
+        or else not All_Pragmas.Has_Key (Lower (Test.Pragma_Name))
+      then
+         return;
+      end if;
+
       declare
-         Alire_Test : constant Yeison.Any := All_Pragmas (Key ("Alire_Test"));
+         Alire_Test : constant Yeison.Any :=
+                        All_Pragmas (Key (Lower (Test.Pragma_Name)));
       begin
          if Alire_Test.Kind /= Map_Kind then
             --  TODO: don't silently return, apply the same policy as for
@@ -419,43 +489,58 @@ package body Alire.Test_Runner is
             return;
          end if;
 
-         declare
-            Name_Value        : constant Yeison.Any :=
-                                  Alire_Test (Key ("Name"));
-            Timeout_Value     : constant Yeison.Any :=
-                                  Alire_Test (Key ("Timeout"));
          begin
-            if Name_Value.Kind = Str_Kind then
-               TC.Name := +LML.Encode (Name_Value.As_Text);
+            --  Indexing a map with an absent key raises Constraint_Error
+            --  (constant indexing does not auto-insert), so every known key
+            --  must be guarded with Has_Key before being read. A key that is
+            --  present but holds an unexpected value type is reported through
+            --  the same on_unknown_parameter policy as an unknown key.
+            if Alire_Test.Has_Key (Img (Test.Name)) then
+               declare
+                  V : constant Yeison.Any := Alire_Test (Key (Test.Name));
+               begin
+                  if V.Kind = Str_Kind then
+                     TC.Name := +LML.Encode (V.As_Text);
+                  else
+                     Wrong_Type (Test.Name);
+                  end if;
+               end;
             end if;
 
-            if Timeout_Value.Kind = Int_Kind then
-               TC.Timeout := Duration (Timeout_Value.As_Int);
-            elsif Timeout_Value.Kind = Real_Kind then
-               TC.Timeout := Duration (Timeout_Value.As_Real.Value);
+            if Alire_Test.Has_Key (Img (Test.Timeout)) then
+               declare
+                  V : constant Yeison.Any := Alire_Test (Key (Test.Timeout));
+               begin
+                  if V.Kind = Int_Kind then
+                     TC.Timeout := Duration (V.As_Int);
+                  elsif V.Kind = Real_Kind then
+                     TC.Timeout := Duration (V.As_Real.Value);
+                  else
+                     Wrong_Type (Test.Timeout);
+                  end if;
+               end;
             end if;
 
-            --  Should_Fail has three states: absent (keep the default
+            --  Should_Fail has three valid states: absent (keep the default
             --  False), present-but-valueless (bare key, e.g.
             --  `pragma Alire_Test (Should_Fail);` => True), and an explicit
-            --  Boolean. The first two both read as Nil through indexing, so
-            --  presence must be checked separately before reading.
-            if Has_Key (Alire_Test, "Should_Fail") then
+            --  Boolean. A valueless key reads as Nil, hence the Has_Key guard
+            --  to tell it apart from an absent key.
+            if Alire_Test.Has_Key (Img (Test.Should_Fail)) then
                declare
-                  Should_Fail_Value : constant Yeison.Any :=
-                                        Alire_Test (Key ("Should_Fail"));
+                  V : constant Yeison.Any :=
+                        Alire_Test (Key (Test.Should_Fail));
                begin
-                  if Should_Fail_Value.Kind = Nil_Kind then
+                  if V.Kind = Nil_Kind then
                      TC.Should_Fail := True;
-                  elsif Should_Fail_Value.Kind = Bool_Kind then
-                     TC.Should_Fail := Should_Fail_Value.As_Bool;
+                  elsif V.Kind = Bool_Kind then
+                     TC.Should_Fail := V.As_Bool;
+                  else
+                     Wrong_Type (Test.Should_Fail);
                   end if;
                end;
             end if;
          end;
-
-         --  TODO: for keys with unexpected typed values, behave as with
-         --  unknown pragma keys.
 
          --  TODO: use --format in test
 
@@ -463,50 +548,32 @@ package body Alire.Test_Runner is
          --  schema (see scripts/schemas/test-pragmas.yaml). The behaviour is
          --  driven by the tests.on_unknown_parameter setting.
          --
-         --  Note: reading the known keys above through Variable_Indexing
-         --  adds Nil entries to Alire_Test for any key the source did not
-         --  supply, so a Nil-kind entry here marks an absent (and therefore
-         --  uninteresting) pragma -- not an unknown one.
-         declare
-            Action : constant String :=
-              Settings.Builtins.Tests_On_Unknown_Parameter.Get;
-         begin
-            for K of Alire_Test.Keys loop
-               if K.Kind /= Nil_Kind
-                 and then not Is_Known_Pragma (LML.Encode (K.As_Text))
-               then
-                  declare
-                     Unknown : constant String := LML.Encode (K.As_Text);
-                     Message : constant String :=
-                       Filename & ": unknown Alire_Test pragma key '"
-                       & Unknown & "'";
-                  begin
-                     if Action = "ignore" then
-                        null;
-                     elsif Action = "skip" then
-                        Trace.Warning (Message);
-                        TC.Skip := True;
-                        TC.Reason :=
-                          +("unknown Alire_Test pragma key: " & Unknown);
-                     else
-                        --  "fail" (the default) and any invalid value land
-                        --  here. The Check on the builtin rejects invalid
-                        --  values at write time, so reaching this branch
-                        --  with anything else is a programmer error.
-                        Trace.Error (Message);
-                        TC.Pre_Fail := True;
-                        TC.Reason :=
-                          +("unknown Alire_Test pragma key: " & Unknown);
-                     end if;
-                  end;
-               end if;
-            end loop;
-         end;
+         --  Note: the known keys above are read through Has_Key-guarded
+         --  constant indexing, which inserts nothing, so the only Nil-kind
+         --  entries here come from genuinely valueless keys in the source.
+         for K of Alire_Test.Keys loop
+            if K.Kind /= Nil_Kind
+              and then not Is_Known_Pragma (LML.Encode (K.As_Text))
+            then
+               declare
+                  Unknown : constant String := LML.Encode (K.As_Text);
+                  Reason  : constant String :=
+                    "unknown " & Test.Pragma_Name & " pragma key: "
+                    & Unknown;
+               begin
+                  Diagnose
+                    (Filename & ": unknown " & Test.Pragma_Name
+                     & " pragma key '" & Unknown & "'",
+                     Reason);
+               end;
+            end if;
+         end loop;
       end;
 
    exception
       when LML.Duplicate_Pragma =>
-         Trace.Error (Filename & ": duplicate Alire_Test pragma key");
+         Trace.Error
+           (Filename & ": duplicate " & Test.Pragma_Name & " pragma key");
       when E : LML.Invalid_Pragma_Syntax =>
          Trace.Error (Filename & ": " & LML.Encode (LML.Decode
            (Ada.Exceptions.Exception_Message (E))));

@@ -20,6 +20,9 @@ package Alire.Test with Preelaborate is
      (Auxiliary_File,
       --  When True, the file is a support unit (not a test main) and must not
       --  be turned into a test. (TODO: recognized but not yet implemented.)
+      --  TODO: we can also not try to turn into a test and .adb that has a
+      --  corresponding .ads, since that's for sure a package. So this might be
+      --  useful only for `separate` definitions.
       Name,
       --  Override the displayed test name.
       Should_Fail,

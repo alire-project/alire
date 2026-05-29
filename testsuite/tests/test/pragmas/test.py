@@ -160,12 +160,32 @@ write_test(
     prelude='pragma Alire_Test (Name => "pragma_named");\n',
 )
 
+# No Alire_Test pragma at all. The file still carries unrelated pragmas
+# (the Warnings wrapper write_test inserts), so the runner must not choke
+# on the absent Alire_Test key; it falls back to the path-derived name.
+
+write_test("plain", "null;")
+
+# Case-insensitive pragma name and keys. Ada identifiers are
+# case-insensitive, so non-canonical casing must be honored exactly like
+# the canonical spelling: the mangled Should_Fail=True turns the raising
+# body into a pass, and the mangled Name overrides the displayed name.
+
+write_test(
+    "mixed_case",
+    "raise Program_Error;",
+    prelude=(
+        'pragma alire_test (nAmE, "Pragma_Mixed_Case");\n'
+        "pragma ALIRE_TEST (should_FAIL, True);\n"
+    ),
+)
+
 p = run_alr("--format=json", "test")
 data = parse_json_result(p)
 
 # Verify no failures in testing
 
-assert_eq(9, data["summary"]["total"])
+assert_eq(11, data["summary"]["total"])
 assert_eq(0, data["summary"]["failures"])
 
 # Verify names of tests
@@ -174,6 +194,8 @@ tests = data["tests"]
 names = sorted(t["name"] for t in tests)
 assert_eq(
     [
+        "Pragma_Mixed_Case",
+        "plain",
         "pragma_annotated",
         "pragma_compact",
         "pragma_multiline",
@@ -190,6 +212,15 @@ assert_eq(
 # Should_Fail=True must turn a raising test into a pass.
 
 assert_eq("pass", find_test(tests, "pragma_triple")["status"])
+
+# Case-insensitive Should_Fail=True does the same; the case-mangled Name
+# is applied as the display name.
+
+assert_eq("pass", find_test(tests, "Pragma_Mixed_Case")["status"])
+
+# A source with no Alire_Test pragma runs normally under its derived name.
+
+assert_eq("pass", find_test(tests, "plain")["status"])
 
 # Duplicate Alire_Test key: parser raises, runner logs an error and
 # falls back to defaults (test name derived from the file). The run still
@@ -259,7 +290,10 @@ write_test(
 
 p = run_alr("test", quiet=False, complain_on_error=False)
 assert_substring("unknown Alire_Test pragma key", p.out)
-assert_substring("Bogus", p.out)
+# Keys are normalized to lower case by the parser, so the diagnostic echoes
+# 'bogus', not the source spelling 'Bogus'. The quotes make this distinct
+# from the test/file name 'bogus_key'.
+assert_substring("'bogus'", p.out)
 assert_match(r".*\[ FAIL \] *\d+[smh]\d+ bogus_key.*", p.out)
 
 # 'ignore': the test runs to completion as if no unknown key were there.
@@ -282,7 +316,7 @@ run_alr(
 p = run_alr("test", quiet=False)
 assert_substring("unknown Alire_Test pragma key", p.out)
 assert_match(
-    r".*\[ SKIP \].*bogus_key \(unknown Alire_Test pragma key: Bogus\).*",
+    r".*\[ SKIP \].*bogus_key \(unknown Alire_Test pragma key: bogus\).*",
     p.out,
 )
 assert_not_substring("[ PASS ]", p.out)
@@ -298,7 +332,7 @@ assert_eq(0, data["summary"]["failures"])
 assert_eq(1, data["summary"]["skipped"])
 assert_eq("skip", find_test(data["tests"], "bogus_key")["status"])
 assert_substring(
-    "unknown Alire_Test pragma key: Bogus",
+    "unknown Alire_Test pragma key: bogus",
     find_test(data["tests"], "bogus_key")["reason"],
 )
 
