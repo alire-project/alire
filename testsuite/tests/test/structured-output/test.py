@@ -50,9 +50,14 @@ def structure_tests(data):
     assert tests[0]["status"] == "fail"
     assert tests[1]["status"] == "pass"
 
-    assert sorted(list(data["summary"].keys())) == ["failures", "total"]
+    assert sorted(list(data["summary"].keys())) == [
+        "failures",
+        "skipped",
+        "total",
+    ]
     assert data["summary"]["total"] == 2
     assert data["summary"]["failures"] == 1
+    assert data["summary"]["skipped"] == 0
 
 
 p = run_alr("--format=json", "test", complain_on_error=False)
