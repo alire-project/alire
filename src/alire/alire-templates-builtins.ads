@@ -15,6 +15,7 @@ with R.Crate_Test_Tests_Alire_Toml;
 with R.Crate_Test_Tests_Common_Name_Tests_Ads;
 with R.Crate_Test_Tests_Crate_Test_Tests_Gpr;
 with R.Crate_Test_Tests_Src_Name_Testsxassertions_Enabled_Adb;
+with R.Crate_Test_Tests_Test_Pragmas_Adc;
 
 with R.Github_Publish_Yml;
 with R.Github_Readme_Md;
@@ -82,6 +83,7 @@ package Alire.Templates.Builtins is
      .Append ("@_NAME_@_tests.gpr",                        +R.Crate_Test_Tests_Crate_Test_Tests_Gpr.Content)
      .Append ("common/@_NAME_@_tests.ads",                 +R.Crate_Test_Tests_Common_Name_Tests_Ads.Content)
      .Append ("src/@_NAME_@_tests-assertions_enabled.adb", +R.Crate_Test_Tests_Src_Name_Testsxassertions_Enabled_Adb.Content)
+     .Append ("test_pragmas.adc",                          +R.Crate_Test_Tests_Test_Pragmas_Adc.Content)
    ;
 
    Github : constant Tree := New_Tree

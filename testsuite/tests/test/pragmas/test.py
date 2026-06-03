@@ -21,15 +21,14 @@ def write_test(stem: str, body: str, prelude: str = "") -> None:
     Write a test source file under tests/src/. `stem` is the suffix after
     `xxx_tests-`, e.g. "named" yields tests/src/xxx_tests-named.adb. `prelude`
     is inserted ahead of the unit declaration, where compilation pragmas
-    must live. The unrecognized-pragma warning is suppressed locally so
-    `pragma Alire_Test` does not break -gnatwe builds.
+    must live. The generated test crate carries a `pragma Ignore_Pragma
+    (Alire_Test)` configuration pragma, so `pragma Alire_Test` needs no local
+    warning suppression to survive a -gnatwe build.
     """
     proc = f"Xxx_Tests.{stem.title()}"
     path = f"./tests/src/xxx_tests-{stem}.adb"
     with open(path, "w") as f:
-        f.write('pragma Warnings (Off, "unrecognized pragma*");\n')
         f.write(prelude)
-        f.write('pragma Warnings (On, "unrecognized pragma*");\n')
         f.write(f"procedure {proc} is\n")
         f.write(f"begin\n   {body}\nend {proc};\n")
 
@@ -128,14 +127,17 @@ write_test(
     ),
 )
 
-# Two distinct pragma names: only Alire_Test should be applied.
+# Two distinct pragma names: only Alire_Test should be applied. The foreign
+# pragma is locally silenced with `pragma Ignore_Pragma` so it does not trip
+# the -gnatwe switch (the crate-wide config pragma only ignores Alire_Test).
 
 write_test(
     "other_pragma",
     "null;",
     prelude=(
+        "pragma Ignore_Pragma (Other_Pragma);\n"
         'pragma Alire_Test (Name, "pragma_two_names");\n'
-        'pragma Other_Pragma (Tag, "ignored");\n'
+        'pragma Other_Pragma (Name, "ignored");\n'
     ),
 )
 

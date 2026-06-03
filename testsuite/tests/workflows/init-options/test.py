@@ -43,6 +43,7 @@ compare(contents('xxx'), ['xxx/.gitignore',
                           'xxx/tests/common/xxx_tests.ads',
                           'xxx/tests/src',
                           'xxx/tests/src/xxx_tests-assertions_enabled.adb',
+                          'xxx/tests/test_pragmas.adc',
                           'xxx/tests/xxx_tests.gpr',
                           'xxx/xxx.gpr'])
 
@@ -72,7 +73,8 @@ compare(contents('aaa'), ['aaa/.gitignore',
                           'aaa/tests/common',
                           'aaa/tests/common/aaa_tests.ads',
                           'aaa/tests/src',
-                          'aaa/tests/src/aaa_tests-assertions_enabled.adb'])
+                          'aaa/tests/src/aaa_tests-assertions_enabled.adb',
+                          'aaa/tests/test_pragmas.adc'])
 
 # Init without skeleton
 run_alr('init', '--bin', '--no-skel', 'yyy')
@@ -143,6 +145,7 @@ compare(contents('.'), ['./.gitignore',
                         './tests/common/zzz_tests.ads',
                         './tests/src',
                         './tests/src/zzz_tests-assertions_enabled.adb',
+                        './tests/test_pragmas.adc',
                         './tests/zzz_tests.gpr',
                         './zzz.gpr'])
 

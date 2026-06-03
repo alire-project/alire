@@ -37,7 +37,7 @@ properties:
           - True
       Timeout:
         description: >
-	  Maximum duration for the test, in seconds. Failure if exceeded.
+          Maximum duration for the test, in seconds. Failure if exceeded.
         type: number
         examples:
           - 11.1

@@ -13,8 +13,9 @@ with r.crate_lib_name_gpr;
 with r.crate_lib_src_name_ads;
 with r.crate_test_tests_alire_toml;
 with r.crate_test_tests_common_name_tests_ads;
-with r.crate_test_tests_crate_test_tests_gpr;
 with r.crate_test_tests_src_name_testsxassertions_enabled_adb;
+with r.crate_test_tests_test_pragmas_adc;
+with r.crate_test_tests_crate_test_tests_gpr;
 with r.github_readme_md;
 with r.github_publish_yml;
 with r.github_selftest_yml;
@@ -34,60 +35,64 @@ package body r is
          Register
             ("crate_bin/alire.toml",
              r.crate_bin_alire_toml.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
          Register
             ("crate_bin/name.gpr",
              r.crate_bin_name_gpr.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
          Register
             ("crate_bin/src/name.adb",
              r.crate_bin_src_name_adb.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
          Register
             ("crate_common/gitignore.hidden",
              r.crate_common_gitignore_hidden.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
          Register
             ("crate_lib/alire.toml",
              r.crate_lib_alire_toml.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
          Register
             ("crate_lib/name.gpr",
              r.crate_lib_name_gpr.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
          Register
             ("crate_lib/src/name.ads",
              r.crate_lib_src_name_ads.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
          Register
             ("crate_test/tests/alire.toml",
              r.crate_test_tests_alire_toml.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
          Register
             ("crate_test/tests/common/name_tests.ads",
              r.crate_test_tests_common_name_tests_ads.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
-         Register
-            ("crate_test/tests/crate_test_tests.gpr",
-             r.crate_test_tests_crate_test_tests_gpr.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
          Register
             ("crate_test/tests/src/name_tests-assertions_enabled."
              & "adb",
              r.crate_test_tests_src_name_testsxassertions_enabled_adb.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
+         Register
+            ("crate_test/tests/test_pragmas.adc",
+             r.crate_test_tests_test_pragmas_adc.Content'Access,
+             GNAT.Calendar.Time_Of (2026, 06, 03, 11, 09, 20, 0.0));
+         Register
+            ("crate_test/tests/crate_test_tests.gpr",
+             r.crate_test_tests_crate_test_tests_gpr.Content'Access,
+             GNAT.Calendar.Time_Of (2026, 06, 03, 11, 09, 34, 0.0));
          Register
             ("github/README.md",
              r.github_readme_md.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
          Register
             ("github/publish.yml",
              r.github_publish_yml.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
          Register
             ("github/selftest.yml",
              r.github_selftest_yml.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 05, 20, 06, 29, 53, 0.0));
+             GNAT.Calendar.Time_Of (2026, 06, 03, 08, 53, 44, 0.0));
       end if;
    end Init;
 

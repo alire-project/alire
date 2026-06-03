@@ -1,0 +1,5 @@
+--  `pragma Alire_Test (...)` clauses in test sources are read by the alr test
+--  runner, not the compiler. Tell GNAT to ignore the pragma so it is neither a
+--  warning nor (under -gnatwe) an error. Other unrecognized pragmas (e.g.
+--  typos) are still reported.
+pragma Ignore_Pragma (Alire_Test);

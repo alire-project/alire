@@ -9,9 +9,9 @@ package Alire.Test with Preelaborate is
    --
    --  `pragma Alire_Test (<key>, <value>);`
    --          |           |      |
-   --          |           |      \- Value: the setting to apply
-   --          |           \- Key: the option to exercise
-   --          \- The pragma may appear many times
+   --          |           |      \_ Value: the setting to apply
+   --          |           \_ Key: the option to exercise
+   --          \_ The pragma may appear many times
    --
    --  See /schemas/test-pragmas.yaml for the canonical schema.
 
