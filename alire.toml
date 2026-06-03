@@ -23,7 +23,6 @@ clic = "~0.3"
 den = "~0.2"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
-gnat_native = "/=13.2" # Known finalization bug
 gnatcoll = "^21"
 lml = "~0.2"
 minirest = "~0.3"
@@ -61,7 +60,7 @@ commit = "73d99ae1ff2f5210dc41c2ea7afebe600f9e9916"
 
 [pins.ada_toml]
 url    = "https://github.com/mosteo/ada-toml"
-commit = "33eaab64b9d531e240c3f525ad80a1f3eb8b9633"
+commit = "f51ff9730aa916f33981db4589666577e9dd05c7"
 
 [pins.ansiada]
 url    = "https://github.com/mosteo/ansi-ada"

@@ -1,8 +1,6 @@
 """
 Verify that `pragma Alire_Test (...)` clauses in test sources are honored
-by the alr test runner. Mirrors the pragma-input cases from
-deps/lml/test/src/test_pragmas.adb, but exercises the full pipeline
-through `alr test` instead of the parser in isolation.
+by the alr test runner, or that error conditions are properly handled.
 """
 
 import json
@@ -36,6 +34,7 @@ def write_test(stem: str, body: str, prelude: str = "") -> None:
         f.write(f"begin\n   {body}\nend {proc};\n")
 
 
+# Later used to ensure all expected tests are there
 def find_test(tests, name):
     for t in tests:
         if t["name"] == name:
@@ -43,6 +42,7 @@ def find_test(tests, name):
     raise AssertionError(f"no test named {name!r} in {[t['name'] for t in tests]}")
 
 
+# Return tests results as JSON
 def parse_json_result(p):
     """Return the parsed JSON object from p.out.
 
@@ -65,9 +65,8 @@ init_local_crate("xxx", with_test=True)
 # Drop the default failing test that init seeds.
 os.remove("./tests/src/xxx_tests-assertions_enabled.adb")
 
-# Supported triple: Name, Should_Fail, Timeout in a single prelude.
-# Body raises, but Should_Fail=True means this counts as a pass; the
-# Timeout value must be accepted without breaking the runner.
+# Supported keys: Name, Should_Fail, Timeout in a single prelude.
+# Body raises, but Should_Fail=True means this counts as a pass.
 
 write_test(
     "triple",
@@ -160,25 +159,22 @@ write_test(
     prelude='pragma Alire_Test (Name => "pragma_named");\n',
 )
 
-# No Alire_Test pragma at all. The file still carries unrelated pragmas
-# (the Warnings wrapper write_test inserts), so the runner must not choke
-# on the absent Alire_Test key; it falls back to the path-derived name.
+# No Alire_Test pragma at all (overkill but...)
 
 write_test("plain", "null;")
 
-# Case-insensitive pragma name and keys. Ada identifiers are
-# case-insensitive, so non-canonical casing must be honored exactly like
-# the canonical spelling: the mangled Should_Fail=True turns the raising
-# body into a pass, and the mangled Name overrides the displayed name.
+# Case-insensitive pragma name and keys
 
 write_test(
     "mixed_case",
     "raise Program_Error;",
     prelude=(
         'pragma alire_test (nAmE, "Pragma_Mixed_Case");\n'
-        "pragma ALIRE_TEST (should_FAIL, True);\n"
+        "pragma ALIRE_TEST (should_FAIL, TRUE);\n"
     ),
 )
+
+# Run all tests and capture JSON output for verification
 
 p = run_alr("--format=json", "test")
 data = parse_json_result(p)
@@ -222,9 +218,9 @@ assert_eq("pass", find_test(tests, "Pragma_Mixed_Case")["status"])
 
 assert_eq("pass", find_test(tests, "plain")["status"])
 
-# Duplicate Alire_Test key: parser raises, runner logs an error and
-# falls back to defaults (test name derived from the file). The run still
-# completes; we just want to see the error and the fallback name.
+# Duplicate Alire_Test key: parser raises, runner logs an error and falls back
+# to defaults. The run still completes, we just verify the error and the
+# fallback name.
 
 os.chdir("..")
 shutil.rmtree("xxx")
@@ -245,16 +241,16 @@ write_test(
 
 p = run_alr("test", quiet=False)
 assert_substring("duplicate Alire_Test pragma key", p.out)
-# Display name falls back to the path-derived form, not "first" / "second".
+# Display name falls back to the path-derived form, not "first" nor "second".
 assert_match(r".*\[ PASS \] *\d+[smh]\d+ dup_key.*", p.out)
 
 # Malformed Alire_Test pragma: strict mode causes Invalid_Pragma_Syntax,
 # which the runner translates to a pre-run failure. The test is marked
 # FAIL without being spawned. We exercise both the positional form with
 # an unsupported value expression, and the named form (`=>`) with the
-# same problem -- strict parsing must catch either shape.
+# same problem.
 for stem, prelude in (
-    ("bad_syntax_pos", 'pragma Alire_Test (Timeout, 1.0 * 60.0);\n'),
+    ("bad_syntax_pos",   'pragma Alire_Test (Timeout,   1.0 * 60.0);\n'),
     ("bad_syntax_named", 'pragma Alire_Test (Timeout => 1.0 * 60.0);\n'),
 ):
     os.chdir("..")
@@ -268,11 +264,9 @@ for stem, prelude in (
     assert_substring("failed to parse strict pragma", p.out)
     assert_match(rf".*\[ FAIL \] *\d+[smh]\d+ {stem}.*", p.out)
 
-# Unrecognized Alire_Test key: only Name, Should_Fail and Timeout are
-# defined by the schema (see scripts/schemas/test-pragmas.yaml). Any other
-# key is diagnosed; the action is driven by tests.on_unknown_parameter,
-# which can be 'ignore', 'fail' (default) or 'skip'. We exercise all three
-# values against the same source tree.
+# Unrecognized Alire_Test key: the response action is defined by
+# tests.on_unknown_parameter, which can be 'ignore', 'fail' (default) or
+# 'skip'. We exercise all three values against the same source tree.
 
 os.chdir("..")
 shutil.rmtree("xxx")
@@ -291,8 +285,7 @@ write_test(
 p = run_alr("test", quiet=False, complain_on_error=False)
 assert_substring("unknown Alire_Test pragma key", p.out)
 # Keys are normalized to lower case by the parser, so the diagnostic echoes
-# 'bogus', not the source spelling 'Bogus'. The quotes make this distinct
-# from the test/file name 'bogus_key'.
+# 'bogus', not the source spelling 'Bogus'.
 assert_substring("'bogus'", p.out)
 assert_match(r".*\[ FAIL \] *\d+[smh]\d+ bogus_key.*", p.out)
 

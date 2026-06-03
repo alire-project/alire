@@ -1,5 +1,4 @@
 with Ada.Calendar;
-with Ada.Characters.Handling;
 with Ada.Exceptions;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
@@ -36,36 +35,39 @@ package body Alire.Test_Runner is
    use Alire.Utils;
    use Ada.Strings.Unbounded;
 
-   --  A test case as discovered on disk, optionally enriched with
-   --  configuration parsed from `pragma Alire_Test (...)` clauses in the
-   --  test source. Pragma fields default when absent.
+   ---------------------
+   -- Default_Timeout --
+   ---------------------
 
    function Default_Timeout return Duration
    is (Duration (Settings.Builtins.Tests_Timeout.Get_Int));
-   --  Read from the `tests.timeout` setting at the moment a Test_Case is
-   --  constructed. A value of -1 disables the per-test deadline.
+
+   ---------------
+   -- Test_Case --
+   ---------------
 
    type Test_Case is record
       Path        : Unbounded_String;
-      --  Stores a Portable_Path value; held as Unbounded_String so the
-      --  record stays definite. Use Path_Of to retrieve as Portable_Path.
+      --  A Portable_Path value; Use Path_Of to retrieve as Portable_Path
       Name        : Unbounded_String;
-      --  Display-name override from `pragma Alire_Test (Name, "...");`.
-      --  Empty when the pragma is not present; callers then fall back to
-      --  the path-derived display name.
+      --  Display-name override from test configuration
       Timeout     : Duration := Default_Timeout;
       Should_Fail : Boolean := False;
       Skip        : Boolean := False;
-      --  When true, the test must be reported as skipped without being
-      --  spawned. Set by Load_Test_Case_Pragmas when an unknown Alire_Test
-      --  pragma key is found and tests.on_unknown_parameter = "skip".
+      --  When True, the test must be reported as skipped without being
+      --  spawned. For now, can happen when unknown configuration is found and
+      --  'skip' is the selected fallback policy.
       Pre_Fail    : Boolean := False;
-      --  When true, the test must be reported as failed without being
-      --  spawned. Set by Load_Test_Case_Pragmas when an unknown Alire_Test
-      --  pragma key is found and tests.on_unknown_parameter = "fail".
+      --  When True, the test must be reported as failed without being
+      --  spawned. For now, can happen when unknown configuration is found and
+      --  'fail' is the selected fallback policy.
       Reason      : Unbounded_String;
       --  Diagnostic shown alongside Skip or Pre_Fail.
    end record;
+
+   -------------
+   -- Path_Of --
+   -------------
 
    function Path_Of (TC : Test_Case) return Portable_Path
    is (Portable_Path (To_String (TC.Path)));
@@ -87,8 +89,7 @@ package body Alire.Test_Runner is
          Output            : AAA.Strings.Vector);
       --  Report a failing test with a message and its output
       procedure Skip (Test_Name, Reason : String);
-      --  Report a test that was not run (no duration, no output). Does not
-      --  count towards Fail_Count.
+      --  Report a test that was not run.
       function Total_Count return Natural;
       --  Get the total number of tests that have been processed
       function Fail_Count return Natural;
@@ -166,7 +167,7 @@ package body Alire.Test_Runner is
 
       --  TODO: have an xplicit XFAIL or similar in the output to distinguish
       --  from PASS/FAIL (or maybe annotate the test name with a trailing
-      --  [with expected failure] when Should_Fail). Now PASS is printed.
+      --  [with expected failure] when Should_Fail). Now just PASS is printed.
 
       ----------
       -- Pass --
@@ -377,7 +378,7 @@ package body Alire.Test_Runner is
        then To_String (TC.Name)
        else Display_Name (Path_Of (TC), Root_Prefix));
    --  Prefer the pragma-supplied name when present; otherwise derive it
-   --  from the on-disk path the way base did.
+   --  from the on-disk path.
 
    ----------------------------
    -- Load_Test_Case_Pragmas --
@@ -390,7 +391,7 @@ package body Alire.Test_Runner is
       use all type Yeison.Kinds;
 
       function Lower (S : String) return String
-                      renames Ada.Characters.Handling.To_Lower;
+                      renames AAA.Strings.To_Lower_Case;
 
       function Img (P : Test.Pragmas) return String
       is (Lower (P'Image));
@@ -398,8 +399,13 @@ package body Alire.Test_Runner is
       --  normalizes identifier keys to lower case, so the enum literal is
       --  matched in lower case too.
 
+      ---------
+      -- Key --
+      ---------
+      --  LML uses WWString, but we use String, so we have a bunch of helpers
+
       function Key (S : Yeison.Text) return Yeison.Any
-      is (Yeison.Make.Str (S));
+      is (Yeison.Make.Str (LML.Decode (Lower (LML.Encode (S)))));
 
       function Key (S : String) return Yeison.Any
       is (Key (LML.Decode (S)));
@@ -408,18 +414,13 @@ package body Alire.Test_Runner is
       is (Key (Img (P)));
 
       function Is_Known_Pragma is new AAA.Enum_Tools.Is_Valid (Test.Pragmas);
-      --  Match each pragma key text against the documented enum literals.
-      --  Ada's case-insensitive 'Value handles any source casing.
 
       ----------------
       -- Get_Action --
       ----------------
 
       function Get_Action return Test.Unknown_Parameter_Action is
-      --  Decode the tests.on_unknown_parameter setting. 'Value can raise if
-      --  the stored value was hand-edited or written by another alr version
-      --  with a different enum, so fall back to the safe default in that case.
-      --  Read afresh on each use so a runtime change is honoured.
+      --  Decode the tests.on_unknown_parameter setting
          Raw : constant String :=
            Settings.Builtins.Tests_On_Unknown_Parameter.Get;
       begin
@@ -441,7 +442,7 @@ package body Alire.Test_Runner is
       begin
          case Get_Action is
             when Test.Ignore =>
-               null;
+               Trace.Debug ("Ignoring unknown test configuration: " & Log_Msg);
             when Test.Skip =>
                Trace.Warning (Log_Msg);
                TC.Skip   := True;
@@ -452,6 +453,10 @@ package body Alire.Test_Runner is
                TC.Reason   := +Reason;
          end case;
       end Diagnose;
+
+      ----------------
+      -- Wrong_Type --
+      ----------------
 
       procedure Wrong_Type (P : Test.Pragmas) is
       --  A known key is present but carries an unexpected value type.
@@ -465,96 +470,82 @@ package body Alire.Test_Runner is
       Builder     : LML.Output.Yeison.Builder;
       All_Pragmas : Yeison.Any;
    begin
+      --  Load the pragmas from the test file, ensuring our own pragmas are
+      --  either parsed fully or reported as misconfigured (strict option).
+      --  Other pragmas are silently gobbled by the parser.
+
       LML.Input.Pragmas.File_IO.From_File
         (Filename, Builder,
          LML.Options.Pragmas.Strict_On (Test.Pragma_Name));
+
       All_Pragmas := Builder.To_Yeison;
 
-      --  Most test sources carry no Alire_Test pragma at all, so the outer
-      --  key is commonly absent; guard before indexing (constant indexing
-      --  of a missing key would raise).
-      if All_Pragmas.Kind /= Map_Kind
-        or else not All_Pragmas.Has_Key (Lower (Test.Pragma_Name))
-      then
+      --  Most test sources carry no Alire_Test pragma at all
+      if not All_Pragmas.Has_Key (Key (Test.Pragma_Name)) then
          return;
       end if;
 
+      --  Otherwise process the known pragma keys
       declare
          Alire_Test : constant Yeison.Any :=
-                        All_Pragmas (Key (Lower (Test.Pragma_Name)));
+                        All_Pragmas (Key (Test.Pragma_Name));
       begin
          if Alire_Test.Kind /= Map_Kind then
-            --  TODO: don't silently return, apply the same policy as for
-            --  unknown pragmas.
+            --  TODO: don't silently ignore, apply the same policy as for
+            --  unknown keys/values.
             return;
          end if;
 
-         begin
-            --  Indexing a map with an absent key raises Constraint_Error
-            --  (constant indexing does not auto-insert), so every known key
-            --  must be guarded with Has_Key before being read. A key that is
-            --  present but holds an unexpected value type is reported through
-            --  the same on_unknown_parameter policy as an unknown key.
-            if Alire_Test.Has_Key (Img (Test.Name)) then
-               declare
-                  V : constant Yeison.Any := Alire_Test (Key (Test.Name));
-               begin
-                  if V.Kind = Str_Kind then
-                     TC.Name := +LML.Encode (V.As_Text);
-                  else
-                     Wrong_Type (Test.Name);
-                  end if;
-               end;
-            end if;
+         if Alire_Test.Has_Key (Key (Test.Name)) then
+            declare
+               V : constant Yeison.Any := Alire_Test (Key (Test.Name));
+            begin
+               if V.Kind = Str_Kind then
+                  TC.Name := +LML.Encode (V.As_Text);
+               else
+                  Wrong_Type (Test.Name);
+               end if;
+            end;
+         end if;
 
-            if Alire_Test.Has_Key (Img (Test.Timeout)) then
-               declare
-                  V : constant Yeison.Any := Alire_Test (Key (Test.Timeout));
-               begin
-                  if V.Kind = Int_Kind then
-                     TC.Timeout := Duration (V.As_Int);
-                  elsif V.Kind = Real_Kind then
-                     TC.Timeout := Duration (V.As_Real.Value);
-                  else
-                     Wrong_Type (Test.Timeout);
-                  end if;
-               end;
-            end if;
+         if Alire_Test.Has_Key (Key (Test.Timeout)) then
+            declare
+               V : constant Yeison.Any := Alire_Test (Key (Test.Timeout));
+            begin
+               if V.Kind = Int_Kind then
+                  TC.Timeout := Duration (V.As_Int);
+               elsif V.Kind = Real_Kind then
+                  TC.Timeout := Duration (V.As_Real.Value);
+               else
+                  Wrong_Type (Test.Timeout);
+               end if;
+            end;
+         end if;
 
-            --  Should_Fail has three valid states: absent (keep the default
-            --  False), present-but-valueless (bare key, e.g.
-            --  `pragma Alire_Test (Should_Fail);` => True), and an explicit
-            --  Boolean. A valueless key reads as Nil, hence the Has_Key guard
-            --  to tell it apart from an absent key.
-            if Alire_Test.Has_Key (Img (Test.Should_Fail)) then
-               declare
-                  V : constant Yeison.Any :=
-                        Alire_Test (Key (Test.Should_Fail));
-               begin
-                  if V.Kind = Nil_Kind then
-                     TC.Should_Fail := True;
-                  elsif V.Kind = Bool_Kind then
-                     TC.Should_Fail := V.As_Bool;
-                  else
-                     Wrong_Type (Test.Should_Fail);
-                  end if;
-               end;
-            end if;
-         end;
+         --  Should_Fail has three valid states: absent (keep the default
+         --  False), present-but-valueless (bare key, e.g.
+         --  `pragma Alire_Test (Should_Fail);`), and an explicit
+         --  Boolean. A valueless key is parsed as a Nil key.
+         if Alire_Test.Has_Key (Key (Test.Should_Fail)) then
+            declare
+               V : constant Yeison.Any :=
+                     Alire_Test (Key (Test.Should_Fail));
+            begin
+               if V.Kind = Nil_Kind then
+                  TC.Should_Fail := True;
+               elsif V.Kind = Bool_Kind then
+                  TC.Should_Fail := V.As_Bool;
+               else
+                  Wrong_Type (Test.Should_Fail);
+               end if;
+            end;
+         end if;
 
-         --  TODO: use --format in test
+         --  Diagnose unknown keys per the tests.on_unknown_parameter setting.
+         --  Yeison still hasn't key deletion, so we visit them all again.
 
-         --  Diagnose any pragma key that is not part of the documented
-         --  schema (see scripts/schemas/test-pragmas.yaml). The behaviour is
-         --  driven by the tests.on_unknown_parameter setting.
-         --
-         --  Note: the known keys above are read through Has_Key-guarded
-         --  constant indexing, which inserts nothing, so the only Nil-kind
-         --  entries here come from genuinely valueless keys in the source.
          for K of Alire_Test.Keys loop
-            if K.Kind /= Nil_Kind
-              and then not Is_Known_Pragma (LML.Encode (K.As_Text))
-            then
+            if not Is_Known_Pragma (LML.Encode (K.As_Text)) then
                declare
                   Unknown : constant String := LML.Encode (K.As_Text);
                   Reason  : constant String :=
@@ -572,14 +563,17 @@ package body Alire.Test_Runner is
 
    exception
       when LML.Duplicate_Pragma =>
+         --  The same configuration key appeared more than once
          Trace.Error
            (Filename & ": duplicate " & Test.Pragma_Name & " pragma key");
       when E : LML.Invalid_Pragma_Syntax =>
+         --  One of our pragmas couldn't be fully parsed, so for now we fail.
+         --  TODO: apply the same policy as for unknown keys/values instead for
+         --  hard failure.
          Trace.Error (Filename & ": " & LML.Encode (LML.Decode
            (Ada.Exceptions.Exception_Message (E))));
          TC.Pre_Fail := True;
-         TC.Reason   := +LML.Encode (LML.Decode
-           (Ada.Exceptions.Exception_Message (E)));
+         TC.Reason   := +Ada.Exceptions.Exception_Message (E);
    end Load_Test_Case_Pragmas;
 
    ---------------------
@@ -659,7 +653,7 @@ package body Alire.Test_Runner is
 
       type Test_Info (N, M : Positive) is record
          Name        : String (1 .. N);
-         --  Display name (pragma override, or path-derived).
+         --  Display name
          Output_File : String (1 .. M);
          --  Output file for the test, will be loaded and printed if the test
          --  fails
@@ -714,9 +708,7 @@ package body Alire.Test_Runner is
          Args : constant Argument_List := (1 .. 0 => <>);
          Pid  : Process_Id;
       begin
-         --  Tests configured to fail or skip without running (e.g. an
-         --  unknown Alire_Test pragma key combined with
-         --  tests.on_unknown_parameter = "fail" or "skip") are reported
+         --  Tests configured to fail or skip without running are reported
          --  directly without launching the binary.
          if TC.Skip then
             Driver.Skip (Full_Print_Name, To_String (TC.Reason));
@@ -886,6 +878,7 @@ package body Alire.Test_Runner is
                 (This.Path,
                  Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator));
       begin
+         --  TODO: skip files that also have an ".ads" counterpart
          if AAA.Strings.Has_Suffix (String (Name), ".adb") then
             declare
                TC : Test_Case :=

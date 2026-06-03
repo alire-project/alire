@@ -17,7 +17,7 @@ aggregate project Alr_Env is
                          "deps/_configs/json-ada/json",
 
                          --  These are regular vendored dependencies, possibly
-                         --  containing their own config if they're Alire
+                         --  containing their own config if they are Alire
                          --  crates that have a default config committed.
                          "deps/aaa",
                          "deps/ada-toml",
