@@ -1,6 +1,5 @@
 """
-Helpers to validate Alire manifests against the catalog JSON Schema that
-is authored in YAML and shipped at <repo>/schemas/catalog-schema.yaml.
+Helpers to validate Alire manifests against the manifest schema
 """
 
 import os
@@ -13,11 +12,11 @@ from drivers.alr import TESTSUITE_ROOT
 
 SCHEMA_PATH = os.path.normpath(
     os.path.join(TESTSUITE_ROOT, os.pardir,
-                 "schemas", "catalog-schema.yaml"))
+                 "schemas", "manifest-schema.yaml"))
 
 
 def catalog_validator():
-    """Return a Draft 2020-12 validator for the catalog schema."""
+    """Return a Draft 2020-12 validator for the manifest schema."""
     with open(SCHEMA_PATH, encoding="utf-8") as f:
         schema = yaml.safe_load(f)
     Draft202012Validator.check_schema(schema)

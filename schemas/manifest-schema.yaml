@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://json-schema.org/draft/2020-12/schema
 #
-# JSON Schema (authored in YAML, Draft 2020-12) for Alire catalog manifests.
+# JSON Schema (authored in YAML, Draft 2020-12) for Alire manifests.
 #
 # Validates both index manifests (`<name>-<version>.toml`) and local
 # manifests (`alire.toml`). It is intentionally *lenient* about the
@@ -13,14 +13,14 @@
 # e.g. `yq -o=json` or `python -c 'import yaml,json,sys;
 # json.dump(yaml.safe_load(open(sys.argv[1])), sys.stdout)'`):
 #
-#   taplo lint --schema=catalog-schema.json path/to/alire.toml
-#   check-jsonschema --schemafile catalog-schema.json path/to/manifest.toml
+#   taplo lint --schema=manifest-schema.json path/to/alire.toml
+#   check-jsonschema --schemafile manifest-schema.json path/to/manifest.toml
 #
 # NOTE: this schema relies on `$ref`/`$defs` and `patternProperties`, which
 # are needed to express the recursive `'case(...)'` dynamic expressions.
 
 "$schema": "https://json-schema.org/draft/2020-12/schema"
-"$id": "https://alire.ada.dev/schemas/catalog-schema.yaml"
+"$id": "https://raw.githubusercontent.com/alire-project/alire/master/schemas/manifest-schema.yaml"
 title: Alire crate release manifest
 description: >-
   A single Alire release manifest, or a file of external definitions. See

@@ -1,6 +1,6 @@
 """
-Intentionally malformed manifests must be rejected by the catalog JSON
-Schema (schemas/catalog-schema.yaml), each for its intended reason.
+Intentionally malformed manifests must be rejected by the manifest JSON
+Schema (schemas/manifest-schema.yaml), each for its intended reason.
 """
 
 from drivers.schema import catalog_validator, manifest_errors

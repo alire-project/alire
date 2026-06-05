@@ -1,6 +1,6 @@
 """
 Every crate manifest in the fixture indices must validate against the
-catalog JSON Schema (schemas/catalog-schema.yaml).
+manifest JSON Schema (schemas/manifest-schema.yaml).
 """
 
 import glob
