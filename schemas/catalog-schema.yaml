@@ -21,7 +21,7 @@
 
 "$schema": "https://json-schema.org/draft/2020-12/schema"
 "$id": "https://alire.ada.dev/schemas/catalog-schema.yaml"
-title: Alire catalog manifest
+title: Alire crate release manifest
 description: >-
   A single Alire release manifest, or a file of external definitions. See
   doc/catalog-format-spec.md for the authoritative specification.
@@ -29,20 +29,27 @@ description: >-
 type: object
 additionalProperties: false
 
-# Lenient required set: the common subset valid for both index and local
-# manifests. (Index additionally needs version/maintainers/origin, and local
-# forbids origin, but those are not enforced here on purpose.)
+# Required for both index and local manifests. `version` is mandatory too
+# (enforced below) for every release; only external-only definition files
+# (which carry `[[external]]` and no release version) may omit it. Index-only
+# extras (maintainers, origin) are not enforced here, on purpose.
 required:
   - name
   - description
+
+# `version` is mandatory unless this is an external-only definition file.
+allOf:
+  - if:
+      not:
+        required: [external]
+    then:
+      required: [version]
 
 properties:
 
   # --- Static identification -------------------------------------------
   name:
-    type: string
-    pattern: '^[a-zA-Z][a-zA-Z0-9_]*$'
-    description: Crate name. See `alr help identifiers`.
+    "$ref": "#/$defs/crate-name"
   version:
     type: string
     description: Semantic version of the release.
@@ -116,15 +123,10 @@ properties:
     "$ref": "#/$defs/test-node"
 
   # --- Origin -----------------------------------------------------------
+  # `origin` is always a table (url/hashes/commit/... live inside it), and
+  # may be wrapped in `case(...)` selectors for binary origins.
   origin:
-    oneOf:
-      - type: string
-      - "$ref": "#/$defs/dyn-origin"
-  # `origin = "url"` may be accompanied by these sibling keys:
-  archive-name:
-    type: string
-  hashes:
-    "$ref": "#/$defs/hash-array"
+    "$ref": "#/$defs/dyn-origin"
 
   # --- Configuration ----------------------------------------------------
   configuration:
@@ -165,10 +167,11 @@ properties:
 
   case-label:
     description: >-
-      A case branch label: a single platform value, an alternation `a|b`,
+      A case branch label: a single platform value, an alternation `a|b`
+      (whitespace around values and `|` is allowed and trimmed by Alire),
       or the catch-all `...`.
     type: string
-    pattern: '^(\.\.\.|[A-Za-z0-9._+-]+(\|[A-Za-z0-9._+-]+)*)$'
+    pattern: '^(\.\.\.|[A-Za-z0-9._+ -]+(\|[A-Za-z0-9._+ -]+)*)$'
 
   # Atomic dynamic boolean: a bool, or a pure case wrapper of dyn-bools.
   dyn-bool:
@@ -566,6 +569,13 @@ properties:
     # matches: alire
 
   # ----- Shared leaf types ---------------------------------------------
+  crate-name:
+    description: >-
+      Crate identifier: 3 to 64 characters, lowercase latin alphanumerics
+      and underscores, not starting with an underscore. See
+      `alr help identifiers`. (Ada/GPR keyword exclusion is not checked.)
+    type: string
+    pattern: '^[a-z0-9][a-z0-9_]{2,63}$'
   string-array:
     type: array
     items:
