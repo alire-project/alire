@@ -1,0 +1,577 @@
+# yaml-language-server: $schema=https://json-schema.org/draft/2020-12/schema
+#
+# JSON Schema (authored in YAML, Draft 2020-12) for Alire catalog manifests.
+#
+# Validates both index manifests (`<name>-<version>.toml`) and local
+# manifests (`alire.toml`). It is intentionally *lenient* about the
+# index-vs-local differences: only the common-subset required fields are
+# enforced, so a local manifest without `origin`/`version` still passes.
+#
+# The format is specified in doc/catalog-format-spec.md; keep both in sync.
+#
+# How to validate (the schema is YAML; most tools want JSON — convert with
+# e.g. `yq -o=json` or `python -c 'import yaml,json,sys;
+# json.dump(yaml.safe_load(open(sys.argv[1])), sys.stdout)'`):
+#
+#   taplo lint --schema=catalog-schema.json path/to/alire.toml
+#   check-jsonschema --schemafile catalog-schema.json path/to/manifest.toml
+#
+# NOTE: this schema relies on `$ref`/`$defs` and `patternProperties`, which
+# are needed to express the recursive `'case(...)'` dynamic expressions.
+
+"$schema": "https://json-schema.org/draft/2020-12/schema"
+"$id": "https://alire.ada.dev/schemas/catalog-schema.yaml"
+title: Alire catalog manifest
+description: >-
+  A single Alire release manifest, or a file of external definitions. See
+  doc/catalog-format-spec.md for the authoritative specification.
+
+type: object
+additionalProperties: false
+
+# Lenient required set: the common subset valid for both index and local
+# manifests. (Index additionally needs version/maintainers/origin, and local
+# forbids origin, but those are not enforced here on purpose.)
+required:
+  - name
+  - description
+
+properties:
+
+  # --- Static identification -------------------------------------------
+  name:
+    type: string
+    pattern: '^[a-zA-Z][a-zA-Z0-9_]*$'
+    description: Crate name. See `alr help identifiers`.
+  version:
+    type: string
+    description: Semantic version of the release.
+  description:
+    type: string
+    description: One-line description of the crate.
+  long-description:
+    type: string
+  notes:
+    type: string
+  website:
+    type: string
+  auto-gpr-with:
+    type: boolean
+
+  authors:
+    "$ref": "#/$defs/string-array"
+  maintainers:
+    "$ref": "#/$defs/string-array"
+  maintainers-logins:
+    type: array
+    items:
+      type: string
+      minLength: 1
+  licenses:
+    type: string
+    description: SPDX expression (not fully validated here).
+  tags:
+    "$ref": "#/$defs/string-array"
+
+  # --- Dynamic scalar / list properties --------------------------------
+  available:
+    "$ref": "#/$defs/dyn-bool"
+  executables:
+    "$ref": "#/$defs/dyn-strlist"
+  project-files:
+    "$ref": "#/$defs/dyn-strlist"
+
+  # --- Dependencies and relations --------------------------------------
+  depends-on:
+    "$ref": "#/$defs/deps-or-array"
+  forbids:
+    "$ref": "#/$defs/deps-or-array"
+  provides:
+    type: array
+    items:
+      type: string
+  pins:
+    type: array
+    items:
+      "$ref": "#/$defs/pin-table"
+
+  # --- GPR integration --------------------------------------------------
+  gpr-externals:
+    type: object
+    additionalProperties:
+      oneOf:
+        - type: string
+        - type: array
+          items:
+            type: string
+  gpr-set-externals:
+    "$ref": "#/$defs/dyn-string-map"
+
+  # --- Environment / actions / test ------------------------------------
+  environment:
+    "$ref": "#/$defs/dyn-environment"
+  actions:
+    "$ref": "#/$defs/action-node"
+  test:
+    "$ref": "#/$defs/test-node"
+
+  # --- Origin -----------------------------------------------------------
+  origin:
+    oneOf:
+      - type: string
+      - "$ref": "#/$defs/dyn-origin"
+  # `origin = "url"` may be accompanied by these sibling keys:
+  archive-name:
+    type: string
+  hashes:
+    "$ref": "#/$defs/hash-array"
+
+  # --- Configuration ----------------------------------------------------
+  configuration:
+    "$ref": "#/$defs/configuration"
+
+  # --- Build profiles / switches ---------------------------------------
+  build-profiles:
+    type: object
+    additionalProperties:
+      "$ref": "#/$defs/build-profile"
+  build-switches:
+    type: object
+    propertyNames:
+      "$ref": "#/$defs/profile-or-wildcard"
+    additionalProperties:
+      "$ref": "#/$defs/build-switch-profile"
+
+  # --- External definitions --------------------------------------------
+  external:
+    type: array
+    items:
+      "$ref": "#/$defs/external"
+
+"$defs":
+
+  # =====================================================================
+  # Dynamic-expression machinery
+  #
+  # A "dynamic" value may carry one or more `'case(var)'` selectors between
+  # the property key and its value, nested arbitrarily. We model this as a
+  # recursive type: a value is either the static value, or a `case` wrapper
+  # whose branches are again dynamic values.
+  # =====================================================================
+
+  # Pattern matching a `case(var)` key for any supported environment var.
+  # (Used inside patternProperties below; repeated literally because JSON
+  # Schema patternProperties keys cannot themselves be $ref'd.)
+
+  case-label:
+    description: >-
+      A case branch label: a single platform value, an alternation `a|b`,
+      or the catch-all `...`.
+    type: string
+    pattern: '^(\.\.\.|[A-Za-z0-9._+-]+(\|[A-Za-z0-9._+-]+)*)$'
+
+  # Atomic dynamic boolean: a bool, or a pure case wrapper of dyn-bools.
+  dyn-bool:
+    oneOf:
+      - type: boolean
+      - "$ref": "#/$defs/case-of-bool"
+  case-of-bool:
+    type: object
+    additionalProperties: false
+    patternProperties:
+      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+        type: object
+        propertyNames:
+          "$ref": "#/$defs/case-label"
+        additionalProperties:
+          "$ref": "#/$defs/dyn-bool"
+
+  # Atomic dynamic string list. A single string is accepted as shorthand
+  # for a one-element list (Alire's labeled properties allow this).
+  dyn-strlist:
+    oneOf:
+      - type: string
+      - type: array
+        items:
+          type: string
+      - "$ref": "#/$defs/case-of-strlist"
+  case-of-strlist:
+    type: object
+    additionalProperties: false
+    patternProperties:
+      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+        type: object
+        propertyNames:
+          "$ref": "#/$defs/case-label"
+        additionalProperties:
+          "$ref": "#/$defs/dyn-strlist"
+
+  # Composite dynamic table: a dependency table. `case(...)` keys are
+  # siblings of static `crate = "constraint"` entries; the two
+  # patternProperties are disjoint because crate names never contain '('.
+  dyn-deps:
+    type: object
+    additionalProperties: false
+    patternProperties:
+      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+        type: object
+        propertyNames:
+          "$ref": "#/$defs/case-label"
+        additionalProperties:
+          "$ref": "#/$defs/dyn-deps"
+      '^[a-zA-Z][a-zA-Z0-9_]*$':
+        type: string
+  deps-or-array:
+    oneOf:
+      - "$ref": "#/$defs/dyn-deps"
+      - type: array
+        items:
+          "$ref": "#/$defs/dyn-deps"
+
+  # Composite dynamic table mapping arbitrary string names to strings
+  # (used by gpr-set-externals). Keys matching `case(...)` are branches;
+  # any other key is an external-variable name mapping to a string.
+  dyn-string-map:
+    type: object
+    patternProperties:
+      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+        type: object
+        propertyNames:
+          "$ref": "#/$defs/case-label"
+        additionalProperties:
+          "$ref": "#/$defs/dyn-string-map"
+    additionalProperties:
+      type: string
+
+  # Environment table: VAR.<action> = value, with optional case branches.
+  dyn-environment:
+    type: object
+    patternProperties:
+      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+        type: object
+        propertyNames:
+          "$ref": "#/$defs/case-label"
+        additionalProperties:
+          "$ref": "#/$defs/dyn-environment"
+    additionalProperties:
+      type: object
+      additionalProperties: false
+      properties:
+        append:
+          type: string
+        prepend:
+          type: string
+        set:
+          type: string
+
+  # Actions are recursive: a single action table, an array of action nodes
+  # (the `[[actions]]` / `[[actions.'case'.x]]` array-of-tables forms), or a
+  # `case` wrapper whose branches are again action nodes (possibly arrays).
+  action-node:
+    oneOf:
+      - "$ref": "#/$defs/action-table"
+      - type: array
+        items:
+          "$ref": "#/$defs/action-node"
+      - type: object
+        additionalProperties: false
+        patternProperties:
+          '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+            type: object
+            propertyNames:
+              "$ref": "#/$defs/case-label"
+            additionalProperties:
+              "$ref": "#/$defs/action-node"
+  action-table:
+    type: object
+    additionalProperties: false
+    required: [type, command]
+    properties:
+      type:
+        "$ref": "#/$defs/action-type"
+      command:
+        type: array
+        items:
+          type: string
+      directory:
+        type: string
+
+  # A test spec: a single runner table, an array of runners (`[[test]]`),
+  # or a `case` wrapper whose branches are again test nodes.
+  test-node:
+    oneOf:
+      - "$ref": "#/$defs/test-table"
+      - type: array
+        items:
+          "$ref": "#/$defs/test-node"
+      - type: object
+        additionalProperties: false
+        patternProperties:
+          '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+            type: object
+            propertyNames:
+              "$ref": "#/$defs/case-label"
+            additionalProperties:
+              "$ref": "#/$defs/test-node"
+  test-table:
+    type: object
+    additionalProperties: false
+    properties:
+      runner:
+        "$ref": "#/$defs/runner"
+      command:
+        type: array
+        items:
+          type: string
+      id:
+        type: string
+        minLength: 1
+      directory:
+        type: string
+      jobs:
+        type: integer
+        minimum: 1
+    oneOf:
+      - required: [runner]
+      - required: [command]
+
+  # Origin table, possibly wrapped in nested case branches (binary origins).
+  dyn-origin:
+    type: object
+    additionalProperties: false
+    patternProperties:
+      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+        type: object
+        propertyNames:
+          "$ref": "#/$defs/case-label"
+        additionalProperties:
+          "$ref": "#/$defs/dyn-origin"
+    properties:
+      url:
+        type: string
+      hashes:
+        "$ref": "#/$defs/hash-array"
+      archive-name:
+        type: string
+      commit:
+        type: string
+      subdir:
+        type: string
+      binary:
+        type: boolean
+
+  # Pins: version | path | git (url + commit|branch + subdir).
+  pin-table:
+    type: object
+    additionalProperties:
+      type: object
+      additionalProperties: false
+      properties:
+        version:
+          type: string
+        path:
+          type: string
+        url:
+          type: string
+        commit:
+          type: string
+        branch:
+          type: string
+        subdir:
+          type: string
+
+  # External definitions.
+  external:
+    type: object
+    properties:
+      kind:
+        "$ref": "#/$defs/external-kind"
+      hint:
+        "$ref": "#/$defs/dyn-string"
+      available:
+        "$ref": "#/$defs/dyn-bool"
+      version-command:
+        type: array
+        items:
+          type: string
+      version-regexp:
+        type: string
+      provides:
+        type: string
+      origin:
+        "$ref": "#/$defs/dyn-origin-list"
+    allOf:
+      - if:
+          properties:
+            kind:
+              const: version-output
+          required: [kind]
+        then:
+          required: [version-command, version-regexp]
+      - if:
+          properties:
+            kind:
+              const: system
+          required: [kind]
+        then:
+          required: [origin]
+
+  # A list of system package names, possibly case-dynamic.
+  dyn-origin-list:
+    oneOf:
+      - type: array
+        items:
+          type: string
+      - type: object
+        additionalProperties: false
+        patternProperties:
+          '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+            type: object
+            propertyNames:
+              "$ref": "#/$defs/case-label"
+            additionalProperties:
+              "$ref": "#/$defs/dyn-origin-list"
+
+  # Atomic dynamic string (e.g. external hint).
+  dyn-string:
+    oneOf:
+      - type: string
+      - type: object
+        additionalProperties: false
+        patternProperties:
+          '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+            type: object
+            propertyNames:
+              "$ref": "#/$defs/case-label"
+            additionalProperties:
+              "$ref": "#/$defs/dyn-string"
+
+  # ----- Crate configuration -------------------------------------------
+  # Key names are restricted (case-insensitively) to the known flags; the
+  # canonical spellings below additionally type-check their values.
+  configuration:
+    type: object
+    propertyNames:
+      "$ref": "#/$defs/config-key"
+    properties:
+      disabled:
+        type: boolean
+      output_dir:
+        type: string
+      generate_ada:
+        type: boolean
+      generate_gpr:
+        type: boolean
+      generate_c:
+        type: boolean
+      auto_gpr_with:
+        type: boolean
+      variables:
+        type: object
+        additionalProperties:
+          "$ref": "#/$defs/config-variable"
+      values:
+        type: object
+        additionalProperties:
+          type: object
+          additionalProperties: true
+  config-variable:
+    type: object
+    additionalProperties: false
+    required: [type]
+    properties:
+      type:
+        "$ref": "#/$defs/config-type"
+      default: true
+      first:
+        type: number
+      last:
+        type: number
+      values:
+        type: array
+        items:
+          type: string
+    allOf:
+      - if:
+          properties:
+            type:
+              pattern: '^[Ee][Nn][Uu][Mm]$'   # Enum, case-insensitive
+          required: [type]
+        then:
+          required: [values]
+
+  # ----- Build profiles / switches -------------------------------------
+  # Switch category keys are restricted (case-insensitively) to the known
+  # categories; each maps to a named selection or a custom switch list.
+  build-switch-profile:
+    type: object
+    propertyNames:
+      "$ref": "#/$defs/switch-category"
+    additionalProperties:
+      "$ref": "#/$defs/switch-value"
+  # Each switch category accepts a named selection (string) or a custom
+  # list of raw compiler switches.
+  switch-value:
+    oneOf:
+      - type: string
+      - type: array
+        items:
+          type: string
+
+  # ----- Case-insensitive token patterns -------------------------------
+  # Alire compares enum tokens and these key names case-insensitively.
+  # ECMA-262 (JSON Schema) regex has no case-insensitive flag, so each
+  # letter is spelled as a [Xx] class. The patterns live here, behind sane
+  # names, with the readable alternation in a comment beneath each.
+  config-key:
+    description: Crate configuration flag/table name, case-insensitive.
+    pattern: '^([Dd][Ii][Ss][Aa][Bb][Ll][Ee][Dd]|[Oo][Uu][Tt][Pp][Uu][Tt]_[Dd][Ii][Rr]|[Gg][Ee][Nn][Ee][Rr][Aa][Tt][Ee]_[Aa][Dd][Aa]|[Gg][Ee][Nn][Ee][Rr][Aa][Tt][Ee]_[Gg][Pp][Rr]|[Gg][Ee][Nn][Ee][Rr][Aa][Tt][Ee]_[Cc]|[Aa][Uu][Tt][Oo]_[Gg][Pp][Rr]_[Ww][Ii][Tt][Hh]|[Vv][Aa][Rr][Ii][Aa][Bb][Ll][Ee][Ss]|[Vv][Aa][Ll][Uu][Ee][Ss])$'
+    # matches: disabled | output_dir | generate_ada | generate_gpr |
+    #          generate_c | auto_gpr_with | variables | values
+  config-type:
+    description: Configuration variable type, case-insensitive.
+    type: string
+    pattern: '^([Ss][Tt][Rr][Ii][Nn][Gg]|[Bb][Oo][Oo][Ll][Ee][Aa][Nn]|[Ee][Nn][Uu][Mm]|[Ii][Nn][Tt][Ee][Gg][Ee][Rr]|[Rr][Ee][Aa][Ll])$'
+    # matches: string | boolean | enum | integer | real
+  switch-category:
+    description: Build switch category name, case-insensitive.
+    pattern: '^([Oo][Pp][Tt][Ii][Mm][Ii][Zz][Aa][Tt][Ii][Oo][Nn]|[Dd][Ee][Bb][Uu][Gg]_[Ii][Nn][Ff][Oo]|[Rr][Uu][Nn][Tt][Ii][Mm][Ee]_[Cc][Hh][Ee][Cc][Kk][Ss]|[Cc][Oo][Mm][Pp][Ii][Ll][Ee]_[Cc][Hh][Ee][Cc][Kk][Ss]|[Cc][Oo][Nn][Tt][Rr][Aa][Cc][Tt][Ss]|[Ss][Tt][Yy][Ll][Ee]_[Cc][Hh][Ee][Cc][Kk][Ss]|[Aa][Dd][Aa]_[Vv][Ee][Rr][Ss][Ii][Oo][Nn]|[Ss][Oo][Uu][Rr][Cc][Ee]_[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg])$'
+    # matches: optimization | debug_info | runtime_checks |
+    #          compile_checks | contracts | style_checks | ada_version |
+    #          source_encoding
+  build-profile:
+    description: Build profile name, case-insensitive.
+    type: string
+    pattern: '^([Dd][Ee][Vv][Ee][Ll][Oo][Pp][Mm][Ee][Nn][Tt]|[Rr][Ee][Ll][Ee][Aa][Ss][Ee]|[Vv][Aa][Ll][Ii][Dd][Aa][Tt][Ii][Oo][Nn])$'
+    # matches: development | release | validation
+  profile-or-wildcard:
+    description: Build profile name or '*' wildcard, case-insensitive.
+    type: string
+    pattern: '^(\*|[Dd][Ee][Vv][Ee][Ll][Oo][Pp][Mm][Ee][Nn][Tt]|[Rr][Ee][Ll][Ee][Aa][Ss][Ee]|[Vv][Aa][Ll][Ii][Dd][Aa][Tt][Ii][Oo][Nn])$'
+    # matches: * | development | release | validation
+  action-type:
+    description: Action trigger kind, case-insensitive.
+    type: string
+    pattern: '^([Pp][Oo][Ss][Tt]-[Ff][Ee][Tt][Cc][Hh]|[Pp][Rr][Ee]-[Bb][Uu][Ii][Ll][Dd]|[Pp][Oo][Ss][Tt]-[Bb][Uu][Ii][Ll][Dd]|[Tt][Ee][Ss][Tt])$'
+    # matches: post-fetch | pre-build | post-build | test
+  external-kind:
+    description: External definition kind, case-insensitive.
+    type: string
+    pattern: '^([Hh][Ii][Nn][Tt]|[Vv][Ee][Rr][Ss][Ii][Oo][Nn]-[Oo][Uu][Tt][Pp][Uu][Tt]|[Ss][Yy][Ss][Tt][Ee][Mm])$'
+    # matches: hint | version-output | system
+  runner:
+    description: Built-in test runner name, case-insensitive.
+    type: string
+    pattern: '^([Aa][Ll][Ii][Rr][Ee])$'
+    # matches: alire
+
+  # ----- Shared leaf types ---------------------------------------------
+  string-array:
+    type: array
+    items:
+      type: string
+  hash-array:
+    type: array
+    items:
+      type: string
+      pattern: '^(sha512|sha256):[0-9a-fA-F]+$'
