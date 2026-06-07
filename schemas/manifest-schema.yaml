@@ -51,17 +51,17 @@ properties:
   name:
     "$ref": "#/$defs/crate-name"
   version:
-    type: string
+    type: string  # TODO: refine into a semver pattern
     description: Semantic version of the release.
   description:
-    type: string
+    type: string  # TODO: refine with bounds
     description: One-line description of the crate.
   long-description:
     type: string
   notes:
     type: string
   website:
-    type: string
+    type: string  # TODO: refine as URL
   auto-gpr-with:
     type: boolean
 
@@ -78,7 +78,7 @@ properties:
     type: string
     description: SPDX expression (not fully validated here).
   tags:
-    "$ref": "#/$defs/string-array"
+    "$ref": "#/$defs/string-array"  # TODO: look for a SPDX scheme
 
   # --- Dynamic scalar / list properties --------------------------------
   available:
@@ -96,7 +96,7 @@ properties:
   provides:
     type: array
     items:
-      type: string
+      type: string  # TODO: reuse the crate-name definition
   pins:
     type: array
     items:
@@ -124,7 +124,7 @@ properties:
 
   # --- Origin -----------------------------------------------------------
   # `origin` is always a table (url/hashes/commit/... live inside it), and
-  # may be wrapped in `case(...)` selectors for binary origins.
+  # may contain `case(...)` selectors for binary origins.
   origin:
     "$ref": "#/$defs/dyn-origin"
 
@@ -182,6 +182,12 @@ properties:
     type: object
     additionalProperties: false
     patternProperties:
+      # TODO: this case repeats because a patternProperties requires a literal
+      # regex, but since this is YAML, it could be factored out with anchors
+      # and aliases. That's not widely supported in YAML parsers (e.g. GitHub's
+      # one for workflows), so this is just a note for the future --arm). Also,
+      # the definition should be put in a top-level key (e.g. _defs) that won't
+      # be rejected by schema validators nor interfere with the validation.
       '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
         type: object
         propertyNames:
@@ -260,6 +266,8 @@ properties:
       type: object
       additionalProperties: false
       properties:
+        # TODO: those strings are considered path fragments and use portable
+        # format, I believe. Verify.
         append:
           type: string
         prepend:
@@ -297,7 +305,7 @@ properties:
         items:
           type: string
       directory:
-        type: string
+        type: string # TODO: a portable path
 
   # A test spec: a single runner table, an array of runners (`[[test]]`),
   # or a `case` wrapper whose branches are again test nodes.
@@ -330,7 +338,7 @@ properties:
         type: string
         minLength: 1
       directory:
-        type: string
+        type: string  # TODO: a portable path
       jobs:
         type: integer
         minimum: 1
@@ -357,9 +365,9 @@ properties:
       archive-name:
         type: string
       commit:
-        type: string
+        type: string  # TODO: length is known
       subdir:
-        type: string
+        type: string  # TODO: a portable path, more precisely (forward slashes)
       binary:
         type: boolean
 
@@ -373,7 +381,7 @@ properties:
         version:
           type: string
         path:
-          type: string
+          type: string  # TODO: a portable path
         url:
           type: string
         commit:
@@ -381,7 +389,25 @@ properties:
         branch:
           type: string
         subdir:
-          type: string
+          type: string  # TODO: a portable path
+      # A pin is exactly one of: version, path, or git origin (url with
+      # an optional commit|branch -- not both -- and subdir).
+      oneOf:
+        - required: [version]
+          properties: {version: true}
+          additionalProperties: false
+        - required: [path]
+          properties: {path: true}
+          additionalProperties: false
+        - required: [url]
+          properties:
+            url: true
+            commit: true
+            branch: true
+            subdir: true
+          additionalProperties: false
+          not:
+            required: [commit, branch]
 
   # External definitions.
   external:
@@ -451,7 +477,9 @@ properties:
 
   # ----- Crate configuration -------------------------------------------
   # Key names are restricted (case-insensitively) to the known flags; the
-  # canonical spellings below additionally type-check their values.
+  # canonical spellings below additionally type-check their values. We could
+  # use patterns to catch all spellings but that would be ugly and not much
+  # more robust, that's the spelling used overwhelmingly in the index.
   configuration:
     type: object
     propertyNames:
@@ -498,7 +526,7 @@ properties:
       - if:
           properties:
             type:
-              pattern: '^[Ee][Nn][Uu][Mm]$'   # Enum, case-insensitive
+              "$ref": "#/$defs/config-type-enum"
           required: [type]
         then:
           required: [values]
@@ -536,6 +564,11 @@ properties:
     type: string
     pattern: '^([Ss][Tt][Rr][Ii][Nn][Gg]|[Bb][Oo][Oo][Ll][Ee][Aa][Nn]|[Ee][Nn][Uu][Mm]|[Ii][Nn][Tt][Ee][Gg][Ee][Rr]|[Rr][Ee][Aa][Ll])$'
     # matches: string | boolean | enum | integer | real
+  config-type-enum:
+    description: The Enum configuration variable type, case-insensitive.
+    type: string
+    pattern: '^[Ee][Nn][Uu][Mm]$'
+    # matches: enum
   switch-category:
     description: Build switch category name, case-insensitive.
     pattern: '^([Oo][Pp][Tt][Ii][Mm][Ii][Zz][Aa][Tt][Ii][Oo][Nn]|[Dd][Ee][Bb][Uu][Gg]_[Ii][Nn][Ff][Oo]|[Rr][Uu][Nn][Tt][Ii][Mm][Ee]_[Cc][Hh][Ee][Cc][Kk][Ss]|[Cc][Oo][Mm][Pp][Ii][Ll][Ee]_[Cc][Hh][Ee][Cc][Kk][Ss]|[Cc][Oo][Nn][Tt][Rr][Aa][Cc][Tt][Ss]|[Ss][Tt][Yy][Ll][Ee]_[Cc][Hh][Ee][Cc][Kk][Ss]|[Aa][Dd][Aa]_[Vv][Ee][Rr][Ss][Ii][Oo][Nn]|[Ss][Oo][Uu][Rr][Cc][Ee]_[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg])$'
