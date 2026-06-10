@@ -3,9 +3,9 @@ Intentionally malformed manifests must be rejected by the manifest JSON
 Schema (schemas/manifest-schema.yaml), each for its intended reason.
 """
 
-from drivers.schema import catalog_validator, manifest_errors
+from drivers.schemas import manifest_validator, manifest_errors
 
-validator = catalog_validator()
+validator = manifest_validator()
 
 # A minimal valid release manifest, extended with one defect per case.
 BASE = 'name = "crate"\nversion = "1.0.0"\ndescription = "d"\n'
@@ -19,7 +19,7 @@ CASES = [
      'name = "crate"\ndescription = "d"\n',
      "'version' is a required property"),
     ("crate name too short",
-     'name = "ab"\nversion = "1.0.0"\ndescription = "d"\n',
+     'name = "a"\nversion = "1.0.0"\ndescription = "d"\n',
      "does not match"),
     ("crate name with whitespace",
      'name = "bad name"\nversion = "1.0.0"\ndescription = "d"\n',
@@ -31,7 +31,7 @@ CASES = [
      BASE + '[available."case(planet)"]\nmars = true\n',
      "is not valid"),
     ("unknown build switch category",
-     BASE + '[build-switches]\nrelease.frobnicate = "Yes"\n',
+     BASE + '[build-switches]\nrelease.laudate = "Yes"\n',
      "does not match"),
     ("invalid action type",
      BASE + '[[actions]]\ntype = "post-lunch"\ncommand = ["x"]\n',
@@ -44,7 +44,7 @@ CASES = [
      "is not of type 'object'"),
 ]
 
-problems = []
+problems = [] # unexpected passes
 for label, manifest, expected in CASES:
     errors = manifest_errors(validator, manifest)
     if not errors:
@@ -56,11 +56,12 @@ for label, manifest, expected in CASES:
             f"{label}: rejected, but no error contained {expected!r}; "
             f"got: {messages}")
 
+# Log unexpected passes to test output before asserting to fail the test
 for problem in problems:
     print(problem)
 
 assert not problems, \
     f"{len(problems)} case(s) did not behave as intended"
 
-print(f"Rejected {len(CASES)} malformed manifests as intended")
+
 print("SUCCESS")

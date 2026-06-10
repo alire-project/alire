@@ -1,15 +1,17 @@
 """
 Every crate manifest in the fixture indices must validate against the
-manifest JSON Schema (schemas/manifest-schema.yaml).
+manifest schema. We don't hold invalid manifests in the fixture indices (at
+least right now). Invalid cases are either in test-local indices or crafted on
+the spot.
 """
 
 import glob
 import os
 
 from drivers.alr import fixtures_path
-from drivers.schema import catalog_validator, manifest_errors
+from drivers.schemas import manifest_validator, manifest_errors
 
-validator = catalog_validator()
+validator = manifest_validator()
 
 # Every directory holding an index.toml is an index root; validate all of
 # its crate manifests.
@@ -41,5 +43,6 @@ for failure in failures:
 
 assert not failures, \
     f"{len(failures)} fixture manifest(s) failed schema validation"
+
 
 print("SUCCESS")
