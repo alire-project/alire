@@ -1,4 +1,5 @@
 with Alire.Errors;
+with Alire.Utils.Config_Type_Def;
 
 package body Alire.Crate_Configuration.Hashes is
 
@@ -12,8 +13,8 @@ package body Alire.Crate_Configuration.Hashes is
 
       for Untyped of Rel.Config_Variables loop
          declare
-            Def : constant Properties.Configurations.Config_Type_Definition :=
-                    Properties.Configurations.Config_Type_Definition (Untyped);
+            Def : constant Properties.Configurations.Config_Variable :=
+                    Properties.Configurations.Config_Variable (Untyped);
             Key : constant String :=
                     Crate_Configuration.Key (Rel.Name, Def.Name);
          begin
@@ -33,7 +34,7 @@ package body Alire.Crate_Configuration.Hashes is
             Add (Kind  => "config",
                  Key   => Key,
                  Value =>
-                   Properties.Configurations.Image
+                   Alire.Utils.Config_Type_Def.Image
                      (Config.Var_Map (+Key).Value));
          end;
       end loop;

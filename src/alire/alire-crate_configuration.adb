@@ -6,6 +6,7 @@ with AAA.Enum_Tools;
 with AAA.Strings; use AAA.Strings;
 
 with Alire.Containers;
+with Alire.Utils.Config_Type_Def; use Alire.Utils.Config_Type_Def;
 with Alire_Early_Elaboration;
 with Alire.Solutions;
 with Alire.Roots;
@@ -31,7 +32,7 @@ package body Alire.Crate_Configuration is
 
    Must_Be_Set : constant UString := +"(variable without default still unset)";
 
-   function Builtin_Build_Profile is new Typedef_From_Enum
+   function Builtin_Build_Profile is new Enum_Typedef
      (Alire.Utils.Switches.Profile_Kind,
       "Build_Profile",
       Lower_Case => True);
@@ -116,7 +117,7 @@ package body Alire.Crate_Configuration is
    -----------------------
 
    function Build_Profile_Key (Crate : Crate_Name) return String
-   is (To_Lower_Case (Crate.As_String & "." & Builtin_Build_Profile.Name));
+   is (To_Lower_Case (Crate.As_String & "." & (+Builtin_Build_Profile.Name)));
 
    -----------------------
    -- Set_Build_Profile --
@@ -254,7 +255,7 @@ package body Alire.Crate_Configuration is
          --  Set build_Mode value in configuration variables
          This.Set_Value
            (Profile_Maps.Key (Cursor),
-            (Name => +Builtin_Build_Profile.Name,
+            (Name => Builtin_Build_Profile.Name,
              Value => TOML.Create_String
                (To_Lower_Case (Profile_Maps.Element (Cursor)'Img))),
             Set_By => "Build profile map");
@@ -427,6 +428,7 @@ package body Alire.Crate_Configuration is
                                     Full : Boolean)
    is
 
+      use Properties.Configurations;
       use Alire.Directories;
       use Alire.Origins;
 
@@ -557,7 +559,7 @@ package body Alire.Crate_Configuration is
       for Elt of Host_Info loop
          TIO.New_Line (File);
          TIO.Put_Line (File,
-                       Elt.Type_Def.Element.To_Ada_Declaration (Elt.Value));
+                       To_Ada_Declaration (Elt.Type_Def.Element, Elt.Value));
       end loop;
 
       for C in This.Var_Map.Iterate loop
@@ -578,7 +580,8 @@ package body Alire.Crate_Configuration is
 
                if Name (C) = Crate then
                   TIO.New_Line (File);
-                  TIO.Put_Line (File, Type_Def.To_Ada_Declaration (Elt.Value));
+                  TIO.Put_Line (File,
+                                To_Ada_Declaration (Type_Def, Elt.Value));
                end if;
             else
                Trace.Debug
@@ -670,7 +673,7 @@ package body Alire.Crate_Configuration is
       for Elt of Host_Info loop
          TIO.New_Line (File);
          TIO.Put_Line (File,
-                       Elt.Type_Def.Element.To_GPR_Declaration (Elt.Value));
+                       To_GPR_Declaration (Elt.Type_Def.Element, Elt.Value));
       end loop;
 
       TIO.Put_Line (File,
@@ -702,7 +705,8 @@ package body Alire.Crate_Configuration is
 
                if Name (C) = Crate then
                   TIO.New_Line (File);
-                  TIO.Put_Line (File, Type_Def.To_GPR_Declaration (Elt.Value));
+                  TIO.Put_Line (File,
+                                To_GPR_Declaration (Type_Def, Elt.Value));
                end if;
             else
                Trace.Debug
@@ -744,7 +748,7 @@ package body Alire.Crate_Configuration is
       for Elt of Host_Info loop
          TIO.New_Line (File);
          TIO.Put_Line (File,
-                       Elt.Type_Def.Element.To_C_Declaration (Elt.Value));
+                       To_C_Declaration (Elt.Type_Def.Element, Elt.Value));
       end loop;
 
       for C in This.Var_Map.Iterate loop
@@ -765,7 +769,8 @@ package body Alire.Crate_Configuration is
 
                if Name (C) = Crate then
                   TIO.New_Line (File);
-                  TIO.Put_Line (File, Type_Def.To_C_Declaration (Elt.Value));
+                  TIO.Put_Line (File,
+                                To_C_Declaration (Type_Def, Elt.Value));
                end if;
             else
                Trace.Debug
@@ -793,9 +798,9 @@ package body Alire.Crate_Configuration is
                              Crate    : Crate_Name;
                              Type_Def : Config_Type_Definition)
    is
-      Type_Name_Lower : constant String := To_Lower_Case (Type_Def.Name);
+      Type_Name_Lower : constant String := To_Lower_Case (+Type_Def.Name);
 
-      Name : constant Unbounded_String := +Key (Crate, Type_Def.Name);
+      Name : constant Unbounded_String := +Key (Crate, +Type_Def.Name);
    begin
 
       if Is_Reserved_Name (Type_Name_Lower) then
@@ -833,10 +838,17 @@ package body Alire.Crate_Configuration is
 
       This.Add_Definition (Crate, Builtin_Build_Profile);
 
-      for Prop of Rel.On_Platform_Properties (Root.Environment,
-                                              Config_Type_Definition'Tag)
+      for Prop of Rel.On_Platform_Properties
+        (Root.Environment,
+         Alire.Properties.Configurations.Config_Variable'Tag)
       loop
-         This.Add_Definition (Crate, Config_Type_Definition (Prop));
+         declare
+            Def_Prop : constant
+              Properties.Configurations.Config_Variable :=
+              Alire.Properties.Configurations.Config_Variable (Prop);
+         begin
+            This.Add_Definition (Crate, Def_Prop.Get_Def);
+         end;
       end loop;
    end Load_Definitions;
 
@@ -846,7 +858,7 @@ package body Alire.Crate_Configuration is
 
    procedure Set_Value (This   : in out Global_Config;
                         Crate  : Crate_Name;
-                        Val    : Assignment;
+                        Val    : Properties.Configurations.Assignment;
                         Set_By : String)
    is
       Name : constant Unbounded_String := +Key (Crate, +Val.Name);
@@ -891,6 +903,7 @@ package body Alire.Crate_Configuration is
                             Root  : in out Roots.Root;
                             Crate : Crate_Name)
    is
+      use Properties.Configurations;
 
       Rel : constant Releases.Release := Root.Release (Crate);
 

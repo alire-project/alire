@@ -6,6 +6,8 @@ with Alire.TOML_Keys;
 with Ada.Strings.Unbounded;
 with Ada.Containers.Doubly_Linked_Lists;
 
+with Alire.Utils;
+with Alire.Utils.Config_Type_Def;
 with TOML;
 
 package Alire.Properties.Configurations with Preelaborate is
@@ -46,31 +48,19 @@ package Alire.Properties.Configurations with Preelaborate is
    function Auto_GPR_With (This : Config_Entry) return Boolean;
    function Disabled (This : Config_Entry) return Boolean;
 
-   type Config_Type_Definition (<>) is new Properties.Property with private;
+   type Config_Variable (<>) is new Properties.Property with private;
    --  [configuration.variables]
 
-   function Valid (This : Config_Type_Definition;
+   function Valid (This : Config_Variable;
                    Val  : TOML.TOML_Value)
                    return Boolean;
 
-   function Default (This : Config_Type_Definition) return TOML.TOML_Value;
+   function Default (This : Config_Variable) return TOML.TOML_Value;
 
-   function Name (This : Config_Type_Definition) return String;
+   function Name (This : Config_Variable) return String;
 
-   function To_Ada_Declaration (This : Config_Type_Definition;
-                                Value : TOML.TOML_Value)
-                                return String
-     with Pre => This.Valid (Value);
-
-   function To_GPR_Declaration (This : Config_Type_Definition;
-                                Value : TOML.TOML_Value)
-                                return String
-     with Pre => This.Valid (Value);
-
-   function To_C_Declaration (This : Config_Type_Definition;
-                              Value :  TOML.TOML_Value)
-                              return String
-     with Pre => This.Valid (Value);
+   function Get_Def (This : Config_Variable)
+                     return Utils.Config_Type_Def.Config_Type_Definition;
 
    type Assignment is record
       Name  : Ada.Strings.Unbounded.Unbounded_String;
@@ -94,37 +84,6 @@ package Alire.Properties.Configurations with Preelaborate is
 
    function Assignments_From_TOML (From : TOML_Adapters.Key_Queue)
                                     return Conditional.Properties;
-
-   generic
-      type T is (<>);
-      Type_Name : String;
-      Lower_Case : Boolean := False;
-   function Typedef_From_Enum (Has_Default : Boolean := False;
-                               Default : T := T'First)
-                               return Config_Type_Definition;
-
-   function String_Typedef (Name : String) return Config_Type_Definition;
-   function String_Typedef (Name : String; Default : String)
-                            return Config_Type_Definition;
-
-   function Int_Typedef (Type_Name   : String;
-                         First, Last : TOML.Any_Integer;
-                         Has_Default : Boolean := False;
-                         Default     : TOML.Any_Integer := 0)
-                         return Config_Type_Definition;
-
-   function Real_Typedef (Type_Name   : String;
-                          First, Last : TOML.Valid_Float;
-                          Has_Default : Boolean := False;
-                          Default     : TOML.Valid_Float := 0.0)
-                          return Config_Type_Definition;
-
-   function Bool_Typedef (Type_Name : String;
-                          Has_Default : Boolean := False;
-                          Default     : Boolean := False)
-                          return Config_Type_Definition;
-
-   function Image (Val : TOML.TOML_Value) return String;
 
 private
 
@@ -167,47 +126,34 @@ private
    function Disabled (This : Config_Entry) return Boolean
    is (This.Disabled);
 
-   type Config_Type_Kind is (Real, Int, Enum, Str, Bool);
-
-   subtype Config_Integer is TOML.Any_Integer;
-
-   function Image (This : Config_Integer) return String;
-
-   subtype Config_Real is TOML.Any_Float;
-   function Image (This : Config_Real) return String;
-
-   type Config_Type_Definition (Kind : Config_Type_Kind)
+   type Config_Variable
    is new Properties.Property
-     with record
-      Name : Ada.Strings.Unbounded.Unbounded_String;
-      Default : TOML.TOML_Value;
-      case Kind is
-         when Real =>
-            Real_First, Real_Last : Config_Real;
-         when Int =>
-            Int_First, Int_Last : Config_Integer;
-         when Enum =>
-            Values : TOML.TOML_Value;
-         when Str | Bool =>
-            null;
-      end case;
+   with record
+      Def : Alire.Utils.Config_Type_Def.Config_Type_Definition;
    end record;
 
    overriding
-   function Key (This : Config_Type_Definition) return String
+   function Key (This : Config_Variable) return String
    is (TOML_Keys.Config_Vars);
 
    overriding
-   function Image (This : Config_Type_Definition) return String;
+   function Image (This : Config_Variable) return String
+   is (Alire.Utils.Config_Type_Def.Image (This.Def));
 
    overriding
-   function To_TOML (This : Config_Type_Definition) return TOML.TOML_Value;
+   function To_TOML (This : Config_Variable) return TOML.TOML_Value
+   is (Alire.Utils.Config_Type_Def.To_TOML (This.Def));
 
    overriding
-   function To_YAML (This : Config_Type_Definition) return String;
+   function To_YAML (This : Config_Variable) return String
+   is (Alire.Utils.Config_Type_Def.To_YAML (This.Def));
 
-   function Default (This : Config_Type_Definition) return TOML.TOML_Value
-   is (This.Default);
+   function Default (This : Config_Variable) return TOML.TOML_Value
+   is (This.Def.Default);
+
+   function Get_Def (This : Config_Variable)
+                     return Utils.Config_Type_Def.Config_Type_Definition
+   is (This.Def);
 
    overriding
    function Key (This : Config_Value_Assignment) return String

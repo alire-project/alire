@@ -9,6 +9,19 @@ with Den;
 
 package body Alire.Templates is
 
+   ---------------------
+   -- Add_Translation --
+   ---------------------
+
+   procedure Add_Translation (Map : in out Translations;
+                              Var : String;
+                              Val : String)
+   is
+      use Templates_Parser;
+   begin
+      Insert (Map.Set, Assoc (Var, Val));
+   end Add_Translation;
+
    -------------------
    -- Parsing_Error --
    -------------------

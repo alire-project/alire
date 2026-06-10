@@ -1,8 +1,9 @@
 with TOML;
 
 with Alire.Utils.Switches;
-with Alire.Properties.Configurations;
+with Alire.Utils.Config_Type_Def;
 with Alire.Releases;
+with Alire.Properties.Configurations;
 limited with Alire.Roots;
 
 private with Ada.Strings.Unbounded;
@@ -107,7 +108,7 @@ package Alire.Crate_Configuration is
 
 private
 
-   use Alire.Properties.Configurations;
+   use Alire.Utils.Config_Type_Def;
    use type Alire.Utils.Switches.Switch_List;
 
    package Config_Type_Definition_Holder
@@ -168,7 +169,7 @@ private
 
    procedure Set_Value (This   : in out Global_Config;
                         Crate  : Crate_Name;
-                        Val    : Assignment;
+                        Val    : Properties.Configurations.Assignment;
                         Set_By : String);
 
    procedure Load_Settings (This  : in out Global_Config;

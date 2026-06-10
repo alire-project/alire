@@ -1,7 +1,7 @@
 with CLIC.User_Input; use CLIC.User_Input;
-with TOML;
+with TOML; use TOML;
 
-package body Alire.Properties.Configurations.User_Input is
+package body Alire.Utils.Config_Type_Def.User_Input is
 
    -----------
    -- Query --
@@ -11,8 +11,9 @@ package body Alire.Properties.Configurations.User_Input is
 
       function Int_Is_Valid (Str : String) return Boolean is
       begin
-         return This.Valid (TOML.Create_Integer
-                            (TOML.Any_Integer'Value (Str)));
+         return Valid (This,
+                       TOML.Create_Integer
+                         (TOML.Any_Integer'Value (Str)));
       exception
          when others =>
             return False;
@@ -20,8 +21,9 @@ package body Alire.Properties.Configurations.User_Input is
 
       function Real_Is_Valid (Str : String) return Boolean is
       begin
-         return This.Valid (TOML.Create_Float
-                            ((TOML.Regular, TOML.Valid_Float'Value (Str))));
+         return Valid (This,
+                       TOML.Create_Float
+                         ((TOML.Regular, TOML.Valid_Float'Value (Str))));
       exception
          when others =>
             return False;
@@ -29,7 +31,7 @@ package body Alire.Properties.Configurations.User_Input is
 
       function Bool_Is_Valid (Str : String) return Boolean is
       begin
-         return This.Valid (TOML.Create_Boolean (Boolean'Value (Str)));
+         return Valid (This, TOML.Create_Boolean (Boolean'Value (Str)));
       exception
          when others =>
             return False;
@@ -127,4 +129,4 @@ package body Alire.Properties.Configurations.User_Input is
       end case;
    end Query;
 
-end Alire.Properties.Configurations.User_Input;
+end Alire.Utils.Config_Type_Def.User_Input;

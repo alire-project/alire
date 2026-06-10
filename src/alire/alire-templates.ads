@@ -12,6 +12,12 @@ package Alire.Templates with Elaborate_Body is
    --  Wrapper of Templates_Parser mappings for cleaner syntax here and in
    --  Alire.Templates.Builtins
 
+   procedure Add_Translation (Map : in out Translations;
+                              Var : String;
+                              Val : String);
+   --  Add a translation into the set. If an association for this variable
+   --  already exists it just replaces it by the new item.
+
    function Translate_String (Template : String;
                               Map : Translations)
                               return String;
