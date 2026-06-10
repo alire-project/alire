@@ -240,9 +240,9 @@ properties:
   # whose branches are again dynamic values.
   # =====================================================================
 
-  # Pattern matching a `case(var)` key for any supported environment var.
-  # (Used inside patternProperties below; repeated literally because JSON
-  # Schema patternProperties keys cannot themselves be $ref'd.)
+  # The `case(var)` key pattern for the supported environment vars is shared
+  # by all the patternProperties below through the `&case-key` YAML anchor
+  # (defined at its first occurrence, in case-of-bool).
 
   case-label:
     description: >-
@@ -260,13 +260,13 @@ properties:
     type: object
     additionalProperties: false
     patternProperties:
-      # TODO: this case repeats because a patternProperties requires a literal
-      # regex, but since this is YAML, it could be factored out with anchors
-      # and aliases. That's not widely supported in YAML parsers (e.g. GitHub's
-      # one for workflows), so this is just a note for the future --arm). Also,
-      # the definition should be put in a top-level key (e.g. _defs) that won't
-      # be rejected by schema validators nor interfere with the validation.
-      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+      # The `case(...)` key pattern must be spelled as a literal regex (JSON
+      # Schema patternProperties keys cannot be $ref'd), so it is anchored
+      # here at its first occurrence and aliased (`*case-key`) everywhere
+      # else. The YAML consumers of this file (PyYAML in the testsuite, yq
+      # for the JSON conversion) resolve aliases at load time, so the
+      # converted JSON just repeats the literal regex.
+      &case-key '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
         type: object
         propertyNames:
           "$ref": "#/$defs/case-label"
@@ -286,7 +286,7 @@ properties:
     type: object
     additionalProperties: false
     patternProperties:
-      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+      *case-key :
         type: object
         propertyNames:
           "$ref": "#/$defs/case-label"
@@ -296,11 +296,16 @@ properties:
   # Composite dynamic table: a dependency table. `case(...)` keys are
   # siblings of static `crate = "constraint"` entries; the two
   # patternProperties are disjoint because crate names never contain '('.
+  # NOTE: this pattern is laxer than crate-name on purpose: Alire lowercases
+  # dependency keys on parsing (see Alire.Dependencies.From_TOML), and some
+  # published index manifests rely on it (e.g. `unixODBC` in
+  # simple_components). This could be fixed in the next index major version
+  # bump (none planned at this time).
   dyn-deps:
     type: object
     additionalProperties: false
     patternProperties:
-      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+      *case-key :
         type: object
         propertyNames:
           "$ref": "#/$defs/case-label"
@@ -321,7 +326,7 @@ properties:
   dyn-string-map:
     type: object
     patternProperties:
-      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+      *case-key :
         type: object
         propertyNames:
           "$ref": "#/$defs/case-label"
@@ -334,7 +339,7 @@ properties:
   dyn-environment:
     type: object
     patternProperties:
-      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+      *case-key :
         type: object
         propertyNames:
           "$ref": "#/$defs/case-label"
@@ -368,7 +373,7 @@ properties:
       - type: object
         additionalProperties: false
         patternProperties:
-          '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+          *case-key :
             type: object
             propertyNames:
               "$ref": "#/$defs/case-label"
@@ -408,7 +413,7 @@ properties:
       - type: object
         additionalProperties: false
         patternProperties:
-          '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+          *case-key :
             type: object
             propertyNames:
               "$ref": "#/$defs/case-label"
@@ -450,7 +455,7 @@ properties:
     type: object
     additionalProperties: false
     patternProperties:
-      '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+      *case-key :
         type: object
         propertyNames:
           "$ref": "#/$defs/case-label"
@@ -542,6 +547,7 @@ properties:
   # External definitions.
   external:
     type: object
+    additionalProperties: false
     properties:
       kind:
         "$ref": "#/$defs/external-kind"
@@ -599,7 +605,7 @@ properties:
       - type: object
         additionalProperties: false
         patternProperties:
-          '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+          *case-key :
             type: object
             propertyNames:
               "$ref": "#/$defs/case-label"
@@ -613,7 +619,7 @@ properties:
       - type: object
         additionalProperties: false
         patternProperties:
-          '^case\((os|distribution|host-arch|toolchain|word-size)\)$':
+          *case-key :
             type: object
             propertyNames:
               "$ref": "#/$defs/case-label"
