@@ -1,0 +1,10 @@
+with Libhello;
+with Ada.Text_IO; use Ada.Text_IO;
+procedure Hello is
+
+begin
+   Put_Line ("@_NAME_@");
+   Put_Line ("@_LOWER:NAME_@");
+   Put_Line ("@_UPPER:NAME_@");
+   Libhello.Hello_World;
+end Hello;
