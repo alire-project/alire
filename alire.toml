@@ -1,7 +1,7 @@
 name = "alr"
 description = "Command-line tool from the Alire project"
 
-version = "2.2.0-dev"
+version = "3.0.0-dev"
 
 authors = ["Alejandro R. Mosteo", "Fabien Chouteau", "Pierre-Marie de Rodat"]
 maintainers = ["alejandro@mosteo.com", "chouteau@adacore.com"]
@@ -134,7 +134,7 @@ commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
 [pins.yeison_12]
 url    = "https://github.com/mosteo/yeison"
 subdir = "yeison_12"
-commit = "44c648ba48127a3e7d65815f832e64332edeb90f"
+commit = "20033cf90a3eb2eff69d9ff9d0820291aed79b57"
 
 # To disable version updating, export ALR_VERSION_DONT_PATCH with any value
 

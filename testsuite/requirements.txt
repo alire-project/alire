@@ -1,4 +1,6 @@
 docker
 e3-testsuite
+jsonschema
 pexpect
+PyYAML
 toml
