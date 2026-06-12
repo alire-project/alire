@@ -11,7 +11,6 @@ project @_CAPITALIZE:NAME_@_Tests is
    package Compiler is
       for Default_Switches ("Ada") use
         @_CAPITALIZE:NAME_@_Tests_Config.Ada_Compiler_Switches;
-      for Local_Configuration_Pragmas use "test_pragmas.adc";
    end Compiler;
 
    package Binder is
