@@ -413,7 +413,8 @@ package body Alire.Test_Runner is
       function Key (P : Test.Pragmas) return Yeison.Any
       is (Key (Img (P)));
 
-      function Is_Known_Pragma is new AAA.Enum_Tools.Is_Valid (Test.Pragmas);
+      function Is_Known_Pragma_Key is
+        new AAA.Enum_Tools.Is_Valid (Test.Pragmas);
 
       ----------------
       -- Get_Action --
@@ -543,22 +544,31 @@ package body Alire.Test_Runner is
 
          --  Diagnose unknown keys per the tests.on_unknown_parameter setting.
          --  Yeison still hasn't key deletion, so we visit them all again.
+         --  Iterated by index: `for ... of` over a yeison value makes
+         --  GNAT <= 11 mis-finalize controlled temporaries and crash
+         --  at scope exit when assertions are enabled.
 
-         for K of Alire_Test.Keys loop
-            if not Is_Known_Pragma (LML.Encode (K.As_Text)) then
+         declare
+            Keys : constant Yeison.Any := Alire_Test.Keys;
+         begin
+            for I in 1 .. Keys.Length loop
                declare
+                  K : constant Yeison.Any :=
+                        Keys (Yeison.Make.Int (Yeison.Big_Int (I)));
                   Unknown : constant String := LML.Encode (K.As_Text);
                   Reason  : constant String :=
                     "unknown " & Test.Pragma_Name & " pragma key: "
                     & Unknown;
                begin
-                  Diagnose
-                    (Filename & ": unknown " & Test.Pragma_Name
-                     & " pragma key '" & Unknown & "'",
-                     Reason);
+                  if not Is_Known_Pragma_Key (Unknown) then
+                     Diagnose
+                       (Filename & ": unknown " & Test.Pragma_Name
+                        & " pragma key '" & Unknown & "'",
+                        Reason);
+                  end if;
                end;
-            end if;
-         end loop;
+            end loop;
+         end;
       end;
 
    exception
