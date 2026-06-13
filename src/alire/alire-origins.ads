@@ -44,6 +44,10 @@ package Alire.Origins is
 
    subtype VCS_Kinds is Kinds range Git .. SVN;
 
+   subtype Mirror_Kinds is Origins.Kinds
+     with Predicate =>
+       Mirror_Kinds in VCS_Kinds | Source_Archive | Binary_Archive;
+
    type Source_Archive_Format is (Unknown, Tarball, Zip_Archive);
    subtype Known_Source_Archive_Format is
      Source_Archive_Format range Tarball .. Source_Archive_Format'Last;
