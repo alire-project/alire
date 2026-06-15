@@ -5,6 +5,9 @@ name: Integrity Checks
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   verify-pins:
     name: Pins & Submodules

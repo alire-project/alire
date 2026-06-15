@@ -4,6 +4,11 @@ on:
   pull_request:
     paths:
       - '**.md'
+
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   spellcheck:
     runs-on: ubuntu-latest

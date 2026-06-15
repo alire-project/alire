@@ -33,6 +33,11 @@ env:
   MSYS2_PATH:   C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin
   MSYS2_PACMAN: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin\pacman --noconfirm
 
+# Default to read-only; release jobs that publish assets opt into
+# `contents: write` individually below.
+permissions:
+  contents: read
+
 jobs:
 
   #########
@@ -190,6 +195,8 @@ jobs:
     if: github.ref_type == 'tag'
     needs: [build, build-macos-universal, windows-installer, appimage]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       upload-url: ${{ steps.create_release.outputs.upload_url }}
       version-without-v: ${{ steps.get_version.outputs.version-without-v }}
@@ -219,6 +226,8 @@ jobs:
     if: github.ref_type == 'tag'
     needs: [build, build-macos-universal, release-info]
     runs-on: ${{ matrix.platform.os }}
+    permissions:
+      contents: write
 
     strategy:
       fail-fast: false
@@ -365,6 +374,8 @@ jobs:
     if: github.ref_type == 'tag'
     needs: [build, release-info, windows-installer]
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
 
@@ -463,6 +474,8 @@ jobs:
     if: github.ref_type == 'tag'
     needs: [appimage, release-info]
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
 
     steps:
 
@@ -494,6 +507,8 @@ jobs:
     if: github.ref_type == 'tag'
     needs: [release-info]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
 
@@ -541,6 +556,8 @@ jobs:
       || (github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'nightly'))
     needs: [build, build-macos-universal]
     runs-on: ${{ matrix.platform.os }}
+    permissions:
+      contents: write
 
     strategy:
       fail-fast: false
@@ -619,6 +636,8 @@ jobs:
       || (github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'nightly'))
     needs: [appimage]
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
 
     steps:
 
