@@ -16,7 +16,7 @@ package body Alire.Origins.Mirrors is
       end if;
 
       --  TODO: actually implement loading
-   end From_Toml;
+   end From_TOML;
 
    --------------
    -- Whenever --
