@@ -10,7 +10,7 @@ with Alire.GPR;
 with Alire.Interfaces;
 with Alire.Manifest;
 with Alire.Milestones;
-with Alire.Origins;
+with Alire.Origins.Mirrors;
 with Alire.Platforms.Current;
 with Alire.Properties.Actions;
 with Alire.Properties.Environment;
@@ -410,6 +410,7 @@ private
       Name         : Crate_Name (Prj_Len);
       Version      : Semantic_Versioning.Version;
       Origin       : Origins.Origin;
+      Mirrors      : Origins.Mirrors.Mirror_Vector;
       Notes        : Description_String (1 .. Notes_Len);
       Equivalences : Alire.Provides.Equivalences;
       Dependencies : Conditional.Dependencies;

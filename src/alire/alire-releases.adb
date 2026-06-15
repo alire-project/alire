@@ -482,6 +482,7 @@ package body Alire.Releases is
 
          Version      => Base.Version,
          Origin       => Base.Origin,
+         Mirrors      => Base.Mirrors,
          Dependencies => Base.Dependencies,
          Equivalences => Base.Equivalences,
          Pins         => Base.Pins,
@@ -537,6 +538,7 @@ package body Alire.Releases is
        Name         => Name,
        Version      => Version,
        Origin       => Origin,
+       Mirrors      => <>,
        Notes        => Notes,
        Dependencies => Dependencies,
        Equivalences => <>,
@@ -571,6 +573,7 @@ package body Alire.Releases is
       Name         => Name,
       Version      => +"0.0.0",
       Origin       => Origin,
+      Mirrors      => <>,
       Notes        => "",
       Dependencies => Dependencies,
       Equivalences => <>,
@@ -1090,6 +1093,7 @@ package body Alire.Releases is
       case Source is
          when Manifest.Index =>
             This.Origin.From_TOML (From).Assert;
+            Origins.Mirrors.From_TOML (From, This.Mirrors, This.Origin);
          when Manifest.Local =>
             This.Origin :=
               Origins.New_Filesystem
@@ -1315,6 +1319,7 @@ package body Alire.Releases is
        Name         => R.Name,
        Version      => R.Version,
        Origin       => R.Origin.Whenever (P),
+       Mirrors      => R.Mirrors.Whenever (P),
        Notes        => R.Notes,
        Dependencies => R.Dependencies.Evaluate (P),
        Equivalences => R.Equivalences,

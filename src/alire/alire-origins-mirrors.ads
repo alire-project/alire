@@ -1,5 +1,7 @@
 with Ada.Containers.Vectors;
 
+with Alire.TOML_Keys;
+
 package Alire.Origins.Mirrors is
 
    subtype Mirror_Kinds is Origins.Kinds
@@ -9,7 +11,24 @@ package Alire.Origins.Mirrors is
    package Mirror_Vectors is new Ada.Containers.Vectors
      (Positive, Origins.Origin);
 
-   subtype Mirror_Vector is Mirror_Vectors.Vector
-     with Predicate => (for all M of Mirror_Vector => M.Kind in Mirror_Kinds);
+   type Mirror_Vector is tagged private;
+
+   procedure From_TOML (From    : TOML_Adapters.Key_Queue;
+                        This    : in out Mirror_Vector;
+                        Primary : Origins.Origin) with
+      Post => not From.Contains (TOML_Keys.Mirror);
+   --  Load mirrors from a manifest, removing the array from the collection if
+   --  it existed. Primary is the authoritative origin those mirrors are for.
+
+   function Whenever (This : Mirror_Vector;
+                      Env  : Properties.Vector)
+                      return Mirror_Vector;
+   --  Apply Whenever to all mirrors
+
+private
+
+   type Mirror_Vector is new Mirror_Vectors.Vector with null record
+      with Type_Invariant =>
+        (for all M of Mirror_Vector => M.Kind in Mirror_Kinds);
 
 end Alire.Origins.Mirrors;
