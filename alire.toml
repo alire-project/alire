@@ -59,8 +59,8 @@ url    = "https://github.com/mosteo/aaa"
 commit = "73d99ae1ff2f5210dc41c2ea7afebe600f9e9916"
 
 [pins.ada_toml]
-url    = "https://github.com/mosteo/ada-toml"
-commit = "33eaab64b9d531e240c3f525ad80a1f3eb8b9633"
+url    = "https://github.com/pmderodat/ada-toml"
+commit = "f51ff9730aa916f33981db4589666577e9dd05c7"
 
 [pins.ansiada]
 url    = "https://github.com/mosteo/ansi-ada"
