@@ -15,7 +15,7 @@ package body Alire.Origins.Mirrors is
          --  Drop the key for now to pass loading tests
       end if;
 
-      --  TODO: actually implement loading
+      --  TODO: actually implement loading.
    end From_TOML;
 
    --------------

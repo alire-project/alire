@@ -11,7 +11,11 @@ package Alire.Origins.Mirrors is
    package Mirror_Vectors is new Ada.Containers.Vectors
      (Positive, Origins.Origin);
 
-   type Mirror_Vector is tagged private;
+   type Mirror_Vector is new Mirror_Vectors.Vector with null record;
+   --    with Dynamic_Predicate => (for all M of Mirror_Vector =>
+   --                               M.Kind in Mirror_Kinds);
+   --  This predicate triggers infinite recursion checks. This will be asserted
+   --  manually on loading; left commented for documentation.
 
    procedure From_TOML (From    : TOML_Adapters.Key_Queue;
                         This    : in out Mirror_Vector;
@@ -24,11 +28,5 @@ package Alire.Origins.Mirrors is
                       Env  : Properties.Vector)
                       return Mirror_Vector;
    --  Apply Whenever to all mirrors
-
-private
-
-   type Mirror_Vector is new Mirror_Vectors.Vector with null record
-      with Type_Invariant =>
-        (for all M of Mirror_Vector => M.Kind in Mirror_Kinds);
 
 end Alire.Origins.Mirrors;
