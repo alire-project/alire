@@ -9,6 +9,16 @@ aggregate project Alr_Env is
    for Create_Missing_Dirs use "True";
 
    for Project_Path use (
+                         --  Configs for Alire crates that don't have a default
+                         --  config commited to their repo are manually
+                         --  vendored in Alire repo to avoid forking the
+                         --  upstream just for that. This also allows switching
+                         --  their profiles directly here if it were necessary.
+                         "deps/_configs/json-ada/json",
+
+                         --  These are regular vendored dependencies, possibly
+                         --  containing their own config if they are Alire
+                         --  crates that have a default config committed.
                          "deps/aaa",
                          "deps/ada-toml",
                          "deps/ajunitgen",
@@ -20,6 +30,7 @@ aggregate project Alr_Env is
                          "deps/dirty_booleans",
                          "deps/diskflags",
                          "deps/gnatcoll-slim",
+                         "deps/json-ada/json",
                          "deps/lml",
                          "deps/minirest",
                          "deps/optional",

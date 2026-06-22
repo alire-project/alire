@@ -1,27 +1,80 @@
 with Ada.Calendar;
+with Ada.Exceptions;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 with System.Multiprocessors;
 
+with AAA.Enum_Tools;
+
 with Alire_Early_Elaboration;
 with Alire.Directories; use Alire.Directories;
 with Alire.OS_Lib;
 with Alire.Paths;
+with Alire.Settings.Builtins;
+with Alire.Test;
 with Alire.TOML_Keys;
 with Alire.Utils.Tables;
 with Alire.Utils.Text_Files;
 with Alire.VFS;
 
 with CLIC.TTY;
+
 with Den.Walk;
+
+with LML.Input.Pragmas.File_IO;
 with LML.Output.Factory;
+with LML.Output.Yeison;
+with LML.Options.Pragmas;
 
 package body Alire.Test_Runner is
    use Alire.Utils;
+   use Ada.Strings.Unbounded;
+
+   ---------------------
+   -- Default_Timeout --
+   ---------------------
+
+   function Default_Timeout return Duration
+   is (Duration (Settings.Builtins.Tests_Timeout.Get_Int));
+
+   ---------------
+   -- Test_Case --
+   ---------------
+
+   type Test_Case is record
+      Path        : Unbounded_String;
+      --  A Portable_Path value; Use Path_Of to retrieve as Portable_Path
+      Name        : Unbounded_String;
+      --  Display-name override from test configuration
+      Timeout     : Duration := Default_Timeout;
+      Should_Fail : Boolean := False;
+      Skip        : Boolean := False;
+      --  When True, the test must be reported as skipped without being
+      --  spawned. For now, can happen when unknown configuration is found and
+      --  'skip' is the selected fallback policy.
+      Pre_Fail    : Boolean := False;
+      --  When True, the test must be reported as failed without being
+      --  spawned. For now, can happen when unknown configuration is found and
+      --  'fail' is the selected fallback policy.
+      Reason      : Unbounded_String;
+      --  Diagnostic shown alongside Skip or Pre_Fail.
+   end record;
+
+   -------------
+   -- Path_Of --
+   -------------
+
+   function Path_Of (TC : Test_Case) return Portable_Path
+   is (Portable_Path (To_String (TC.Path)));
+
+   package Test_Case_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Positive, Test_Case);
+   subtype Test_Case_Vector is Test_Case_Vectors.Vector;
 
    package Driver is
       --  Driver for synchronising stats and output
@@ -35,10 +88,14 @@ package body Alire.Test_Runner is
          Start_Time        : Ada.Calendar.Time;
          Output            : AAA.Strings.Vector);
       --  Report a failing test with a message and its output
+      procedure Skip (Test_Name, Reason : String);
+      --  Report a test that was not run.
       function Total_Count return Natural;
-      --  Get the total number of tests that have been run
+      --  Get the total number of tests that have been processed
       function Fail_Count return Natural;
       --  Get the number of failed tests
+      function Skip_Count return Natural;
+      --  Get the number of skipped tests
       procedure Report;
       --  Print a report of tests and finalize the driver
 
@@ -57,8 +114,9 @@ package body Alire.Test_Runner is
       Structured_Output_Format : Tables.Formats renames
         Tables.Structured_Output_Format;
 
-      Passed : Natural := 0;
-      Failed : Natural := 0;
+      Passed  : Natural := 0;
+      Failed  : Natural := 0;
+      Skipped : Natural := 0;
 
       Builder : Builder_Access := null;
    end Driver;
@@ -106,6 +164,10 @@ package body Alire.Test_Runner is
       is (LML.Scalars.New_Real
             (LML.Yeison.Reals.New_Real
                (Long_Long_Float (Duration_Since (Start_Time)))));
+
+      --  TODO: have an xplicit XFAIL or similar in the output to distinguish
+      --  from PASS/FAIL (or maybe annotate the test name with a trailing
+      --  [with expected failure] when Should_Fail). Now just PASS is printed.
 
       ----------
       -- Pass --
@@ -179,12 +241,43 @@ package body Alire.Test_Runner is
          end if;
       end Fail;
 
+      ----------
+      -- Skip --
+      ----------
+
+      procedure Skip (Test_Name, Reason : String) is
+         No_Time : constant String := (1 .. 6 => '-');
+      begin
+         Skipped := Skipped + 1;
+         if Structured_Output then
+            Builder.Begin_Map;
+            Builder.Insert (+TOML_Keys.Test_Report_Display_Name);
+            Builder.Append (LML.Scalars.New_Text (+Test_Name));
+            Builder.Insert (+TOML_Keys.Test_Report_Status);
+            Builder.Append (LML.Scalars.New_Text ("skip"));
+            Builder.Insert (+TOML_Keys.Test_Report_Reason);
+            Builder.Append (LML.Scalars.New_Text (+Reason));
+            Builder.End_Map;
+         else
+            Trace.Always
+              ("[ "
+               & CLIC.TTY.Warn ("SKIP")
+               & " ] "
+               & CLIC.TTY.Dim (No_Time)
+               & " "
+               & Test_Name
+               & " ("
+               & Reason
+               & ")");
+         end if;
+      end Skip;
+
       -----------------
       -- Total_Count --
       -----------------
 
       function Total_Count return Natural
-      is (Passed + Failed);
+      is (Passed + Failed + Skipped);
 
       ----------------
       -- Fail_Count --
@@ -192,6 +285,13 @@ package body Alire.Test_Runner is
 
       function Fail_Count return Natural
       is (Failed);
+
+      ----------------
+      -- Skip_Count --
+      ----------------
+
+      function Skip_Count return Natural
+      is (Skipped);
 
       ------------
       -- Report --
@@ -211,6 +311,9 @@ package body Alire.Test_Runner is
             Builder.Insert (+TOML_Keys.Test_Report_Failures);
             Builder.Append
               (LML.Scalars.New_Int (Long_Long_Integer (Driver.Fail_Count)));
+            Builder.Insert (+TOML_Keys.Test_Report_Skipped);
+            Builder.Append
+              (LML.Scalars.New_Int (Long_Long_Integer (Driver.Skip_Count)));
             Builder.End_Map;
             Builder.End_Map;
 
@@ -229,6 +332,10 @@ package body Alire.Test_Runner is
             --  put a summary of test runs
             Trace.Always ("Total:" & Driver.Total_Count'Image & " tests");
             Ada.Text_IO.Flush;
+            if Driver.Skip_Count /= 0 then
+               Trace.Warning
+                 ("skipped" & Driver.Skip_Count'Image & " tests");
+            end if;
             if Driver.Fail_Count /= 0 then
                Trace.Error ("failed" & Driver.Fail_Count'Image & " tests");
             end if;
@@ -262,15 +369,228 @@ package body Alire.Test_Runner is
       end if;
    end Display_Name;
 
-   package Portable_Path_Vectors is new
-     Ada.Containers.Indefinite_Vectors (Positive, Portable_Path);
-   subtype Portable_Path_Vector is Portable_Path_Vectors.Vector;
+   ------------------
+   -- Display_Name --
+   ------------------
+
+   function Display_Name (TC : Test_Case; Root_Prefix : String) return String
+   is (if Length (TC.Name) > 0
+       then To_String (TC.Name)
+       else Display_Name (Path_Of (TC), Root_Prefix));
+   --  Prefer the pragma-supplied name when present; otherwise derive it
+   --  from the on-disk path.
+
+   ----------------------------
+   -- Load_Test_Case_Pragmas --
+   ----------------------------
+
+   procedure Load_Test_Case_Pragmas
+     (Filename : Any_Path; TC : in out Test_Case)
+   is
+      package Yeison renames LML.Yeison;
+      use all type Yeison.Kinds;
+
+      function Lower (S : String) return String
+                      renames AAA.Strings.To_Lower_Case;
+
+      function Img (P : Test.Pragmas) return String
+      is (Lower (P'Image));
+      --  The stored key spelling for a documented pragma. The pragma parser
+      --  normalizes identifier keys to lower case, so the enum literal is
+      --  matched in lower case too.
+
+      ---------
+      -- Key --
+      ---------
+      --  LML uses WWString, but we use String, so we have a bunch of helpers
+
+      function Key (S : Yeison.Text) return Yeison.Any
+      is (Yeison.Make.Str (LML.Decode (Lower (LML.Encode (S)))));
+
+      function Key (S : String) return Yeison.Any
+      is (Key (LML.Decode (S)));
+
+      function Key (P : Test.Pragmas) return Yeison.Any
+      is (Key (Img (P)));
+
+      function Is_Known_Pragma_Key is
+        new AAA.Enum_Tools.Is_Valid (Test.Pragmas);
+
+      ----------------
+      -- Get_Action --
+      ----------------
+
+      function Get_Action return Test.Unknown_Parameter_Action is
+      --  Decode the tests.on_unknown_parameter setting
+         Raw : constant String :=
+           Settings.Builtins.Tests_On_Unknown_Parameter.Get;
+      begin
+         return Test.Unknown_Parameter_Action'Value (Raw);
+      exception
+         when Constraint_Error =>
+            Trace.Warning
+              ("Invalid tests.on_unknown_parameter value '" & Raw
+               & "', defaulting to 'fail'");
+            return Test.Fail;
+      end Get_Action;
+
+      --------------
+      -- Diagnose --
+      --------------
+
+      procedure Diagnose (Log_Msg, Reason : String) is
+      --  Apply the tests.on_unknown_parameter policy to a problematic key.
+      begin
+         case Get_Action is
+            when Test.Ignore =>
+               Trace.Debug ("Ignoring unknown test configuration: " & Log_Msg);
+            when Test.Skip =>
+               Trace.Warning (Log_Msg);
+               TC.Skip   := True;
+               TC.Reason := +Reason;
+            when Test.Fail =>
+               Trace.Error (Log_Msg);
+               TC.Pre_Fail := True;
+               TC.Reason   := +Reason;
+         end case;
+      end Diagnose;
+
+      ----------------
+      -- Wrong_Type --
+      ----------------
+
+      procedure Wrong_Type (P : Test.Pragmas) is
+      --  A known key is present but carries an unexpected value type.
+         Reason : constant String :=
+           Test.Pragma_Name & " pragma key '" & Img (P)
+           & "' has an unexpected value type";
+      begin
+         Diagnose (Filename & ": " & Reason, Reason);
+      end Wrong_Type;
+
+      Builder     : LML.Output.Yeison.Builder;
+      All_Pragmas : Yeison.Any;
+   begin
+      --  Load the pragmas from the test file, ensuring our own pragmas are
+      --  either parsed fully or reported as misconfigured (strict option).
+      --  Other pragmas are silently gobbled by the parser.
+
+      LML.Input.Pragmas.File_IO.From_File
+        (Filename, Builder,
+         LML.Options.Pragmas.Strict_On (Test.Pragma_Name));
+
+      All_Pragmas := Builder.To_Yeison;
+
+      --  Most test sources carry no Alire_Test pragma at all
+      if not All_Pragmas.Has_Key (Key (Test.Pragma_Name)) then
+         return;
+      end if;
+
+      --  Otherwise process the known pragma keys
+      declare
+         Alire_Test : constant Yeison.Any :=
+                        All_Pragmas (Key (Test.Pragma_Name));
+      begin
+         if Alire_Test.Kind /= Map_Kind then
+            --  TODO: don't silently ignore, apply the same policy as for
+            --  unknown keys/values.
+            return;
+         end if;
+
+         if Alire_Test.Has_Key (Key (Test.Name)) then
+            declare
+               V : constant Yeison.Any := Alire_Test (Key (Test.Name));
+            begin
+               if V.Kind = Str_Kind then
+                  TC.Name := +LML.Encode (V.As_Text);
+               else
+                  Wrong_Type (Test.Name);
+               end if;
+            end;
+         end if;
+
+         if Alire_Test.Has_Key (Key (Test.Timeout)) then
+            declare
+               V : constant Yeison.Any := Alire_Test (Key (Test.Timeout));
+            begin
+               if V.Kind = Int_Kind then
+                  TC.Timeout := Duration (V.As_Int);
+               elsif V.Kind = Real_Kind then
+                  TC.Timeout := Duration (V.As_Real.Value);
+               else
+                  Wrong_Type (Test.Timeout);
+               end if;
+            end;
+         end if;
+
+         --  Should_Fail has three valid states: absent (keep the default
+         --  False), present-but-valueless (bare key, e.g.
+         --  `pragma Alire_Test (Should_Fail);`), and an explicit
+         --  Boolean. A valueless key is parsed as a Nil key.
+         if Alire_Test.Has_Key (Key (Test.Should_Fail)) then
+            declare
+               V : constant Yeison.Any :=
+                     Alire_Test (Key (Test.Should_Fail));
+            begin
+               if V.Kind = Nil_Kind then
+                  TC.Should_Fail := True;
+               elsif V.Kind = Bool_Kind then
+                  TC.Should_Fail := V.As_Bool;
+               else
+                  Wrong_Type (Test.Should_Fail);
+               end if;
+            end;
+         end if;
+
+         --  Diagnose unknown keys per the tests.on_unknown_parameter setting.
+         --  Yeison still hasn't key deletion, so we visit them all again.
+         --  Iterated by index: `for ... of` over a yeison value makes
+         --  GNAT <= 11 mis-finalize controlled temporaries and crash
+         --  at scope exit when assertions are enabled.
+
+         declare
+            Keys : constant Yeison.Any := Alire_Test.Keys;
+         begin
+            for I in 1 .. Keys.Length loop
+               declare
+                  K : constant Yeison.Any :=
+                        Keys (Yeison.Make.Int (Yeison.Big_Int (I)));
+                  Unknown : constant String := LML.Encode (K.As_Text);
+                  Reason  : constant String :=
+                    "unknown " & Test.Pragma_Name & " pragma key: "
+                    & Unknown;
+               begin
+                  if not Is_Known_Pragma_Key (Unknown) then
+                     Diagnose
+                       (Filename & ": unknown " & Test.Pragma_Name
+                        & " pragma key '" & Unknown & "'",
+                        Reason);
+                  end if;
+               end;
+            end loop;
+         end;
+      end;
+
+   exception
+      when LML.Duplicate_Pragma =>
+         --  The same configuration key appeared more than once
+         Trace.Error
+           (Filename & ": duplicate " & Test.Pragma_Name & " pragma key");
+      when E : LML.Invalid_Pragma_Syntax =>
+         --  One of our pragmas couldn't be fully parsed, so for now we fail.
+         --  TODO: apply the same policy as for unknown keys/values instead for
+         --  hard failure.
+         Trace.Error (Filename & ": " & LML.Encode (LML.Decode
+           (Ada.Exceptions.Exception_Message (E))));
+         TC.Pre_Fail := True;
+         TC.Reason   := +Ada.Exceptions.Exception_Message (E);
+   end Load_Test_Case_Pragmas;
 
    ---------------------
    -- Create_Gpr_List --
    ---------------------
 
-   procedure Create_Gpr_List (Root : Roots.Root; List : Portable_Path_Vector)
+   procedure Create_Gpr_List (Root : Roots.Root; List : Test_Case_Vector)
      --  Create a gpr file containing a list of the test files
      --  (named `Test_Files`).
    is
@@ -308,7 +628,7 @@ package body Alire.Test_Runner is
       Lines.Append_Line ("abstract project " & Root_Name & "_List_Config is");
       Lines.Append_Line (Indent & "Test_Files := (");
 
-      for Name of List loop
+      for TC of List loop
          Lines.Append_Line (Indent & Indent);
          if First then
             Lines.Append_To_Last_Line (" ");
@@ -316,7 +636,8 @@ package body Alire.Test_Runner is
          else
             Lines.Append_To_Last_Line (",");
          end if;
-         Lines.Append_To_Last_Line ("""" & VFS.Simple_Name (Name) & """");
+         Lines.Append_To_Last_Line
+           ("""" & VFS.Simple_Name (Path_Of (TC)) & """");
       end loop;
 
       Lines.Append_Line (Indent & ");");
@@ -328,7 +649,7 @@ package body Alire.Test_Runner is
    -------------------
 
    procedure Run_All_Tests
-     (Root : Roots.Root; Test_List : Portable_Path_Vector; Jobs : Positive)
+     (Root : Roots.Root; Test_Cases : Test_Case_Vector; Jobs : Positive)
    is
       CR : Character renames Latin_1.CR;
       use GNAT.OS_Lib;
@@ -342,24 +663,27 @@ package body Alire.Test_Runner is
 
       type Test_Info (N, M : Positive) is record
          Name        : String (1 .. N);
-         --  Contains simple names without extension with prefix from src,
-         --  e.g.: crate_tests-some_test, nested/crate_tests-some_other_test
+         --  Display name
          Output_File : String (1 .. M);
          --  Output file for the test, will be loaded and printed if the test
          --  fails
          Start_Time  : Ada.Calendar.Time;
+         Should_Fail : Boolean := False;
+         --  When true, a non-zero exit is the expected outcome.
       end record;
 
       ------------
       -- Create --
       ------------
 
-      function Create (Name, Output_File : String) return Test_Info
+      function Create
+        (Name, Output_File : String; Should_Fail : Boolean) return Test_Info
       is (N           => Name'Length,
           M           => Output_File'Length,
           Name        => Name,
           Output_File => Output_File,
-          Start_Time  => Ada.Calendar.Clock);
+          Start_Time  => Ada.Calendar.Clock,
+          Should_Fail => Should_Fail);
 
       package PID_Test_Maps is new
         Ada.Containers.Indefinite_Ordered_Maps
@@ -375,13 +699,13 @@ package body Alire.Test_Runner is
       -- Spawn_Test --
       ----------------
 
-      procedure Spawn_Test (Test_Name : Portable_Path) is
+      procedure Spawn_Test (TC : Test_Case) is
          Simple_Name : constant String :=
-           Utils.Strip_Suffix (VFS.Simple_Name (Test_Name), ".adb");
+           Utils.Strip_Suffix (VFS.Simple_Name (Path_Of (TC)), ".adb");
          --  Contains package name, e.g. crate_tests-my_test
 
          Full_Print_Name : constant String :=
-           Display_Name (Test_Name, Crate_Prefix);
+           Display_Name (TC, Crate_Prefix);
          --  Full portable name without package prefix, e.g. nested/my_test
 
          Exe_Name : constant String := Simple_Name & OS_Lib.Exe_Suffix;
@@ -394,6 +718,20 @@ package body Alire.Test_Runner is
          Args : constant Argument_List := (1 .. 0 => <>);
          Pid  : Process_Id;
       begin
+         --  Tests configured to fail or skip without running are reported
+         --  directly without launching the binary.
+         if TC.Skip then
+            Driver.Skip (Full_Print_Name, To_String (TC.Reason));
+            return;
+         elsif TC.Pre_Fail then
+            Driver.Fail
+              (Full_Print_Name,
+               To_String (TC.Reason),
+               Ada.Calendar.Clock,
+               AAA.Strings.Empty_Vector);
+            return;
+         end if;
+
          Pid :=
            Non_Blocking_Spawn
              (Root.Path / "bin" / Exe_Name,
@@ -402,21 +740,24 @@ package body Alire.Test_Runner is
               Err_To_Out => True);
          if Pid = Invalid_Pid then
             Driver.Fail
-              (String (Test_Name),
+              (Full_Print_Name,
                "failed to start",
                Ada.Calendar.Clock,
                AAA.Strings.Empty_Vector);
          else
             Running_Tests.Insert
               (Pid,
-               Create (Name => Full_Print_Name, Output_File => Out_Filename));
+               Create
+                 (Name        => Full_Print_Name,
+                  Output_File => Out_Filename,
+                  Should_Fail => TC.Should_Fail));
          end if;
       end Spawn_Test;
 
       Pid     : Process_Id;
       Success : Boolean;
 
-      Remaining : Portable_Path_Vector := Test_List;
+      Remaining : Test_Case_Vector := Test_Cases;
       Completed : Long_Integer := 0; -- Tests already completed
 
       ------------------
@@ -427,7 +768,8 @@ package body Alire.Test_Runner is
          --  convenience function to print a percentage box when running
          --  in a terminal
          use Ada.Strings.Fixed;
-         Len        : constant Long_Integer := Long_Integer (Test_List.Length);
+         Len        : constant Long_Integer :=
+           Long_Integer (Test_Cases.Length);
          --  rounding division
          Percentage : constant Long_Integer :=
            (if Len = 0 then 0 else (Completed * 100 + Len / 2) / Len);
@@ -439,13 +781,15 @@ package body Alire.Test_Runner is
 
    begin
 
+      --  Init before spawning so the structured-output builder exists when
+      --  pre-fail / skip cases report directly from Spawn_Test.
+      Driver.Init;
+
       --  start the first `Jobs` tests
-      for I in 1 .. Natural'Min (Jobs, Natural (Test_List.Length)) loop
+      for I in 1 .. Natural'Min (Jobs, Natural (Test_Cases.Length)) loop
          Spawn_Test (Remaining.Last_Element);
          Remaining.Delete_Last;
       end loop;
-
-      Driver.Init;
 
       loop
          if CLIC.TTY.Is_TTY and then not Alire_Early_Elaboration.Switch_Q then
@@ -467,13 +811,19 @@ package body Alire.Test_Runner is
 
          declare
             Test : constant Test_Info := Running_Tests (Pid);
+            --  A test passes when its outcome matches the expectation
+            --  expressed by Should_Fail: Success xor Should_Fail.
+            Expected_Outcome : constant Boolean :=
+              Success xor Test.Should_Fail;
          begin
-            if Success then
+            if Expected_Outcome then
                Driver.Pass (Test.Name, Test.Start_Time);
             else
                Driver.Fail
                  (Test.Name,
-                  "non-zero return code",
+                  (if Test.Should_Fail
+                   then "test passed but was expected to fail"
+                   else "non-zero return code"),
                   Test.Start_Time,
                   Utils.Text_Files.Lines (Test.Output_File));
             end if;
@@ -491,28 +841,28 @@ package body Alire.Test_Runner is
    end Run_All_Tests;
 
    -------------------
-   -- Get_File_List --
+   -- Get_Test_List --
    -------------------
 
-   function Get_File_List
-     (Root : Roots.Root; Filter : AAA.Strings.Vector)
-      return Portable_Path_Vector
+   function Get_Test_List
+     (Root : Roots.Root; Filter : AAA.Strings.Vector) return Test_Case_Vector
    is
       Crate_Prefix : constant String := Root_Prefix (Root);
 
-      Test_List : Portable_Path_Vector;
+      Test_List : Test_Case_Vector;
+
       --------------------
       -- Matches_Filter --
       --------------------
 
-      function Matches_Filter (Name : Portable_Path) return Boolean is
+      function Matches_Filter (TC : Test_Case) return Boolean is
       begin
          if Filter.Is_Empty then
             return True;
          end if;
          declare
             Filtering_Name : constant String :=
-              Display_Name (Name, Crate_Prefix);
+              Display_Name (TC, Crate_Prefix);
          begin
             return
               (for some F of Filter =>
@@ -538,16 +888,23 @@ package body Alire.Test_Runner is
                 (This.Path,
                  Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator));
       begin
-         if AAA.Strings.Has_Suffix (String (Name), ".adb")
-           and then Matches_Filter (Name)
-         then
-            Test_List.Append (Name);
+         --  TODO: skip files that also have an ".ads" counterpart
+         if AAA.Strings.Has_Suffix (String (Name), ".adb") then
+            declare
+               TC : Test_Case :=
+                 (Path => To_Unbounded_String (String (Name)), others => <>);
+            begin
+               Load_Test_Case_Pragmas (This.Path, TC);
+               if Matches_Filter (TC) then
+                  Test_List.Append (TC);
+               end if;
+            end;
          end if;
       end Append;
    begin
       Den.Walk.Find (This => Root.Path / "src", Action => Append'Access);
       return Test_List;
-   end Get_File_List;
+   end Get_Test_List;
 
    ---------
    -- Run --
@@ -567,10 +924,10 @@ package body Alire.Test_Runner is
 
       Original_Switch_Q : constant Boolean := Alire_Early_Elaboration.Switch_Q;
 
-      Test_List : constant Portable_Path_Vector :=
-        Get_File_List (Root, Filter);
+      Test_Cases : constant Test_Case_Vector :=
+        Get_Test_List (Root, Filter);
    begin
-      Create_Gpr_List (Root, Test_List);
+      Create_Gpr_List (Root, Test_Cases);
 
       --  Ensure a void solution on first test run
       if not Root.Has_Lockfile then
@@ -590,12 +947,12 @@ package body Alire.Test_Runner is
          --  restore original value of `-q` switch
 
          if Build_Only then
-            Put_Info ("Built " & Test_List.Length'Image & " tests");
+            Put_Info ("Built " & Test_Cases.Length'Image & " tests");
             return 0;
          end if;
 
-         Put_Info ("Running" & Test_List.Length'Image & " tests");
-         Run_All_Tests (Root, Test_List, Job_Count);
+         Put_Info ("Running" & Test_Cases.Length'Image & " tests");
+         Run_All_Tests (Root, Test_Cases, Job_Count);
 
          Driver.Report;
          return Driver.Fail_Count;
@@ -615,8 +972,8 @@ package body Alire.Test_Runner is
    is
       Crate_Prefix : constant String := Root_Prefix (Root);
       Path         : constant Absolute_Path := Root.Path;
-      Test_List    : constant Portable_Path_Vector :=
-        Get_File_List (Root, Filter);
+      Test_Cases   : constant Test_Case_Vector :=
+        Get_Test_List (Root, Filter);
 
       function Text (S : String) return LML.Scalar
       is (LML.Scalars.New_Text (LML.Decode (S)));
@@ -629,15 +986,17 @@ package body Alire.Test_Runner is
             Builder.Begin_Map;
             Builder.Insert (LML.Decode (TOML_Keys.Test_Report_Cases));
             Builder.Begin_Vec;
-            for Test of Test_List loop
+            for TC of Test_Cases loop
                Builder.Begin_Map;
                Builder.Insert
                  (LML.Decode (TOML_Keys.Test_Report_Display_Name));
-               Builder.Append (Text (Display_Name (Test, Crate_Prefix)));
+               Builder.Append (Text (Display_Name (TC, Crate_Prefix)));
                Builder.Insert (LML.Decode (TOML_Keys.Test_Report_Path));
                Builder.Append
                  (Text
-                    (String (VFS.To_Portable (Path / "src" / String (Test)))));
+                    (String
+                       (VFS.To_Portable
+                          (Path / "src" / String (Path_Of (TC))))));
                Builder.End_Map;
             end loop;
             Builder.End_Vec;
@@ -647,14 +1006,16 @@ package body Alire.Test_Runner is
          end;
       else
          Put_Info ("Matching tests:");
-         for Test of Test_List loop
+         for TC of Test_Cases loop
             Trace.Info
               ("   "
-               & Display_Name (Test, Crate_Prefix)
+               & Display_Name (TC, Crate_Prefix)
                & (if Alire_Early_Elaboration.Switch_V
                   then
                     " ("
-                    & String (VFS.To_Portable (Path / "src" / String (Test)))
+                    & String
+                        (VFS.To_Portable
+                           (Path / "src" / String (Path_Of (TC))))
                     & ")"
                   else ""));
          end loop;

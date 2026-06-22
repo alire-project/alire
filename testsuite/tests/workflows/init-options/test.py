@@ -72,7 +72,8 @@ compare(contents('aaa'), ['aaa/.gitignore',
                           'aaa/tests/common',
                           'aaa/tests/common/aaa_tests.ads',
                           'aaa/tests/src',
-                          'aaa/tests/src/aaa_tests-assertions_enabled.adb'])
+                          'aaa/tests/src/aaa_tests-assertions_enabled.adb'
+                          ])
 
 # Init without skeleton
 run_alr('init', '--bin', '--no-skel', 'yyy')

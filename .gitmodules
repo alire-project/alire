@@ -75,3 +75,6 @@
 [submodule "deps/resources"]
 	path = deps/resources
 	url = https://github.com/alire-project/resources
+[submodule "deps/json-ada"]
+	path = deps/json-ada
+	url = https://github.com/onox/json-ada

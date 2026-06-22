@@ -19,6 +19,9 @@ from shutil import copytree
 TESTSUITE_ROOT = os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))
 
+# Default crate name used by init_local_crate and other helpers
+DEFAULT_CRATE_NAME = "xxx"
+
 
 class CalledProcessError(Exception):
     pass
@@ -338,7 +341,7 @@ def index_version():
     return index_branch().split('-')[1]
 
 
-def init_local_crate(name="xxx", binary=True, enter=True, update=True,
+def init_local_crate(name=DEFAULT_CRATE_NAME, binary=True, enter=True, update=True,
                      with_maintainer_login=False, with_test=False):
     """
     Initialize a local crate and enter its folder for further testing.

@@ -1,0 +1,61 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+
+description: >
+  Top-level map keyed by pragma name.
+
+  Only the positional two-argument pragma form is supported:
+
+    pragma <PragmaName> (<Key>, <Value>);
+    pragma <PragmaName> (<Key> => <Value>);
+
+properties:
+  Alire_Test:
+    description: Keys and values from pragma Alire_Test (...) occurrences.
+    type: object
+    properties:
+      Auxiliary_File:
+        description: >
+          When True (or value omitted), the file is a
+          support unit and must not be turned into a test main.
+          Mutually exclusive with all other keys.
+        type: boolean
+        default: true
+        examples:
+          - True
+      Name:
+        description: Overridden test name.
+        type: string
+        examples:
+          - "A test"
+      Should_Fail:
+        description: >
+          Whether the test is expected to fail.
+        type: boolean
+        default: true
+        examples:
+          - True
+      Timeout:
+        description: >
+          Maximum duration for the test, in seconds. Failure if exceeded.
+        type: number
+        examples:
+          - 11.1
+    additionalProperties: false
+    if:
+      properties:
+        Auxiliary_File:
+          const: true
+      required: [Auxiliary_File]
+    then:
+      maxProperties: 1
+
+additionalProperties: false
+
+examples:
+  - Alire_Test:
+      Auxiliary_File: true
+  - Alire_Test:
+      Name: "A test"
+      Should_Fail: true
+      Timeout: 11.1

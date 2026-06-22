@@ -176,6 +176,24 @@ package Alire.Settings.Builtins is
       Def    => False,
       Help   => "Never progress towards a solution (for testing only)");
 
+   --  TESTING
+
+   Tests_On_Unknown_Parameter : constant Builtin := New_Builtin
+     (Key   => "tests.on_unknown_parameter",
+      Kind  => Stn_String,
+      Def   => "fail",
+      Check => Checks.Valid_Tests_On_Unknown_Parameter'Access,
+      Help  =>
+          "Action to perform when an unknown parameter is found in a test "
+          & "pragma. Can be 'ignore' (run the test and hope for the best), "
+          & "'fail' (default, fail the test), 'skip' (do not run the test).");
+
+   Tests_Timeout : constant Builtin := New_Builtin
+     (Key    => "tests.timeout",
+      Kind   => Stn_Int,
+      Def    => "60",
+      Help   => "Default test timeout (-1 to disable)");
+
    --  TOOLCHAIN
 
    Toolchain_Assistant : constant Builtin := New_Builtin

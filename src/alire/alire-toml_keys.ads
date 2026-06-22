@@ -65,13 +65,14 @@ package Alire.TOML_Keys with Preelaborate is
 
    Test_Report_Cases        : constant String := "tests";
    Test_Report_Display_Name : constant String := "name";
-   Test_Report_Status       : constant String := "status";
-   Test_Report_Reason       : constant String := "reason";
-   Test_Report_Output       : constant String := "output";
    Test_Report_Duration     : constant String := "duration";
+   Test_Report_Failures     : constant String := "failures";
+   Test_Report_Output       : constant String := "output";
    Test_Report_Path         : constant String := "path";
+   Test_Report_Reason       : constant String := "reason";
+   Test_Report_Skipped      : constant String := "skipped";
+   Test_Report_Status       : constant String := "status";
    Test_Report_Summary      : constant String := "summary";
    Test_Report_Total        : constant String := "total";
-   Test_Report_Failures     : constant String := "failures";
 
 end Alire.TOML_Keys;
