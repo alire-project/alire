@@ -17,6 +17,7 @@ with Semantic_Versioning.Extended;
 package Alire.Index is
 
    Community_Branch : constant String := "stable-1.4.0";
+   --  TODO: update to 1.5.0 before 3.0 release (see BREAKING.md).
    --  The branch used for the community index. Must be updated when new index
    --  features are introduced.
 

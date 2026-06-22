@@ -1,0 +1,17 @@
+description = "Sample crate"
+name = "crate"
+version = "1.0.0"
+licenses = "MIT"
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin]
+url = "file:../../../crates/crate"
+
+[[mirror]]
+url = "file:../../../crates/crate-mirror"
+
+# A conditional mirror entry (binary origin) must work too
+[[mirror]]
+[mirror.'case(os)'.'...']
+url = "file:../../../crates/crate-mirror"

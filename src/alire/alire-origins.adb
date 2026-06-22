@@ -581,8 +581,7 @@ package body Alire.Origins is
       --  static one. If the former, divert to the dynamic loader; else
       --  continue loading normally.
 
-      if (for some Key of Table.Unwrap.Keys =>
-            AAA.Strings.Has_Prefix (+Key, "case("))
+      if Table.Contains_Expression
         or else
           (Table.Unwrap.Has (Keys.Binary) and then
            Table.Unwrap.Get (Keys.Binary).As_Boolean)
