@@ -13,7 +13,8 @@ hashes = ["sha512:deadbeef"]
 [[mirror]]
 url = "http://mirror1.example.com/crate-1.0.0.tar.gz"
 
-# A mirror may redundantly repeat the matching hashes
+# A mirror may use a different archive name, as long as the hash matches; it
+# may also redundantly repeat the matching hashes
 [[mirror]]
-url = "http://mirror2.example.com/crate-1.0.0.tar.gz"
+url = "http://mirror2.example.com/crate-renamed.tar.gz"
 hashes = ["sha512:deadbeef"]

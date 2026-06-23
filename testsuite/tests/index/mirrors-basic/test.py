@@ -13,7 +13,7 @@ crate=1.0.0: Sample crate
 Origin: source archive crate-1.0.0.tar.gz at http://example.com/crate-1.0.0.tar.gz with hash sha512:deadbeef
 Mirrors:
    source archive crate-1.0.0.tar.gz at http://mirror1.example.com/crate-1.0.0.tar.gz with hash sha512:deadbeef
-   source archive crate-1.0.0.tar.gz at http://mirror2.example.com/crate-1.0.0.tar.gz with hash sha512:deadbeef
+   source archive crate-renamed.tar.gz at http://mirror2.example.com/crate-renamed.tar.gz with hash sha512:deadbeef
 Properties:
    Description: Sample crate
    License: MIT
