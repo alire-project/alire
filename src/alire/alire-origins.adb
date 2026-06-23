@@ -15,22 +15,6 @@ with Semantic_Versioning;
 
 package body Alire.Origins is
 
-   ----------
-   -- Keys --
-   ----------
-
-   package Keys is -- TOML keys for serialization
-
-      Archive_Name : constant String := "archive-name";
-      Binary       : constant String := "binary";
-      Commit       : constant String := "commit";
-      Hashes       : constant String := "hashes";
-      Origin       : constant String := "origin";
-      Subdir       : constant String := "subdir";
-      URL          : constant String := "url";
-
-   end Keys;
-
    function URL_Basename (URL : Alire.URL) return String;
    --  Try to get a basename for the given URL. Return an empty string on
    --  failure.
@@ -530,21 +514,22 @@ package body Alire.Origins is
           (Conditional_Archives.Tree'(From_TOML (From)) with null record)
         .As_Data));
 
-   ---------------
-   -- From_TOML --
-   ---------------
+   ----------
+   -- Load --
+   ----------
 
-   overriding
-   function From_TOML (This : in out Origin;
-                       From :        TOML_Adapters.Key_Queue)
-                       return Outcome
+   function Load (This : in out Origin;
+                  From :        TOML_Adapters.Key_Queue)
+                  return Outcome
    is
 
       use TOML;
       use all type URI.URI_Kinds;
-      Table   : constant TOML_Adapters.Key_Queue :=
-                 From.Descend (From.Checked_Pop (Keys.Origin, TOML_Table),
-                               Context => Keys.Origin);
+
+      Table : TOML_Adapters.Key_Queue renames From;
+      --  The bare origin fields-table renamed as Table for historical reasons,
+      --  as this body used to descend into From (the [origin] wrapper) first
+      --  using a Table var. This way we don't touch code below.
 
       -----------------
       -- Mark_Binary --
@@ -693,6 +678,22 @@ package body Alire.Origins is
 
          return Table.Report_Extra_Keys;
       end;
+   end Load;
+
+   ---------------
+   -- From_TOML --
+   ---------------
+
+   overriding
+   function From_TOML (This : in out Origin;
+                       From :        TOML_Adapters.Key_Queue)
+                       return Outcome
+   is
+      use TOML;
+   begin
+      return This.Load
+        (From.Descend (From.Checked_Pop (Keys.Origin, TOML_Table),
+                       Context => Keys.Origin));
    end From_TOML;
 
    -----------

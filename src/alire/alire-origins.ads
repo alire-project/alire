@@ -219,6 +219,20 @@ private
 
    use all type Hashes.Any_Hash;
 
+   package Keys is
+
+      -- TOML keys for origin serialization and mirror reuse
+
+      Archive_Name : constant String := "archive-name";
+      Binary       : constant String := "binary";
+      Commit       : constant String := "commit";
+      Hashes       : constant String := "hashes";
+      Origin       : constant String := TOML_Keys.Origin;
+      Subdir       : constant String := "subdir";
+      URL          : constant String := "url";
+
+   end Keys;
+
    package Hash_Vectors is new
      Ada.Containers.Indefinite_Vectors (Positive, Hashes.Any_Hash);
 
@@ -226,6 +240,14 @@ private
    --  Ugly Get_ but it avoids lots of ambiguities down the line. This returns
    --  the hashes that apply to the current environment; it may be an empty
    --  vector for origins without a hash (e.g. external or system).
+
+   function Load (This : in out Origin;
+                  From :        TOML_Adapters.Key_Queue)
+                  return Outcome
+      with Pre => not From.Contains (TOML_Keys.Origin);
+   --  Load an origin from an anon table, i.e. the contents of an [origin]
+   --  table without the enclosing "origin" key. Declared here for reuse from
+   --  child Alire.Origins.Mirrors, which loads bare [[mirror]] tables.
 
    function "+" (S : String) return Unbounded_String
    renames To_Unbounded_String;
