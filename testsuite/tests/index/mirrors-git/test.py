@@ -1,7 +1,7 @@
 """
-Check that index manifests can load git releases with top-level mirrors,
-reusing the origin's commit for url-only mirrors, and that `alr show` lists
-the mirrors right after the origin.
+Check that index manifests can load git releases with top-level mirrors. A
+mirror only gives a url (its commit comes from the origin). `alr show` lists
+the mirrors after the origin.
 """
 
 from drivers.alr import run_alr
@@ -12,8 +12,8 @@ expected = """\
 crate=1.0.0: Sample git crate
 Origin: commit 0123456789abcdef0123456789abcdef01234567 from https://example.com/crate.git
 Mirrors:
-   commit 0123456789abcdef0123456789abcdef01234567 from https://mirror.example.com/crate.git
-   commit 0123456789abcdef0123456789abcdef01234567 from https://mirror2.example.com/crate.git
+   https://mirror.example.com/crate.git
+   https://mirror2.example.com/crate.git
 Properties:
    Description: Sample git crate
    License: MIT

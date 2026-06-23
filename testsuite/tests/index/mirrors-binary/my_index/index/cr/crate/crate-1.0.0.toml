@@ -1,0 +1,21 @@
+description = "Conditional binary crate with mirrors"
+name = "crate"
+version = "1.0.0"
+licenses = "MIT"
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin."case(os)"."..."]
+url = "http://example.com/crate-1.0.0.tgz"
+hashes = ["sha512:deadbeef"]
+binary = true
+
+# A conditional mirror reuses the origin's per-case hashes (url-only leaves).
+# The `binary` marker is optional in mirrors, as the origin is binary.
+[[mirror]]
+[mirror."case(os)"."..."]
+url = "http://mirror1.example.com/crate-1.0.0.tgz"
+
+# A flat mirror also works, and is taken as binary because the origin is
+[[mirror]]
+url = "http://mirror2.example.com/crate-1.0.0.tgz"

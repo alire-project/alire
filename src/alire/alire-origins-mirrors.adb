@@ -1,5 +1,3 @@
-with Alire.VFS;
-
 package body Alire.Origins.Mirrors is
 
    ---------------
@@ -11,78 +9,43 @@ package body Alire.Origins.Mirrors is
                         Primary : Origins.Origin)
    is
 
-      -----------
-      -- Reuse --
-      -----------
-      --  A mirror is an exact copy of the origin except for its url, so any
-      --  Key it carries must match the origin's value; when it is omitted we
-      --  inject the origin's value so the loader reuses it without complaint.
-
-      procedure Reuse (Table : TOML.TOML_Value;
-                       Key   : String;
-                       Value : TOML.TOML_Value;
-                       Error : String)
-      is
-      begin
-         if Table.Has (Key) then
-            if not TOML.Equals (Table.Get (Key), Value) then
-               From.Checked_Error (Error);
-            end if;
-         else
-            Table.Set (Key, Value);
-         end if;
-      end Reuse;
-
       ----------------
       -- Load_Entry --
       ----------------
-      --  Validate one [[mirror]] entry against the primary and append it.
+      --  Load one [[mirror]] entry and append it. A mirror provides only its
+      --  url(s); the identity fields (commit/hashes/subdir) are forbidden and
+      --  taken from the origin, which the origin loader enforces in mirror
+      --  mode. We only additionally require the mirror to be of the same kind.
 
       procedure Load_Entry (Entry_Table : TOML.TOML_Value) is
-         Table  : constant TOML.TOML_Value := Entry_Table.Clone;
          Mirror : Origins.Origin;
+         Table  : constant TOML.TOML_Value :=
+                    (if Entry_Table.Kind in TOML.TOML_Table
+                     then Entry_Table.Clone
+                     else Entry_Table);
+         Queue  : constant TOML_Adapters.Key_Queue :=
+                    From.Descend (Table, Context => TOML_Keys.Mirror);
       begin
          if Entry_Table.Kind /= TOML.TOML_Table then
             From.Checked_Error
               ("each " & TOML_Keys.Mirror & " entry must be a table");
          end if;
 
-         --  Inject (and validate against) the origin's commit/hashes, so the
-         --  mirror is loaded as a copy that differs only in its url. Any other
-         --  unexpected key is rejected by Load below.
+         --  A binary origin's mirror is necessarily binary, so the `binary`
+         --  marker is optional in mirrors: set it for a flat (non-conditional)
+         --  entry so it isn't taken for a source archive. Conditional entries
+         --  already load as binary, and an explicit `binary` on a non-binary
+         --  origin is rejected below by the kind check.
+         if Primary.Kind in Binary_Archive
+           and then not Queue.Contains_Expression
+           and then not Table.Has (Keys.Binary)
+         then
+            Table.Set (Keys.Binary, TOML.Create_Boolean (True));
+         end if;
 
-         case Primary.Kind is
-            when VCS_Kinds =>
-               Reuse (Table, Keys.Commit,
-                      TOML.Create_String (Primary.Commit),
-                      Error => "mirror commit must match the origin's"
-                               & " or be omitted");
-               if Primary.Subdir /= "" then
-                  Reuse (Table, Keys.Subdir,
-                         TOML.Create_String
-                           (String (VFS.To_Portable (Primary.Subdir))),
-                         Error => "mirror subdir must match the origin's"
-                                  & " or be omitted");
-               end if;
-
-            when Archive_Kinds =>
-               Reuse (Table, Keys.Hashes,
-                      TOML_Adapters.To_TOML (Primary.Unique_Ids),
-                      Error => "mirror hashes must match the origin's"
-                               & " or be omitted");
-               if Primary.Kind in Binary_Archive
-                 and then not Table.Has (Keys.Binary)
-               then
-                  Table.Set (Keys.Binary, TOML.Create_Boolean (True));
-               end if;
-
-            when others =>
-               null; -- Excluded by the Mirror_Kinds check below
-         end case;
-
-         --  Reuse the regular origin loader on the resulting bare table
-         Mirror.Load
-           (From.Descend (Table, Context => TOML_Keys.Mirror)).Assert;
+         --  Reuse the regular origin loader (including the conditional binary
+         --  path) on the bare entry, in mirror mode.
+         Mirror.Load (Queue, Is_Mirror => True).Assert;
 
          if Mirror.Kind /= Primary.Kind then
             From.Checked_Error

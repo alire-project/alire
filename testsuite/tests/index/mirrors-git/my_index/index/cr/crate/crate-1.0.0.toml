@@ -9,11 +9,9 @@ maintainers-logins = ["someone"]
 url = "git+https://example.com/crate.git"
 commit = "0123456789abcdef0123456789abcdef01234567"
 
-# A url-only mirror reuses the origin's commit
+# Mirrors only give a url; the commit is taken from the origin
 [[mirror]]
 url = "git+https://mirror.example.com/crate.git"
 
-# A mirror may redundantly repeat the matching commit
 [[mirror]]
 url = "git+https://mirror2.example.com/crate.git"
-commit = "0123456789abcdef0123456789abcdef01234567"

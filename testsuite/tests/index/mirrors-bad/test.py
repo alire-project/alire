@@ -12,11 +12,10 @@ def show_fails(crate, error):
     assert_match(".*ERROR:.*" + error + ".*", p.out)
 
 
-# A mirror commit that differs from the origin's is rejected
-show_fails("bad_commit", "mirror commit must match the origin's")
-
-# A mirror hash that differs from the origin's is rejected
-show_fails("bad_hash", "mirror hashes must match the origin's")
+# A mirror cannot carry identity fields; they are taken from the origin
+show_fails("bad_commit", "mirrors cannot specify a commit")
+show_fails("bad_hash", "mirrors cannot specify hashes")
+show_fails("bad_subdir", "mirrors cannot specify a subdir")
 
 # A mirror that resolves to a different origin kind is rejected
 show_fails("bad_kind", "mirror is a .* but the authoritative origin is")

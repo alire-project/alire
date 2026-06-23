@@ -1,4 +1,4 @@
-description = "Mirror hashes do not match the origin's"
+description = "Mirror cannot specify hashes"
 name = "bad_hash"
 version = "1.0.0"
 licenses = "MIT"
