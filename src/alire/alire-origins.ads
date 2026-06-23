@@ -221,7 +221,7 @@ private
 
    package Keys is
 
-      -- TOML keys for origin serialization and mirror reuse
+      --  TOML keys for origin serialization and mirror reuse
 
       Archive_Name : constant String := "archive-name";
       Binary       : constant String := "binary";

@@ -895,6 +895,14 @@ package body Alire.Releases is
       --  ORIGIN
       Put_Line ("Origin: " & R.Origin.Image);
 
+      --  MIRRORS
+      if not R.Mirrors.Is_Empty then
+         Put_Line ("Mirrors:");
+         for Mirror of R.Mirrors loop
+            Put_Line ("   " & Mirror.Image);
+         end loop;
+      end if;
+
       --  AVAILABILITY
       if not R.Available.Is_Empty then
          Put_Line ("Available when: " & R.Available.Image_One_Line);
