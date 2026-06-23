@@ -1,0 +1,19 @@
+description = "Sample git crate"
+name = "crate"
+version = "1.0.0"
+licenses = "MIT"
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin]
+url = "git+https://example.com/crate.git"
+commit = "0123456789abcdef0123456789abcdef01234567"
+
+# A url-only mirror reuses the origin's commit
+[[mirror]]
+url = "git+https://mirror.example.com/crate.git"
+
+# A mirror may redundantly repeat the matching commit
+[[mirror]]
+url = "git+https://mirror2.example.com/crate.git"
+commit = "0123456789abcdef0123456789abcdef01234567"

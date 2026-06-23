@@ -6,12 +6,14 @@ maintainers = ["any@bo.dy"]
 maintainers-logins = ["someone"]
 
 [origin]
-url = "file:../../../crates/crate"
+url = "http://example.com/crate-1.0.0.tar.gz"
+hashes = ["sha512:deadbeef"]
 
+# A url-only mirror reuses the origin's hashes
 [[mirror]]
-url = "file:../../../crates/crate-mirror"
+url = "http://mirror1.example.com/crate-1.0.0.tar.gz"
 
-# A conditional mirror entry (binary origin) must work too
+# A mirror may redundantly repeat the matching hashes
 [[mirror]]
-[mirror.'case(os)'.'...']
-url = "file:../../../crates/crate-mirror"
+url = "http://mirror2.example.com/crate-1.0.0.tar.gz"
+hashes = ["sha512:deadbeef"]
