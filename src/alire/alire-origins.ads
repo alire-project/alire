@@ -204,6 +204,16 @@ package Alire.Origins is
    --  already detected by some External.
 
    function Image (This : Origin) return String;
+   --  Single-line image, suitable for logs and messages. For a conditional
+   --  origin see Print, which renders it readably over several lines.
+
+   function Is_Conditional (This : Origin) return Boolean;
+   --  True for a binary origin that carries case expressions (per-platform).
+
+   procedure Print (This : Origin; Prefix : String := "");
+   --  Print the origin for user consumption: a single Image line for plain
+   --  origins, or a multi-line indented tree for conditional ones. Prefix is
+   --  prepended to every line, so nested listings (e.g. mirrors) indent right.
 
    procedure Add_Hash (This : in out Origin;
                        Hash :        Hashes.Any_Hash);

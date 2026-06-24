@@ -766,11 +766,10 @@ package body Alire.Origins is
    -- Image --
    -----------
 
-   --  TODO: when the origin is conditional (a binary archive with case
-   --  expressions, e.g. its mirrors too), Image falls back to
-   --  Bin_Archive.Image_One_Line below, which produces an unreadable
-   --  single-line "(case OS is ... => ...)" dump. It should instead be
-   --  pretty-printed (multi-line, indented) like Print does for trees.
+   --  Note: for a conditional origin this falls back to
+   --  Bin_Archive.Image_One_Line below (a terse single-line
+   --  "(case OS is ... => ...)"), which is fine for logs. User-facing output
+   --  should use Print instead, which renders conditionals over several lines.
    function Image (This : Origin) return String is
      ((case This.Kind is
           when VCS_Kinds      =>
@@ -800,6 +799,27 @@ package body Alire.Origins is
          then " with hash " & This.Image_Of_Hashes
          else " with hashes " & This.Image_Of_Hashes)
      );
+
+   --------------------
+   -- Is_Conditional --
+   --------------------
+
+   function Is_Conditional (This : Origin) return Boolean
+   is (This.Kind = Binary_Archive
+       and then not This.Data.Bin_Archive.Is_Unconditional);
+
+   -----------
+   -- Print --
+   -----------
+
+   procedure Print (This : Origin; Prefix : String := "") is
+   begin
+      if This.Is_Conditional then
+         This.Data.Bin_Archive.Print (Prefix => Prefix, And_Or => False);
+      else
+         Trace.Always (Prefix & This.Image);
+      end if;
+   end Print;
 
    ---------------------
    -- Image_Of_Hashes --
