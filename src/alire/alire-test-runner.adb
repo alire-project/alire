@@ -16,7 +16,6 @@ with Alire.Directories; use Alire.Directories;
 with Alire.OS_Lib;
 with Alire.Paths;
 with Alire.Settings.Builtins;
-with Alire.Test;
 with Alire.TOML_Keys;
 with Alire.Utils.Tables;
 with Alire.Utils.Text_Files;
@@ -31,7 +30,7 @@ with LML.Output.Factory;
 with LML.Output.Yeison;
 with LML.Options.Pragmas;
 
-package body Alire.Test_Runner is
+package body Alire.Test.Runner is
    use Alire.Utils;
    use Ada.Strings.Unbounded;
 
@@ -1021,4 +1020,4 @@ package body Alire.Test_Runner is
          end loop;
       end if;
    end Show_List;
-end Alire.Test_Runner;
+end Alire.Test.Runner;

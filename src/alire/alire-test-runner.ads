@@ -2,7 +2,7 @@ with Alire.Roots;
 
 with AAA.Strings;
 
-package Alire.Test_Runner is
+package Alire.Test.Runner is
 
    function Run
      (Root       : in out Alire.Roots.Root;
@@ -22,4 +22,4 @@ package Alire.Test_Runner is
    --  Print a list of matching tests without running them. Respects structured
    --  output.
 
-end Alire.Test_Runner;
+end Alire.Test.Runner;
