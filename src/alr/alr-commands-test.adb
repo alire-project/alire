@@ -6,7 +6,7 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Properties.Actions.Executor;
 with Alire.Properties.Tests;
 with Alire.Roots;
-with Alire.Test_Runner;
+with Alire.Test.Runner;
 
 with CLIC.Subcommand;
 
@@ -259,13 +259,13 @@ package body Alr.Commands.Test is
                      end if;
 
                      if Cmd.List then
-                        Alire.Test_Runner.Show_List
+                        Alire.Test.Runner.Show_List
                           (Test_Root.Value, Get_Args);
                         OS_Lib.Bailout;
                      end if;
 
                      Failures :=
-                       Alire.Test_Runner.Run
+                       Alire.Test.Runner.Run
                          (Root       => Test_Root.Value,
                           Filter     => Get_Args,
                           Jobs       =>
