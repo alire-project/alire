@@ -204,16 +204,14 @@ package Alire.Origins is
    --  already detected by some External.
 
    function Image (This : Origin) return String;
-   --  Single-line image, suitable for logs and messages. For a conditional
-   --  origin see Print, which renders it readably over several lines.
+   --  Single-line image. For a conditional origin see Print, which uses
+   --  multi-line indented nicer output.
 
    function Is_Conditional (This : Origin) return Boolean;
-   --  True for a binary origin that carries case expressions (per-platform).
+   --  True for a binary origin that carries case expressions
 
    procedure Print (This : Origin; Prefix : String := "");
-   --  Print the origin for user consumption: a single Image line for plain
-   --  origins, or a multi-line indented tree for conditional ones. Prefix is
-   --  prepended to every line, so nested listings (e.g. mirrors) indent right.
+   --  Pretty printer with indentation and multi-line
 
    procedure Add_Hash (This : in out Origin;
                        Hash :        Hashes.Any_Hash);
@@ -262,9 +260,8 @@ private
       with Pre => not From.Contains (TOML_Keys.Origin);
    --  Load an origin from an anon table, i.e. the contents of an [origin]
    --  table without the enclosing "origin" key. Declared here for reuse from
-   --  child Alire.Origins.Mirrors, which loads bare [[mirror]] tables. When
-   --  Is_Mirror, the identity fields (commit/hashes/subdir) are forbidden and
-   --  not required, as they are taken from the authoritative origin.
+   --  child Alire.Origins.Mirrors, which loads bare [[mirror]] tables via this
+   --  function.
 
    function "+" (S : String) return Unbounded_String
    renames To_Unbounded_String;

@@ -397,8 +397,7 @@ package body Alire.Origins is
    begin
       case URL_Kind is
          when URI.Git_URIs =>
-            --  A mirror has no commit of its own (taken from the origin);
-            --  New_Git requires a valid one, so build the bare origin here.
+            --  A mirror has no commit of its own (it's taken from the origin)
             if Is_Mirror then
                return (Data => (Git,
                                 Repo_URL => +VCS_URL,
@@ -463,8 +462,6 @@ package body Alire.Origins is
                                         then Archive.As_String
                                         else ""));
       begin
-         --  Mirrors carry no hashes of their own: they are taken from the
-         --  authoritative origin. Reject any, and never require them.
          if Is_Mirror then
             if Table.Contains (Keys.Hashes) then
                Table.Checked_Error
@@ -497,8 +494,9 @@ package body Alire.Origins is
    -----------------------
    -- Load_Binary_Archive --
    -----------------------
-   --  Shared core for the binary-archive leaf loaders below: it ensures a
-   --  conditional archive is explicitly marked as binary, then loads the leaf.
+   --  Shared code for the binary-archive loaders below: it ensures a
+   --  conditional archive is explicitly marked as binary, then loads the
+   --  unconditional leaf.
    function Load_Binary_Archive (From      : TOML_Adapters.Key_Queue;
                                  Is_Mirror : Boolean)
                                  return Conditional_Archives.Tree
@@ -534,7 +532,7 @@ package body Alire.Origins is
    ----------------------
    -- Binary_From_TOML --
    ----------------------
-   --  Static_Loader for an authoritative binary origin leaf.
+   --  Static_Loader for an authoritative binary origin leaf
    function Binary_From_TOML (From : TOML_Adapters.Key_Queue)
                               return Conditional_Archives.Tree
    is (Load_Binary_Archive (From, Is_Mirror => False));
@@ -542,7 +540,7 @@ package body Alire.Origins is
    -----------------------------
    -- Mirror_Binary_From_TOML --
    -----------------------------
-   --  Static_Loader for a binary mirror leaf (hashes forbidden, not required).
+   --  Static_Loader for a binary mirror leaf
    function Mirror_Binary_From_TOML (From : TOML_Adapters.Key_Queue)
                                      return Conditional_Archives.Tree
    is (Load_Binary_Archive (From, Is_Mirror => True));
@@ -573,9 +571,9 @@ package body Alire.Origins is
       use all type URI.URI_Kinds;
 
       Table : TOML_Adapters.Key_Queue renames From;
-      --  The bare origin fields-table renamed as Table for historical reasons,
-      --  as this body used to descend into From (the [origin] wrapper) first
-      --  using a Table var. This way we don't touch code below.
+      --  A renaming for historical reasons, as this body used to descend into
+      --  From (the [origin] wrapper) first using a Table var. This way we
+      --  don't touch code below. Could be removed renaming uses below instead.
 
       -----------------
       -- Mark_Binary --
@@ -659,7 +657,10 @@ package body Alire.Origins is
             This := New_Filesystem (URI.Local_Path (URL));
 
          when URI.VCS_URIs                 =>
-            if URL_Kind in URI.Probably_Git and then Hashed then
+            if not Is_Mirror
+               and then URL_Kind in URI.Probably_Git
+               and then Hashed
+            then
                --  To resolve the ambiguity of Probably_Git, assume a source
                --  archive if the "hashes" field is present.
                Load_Source_Archive (This, Table, URL);
@@ -728,7 +729,7 @@ package body Alire.Origins is
 
          when Source_Archive =>
             --  Hashes already loaded by the archive data loader. A mirror
-            --  legitimately has none (they come from the origin).
+            --  legitimately has none (they are taken from the origin).
             Assert (Is_Mirror
                     or else not This.Data.Src_Archive.Hashes.Is_Empty,
                     Or_Else => "source archive hashes missing");
@@ -773,7 +774,7 @@ package body Alire.Origins is
    function Image (This : Origin) return String is
      ((case This.Kind is
           when VCS_Kinds      =>
-            (if S (This.Data.Commit) = "" -- a mirror has no commit of its own
+            (if S (This.Data.Commit) = "" -- a mirror
              then S (This.Data.Repo_URL)
              else "commit " & S (This.Data.Commit)
                   & " from " & S (This.Data.Repo_URL)),

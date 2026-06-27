@@ -307,6 +307,8 @@ def prepare_indexes(config_dir, working_dir, index_descriptions):
         priority = desc.pop('priority', 1)
         check_type('"priority"', 'an integer', priority, int)
 
+	    # For enabling lazy loading of an index (breaks provides in such an
+        # index, so use only when intended).
         lazy_loading = desc.pop('lazy_loading', False)
         check_type('"lazy_loading"', 'a boolean', lazy_loading, bool)
 
@@ -341,7 +343,7 @@ url = '{}'
             # crates actually requested, instead of eagerly loading every
             # manifest in the index. This is useful to test several invalid
             # manifests in a single index, as an eager load aborts on the
-            # first faulty one. NOTE: this disables crate `provides`
+            # first faulty one. WARNING: this disables crate `provides`
             # resolution, so do not use it in tests that rely on it.
             with open(os.path.join(indexes_dir, 'providers.toml'), 'w') as f:
                 f.write("")

@@ -14,7 +14,7 @@ def show_fails(crate, error):
 
 # A mirror cannot carry identity fields; they are taken from the origin
 show_fails("bad_commit", "mirrors cannot specify a commit")
-show_fails("bad_hash", "mirrors cannot specify hashes")
+show_fails("bad_hash",   "mirrors cannot specify hashes")
 show_fails("bad_subdir", "mirrors cannot specify a subdir")
 
 # A mirror that resolves to a different origin kind is rejected

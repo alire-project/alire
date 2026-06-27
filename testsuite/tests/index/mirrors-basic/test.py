@@ -1,7 +1,6 @@
 """
 Check that index manifests can load source-archive releases with top-level
-mirrors. A mirror only gives a url (its hashes come from the origin) and may
-use a different archive name. `alr show` lists the mirrors after the origin.
+mirrors.
 """
 
 from drivers.alr import run_alr

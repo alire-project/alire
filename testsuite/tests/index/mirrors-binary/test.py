@@ -1,8 +1,5 @@
 """
-Check that a conditional (case) binary origin can carry mirrors. A mirror only
-gives a url (its hashes come from the origin) and may itself be conditional or
-flat (the `binary` marker is optional, inferred from the origin). `alr show`
-renders conditional origins/mirrors as an indented multi-line case block.
+Check mirrors for conditional (case) binary origins
 """
 
 from drivers.alr import run_alr

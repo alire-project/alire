@@ -9,6 +9,8 @@ maintainers-logins = ["someone"]
 url = "http://example.com/crate-1.0.0.tar.gz"
 hashes = ["sha512:deadbeef"]
 
-# A local path resolves to a Filesystem origin, not a source archive
+# A local path resolves to a Filesystem origin, not a source archive. Remember
+# that this points to a folder, so we are not losing the ability to use a local
+# source archive.
 [[mirror]]
 url = "file:./elsewhere"

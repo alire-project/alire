@@ -9,19 +9,22 @@ package body Alire.Origins.Mirrors is
                         Primary : Origins.Origin)
    is
 
+      use AAA.Strings;
+
       ----------------
       -- Load_Entry --
       ----------------
-      --  Load one [[mirror]] entry and append it. A mirror provides only its
-      --  url(s); the identity fields (commit/hashes/subdir) are forbidden and
-      --  taken from the origin, which the origin loader enforces in mirror
-      --  mode. We only additionally require the mirror to be of the same kind.
+      --  Load one [[mirror]] entry. A mirror provides only its url; the
+      --  identity fields (commit/hashes/subdir) are forbidden and taken from
+      --  the origin, which the origin loader enforces in mirror mode. We
+      --  additionally require the mirror to be of the same kind.
 
       procedure Load_Entry (Entry_Table : TOML.TOML_Value) is
          Mirror : Origins.Origin;
          Table  : constant TOML.TOML_Value :=
                     (if Entry_Table.Kind in TOML.TOML_Table
                      then Entry_Table.Clone
+                     --  Cloned in case we inject some extra field below
                      else Entry_Table);
          Queue  : constant TOML_Adapters.Key_Queue :=
                     From.Descend (Table, Context => TOML_Keys.Mirror);
@@ -32,10 +35,11 @@ package body Alire.Origins.Mirrors is
          end if;
 
          --  A binary origin's mirror is necessarily binary, so the `binary`
-         --  marker is optional in mirrors: set it for a flat (non-conditional)
-         --  entry so it isn't taken for a source archive. Conditional entries
-         --  already load as binary, and an explicit `binary` on a non-binary
-         --  origin is rejected below by the kind check.
+         --  marker is optional in mirrors: inject it for a flat
+         --  non-conditional entry so it isn't mistaken for a source archive.
+         --  Conditional entries already load as binary, and an explicit
+         --  `binary` on a non-binary origin is rejected below by the kind
+         --  check.
          if Primary.Kind in Binary_Archive
            and then not Queue.Contains_Expression
            and then not Table.Has (Keys.Binary)
@@ -43,16 +47,15 @@ package body Alire.Origins.Mirrors is
             Table.Set (Keys.Binary, TOML.Create_Boolean (True));
          end if;
 
-         --  Reuse the regular origin loader (including the conditional binary
-         --  path) on the bare entry, in mirror mode.
+         --  Reuse the regular origin loader
          Mirror.Load (Queue, Is_Mirror => True).Assert;
 
          if Mirror.Kind /= Primary.Kind then
             From.Checked_Error
               ("mirror is a "
-               & AAA.Strings.To_Mixed_Case (Mirror.Kind'Image)
+               & To_Mixed_Case (Mirror.Kind'Image)
                & " origin, but the authoritative origin is "
-               & AAA.Strings.To_Mixed_Case (Primary.Kind'Image));
+               & To_Mixed_Case (Primary.Kind'Image));
          end if;
 
          This.Append (Mirror);

@@ -1,7 +1,5 @@
 """
-Check that index manifests can load git releases with top-level mirrors. A
-mirror only gives a url (its commit comes from the origin). `alr show` lists
-the mirrors after the origin.
+Check that index manifests can load git releases with top-level mirrors.
 """
 
 from drivers.alr import run_alr

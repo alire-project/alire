@@ -16,6 +16,8 @@ binary = true
 [mirror."case(os)"."..."]
 url = "http://mirror1.example.com/crate-1.0.0.tgz"
 
-# A flat mirror also works, and is taken as binary because the origin is
+# A flat mirror also works, and is taken as binary because the origin is.
+# Actual checking of hashes takes place at downloading time, so using a flat
+# mirror for a conditional origin with several cases cannot really be useful.
 [[mirror]]
 url = "http://mirror2.example.com/crate-1.0.0.tgz"
