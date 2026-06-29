@@ -8,24 +8,14 @@ import yaml
 import toml
 
 from drivers.alr import init_local_crate, run_alr
+from drivers.testing import write_test
 
 init_local_crate("xxx", with_test=True)
 
 os.remove("./tests/src/xxx_tests-assertions_enabled.adb")
 
-with open("./tests/src/xxx_tests-failing_test.adb", "w+") as f:
-    f.write("""procedure Xxx_Tests.Failing_Test is
-begin
-   raise Program_Error;
-end Xxx_Tests.Failing_Test;
-""")
-
-with open("./tests/src/xxx_tests-passing_test.adb", "w+") as f:
-    f.write("""procedure Xxx_Tests.Passing_Test is
-begin
-   null;
-end Xxx_Tests.Passing_Test;
-""")
+write_test("failing_test", "raise Program_Error;")
+write_test("passing_test", "null;")
 
 
 def structure_tests(data):

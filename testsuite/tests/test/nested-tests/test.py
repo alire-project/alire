@@ -18,6 +18,7 @@ makedirs("tests/src/nested", exist_ok=True)
 
 with open("tests/src/nested/xxx_tests-nested_test.adb", "w") as f:
     f.write("""
+pragma Alire_Test;
 procedure Xxx_Tests.Nested_Test is
 begin
    null;
@@ -34,6 +35,7 @@ assert_match(".*\[ PASS \] *\d+[smh]\d+ nested/nested_test.*", p.out)
 
 with open("tests/src/nested/xxx_tests-failing_test.adb", "w") as f:
     f.write("""
+pragma Alire_Test;
 procedure Xxx_Tests.Failing_Test is
 begin
    raise Program_Error;

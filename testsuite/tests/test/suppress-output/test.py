@@ -4,15 +4,11 @@ Run a failing test and check its output is suppressed when using -q
 
 from drivers.alr import init_local_crate, run_alr
 from drivers.asserts import assert_substring, assert_match
+from drivers.testing import write_test
 
 init_local_crate("xxx", with_test=True)
 
-with open("./tests/src/xxx_tests-assertions_enabled.adb", "w") as f:
-    f.write("""procedure Xxx_Tests.Assertions_Enabled is
-begin
-   raise Program_Error;
-end Xxx_Tests.Assertions_Enabled;
-""")
+write_test("assertions_enabled", "raise Program_Error;")
 
 # check that when -q is set to false, the failing test output is displayed
 p = run_alr("test", complain_on_error=False, quiet=False)

@@ -1,3 +1,4 @@
+pragma Alire_Test;
 with Alire.Utils.Regex;
 
 procedure Alr_Tests.Regexes is

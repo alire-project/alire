@@ -5,12 +5,15 @@ Check that having two built-in test runners works properly
 import os
 from drivers.alr import alr_manifest, init_local_crate, run_alr
 from drivers.asserts import assert_substring
+from drivers.testing import declare_main_as_test
 
 init_local_crate()
 
-# Initialize two crates for the tests
+# Initialize two crates for the tests and declare their mains as tests
 init_local_crate("tests_1", enter=False)
 init_local_crate("tests_2", enter=False)
+declare_main_as_test("tests_1")
+declare_main_as_test("tests_2")
 
 # Create two built-in runners
 with open(alr_manifest(), "a") as f:

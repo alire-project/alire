@@ -1,3 +1,4 @@
+pragma Alire_Test;
 with Alire.Utils;
 
 procedure Alr_Tests.Github_Logins is

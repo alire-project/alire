@@ -6,21 +6,13 @@ import os.path
 
 from drivers.alr import init_local_crate, run_alr
 from drivers.asserts import assert_match
-
-def make_test(name: str):
-   cap = name[0].upper() + name[1:]
-   with open(f"./tests/src/xxx_tests-{name}.adb", "w") as f:
-      f.write(f"""procedure Xxx_Tests.{cap} is
-begin
-   null;
-end Xxx_Tests.{cap};
-""")
+from drivers.testing import write_test
 
 init_local_crate("xxx", with_test=True)
 os.remove("./tests/src/xxx_tests-assertions_enabled.adb")
 
 for test in ["yes1", "yes2", "yes3", "no1", "no2"]:
-   make_test(test)
+   write_test(test, "null;")
 
 p = run_alr("test")
 assert p.out.count("PASS") == 5

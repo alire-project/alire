@@ -45,11 +45,22 @@ package body Alire.Test.Runner is
    -- Test_Case --
    ---------------
 
+   type Declaration is (Undeclared, Include, Exclude);
+   --  How a source declares (or fails to declare) itself to the runner via the
+   --  Alire_Test pragma: no pragma at all (Undeclared), an opt-in pragma
+   --  (Include), or an explicit `Auxiliary_File` opt-out (Exclude).
+
    type Test_Case is record
       Path        : Unbounded_String;
       --  A Portable_Path value; Use Path_Of to retrieve as Portable_Path
       Name        : Unbounded_String;
       --  Display-name override from test configuration
+      Unit        : LML.Input.Pragmas.Ada_Unit :=
+                      LML.Input.Pragmas.Unknown;
+      --  The kind of compilation unit in the .adb, from the source scan. Only
+      --  a parameterless main procedure can be a runnable test.
+      Declared    : Declaration := Undeclared;
+      --  Whether the source opts in/out via the Alire_Test pragma.
       Timeout     : Duration := Default_Timeout;
       Should_Fail : Boolean := False;
       Skip        : Boolean := False;
@@ -469,14 +480,18 @@ package body Alire.Test.Runner is
 
       Builder     : LML.Output.Yeison.Builder;
       All_Pragmas : Yeison.Any;
+      Unit_Kind   : LML.Input.Pragmas.Ada_Unit;
    begin
       --  Load the pragmas from the test file, ensuring our own pragmas are
       --  either parsed fully or reported as misconfigured (strict option).
-      --  Other pragmas are silently gobbled by the parser.
+      --  Other pragmas are silently gobbled by the parser. The same scan
+      --  reports the kind of unit the source declares.
 
       LML.Input.Pragmas.File_IO.From_File
-        (Filename, Builder,
+        (Filename, Builder, Unit_Kind,
          LML.Options.Pragmas.Strict_On (Test.Pragma_Name));
+
+      TC.Unit := Unit_Kind;
 
       All_Pragmas := Builder.To_Yeison;
 
@@ -484,6 +499,10 @@ package body Alire.Test.Runner is
       if not All_Pragmas.Has_Key (Key (Test.Pragma_Name)) then
          return;
       end if;
+
+      --  An Alire_Test pragma is present: opt the source in unless an
+      --  Auxiliary_File key later downgrades it to an opt-out.
+      TC.Declared := Include;
 
       --  Otherwise process the known pragma keys
       declare
@@ -494,6 +513,33 @@ package body Alire.Test.Runner is
             --  TODO: don't silently ignore, apply the same policy as for
             --  unknown keys/values.
             return;
+         end if;
+
+         --  Auxiliary_File: a bare key (Nil) or True marks the source as a
+         --  support unit to exclude; an explicit False leaves it included.
+         if Alire_Test.Has_Key (Key (Test.Auxiliary_File)) then
+            declare
+               V : constant Yeison.Any :=
+                     Alire_Test (Key (Test.Auxiliary_File));
+            begin
+               if V.Kind = Nil_Kind
+                 or else (V.Kind = Bool_Kind and then V.As_Bool)
+               then
+                  TC.Declared := Exclude;
+               elsif V.Kind /= Bool_Kind then
+                  Wrong_Type (Test.Auxiliary_File);
+               end if;
+            end;
+         end if;
+
+         --  An opt-out must stand alone: pairing Auxiliary_File with any other
+         --  Alire_Test configuration (a name, timeout, ...) is contradictory.
+         if TC.Declared = Exclude and then Alire_Test.Keys.Length > 1 then
+            Recoverable_User_Error
+              (Filename & ": pragma " & Test.Pragma_Name
+               & " (Auxiliary_File) excludes this source from testing, so it"
+               & " must not carry any other " & Test.Pragma_Name
+               & " configuration");
          end if;
 
          if Alire_Test.Has_Key (Key (Test.Name)) then
@@ -571,16 +617,22 @@ package body Alire.Test.Runner is
       end;
 
    exception
+      --  These are raised mid-scan by the parser, so Unit was never reported
+      --  and stays Unknown; the source nonetheless carries an Alire_Test
+      --  pragma, so mark it Include so the discovery treats it as a (broken)
+      --  declared test rather than a non-test source.
       when LML.Duplicate_Pragma =>
          --  The same configuration key appeared more than once
          Trace.Error
            (Filename & ": duplicate " & Test.Pragma_Name & " pragma key");
+         TC.Declared := Include;
       when E : LML.Invalid_Pragma_Syntax =>
          --  One of our pragmas couldn't be fully parsed, so for now we fail.
          --  TODO: apply the same policy as for unknown keys/values instead for
          --  hard failure.
          Trace.Error (Filename & ": " & LML.Encode (LML.Decode
            (Ada.Exceptions.Exception_Message (E))));
+         TC.Declared := Include;
          TC.Pre_Fail := True;
          TC.Reason   := +Ada.Exceptions.Exception_Message (E);
    end Load_Test_Case_Pragmas;
@@ -878,27 +930,84 @@ package body Alire.Test.Runner is
          Unused_Enter : in out Boolean;
          Unused_Stop  : in out Boolean)
       is
-         --  Helper function to append all .adb files in a tree
-         --  to the `Test_List` vector
+         use all type LML.Input.Pragmas.Ada_Unit;
+
+         --  Helper that classifies each .adb in the tree: a parameterless main
+         --  procedure that opts in becomes a test; anything else is skipped
+         --  silently (packages, functions, ... never need a declaration), and
+         --  a few inconsistencies are reported as recoverable errors.
 
          Name : constant Portable_Path :=
            VFS.To_Portable
              (Utils.Strip_Prefix
                 (This.Path,
                  Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator));
+
+         function Unit_Description
+           (U : LML.Input.Pragmas.Ada_Unit) return String
+         is (case U is
+                when Package_Unit                => "a package body",
+                when Function_Unit               => "a function body",
+                when Generic_Unit                => "a generic unit",
+                when Separate_Unit               => "a separate subunit",
+                when Procedure_With_Parameters   =>
+                   "a procedure that takes parameters",
+                when Procedure_Without_Parameters => "a main procedure",
+                when Unknown                     => "not a recognized unit");
+
+         Pragma_Name : String renames Test.Pragma_Name;
       begin
-         --  TODO: skip files that also have an ".ads" counterpart
-         if AAA.Strings.Has_Suffix (String (Name), ".adb") then
-            declare
-               TC : Test_Case :=
-                 (Path => To_Unbounded_String (String (Name)), others => <>);
-            begin
-               Load_Test_Case_Pragmas (This.Path, TC);
-               if Matches_Filter (TC) then
-                  Test_List.Append (TC);
-               end if;
-            end;
+         if not AAA.Strings.Has_Suffix (String (Name), ".adb") then
+            return;
          end if;
+
+         declare
+            TC : Test_Case :=
+              (Path => To_Unbounded_String (String (Name)), others => <>);
+         begin
+            Load_Test_Case_Pragmas (This.Path, TC);
+
+            case TC.Unit is
+               --  A runnable main, or a source left Unknown because its
+               --  pragmas failed to parse (then it is Include with Pre_Fail
+               --  set, and is appended to be reported as a failed test).
+               when Procedure_Without_Parameters | Unknown =>
+                  case TC.Declared is
+                     when Exclude =>
+                        Trace.Debug
+                          ("Skipping auxiliary test source: " & String (Name));
+                     when Include =>
+                        if Matches_Filter (TC) then
+                           Test_List.Append (TC);
+                        end if;
+                     when Undeclared =>
+                        if TC.Unit = Procedure_Without_Parameters then
+                           Recoverable_User_Error
+                             (String (Name) & ": looks like a test main but is"
+                              & " not declared; add `pragma " & Pragma_Name
+                              & ";` to run it, or `pragma " & Pragma_Name
+                              & " (Auxiliary_File);` to exclude it");
+                        else
+                           Trace.Debug
+                             ("Skipping non-test source: " & String (Name));
+                        end if;
+                  end case;
+
+               --  Not a runnable main: only complain when something wrongly
+               --  declared it a test; otherwise ignore it without fuss.
+               when others =>
+                  if TC.Declared = Include then
+                     Recoverable_User_Error
+                       (String (Name) & ": declared with `pragma "
+                        & Pragma_Name & "` but is "
+                        & Unit_Description (TC.Unit)
+                        & ", not a parameterless main procedure");
+                  else
+                     Trace.Debug
+                       ("Skipping non-test source: " & String (Name));
+                  end if;
+            end case;
+         end;
       end Append;
    begin
       Den.Walk.Find (This => Root.Path / "src", Action => Append'Access);

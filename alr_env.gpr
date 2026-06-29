@@ -45,6 +45,7 @@ aggregate project Alr_Env is
                          "deps/umwi",
                          "deps/uri-ada",
                          "deps/xmlezout",
+                         "deps/yamlfk",
                          "deps/yeison/yeison_12"
                         );
 
