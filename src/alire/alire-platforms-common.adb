@@ -91,7 +91,7 @@ package body Alire.Platforms.Common is
       then
          return "/tmp";
       else
-         return Home_Var;
+         return Den.Scrub (Home_Var);
       end if;
    end Unix_Home_Folder;
 
