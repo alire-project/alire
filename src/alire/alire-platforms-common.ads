@@ -1,4 +1,5 @@
 with Alire.OS_Lib;
+with Den;
 
 private with GNATCOLL.OS.Constants;
 
@@ -26,29 +27,27 @@ private package Alire.Platforms.Common is
    ----------------------
 
    function Unix_Temp_Folder return String
-   is (OS_Lib.Getenv ("XDG_RUNTIME_DIR",
-                      Default => OS_Lib.Getenv ("TMPDIR",
-                                                Default => ".")));
+     is (Den.Scrub (OS_Lib.Getenv
+       ("XDG_RUNTIME_DIR",
+        Default => OS_Lib.Getenv ("TMPDIR", Default => "."))));
 
    -------------------
    -- XDG_Data_Home --
    -------------------
 
    function XDG_Data_Home return String
-   is (OS_Lib.Getenv
-         ("XDG_DATA_HOME",
-          Default => Unix_Home_Folder / ".local/share")
-       / "alire");
+     is (Den.Scrub (OS_Lib.Getenv
+       ("XDG_DATA_HOME",
+        Default => Unix_Home_Folder / ".local/share") / "alire"));
 
    ---------------------
    -- XDG_Config_Home --
    ---------------------
 
    function XDG_Config_Home return String
-   is (OS_Lib.Getenv
-         ("XDG_CONFIG_HOME",
-          Default => Unix_Home_Folder / ".config")
-       / "alire");
+     is (Den.Scrub (OS_Lib.Getenv
+       ("XDG_CONFIG_HOME",
+        Default => Unix_Home_Folder / ".config") / "alire"));
 
 private
 

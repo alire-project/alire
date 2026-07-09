@@ -1,0 +1,5 @@
+driver: python-script
+control:
+    - [SKIP, "skip_unix", "XDG variables are Unix-only"]
+indexes:
+    compiler_only_index: {}

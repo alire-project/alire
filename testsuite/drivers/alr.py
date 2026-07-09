@@ -2,6 +2,7 @@
 Helpers to run alr in the testsuite.
 """
 
+import json
 import os
 import os.path
 import platform
@@ -25,6 +26,15 @@ DEFAULT_CRATE_NAME = "xxx"
 
 class CalledProcessError(Exception):
     pass
+
+
+def version_info() -> dict:
+    """
+    Key/value pairs reported by `alr version`, as a dictionary. The JSON
+    output is a list of {"key": ..., "value": ...} entries.
+    """
+    return {entry["key"]: entry["value"] for entry in
+            json.loads(run_alr("--format=JSON", "version").out)}
 
 
 def distro_is_known():
