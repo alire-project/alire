@@ -52,20 +52,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # These combinations are deliberately oldest supported so the produced
+        # binaries can run on older platforms.
         platform:
           - os: macos-15-intel      # x64
             id: x86_64-macos
 
-          - os: macos-14            # arm64 (macos-latest is now v15 and it breaks things, TODO)
+          - os: macos-15            # arm64
             id: aarch64-macos
 
-          - os: ubuntu-22.04        # x64, oldest supported so releases can run on older distros
+          - os: ubuntu-22.04        # x64
             id: x86_64-linux
 
-          - os: ubuntu-22.04-arm    # new ARM runners
+          - os: ubuntu-22.04-arm    # arm64
             id: aarch64-linux
 
-          - os: windows-latest
+          - os: windows-2022
             id: x86_64-windows
 
     steps:
@@ -74,30 +76,6 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
-
-    # Install GNAT, we only need a system compiler for Ubuntu ARM until we have
-    # Alire for ARM64/Linux (on Ubuntu 22.04) release.
-
-    - name: Install system toolchain (Ubuntu ARM)
-      if: matrix.platform.id == 'aarch64-linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gnat gprbuild
-        echo ALIRE_TESTSUITE_DISABLE_DOCKER=true >> $GITHUB_ENV
-        # We need to disable Docker tests on Ubuntu ARM.
-
-    - name: Bootstrap Alire (Ubuntu ARM)
-      if: matrix.platform.id == 'aarch64-linux'
-      uses: alire-project/setup-alire@v5
-      with:
-        branch: "master" # build from source
-
-    - name: Remove system GNAT (Ubuntu ARM)
-      if: matrix.platform.id == 'aarch64-linux'
-      run: |
-        sudo apt-get remove -y gnat-10 gprbuild
-        rm -rf ~/.local/share/alire/toolchains/
-      shell: bash
 
     - name: Install Alire toolchain
       uses: alire-project/alr-install@v2
