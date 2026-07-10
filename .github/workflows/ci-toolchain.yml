@@ -39,7 +39,6 @@ jobs:
           - macos-15-intel
           - macos-26-intel
 
-          - macos-14
           - macos-15
           - macos-26
 
@@ -56,19 +55,49 @@ jobs:
         # 'include' explicit section.
         gcc_version: [12, 13, 14, 15, 16]
 
-        # exclude:
-          # Some combos are not supported due to missing pieces in the
-          # toolchain or other known issues.
-          # - os: macos-15-intel
-          #   gcc_version: 12
-
         include:
           # Only test gcc-10 and -11 on ubuntu-22.04 (to maintain testing
-          # back-compatibility, as those were being tested before)
+          # back-compatibility, as those were being tested before). Those start
+          # to be quite old GCCs and we could drop them if they fail to compile
+          # modern code.
           - os: ubuntu-22.04
             gcc_version: 10
           - os: ubuntu-22.04
             gcc_version: 11
+
+          # Older macOS combos that still work somehow so we keep them.
+          - os: macos-14
+            gcc_version: 13
+          - os: macos-14
+            gcc_version: 14
+
+        exclude:
+          # Some combos are not supported due to missing pieces in the
+          # toolchain or other known issues.
+          - os: macos-15
+            gcc_version: 12
+          - os: macos-15
+            gcc_version: 13
+          - os: macos-15
+            gcc_version: 14
+          - os: macos-26
+            gcc_version: 12
+          - os: macos-26
+            gcc_version: 13
+          - os: macos-26
+            gcc_version: 14
+          - os: macos-15-intel
+            gcc_version: 12
+          - os: macos-15-intel
+            gcc_version: 13
+          - os: macos-15-intel
+            gcc_version: 14
+          - os: macos-26-intel
+            gcc_version: 12
+          - os: macos-26-intel
+            gcc_version: 13
+          - os: macos-26-intel
+            gcc_version: 14
 
     steps:
     - name: Check out
