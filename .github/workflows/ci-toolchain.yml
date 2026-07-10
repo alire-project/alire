@@ -51,7 +51,9 @@ jobs:
 
           # - windows-11-arm # No compiler available yet
 
-        # Add GCC versions as they become available.
+        # Add GCC versions as they become available. Remove ones failing in
+        # modern platforms, and maybe keep a representative combo in the
+        # 'include' explicit section.
         gcc_version: [12, 13, 14, 15, 16]
 
         # exclude:
@@ -90,7 +92,7 @@ jobs:
     - name: Select toolchain GNAT^${{matrix.gcc_version}}
       run: >
         ./bin/alr -d -n toolchain
-                  --select gnat_native^${{matrix.gcc_version}} gprbuild
+        --select gnat_native^${{matrix.gcc_version}} gprbuild
 
     - name: Show builder alr configuration
       run: ./bin/alr -d -n version
