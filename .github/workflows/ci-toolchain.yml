@@ -14,6 +14,10 @@ on:
       - '**.rst'
       - '**.txt'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -28,58 +32,76 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # We want for builds to pass on the latest stable platforms, but we
+        # keep older ones for as long as they pass. No qualms on dropping older
+        # platforms once they stop working.
         os:
           - macos-15-intel
-          - macos-14 # See ci-release.yml about macos-latest
-          - ubuntu-22.04
-          - ubuntu-latest
-          - windows-latest
-        gcc_version: [10, 11, 12, 13, 14, 15]
+          - macos-26-intel
+
+          - macos-15
+          - macos-26
+
+          # - ubuntu-22.04 # Only two legacy combs manually included below
+          - ubuntu-24.04
+
+          - windows-2022
+          - windows-2025
+
+          # - windows-11-arm # No compiler available yet
+
+        # Add GCC versions as they become available. Remove ones failing in
+        # modern platforms, and maybe keep a representative combo in the
+        # 'include' explicit section.
+        gcc_version: [12, 13, 14, 15, 16]
+
+        include:
+          # Only test gcc-10 and -11 on ubuntu-22.04 (to maintain testing
+          # back-compatibility, as those were being tested before). Those start
+          # to be quite old GCCs and we could drop them if they fail to compile
+          # modern code.
+          - os: ubuntu-22.04
+            gcc_version: 10
+          - os: ubuntu-22.04
+            gcc_version: 11
+
+          # Older macOS combos that still work somehow so we keep them.
+          - os: macos-14
+            gcc_version: 13
+          - os: macos-14
+            gcc_version: 14
 
         exclude:
-          # Some combos are not supported due to missing pieces in the toolchain
-
-          # Linking troubles on macos-15 for those gcc versions
-          - os: macos-15-intel
-            gcc_version: 10
-          - os: macos-15-intel
-            gcc_version: 11
+          # Some combos are not supported due to missing pieces in the
+          # toolchain or other known issues.
+          - os: macos-15
+            gcc_version: 12
+          - os: macos-15
+            gcc_version: 13
+          - os: macos-15
+            gcc_version: 14
+          - os: macos-26
+            gcc_version: 12
+          - os: macos-26
+            gcc_version: 13
+          - os: macos-26
+            gcc_version: 14
           - os: macos-15-intel
             gcc_version: 12
           - os: macos-15-intel
             gcc_version: 13
           - os: macos-15-intel
             gcc_version: 14
-
-          # No builds of gcc-10, -11, -12 that work on arm64
-          - os: macos-14 # See ci-release.yml about macos-latest
-            gcc_version: 10
-          - os: macos-14 # See ci-release.yml about macos-latest
-            gcc_version: 11
-          - os: macos-14 # See ci-release.yml about macos-latest
+          - os: macos-26-intel
             gcc_version: 12
-
-          # gcc-10 and -11 do not work on LTS 24.04 anymore
-          - os: ubuntu-latest
-            gcc_version: 10
-          - os: ubuntu-latest
-            gcc_version: 11
-
-          # exclude all ubuntu-22.04 because we are only interested in two
-          # older tests that are explicitly included next
-          - os: ubuntu-22.04
-
-        include:
-          # Only test gcc-10 and -11 on ubuntu-22.04 (to maintain testing
-          # back-compatibility, as those were being tested before)
-          - os: ubuntu-22.04
-            gcc_version: 10
-          - os: ubuntu-22.04
-            gcc_version: 11
+          - os: macos-26-intel
+            gcc_version: 13
+          - os: macos-26-intel
+            gcc_version: 14
 
     steps:
     - name: Check out
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         submodules: recursive
 
@@ -97,21 +119,28 @@ jobs:
     # We can start using the alr we just built
 
     - name: Select toolchain GNAT^${{matrix.gcc_version}}
-      run: ./bin/alr -d -n toolchain --select gnat_native^${{matrix.gcc_version}} gprbuild
+      run: >
+        ./bin/alr -d -n toolchain
+        --select gnat_native^${{matrix.gcc_version}} gprbuild
 
     - name: Show builder alr configuration
       run: ./bin/alr -d -n version
 
     - name: Verify proper toolchain used for 1st build
       shell: bash
-      run: ./bin/alr -d -n version | grep 'compiled with version' | grep -q '${{ matrix.gcc_version }}'
+      run: >
+        ./bin/alr -d -n version |
+        grep 'compiled with version' |
+        grep -q '${{ matrix.gcc_version }}'
 
     - name: Update dependencies
       run: ./bin/alr -d -n -f update
       # Force because otherwise solving may time out in non-interactive mode
 
     - name: Show dependencies/pins
-      run: ./bin/alr -d -n -q with --solve || ./bin/alr -n -v -d with --solve
+      run: >
+        ./bin/alr -d -n -q with --solve ||
+        ./bin/alr -n -v -d with --solve
 
     - name: Show build environment, with debug fallback
       run: ./bin/alr -d -n printenv || ./bin/alr -n -v -d printenv
@@ -133,13 +162,16 @@ jobs:
 
     - name: Verify proper toolchain used for 2nd build
       shell: bash
-      run: ./bin/alr -d -n version | grep 'compiled with version' | grep -q '${{ matrix.gcc_version }}'
+      run: >
+        ./bin/alr -d -n version |
+        grep 'compiled with version' |
+        grep -q '${{ matrix.gcc_version }}'
 
     # Run the testsuite with the just build alr. The testsuite picks the proper
     # alr in the ./bin/alr location.
 
     - name: Install Python 3.x # required by testsuite
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.x'
 

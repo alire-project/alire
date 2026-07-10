@@ -23,6 +23,10 @@ on:
         required: false
         default: 'false'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   alire_index: ""
   # Empty index: test with master of community index
@@ -52,52 +56,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # These combinations are deliberately oldest supported so the produced
+        # binaries can run on older platforms.
         platform:
           - os: macos-15-intel      # x64
             id: x86_64-macos
 
-          - os: macos-14            # arm64 (macos-latest is now v15 and it breaks things, TODO)
+          - os: macos-15            # arm64
             id: aarch64-macos
 
-          - os: ubuntu-22.04        # x64, oldest supported so releases can run on older distros
+          - os: ubuntu-22.04        # x64
             id: x86_64-linux
 
-          - os: ubuntu-22.04-arm    # new ARM runners
+          - os: ubuntu-22.04-arm    # arm64
             id: aarch64-linux
 
-          - os: windows-latest
+          - os: windows-2022
             id: x86_64-windows
 
     steps:
 
     - name: Check out repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         submodules: recursive
-
-    # Install GNAT, we only need a system compiler for Ubuntu ARM until we have
-    # Alire for ARM64/Linux (on Ubuntu 22.04) release.
-
-    - name: Install system toolchain (Ubuntu ARM)
-      if: matrix.platform.id == 'aarch64-linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gnat gprbuild
-        echo ALIRE_TESTSUITE_DISABLE_DOCKER=true >> $GITHUB_ENV
-        # We need to disable Docker tests on Ubuntu ARM.
-
-    - name: Bootstrap Alire (Ubuntu ARM)
-      if: matrix.platform.id == 'aarch64-linux'
-      uses: alire-project/setup-alire@v5
-      with:
-        branch: "master" # build from source
-
-    - name: Remove system GNAT (Ubuntu ARM)
-      if: matrix.platform.id == 'aarch64-linux'
-      run: |
-        sudo apt-get remove -y gnat-10 gprbuild
-        rm -rf ~/.local/share/alire/toolchains/
-      shell: bash
 
     - name: Install Alire toolchain
       uses: alire-project/alr-install@v2
@@ -109,7 +91,7 @@ jobs:
       uses: mosteo-actions/gnat-toolchain-arch-checker@v1
 
     - name: Install Python 3.x (required for the testsuite)
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.x'
 
@@ -160,13 +142,13 @@ jobs:
     steps:
 
       - name: Download x86_64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: alr-bin-x86_64-macos.zip
           path: x86_64
 
       - name: Download aarch64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: alr-bin-aarch64-macos.zip
           path: aarch64
@@ -204,7 +186,7 @@ jobs:
     steps:
       - name: Create draft release
         id: create_release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        uses: softprops/action-gh-release@2bb465e97f322d3cb2a965294d483e0d26a67aa9 # v3.0.1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
@@ -254,7 +236,7 @@ jobs:
     steps:
 
       - name: Retrieve binary artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: alr-bin-${{ matrix.platform.id }}.zip
 
@@ -293,11 +275,11 @@ jobs:
     steps:
 
     - name: Check out repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       # We need it for the installer scripts. We don't need submodules now though.
 
     - name: Download built alr
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: alr-bin-x86_64-windows.zip
 
@@ -317,7 +299,7 @@ jobs:
     # lighter than alr-install (which uses setup-alire internally).
 
     - name: Set up stable Alire (for MSYS2)
-      uses: alire-project/setup-alire@v4
+      uses: alire-project/setup-alire@v6
 
     - name: Check MSYS2 installation
       run: bin/alr version
@@ -380,7 +362,7 @@ jobs:
     steps:
 
       - name: Retrieve binary artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: installer-x86_64-windows
           path: installer
@@ -417,11 +399,11 @@ jobs:
     steps:
 
     - name: Check out repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       # No need for submodules, but we need some resources for the appimage
 
     - name: Retrieve artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: alr-bin-x86_64-linux.zip
 
@@ -432,7 +414,7 @@ jobs:
         sudo apt-get install -y libfuse2
 
     - name: Install AppImage's linuxdeploy
-      uses: miurahr/install-linuxdeploy-action@c776300d621bfc9510fc400abf5dff5fa728ac14 # v1 branch
+      uses: miurahr/install-linuxdeploy-action@4e0e2563942963739823dc5b9ea3bb11a8063182 # v1.8.0
       with:
         plugins: appimage
 
@@ -480,7 +462,7 @@ jobs:
     steps:
 
       - name: Retrieve binary artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: alr-${{needs.appimage.outputs.short_sha}}-x86_64.AppImage.zip
 
@@ -513,7 +495,7 @@ jobs:
     steps:
 
       - name: Install Python 3.x
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
 
@@ -521,7 +503,7 @@ jobs:
         run: pip install git-archive-all
 
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -584,7 +566,7 @@ jobs:
     steps:
 
       - name: Retrieve binary artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: alr-bin-${{ matrix.platform.id }}.zip
 
@@ -611,12 +593,12 @@ jobs:
       # The uploader needs Python with the github module
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
 
       - name: Upload to release
-        uses: pyTooling/Actions/releaser/composite@a1509493ae13d21f384ec0abe66e81af52b38046 # r4 branch
+        uses: pyTooling/Actions/releaser/composite@4bab5544c2b45538d50bce20a526b3d1f9fe35e4 # r7 branch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
@@ -642,7 +624,7 @@ jobs:
     steps:
 
       - name: Retrieve binary artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: alr-${{needs.appimage.outputs.short_sha}}-x86_64.AppImage.zip
 
@@ -652,7 +634,7 @@ jobs:
           mv alr.AppImage alr-nightly-x86_64.AppImage
 
       - name: Upload to release
-        uses: pyTooling/Actions/releaser/composite@a1509493ae13d21f384ec0abe66e81af52b38046 # r4 branch
+        uses: pyTooling/Actions/releaser/composite@4bab5544c2b45538d50bce20a526b3d1f9fe35e4 # r7 branch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: nightly
