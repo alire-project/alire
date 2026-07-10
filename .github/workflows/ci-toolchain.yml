@@ -33,16 +33,17 @@ jobs:
       fail-fast: false
       matrix:
         # We want for builds to pass on the latest stable platforms, but we
-        # keep older ones for as long as the pass. No qualms on dropping older
+        # keep older ones for as long as they pass. No qualms on dropping older
         # platforms once they stop working.
         os:
           - macos-15-intel
           - macos-26-intel
 
+          - macos-14
           - macos-15
           - macos-26
 
-          - ubuntu-22.04
+          # - ubuntu-22.04 # Only two legacy combs manually included below
           - ubuntu-24.04
 
           - windows-2022
@@ -51,40 +52,13 @@ jobs:
           # - windows-11-arm # No compiler available yet
 
         # Add GCC versions as they become available.
-        gcc_version: [10, 11, 12, 13, 14, 15, 16]
+        gcc_version: [12, 13, 14, 15, 16]
 
-        exclude:
+        # exclude:
           # Some combos are not supported due to missing pieces in the
           # toolchain or other known issues.
-
-          # Linking troubles on macos-15 for those gcc versions
-          # - os: macos-26-intel
-          #   gcc_version: 10
-          # - os: macos-26-intel
-          #   gcc_version: 11
-          # - os: macos-26-intel
+          # - os: macos-15-intel
           #   gcc_version: 12
-          # - os: macos-26-intel
-          #   gcc_version: 13
-          # - os: macos-26-intel
-          #   gcc_version: 14
-
-          # gcc-10 and -11 do not work on LTS 24.04 anymore
-          - os: ubuntu-latest
-            gcc_version: 10
-          - os: ubuntu-latest
-            gcc_version: 11
-
-          # exclude all ubuntu-22.04 because we are only interested in two
-          # older tests that are explicitly included next
-          - os: ubuntu-22.04
-
-          # exclude macOS with older GCCs, working combos explicitly included
-          # below.
-          - os: macos-15
-          - os: macos-15-intel
-          - os: macos-26
-          - os: macos-26-intel
 
         include:
           # Only test gcc-10 and -11 on ubuntu-22.04 (to maintain testing
