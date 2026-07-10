@@ -23,6 +23,10 @@ on:
         required: false
         default: 'false'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   alire_index: ""
   # Empty index: test with master of community index

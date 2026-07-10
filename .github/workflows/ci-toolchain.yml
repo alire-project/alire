@@ -14,6 +14,10 @@ on:
       - '**.rst'
       - '**.txt'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -45,7 +49,9 @@ jobs:
           - windows-2025
 
           # - windows-11-arm # No compiler available yet
-        gcc_version: [10, 11, 12, 13, 14, 15]
+
+        # Add GCC versions as they become available.
+        gcc_version: [10, 11, 12, 13, 14, 15, 16]
 
         exclude:
           # Some combos are not supported due to missing pieces in the
@@ -72,6 +78,13 @@ jobs:
           # exclude all ubuntu-22.04 because we are only interested in two
           # older tests that are explicitly included next
           - os: ubuntu-22.04
+
+          # exclude macOS with older GCCs, working combos explicitly included
+          # below.
+          - os: macos-15
+          - os: macos-15-intel
+          - os: macos-26
+          - os: macos-26-intel
 
         include:
           # Only test gcc-10 and -11 on ubuntu-22.04 (to maintain testing
@@ -101,21 +114,28 @@ jobs:
     # We can start using the alr we just built
 
     - name: Select toolchain GNAT^${{matrix.gcc_version}}
-      run: ./bin/alr -d -n toolchain --select gnat_native^${{matrix.gcc_version}} gprbuild
+      run: >
+        ./bin/alr -d -n toolchain
+                  --select gnat_native^${{matrix.gcc_version}} gprbuild
 
     - name: Show builder alr configuration
       run: ./bin/alr -d -n version
 
     - name: Verify proper toolchain used for 1st build
       shell: bash
-      run: ./bin/alr -d -n version | grep 'compiled with version' | grep -q '${{ matrix.gcc_version }}'
+      run: >
+        ./bin/alr -d -n version |
+        grep 'compiled with version' |
+        grep -q '${{ matrix.gcc_version }}'
 
     - name: Update dependencies
       run: ./bin/alr -d -n -f update
       # Force because otherwise solving may time out in non-interactive mode
 
     - name: Show dependencies/pins
-      run: ./bin/alr -d -n -q with --solve || ./bin/alr -n -v -d with --solve
+      run: >
+        ./bin/alr -d -n -q with --solve ||
+        ./bin/alr -n -v -d with --solve
 
     - name: Show build environment, with debug fallback
       run: ./bin/alr -d -n printenv || ./bin/alr -n -v -d printenv
@@ -137,7 +157,10 @@ jobs:
 
     - name: Verify proper toolchain used for 2nd build
       shell: bash
-      run: ./bin/alr -d -n version | grep 'compiled with version' | grep -q '${{ matrix.gcc_version }}'
+      run: >
+        ./bin/alr -d -n version |
+        grep 'compiled with version' |
+        grep -q '${{ matrix.gcc_version }}'
 
     # Run the testsuite with the just build alr. The testsuite picks the proper
     # alr in the ./bin/alr location.
