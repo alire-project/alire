@@ -1,6 +1,7 @@
 # This docker image is used in tests with the `docker_wrapper` driver.
 
-# Latest tested is 24.04. We use our image from the github registry.
+# Latest tested is 26.04. We use our multi-arch (amd64+arm64) image
+# from the github registry.
 FROM ghcr.io/alire-project/docker/gnat:ubuntu-lts
 
 RUN useradd -m -s /bin/bash user && \

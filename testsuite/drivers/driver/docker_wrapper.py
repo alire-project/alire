@@ -1,7 +1,6 @@
 import hashlib
 import json
 import os
-import platform
 import subprocess
 from importlib import import_module
 import time
@@ -22,11 +21,6 @@ LABEL_HASH = "hash"
 def is_docker_available() -> bool:
     # Restrict docker testing only to Linux
     if not on_linux():
-        return False
-
-    # Our testsuite image (see Dockerfile) is only published for amd64,
-    # so docker tests cannot run on other architectures
-    if platform.machine() not in ("x86_64", "AMD64"):
         return False
 
     # Detect explicitly disabled
