@@ -60,7 +60,7 @@ commit = "73d99ae1ff2f5210dc41c2ea7afebe600f9e9916"
 
 [pins.ada_toml]
 url    = "https://github.com/pmderodat/ada-toml"
-commit = "f51ff9730aa916f33981db4589666577e9dd05c7"
+commit = "669eacabc8cad45b89b0bfc34d99b4334d66bebd"
 
 [pins.ansiada]
 url    = "https://github.com/mosteo/ansi-ada"
