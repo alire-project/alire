@@ -1,9 +1,7 @@
-[![Linux CI](https://github.com/alire-project/alire/workflows/CI%20linux/badge.svg)](https://github.com/alire-project/alire/actions)
-[![Windows CI](https://github.com/alire-project/alire/workflows/CI%20Windows/badge.svg)](https://github.com/alire-project/alire/actions)
-[![MacOS CI](https://github.com/alire-project/alire/workflows/CI%20macOS/badge.svg)](https://github.com/alire-project/alire/actions)
+[![CI](https://github.com/alire-project/alire/workflows/CI%20self+toolchain/badge.svg)](https://github.com/alire-project/alire/actions)
+[![CI](https://github.com/alire-project/alire/workflows/CI%20Docker/badge.svg)](https://github.com/alire-project/alire/actions)
+[![CI](https://github.com/alire-project/alire/workflows/CI%20Release/badge.svg)](https://github.com/alire-project/alire/actions)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/ada-lang/Alire)
-[![Gitpod ready](https://img.shields.io/badge/Gitpod-ready-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/alire-project/alire)
-[![Funding](https://polar.sh/embed/seeks-funding-shield.svg?org=alire-project)](https://polar.sh/alire-project)
 
 # ALR #
 
@@ -53,7 +51,7 @@ Sourcing the `scripts/alr-completion.bash` file will provide Bash tab autocomple
 
 If you already have a recent enough `alr` binary, you can alternatively build
 `alr` by simply running `alr build` at the root of the repository. This command
-will retrieve all necessary dependencies prior to launching the build and 
+will retrieve all necessary dependencies prior to launching the build and
 configure the environment.
 
 The master branch should normally be able to build itself in this fashion, as
@@ -83,10 +81,9 @@ environment `alr` is using with `alr printenv`.
 
 Alire can be built on Linux, macOS, Windows, FreeBSD, and OpenBSD.
 
-Alire requires a recent Ada 2012 compiler. In practice, this currently means
-the latest [GNAT Community](https://www.adacore.com/download) or a somewhat
-recent GNAT FSF. Continuous integration is run against the Windows and macOS
-Github Actions images, and a suite of Linux [docker
+Alire requires a recent Ada 2012 compiler. In practice, this currently means a
+somewhat recent GNAT FSF (>=13). Continuous integration is run against the
+Windows and macOS Github Actions images, and a suite of Linux [docker
 images](https://github.com/alire-project/alire/blob/538a3549a1dbbc6c09728cb987c71187578381b2/.github/workflows/ci-docker.yml#L20)
 that includes at least Debian stable, Ubuntu LTS, CentOS, Arch and Fedora. The
 packaged GNAT is used when available from the distribution.
