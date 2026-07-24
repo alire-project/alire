@@ -598,7 +598,7 @@ jobs:
           python-version: '3.x'
 
       - name: Upload to release
-        uses: pyTooling/Actions/releaser/composite@4bab5544c2b45538d50bce20a526b3d1f9fe35e4 # r7 branch
+        uses: pyTooling/Actions/releaser/composite@c58169077d7a6289af1885bb0711eb263a57727d # r6 branch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
@@ -634,7 +634,7 @@ jobs:
           mv alr.AppImage alr-nightly-x86_64.AppImage
 
       - name: Upload to release
-        uses: pyTooling/Actions/releaser/composite@4bab5544c2b45538d50bce20a526b3d1f9fe35e4 # r7 branch
+        uses: pyTooling/Actions/releaser/composite@c58169077d7a6289af1885bb0711eb263a57727d # r6 branch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: nightly
