@@ -42,12 +42,14 @@ def structure_tests(data):
 
     assert sorted(list(data["summary"].keys())) == [
         "failures",
+        "force_ignored",
         "skipped",
         "total",
     ]
     assert data["summary"]["total"] == 2
     assert data["summary"]["failures"] == 1
     assert data["summary"]["skipped"] == 0
+    assert data["summary"]["force_ignored"] == 0
 
 
 p = run_alr("--format=json", "test", complain_on_error=False)
