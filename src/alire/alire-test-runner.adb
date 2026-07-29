@@ -100,12 +100,17 @@ package body Alire.Test.Runner is
       --  Report a failing test with a message and its output
       procedure Skip (Test_Name, Reason : String);
       --  Report a test that was not run.
+      procedure Note_Force_Ignored;
+      --  Count a possible test that was excluded from the run because
+      --  --force downgraded its discovery error to a warning.
       function Total_Count return Natural;
       --  Get the total number of tests that have been processed
       function Fail_Count return Natural;
       --  Get the number of failed tests
       function Skip_Count return Natural;
       --  Get the number of skipped tests
+      function Force_Ignored_Count return Natural;
+      --  Get the number of possible tests excluded from the run by --force
       procedure Report;
       --  Print a report of tests and finalize the driver
 
@@ -124,9 +129,10 @@ package body Alire.Test.Runner is
       Structured_Output_Format : Tables.Formats renames
         Tables.Structured_Output_Format;
 
-      Passed  : Natural := 0;
-      Failed  : Natural := 0;
-      Skipped : Natural := 0;
+      Passed        : Natural := 0;
+      Failed        : Natural := 0;
+      Skipped       : Natural := 0;
+      Force_Ignored : Natural := 0;
 
       Builder : Builder_Access := null;
    end Driver;
@@ -282,6 +288,15 @@ package body Alire.Test.Runner is
          end if;
       end Skip;
 
+      ------------------------
+      -- Note_Force_Ignored --
+      ------------------------
+
+      procedure Note_Force_Ignored is
+      begin
+         Force_Ignored := Force_Ignored + 1;
+      end Note_Force_Ignored;
+
       -----------------
       -- Total_Count --
       -----------------
@@ -302,6 +317,13 @@ package body Alire.Test.Runner is
 
       function Skip_Count return Natural
       is (Skipped);
+
+      -------------------------
+      -- Force_Ignored_Count --
+      -------------------------
+
+      function Force_Ignored_Count return Natural
+      is (Force_Ignored);
 
       ------------
       -- Report --
@@ -324,6 +346,10 @@ package body Alire.Test.Runner is
             Builder.Insert (+TOML_Keys.Test_Report_Skipped);
             Builder.Append
               (LML.Scalars.New_Int (Long_Long_Integer (Driver.Skip_Count)));
+            Builder.Insert (+TOML_Keys.Test_Report_Force_Ignored);
+            Builder.Append
+              (LML.Scalars.New_Int
+                 (Long_Long_Integer (Driver.Force_Ignored_Count)));
             Builder.End_Map;
             Builder.End_Map;
 
@@ -348,6 +374,12 @@ package body Alire.Test.Runner is
             end if;
             if Driver.Fail_Count /= 0 then
                Trace.Error ("failed" & Driver.Fail_Count'Image & " tests");
+            end if;
+            if Driver.Force_Ignored_Count /= 0 then
+               Trace.Warning
+                 ("--force ignored" & Driver.Force_Ignored_Count'Image
+                  & " test candidate(s) because of missing "
+                  & Test.Pragma_Name & " declaration");
             end if;
          end if;
       end Report;
@@ -996,6 +1028,9 @@ package body Alire.Test.Runner is
                               & " not declared; add `pragma " & Pragma_Name
                               & ";` to run it, or `pragma " & Pragma_Name
                               & " (Auxiliary_File);` to exclude it");
+                           --  Only reached with --force, as otherwise the
+                           --  call above raises and aborts the scan.
+                           Driver.Note_Force_Ignored;
                         else
                            Trace.Debug
                              ("Skipping non-test source: " & String (Name));

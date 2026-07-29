@@ -74,9 +74,15 @@ p = run_alr("test", quiet=False, complain_on_error=False)
 assert p.status != 0, "undeclared main should fail the run"
 assert_substring("is not declared", p.out)
 
-# --force downgrades it to a warning and skips the source.
+# --force downgrades it to a warning and skips the source, but the run must
+# still count and report the ignored possible test.
 p = run_alr("test", quiet=False, force=True)
 assert_substring("is not declared", p.out)
+assert_substring("force ignored", p.out)
+
+p = run_alr("--format=json", "test", force=True)
+data = parse_json_result(p)
+assert_eq(1, data["summary"]["force_ignored"])
 
 # --- An Alire_Test pragma on a non-main is a recoverable error --------------
 
