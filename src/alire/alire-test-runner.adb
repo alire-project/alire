@@ -979,7 +979,7 @@ package body Alire.Test.Runner is
                --  A runnable main, or a source left Unknown because its
                --  pragmas failed to parse (then it is Include with Pre_Fail
                --  set, and is appended to be reported as a failed test).
-               
+
                when Procedure_Without_Parameters | Unknown =>
                   case TC.Declared is
                      when Exclude =>
