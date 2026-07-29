@@ -517,6 +517,7 @@ package body Alire.Test.Runner is
 
          --  Auxiliary_File: a bare key (Nil) or True marks the source as a
          --  support unit to exclude; an explicit False leaves it included.
+
          if Alire_Test.Has_Key (Key (Test.Auxiliary_File)) then
             declare
                V : constant Yeison.Any :=
@@ -534,6 +535,7 @@ package body Alire.Test.Runner is
 
          --  An opt-out must stand alone: pairing Auxiliary_File with any other
          --  Alire_Test configuration (a name, timeout, ...) is contradictory.
+
          if TC.Declared = Exclude and then Alire_Test.Keys.Length > 1 then
             Recoverable_User_Error
               (Filename & ": pragma " & Test.Pragma_Name
@@ -621,6 +623,7 @@ package body Alire.Test.Runner is
       --  and stays Unknown; the source nonetheless carries an Alire_Test
       --  pragma, so mark it Include so the discovery treats it as a (broken)
       --  declared test rather than a non-test source.
+
       when LML.Duplicate_Pragma =>
          --  The same configuration key appeared more than once
          Trace.Error
@@ -943,6 +946,10 @@ package body Alire.Test.Runner is
                 (This.Path,
                  Prefix => (Root.Path / "src") & OS_Lib.Dir_Separator));
 
+         ----------------------
+         -- Unit_Description --
+         ----------------------
+
          function Unit_Description
            (U : LML.Input.Pragmas.Ada_Unit) return String
          is (case U is
@@ -958,7 +965,7 @@ package body Alire.Test.Runner is
          Pragma_Name : String renames Test.Pragma_Name;
       begin
          if not AAA.Strings.Has_Suffix (String (Name), ".adb") then
-            return;
+            return; -- Cannot be a runnable main procedure
          end if;
 
          declare
@@ -968,9 +975,11 @@ package body Alire.Test.Runner is
             Load_Test_Case_Pragmas (This.Path, TC);
 
             case TC.Unit is
+
                --  A runnable main, or a source left Unknown because its
                --  pragmas failed to parse (then it is Include with Pre_Fail
                --  set, and is appended to be reported as a failed test).
+               
                when Procedure_Without_Parameters | Unknown =>
                   case TC.Declared is
                      when Exclude =>
@@ -995,6 +1004,7 @@ package body Alire.Test.Runner is
 
                --  Not a runnable main: only complain when something wrongly
                --  declared it a test; otherwise ignore it without fuss.
+
                when others =>
                   if TC.Declared = Include then
                      Recoverable_User_Error

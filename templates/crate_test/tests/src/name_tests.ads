@@ -5,7 +5,7 @@ pragma Warnings (On);
 
 pragma Ignore_Pragma (Alire_Test);
 --  Alire configures tests through this pragma. This clause silences warnings
---  by GNAT about it. The pragma has no impact on GNAT compilation.
+--  by GNAT about it. The pragma has no other impact on GNAT compilation.
 
 package @_CAPITALIZE:NAME_@_Tests is
 
