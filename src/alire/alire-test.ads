@@ -9,6 +9,7 @@ package Alire.Test with Preelaborate is
    --  subunits, ...) are ignored without needing any pragma.
    --
    --  `pragma Alire_Test;`           -- declare as a test, with defaults
+   --  `pragma Alire_Test (<key> => <value);` -- alt syntax
    --  `pragma Alire_Test (<key>, <value>);`
    --          |           |      |
    --          |           |      \_ Value: the setting to apply
@@ -32,7 +33,7 @@ package Alire.Test with Preelaborate is
      (Auxiliary_File,
       --  When True (or value omitted), the source is a support unit, not a
       --  test main, and is excluded from testing. Must be the only key in its
-      --  Alire_Test configuration.
+      --  Alire_Test configuration. Applies to files that could be a test only.
       --  Value is an optional Boolean.
       Name,
       --  Override the displayed test name.
