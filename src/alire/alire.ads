@@ -57,14 +57,19 @@ package Alire with Preelaborate is
 
    Community_Trusted_Sites : constant String :=
      "bitbucket.org"
+     & " codeberg.org"
      & " github.com"
      & " gitlab.com"
+     & " launchpad.net"
      & " savannah.gnu.org"
      & " savannah.nongnu.org"
-     & " sf.net";
-   --  Space separated list of hosts that are known to not be vulnerable to
-   --  SHA-1 collision attacks, and therefore trusted for use on the community
-   --  index. Also used as the default value for 'origins.git.trusted_sites'.
+     & " sf.net"
+     & " sourceforge.net"
+     ;
+   --  Space separated list of hosts that are reputable and known to not be
+   --  vulnerable to SHA-1 collision attacks (protection added to git since
+   --  2.13), and therefore trusted for use on the community index. Also used
+   --  as the default value for 'origins.git.trusted_sites'.
 
    --  Strings that are used quite generally
 
