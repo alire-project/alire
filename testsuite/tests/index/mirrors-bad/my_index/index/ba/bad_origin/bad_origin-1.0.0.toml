@@ -1,0 +1,12 @@
+description = "Origin kind that does not support mirrors"
+name = "bad_origin"
+version = "1.0.0"
+licenses = "MIT"
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin]
+url = "file:./here"
+
+[[mirror]]
+url = "file:./there"

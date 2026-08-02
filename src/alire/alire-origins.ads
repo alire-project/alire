@@ -173,11 +173,15 @@ package Alire.Origins is
                      Commit : String;
                      Subdir : Relative_Path := "") return Origin;
 
-   function New_VCS (URL    : Alire.URL;
-                     Commit : String;
-                     Subdir : Relative_Path := "") return Origin;
+   function New_VCS (URL       : Alire.URL;
+                     Commit    : String := "";
+                     Subdir    : Relative_Path := "";
+                     Is_Mirror : Boolean := False) return Origin
+     with Pre => Is_Mirror or else Commit /= "";
    --  Determine whether URL looks like git, Hg or SVN, and construct an origin
-   --  accordingly. Raises Checked_Error if not recognized as any VCS.
+   --  accordingly. Raises Checked_Error if not recognized as any VCS. A mirror
+   --  carries no commit/subdir of its own (they are taken from the
+   --  authoritative origin), so they are left empty when Is_Mirror.
 
    Unknown_Source_Archive_Name_Error : exception;
 
@@ -200,6 +204,14 @@ package Alire.Origins is
    --  already detected by some External.
 
    function Image (This : Origin) return String;
+   --  Single-line image. For a conditional origin see Print, which uses
+   --  multi-line indented nicer output.
+
+   function Is_Conditional (This : Origin) return Boolean;
+   --  True for a binary origin that carries case expressions
+
+   procedure Print (This : Origin; Prefix : String := "");
+   --  Pretty printer with indentation and multi-line
 
    procedure Add_Hash (This : in out Origin;
                        Hash :        Hashes.Any_Hash);
@@ -219,6 +231,20 @@ private
 
    use all type Hashes.Any_Hash;
 
+   package Keys is
+
+      --  TOML keys for origin serialization and mirror reuse
+
+      Archive_Name : constant String := "archive-name";
+      Binary       : constant String := "binary";
+      Commit       : constant String := "commit";
+      Hashes       : constant String := "hashes";
+      Origin       : constant String := TOML_Keys.Origin;
+      Subdir       : constant String := "subdir";
+      URL          : constant String := "url";
+
+   end Keys;
+
    package Hash_Vectors is new
      Ada.Containers.Indefinite_Vectors (Positive, Hashes.Any_Hash);
 
@@ -226,6 +252,16 @@ private
    --  Ugly Get_ but it avoids lots of ambiguities down the line. This returns
    --  the hashes that apply to the current environment; it may be an empty
    --  vector for origins without a hash (e.g. external or system).
+
+   function Load (This      : in out Origin;
+                  From      :        TOML_Adapters.Key_Queue;
+                  Is_Mirror :        Boolean)
+                  return Outcome
+      with Pre => not From.Contains (TOML_Keys.Origin);
+   --  Load an origin from an anon table, i.e. the contents of an [origin]
+   --  table without the enclosing "origin" key. Declared here for reuse from
+   --  child Alire.Origins.Mirrors, which loads bare [[mirror]] tables via this
+   --  function.
 
    function "+" (S : String) return Unbounded_String
    renames To_Unbounded_String;

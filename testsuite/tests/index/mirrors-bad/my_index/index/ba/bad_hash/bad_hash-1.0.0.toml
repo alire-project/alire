@@ -1,0 +1,14 @@
+description = "Mirror cannot specify hashes"
+name = "bad_hash"
+version = "1.0.0"
+licenses = "MIT"
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin]
+url = "http://example.com/crate-1.0.0.tar.gz"
+hashes = ["sha512:deadbeef"]
+
+[[mirror]]
+url = "http://mirror.example.com/crate-1.0.0.tar.gz"
+hashes = ["sha512:beefdead"]

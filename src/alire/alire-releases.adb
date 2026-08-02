@@ -893,7 +893,20 @@ package body Alire.Releases is
       end if;
 
       --  ORIGIN
-      Put_Line ("Origin: " & R.Origin.Image);
+      if R.Origin.Is_Conditional then
+         Put_Line ("Origin:");
+         R.Origin.Print ("   ");
+      else
+         Put_Line ("Origin: " & R.Origin.Image);
+      end if;
+
+      --  MIRRORS
+      if not R.Mirrors.Is_Empty then
+         Put_Line ("Mirrors:");
+         for Mirror of R.Mirrors loop
+            Mirror.Print ("   ");
+         end loop;
+      end if;
 
       --  AVAILABILITY
       if not R.Available.Is_Empty then

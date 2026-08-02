@@ -1,0 +1,17 @@
+description = "Sample git crate"
+name = "crate"
+version = "1.0.0"
+licenses = "MIT"
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin]
+url = "git+https://example.com/crate.git"
+commit = "0123456789abcdef0123456789abcdef01234567"
+
+# Mirrors only give a url; the commit is taken from the origin
+[[mirror]]
+url = "git+https://mirror.example.com/crate.git"
+
+[[mirror]]
+url = "git+https://mirror2.example.com/crate.git"

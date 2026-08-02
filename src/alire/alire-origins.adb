@@ -15,22 +15,6 @@ with Semantic_Versioning;
 
 package body Alire.Origins is
 
-   ----------
-   -- Keys --
-   ----------
-
-   package Keys is -- TOML keys for serialization
-
-      Archive_Name : constant String := "archive-name";
-      Binary       : constant String := "binary";
-      Commit       : constant String := "commit";
-      Hashes       : constant String := "hashes";
-      Origin       : constant String := "origin";
-      Subdir       : constant String := "subdir";
-      URL          : constant String := "url";
-
-   end Keys;
-
    function URL_Basename (URL : Alire.URL) return String;
    --  Try to get a basename for the given URL. Return an empty string on
    --  failure.
@@ -403,23 +387,37 @@ package body Alire.Origins is
    -- New_VCS --
    -------------
 
-   function New_VCS (URL    : Alire.URL;
-                     Commit : String;
-                     Subdir : Relative_Path := "") return Origin is
+   function New_VCS (URL       : Alire.URL;
+                     Commit    : String := "";
+                     Subdir    : Relative_Path := "";
+                     Is_Mirror : Boolean := False) return Origin is
       URL_Kind : constant URI.URI_Kinds := URI.URI_Kind (URL);
       VCS_URL : constant String := VCSs.Repo_URL (URL);
 
    begin
       case URL_Kind is
          when URI.Git_URIs =>
-            if not VCSs.Git.Is_Valid_Commit (Commit) then
+            --  A mirror has no commit of its own (it's taken from the origin)
+            if Is_Mirror then
+               return (Data => (Git,
+                                Repo_URL => +VCS_URL,
+                                Commit   => <>,
+                                Hashes   => <>,
+                                Subdir   => +Subdir));
+            elsif not VCSs.Git.Is_Valid_Commit (Commit) then
                Raise_Checked_Error
                  ("invalid git commit id, " &
                     "40 digits hexadecimal expected");
             end if;
             return New_Git (VCS_URL, Commit, Subdir);
          when URI.Hg_URIs =>
-            if not VCSs.Hg.Is_Valid_Commit (Commit) then
+            if Is_Mirror then
+               return (Data => (Hg,
+                                Repo_URL => +VCS_URL,
+                                Commit   => <>,
+                                Hashes   => <>,
+                                Subdir   => +Subdir));
+            elsif not VCSs.Hg.Is_Valid_Commit (Commit) then
                Raise_Checked_Error
                  ("invalid mercurial commit id, " &
                     "40 digits hexadecimal expected");
@@ -438,7 +436,8 @@ package body Alire.Origins is
    -- From_TOML --
    ---------------
 
-   function From_TOML (From : TOML_Adapters.Key_Queue)
+   function From_TOML (From      : TOML_Adapters.Key_Queue;
+                       Is_Mirror : Boolean)
                        return Conditional_Archives.Tree
    is
       use TOML;
@@ -463,7 +462,15 @@ package body Alire.Origins is
                                         then Archive.As_String
                                         else ""));
       begin
-         Add_Hashes (Archive_Origin.Data.Src_Archive.Hashes, Table).Assert;
+         if Is_Mirror then
+            if Table.Contains (Keys.Hashes) then
+               Table.Checked_Error
+                 ("mirrors cannot specify hashes; "
+                  & "they are taken from the origin");
+            end if;
+         else
+            Add_Hashes (Archive_Origin.Data.Src_Archive.Hashes, Table).Assert;
+         end if;
 
          if Table.Unwrap.Has (Keys.Binary) then
             Archive_Origin.Data.Src_Archive.Binary :=
@@ -484,13 +491,15 @@ package body Alire.Origins is
             & Keys.Archive_Name & "'");
    end From_TOML;
 
-   ----------------------
-   -- Binary_From_TOML --
-   ----------------------
-   --  This wrapper is used to make sure that a conditional archive is
-   --  explicitly marked as binary.
-   function Binary_From_TOML (From : TOML_Adapters.Key_Queue)
-                              return Conditional_Archives.Tree
+   -----------------------
+   -- Load_Binary_Archive --
+   -----------------------
+   --  Shared code for the binary-archive loaders below: it ensures a
+   --  conditional archive is explicitly marked as binary, then loads the
+   --  unconditional leaf.
+   function Load_Binary_Archive (From      : TOML_Adapters.Key_Queue;
+                                 Is_Mirror : Boolean)
+                                 return Conditional_Archives.Tree
    is
       use TOML;
       use type Semantic_Versioning.Version;
@@ -517,34 +526,54 @@ package body Alire.Origins is
             & " onwards.");
       end if;
 
-      return From_TOML (From);
-   end Binary_From_TOML;
+      return From_TOML (From, Is_Mirror);
+   end Load_Binary_Archive;
+
+   ----------------------
+   -- Binary_From_TOML --
+   ----------------------
+   --  Static_Loader for an authoritative binary origin leaf
+   function Binary_From_TOML (From : TOML_Adapters.Key_Queue)
+                              return Conditional_Archives.Tree
+   is (Load_Binary_Archive (From, Is_Mirror => False));
+
+   -----------------------------
+   -- Mirror_Binary_From_TOML --
+   -----------------------------
+   --  Static_Loader for a binary mirror leaf
+   function Mirror_Binary_From_TOML (From : TOML_Adapters.Key_Queue)
+                                     return Conditional_Archives.Tree
+   is (Load_Binary_Archive (From, Is_Mirror => True));
 
    ---------------
    -- From_TOML --
    ---------------
 
-   function From_TOML (From : TOML_Adapters.Key_Queue) return Archive_Data
+   function From_TOML (From      : TOML_Adapters.Key_Queue;
+                       Is_Mirror : Boolean) return Archive_Data
    is (Archive_Data
        (Conditional_Archive'
-          (Conditional_Archives.Tree'(From_TOML (From)) with null record)
+          (Conditional_Archives.Tree'(From_TOML (From, Is_Mirror))
+           with null record)
         .As_Data));
 
-   ---------------
-   -- From_TOML --
-   ---------------
+   ----------
+   -- Load --
+   ----------
 
-   overriding
-   function From_TOML (This : in out Origin;
-                       From :        TOML_Adapters.Key_Queue)
-                       return Outcome
+   function Load (This      : in out Origin;
+                  From      :        TOML_Adapters.Key_Queue;
+                  Is_Mirror :        Boolean)
+                  return Outcome
    is
 
       use TOML;
       use all type URI.URI_Kinds;
-      Table   : constant TOML_Adapters.Key_Queue :=
-                 From.Descend (From.Checked_Pop (Keys.Origin, TOML_Table),
-                               Context => Keys.Origin);
+
+      Table : TOML_Adapters.Key_Queue renames From;
+      --  A renaming for historical reasons, as this body used to descend into
+      --  From (the [origin] wrapper) first using a Table var. This way we
+      --  don't touch code below. Could be removed renaming uses below instead.
 
       -----------------
       -- Mark_Binary --
@@ -572,7 +601,8 @@ package body Alire.Origins is
                              (Table.Descend
                                 (Keys.Origin,
                                  Table.Unwrap,
-                                 Context => "source archive")),
+                                 Context => "source archive"),
+                              Is_Mirror => Is_Mirror),
                            Hashes      => <>));
       end Load_Source_Archive;
 
@@ -593,7 +623,9 @@ package body Alire.Origins is
                             (Keys.Origin,
                              Table.Unwrap,
                              Context => "binary archive"),
-                        Loader  => Binary_From_TOML'Access,
+                        Loader  => (if Is_Mirror
+                                    then Mirror_Binary_From_TOML'Access
+                                    else Binary_From_TOML'Access),
                         Resolve => True,
                         Strict  => False) with null record)));
 
@@ -625,10 +657,27 @@ package body Alire.Origins is
             This := New_Filesystem (URI.Local_Path (URL));
 
          when URI.VCS_URIs                 =>
-            if URL_Kind in URI.Probably_Git and then Hashed then
+            if not Is_Mirror
+               and then URL_Kind in URI.Probably_Git
+               and then Hashed
+            then
                --  To resolve the ambiguity of Probably_Git, assume a source
                --  archive if the "hashes" field is present.
                Load_Source_Archive (This, Table, URL);
+            elsif Is_Mirror then
+               --  A mirror differs from the origin only in its url: the commit
+               --  and subdir are taken from the origin, so reject them and
+               --  build with an empty commit.
+               if Table.Contains (Keys.Commit) then
+                  Table.Checked_Error
+                    ("mirrors cannot specify a commit; "
+                     & "it is taken from the origin");
+               elsif Table.Contains (Keys.Subdir) then
+                  Table.Checked_Error
+                    ("mirrors cannot specify a subdir; "
+                     & "it is taken from the origin");
+               end if;
+               This := New_VCS (URL, Is_Mirror => True);
             else
                --  In all other cases, treat this as a git repo.
                declare
@@ -679,8 +728,10 @@ package body Alire.Origins is
                Errors.Set ("This case should be unreachable");
 
          when Source_Archive =>
-            --  Hashes already loaded by the archive data loader
-            Assert (not This.Data.Src_Archive.Hashes.Is_Empty,
+            --  Hashes already loaded by the archive data loader. A mirror
+            --  legitimately has none (they are taken from the origin).
+            Assert (Is_Mirror
+                    or else not This.Data.Src_Archive.Hashes.Is_Empty,
                     Or_Else => "source archive hashes missing");
 
          when others =>
@@ -693,17 +744,40 @@ package body Alire.Origins is
 
          return Table.Report_Extra_Keys;
       end;
+   end Load;
+
+   ---------------
+   -- From_TOML --
+   ---------------
+
+   overriding
+   function From_TOML (This : in out Origin;
+                       From :        TOML_Adapters.Key_Queue)
+                       return Outcome
+   is
+      use TOML;
+   begin
+      return This.Load
+        (From.Descend (From.Checked_Pop (Keys.Origin, TOML_Table),
+                       Context => Keys.Origin),
+         Is_Mirror => False);
    end From_TOML;
 
    -----------
    -- Image --
    -----------
 
+   --  Note: for a conditional origin this falls back to
+   --  Bin_Archive.Image_One_Line below (a terse single-line
+   --  "(case OS is ... => ...)"), which is fine for logs. User-facing output
+   --  should use Print instead, which renders conditionals over several lines.
    function Image (This : Origin) return String is
      ((case This.Kind is
           when VCS_Kinds      =>
-             "commit " & S (This.Data.Commit)
-       & " from " & S (This.Data.Repo_URL),
+            (if S (This.Data.Commit) = "" -- a mirror
+             then S (This.Data.Repo_URL)
+             else "commit " & S (This.Data.Commit)
+                  & " from " & S (This.Data.Repo_URL)),
           when Archive_Kinds  =>
          (if This.Kind in Source_Archive then
              Source_Image (This.Data.Src_Archive)
@@ -726,6 +800,27 @@ package body Alire.Origins is
          then " with hash " & This.Image_Of_Hashes
          else " with hashes " & This.Image_Of_Hashes)
      );
+
+   --------------------
+   -- Is_Conditional --
+   --------------------
+
+   function Is_Conditional (This : Origin) return Boolean
+   is (This.Kind = Binary_Archive
+       and then not This.Data.Bin_Archive.Is_Unconditional);
+
+   -----------
+   -- Print --
+   -----------
+
+   procedure Print (This : Origin; Prefix : String := "") is
+   begin
+      if This.Is_Conditional then
+         This.Data.Bin_Archive.Print (Prefix => Prefix, And_Or => False);
+      else
+         Trace.Always (Prefix & This.Image);
+      end if;
+   end Print;
 
    ---------------------
    -- Image_Of_Hashes --

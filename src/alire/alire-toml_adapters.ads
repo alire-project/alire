@@ -153,6 +153,11 @@ package Alire.TOML_Adapters with Preelaborate is
 
    function "+" (Vect : AAA.Strings.Vector) return TOML.TOML_Value;
 
+   function To_TOML (S : String) return TOML.TOML_Value renames "+";
+
+   function To_TOML (Vect : AAA.Strings.Vector) return TOML.TOML_Value
+                     renames "+";
+
    function To_Array (V : TOML.TOML_Value) return TOML.TOML_Value with
      Post => To_Array'Result.Kind = TOML.TOML_Array;
    --  Take a value and return an array of a single element.
