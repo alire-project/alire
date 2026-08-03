@@ -117,6 +117,7 @@ warning is printed suggesting the use of `--builtin`.
 ### New test command
 
 PR [#1874](https://github.com/alire-project/alire/pull/1874)
+PR [#2157](https://github.com/alire-project/alire/pull/2157)
 
 The `alr test` command can now be configured with a new `[test]` section in the
 Alire manifest, with the option to use a built-in test runner or an external
@@ -130,9 +131,19 @@ command = ["my", "custom", "runner"]
 ```
 
 The built-in test runner allows crate authors to compile and run tests from
-simple `.adb` files. It compiles and runs every `.adb` file of the subcrate's
-`/src` folder as a separate test. A skeleton test subcrate is now generated
-with `alr init` (this can be prevented with the `--no-test` flag).
+simple `.adb` files in the test crate's `src/` folder. A source is run as a
+separate test only if it is a parameterless main procedure that declares itself
+with a pragma in its context clause:
+
+```ada
+pragma Alire_Test;          --  run this source as a test
+```
+
+Sources that can never be a runnable main (package bodies, functions, generics,
+`separate` subunits, ...) are ignored silently. See the new testsuite documentation for more test configuration pragmas.
+
+A skeleton test subcrate, including a declared test, is now generated with
+`alr init` (this can be prevented with the `--no-test` flag).
 
 For backwards compatibility, running `alr test` without a `[test]` section in
 the manifest will still run local test actions, but they should be considered
@@ -1279,4 +1290,3 @@ See the [GPR config](https://docs.adacore.com/gprbuild-docs/pdf/gprbuild_ug.pdf)
 definition in 2.9.1 and
 [Ada2022](https://www.adaic.org/resources/add_content/standards/22rm/html/RM-2-9.html)
 definition.
-

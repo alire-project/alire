@@ -8,24 +8,14 @@ import yaml
 import toml
 
 from drivers.alr import init_local_crate, run_alr
+from drivers.testing import write_test
 
 init_local_crate("xxx", with_test=True)
 
 os.remove("./tests/src/xxx_tests-assertions_enabled.adb")
 
-with open("./tests/src/xxx_tests-failing_test.adb", "w+") as f:
-    f.write("""procedure Xxx_Tests.Failing_Test is
-begin
-   raise Program_Error;
-end Xxx_Tests.Failing_Test;
-""")
-
-with open("./tests/src/xxx_tests-passing_test.adb", "w+") as f:
-    f.write("""procedure Xxx_Tests.Passing_Test is
-begin
-   null;
-end Xxx_Tests.Passing_Test;
-""")
+write_test("failing_test", "raise Program_Error;")
+write_test("passing_test", "null;")
 
 
 def structure_tests(data):
@@ -52,12 +42,14 @@ def structure_tests(data):
 
     assert sorted(list(data["summary"].keys())) == [
         "failures",
+        "force_ignored",
         "skipped",
         "total",
     ]
     assert data["summary"]["total"] == 2
     assert data["summary"]["failures"] == 1
     assert data["summary"]["skipped"] == 0
+    assert data["summary"]["force_ignored"] == 0
 
 
 p = run_alr("--format=json", "test", complain_on_error=False)

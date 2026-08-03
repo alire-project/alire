@@ -13,10 +13,10 @@ from drivers.asserts import (
     assert_not_substring,
     assert_substring,
 )
-from drivers.helpers import (
-    testing_find_test,
-    testing_parse_json_result,
-    testing_write_test,
+from drivers.testing import (
+    find_test,
+    parse_json_result,
+    write_test,
 )
 
 
@@ -24,7 +24,7 @@ init_local_crate(with_test=True)
 # Drop the default failing test to avoid confusion with its output
 os.remove("./tests/src/xxx_tests-assertions_enabled.adb")
 
-testing_write_test(
+write_test(
     "bogus_key",
     "null;",
     prelude='pragma Alire_Test (Bogus, "anything");\n',
@@ -69,14 +69,14 @@ assert_not_substring("[ FAIL ]", p.out)
 # Structured output exposes the skip in both the per-test entry and the summary
 
 p = run_alr("--format=json", "test")
-data = testing_parse_json_result(p)
+data = parse_json_result(p)
 assert_eq(1, data["summary"]["total"])
 assert_eq(0, data["summary"]["failures"])
 assert_eq(1, data["summary"]["skipped"])
-assert_eq("skip", testing_find_test(data["tests"], "bogus_key")["status"])
+assert_eq("skip", find_test(data["tests"], "bogus_key")["status"])
 assert_substring(
     "unknown Alire_Test pragma key: bogus",
-    testing_find_test(data["tests"], "bogus_key")["reason"],
+    find_test(data["tests"], "bogus_key")["reason"],
 )
 
 

@@ -4,8 +4,10 @@ type: object
 description: >
   Top-level map keyed by pragma name.
 
-  Only the positional two-argument pragma form is supported:
+  A test source declares itself with one of these forms:
 
+    pragma <PragmaName>;                   -- bare: include with defaults
+    pragma <PragmaName> (<Key>);           -- valueless key
     pragma <PragmaName> (<Key>, <Value>);
     pragma <PragmaName> (<Key> => <Value>);
 
