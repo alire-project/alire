@@ -313,7 +313,8 @@ package body Alr.Commands.Test is
          ("Run the test runner as defined in the manifest.")
          .Append ("")
          .Append
-            ("The built-in test runner takes an extra --jobs parameter, that"
+            ("The built-in test runner takes an extra "
+             & Markup.Terminal ("--jobs") & " parameter, that"
              & " defines the maximum number of tests to run in parallel.")
          .Append ("")
          .Append
@@ -323,12 +324,17 @@ package body Alr.Commands.Test is
              & " arguments.")
          .Append ("")
          .Append
-            ("When using a built-in runner, one can pass --list to get"
+            ("When using a built-in runner, one can pass "
+             & Markup.Terminal ("--list") & " to get"
              & " ahead of time a list of tests (optionally matching the"
              & " command line filter).")
          .Append ("")
          .Append
-            ("The --build-only and --build-arg switches allow finer control"
+            ("The "
+             & Markup.Terminal ("--build-only")
+             & " and "
+             & Markup.Terminal ("--build-arg")
+             & " switches allow finer control"
              & " over the test build process.")
          .Append ("")
          .Append

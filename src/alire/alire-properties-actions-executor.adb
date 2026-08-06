@@ -85,7 +85,7 @@ package body Alire.Properties.Actions.Executor is
       then
          Raise_Checked_Error
            (Errors.New_Wrapper ("Cannot run action:")
-            .Wrap ("Command not found  [" & TTY.Terminal (Exec) & "]")
+            .Wrap ("Command not found  [" & Markup.Terminal (Exec) & "]")
             .Wrap ("Working directory  [" & TTY.URL (Current) & "]")
             .Wrap ("Action description [" & This.Image & "]").Get);
       end if;

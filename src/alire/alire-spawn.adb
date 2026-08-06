@@ -69,7 +69,7 @@ package body Alire.Spawn is
             & TTY.Emph ("gprbuild")
             & ", please check that you have a GNAT and GPRbuild installation"
             & "in your environment. You may want to install a toolchain with "
-            & TTY.Terminal ("alr toolchain --select"));
+            & Markup.Terminal ("alr toolchain --select"));
       end if;
 
       Command ("gprbuild",

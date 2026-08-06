@@ -79,7 +79,7 @@ package body Alr.Commands.Build is
          else
             Reportaise_Wrong_Arguments
               ("Stopping stage is invalid: " & TTY.Error (Cmd.Stop_After.all)
-               & "; see " & TTY.Terminal ("alr help build")
+               & "; see " & Markup.Terminal ("alr help build")
                & " for valid values");
          end if;
       end if;
@@ -189,7 +189,7 @@ package body Alr.Commands.Build is
                       Description : String)
                       return String
       is ("* "
-          & TTY.Emph (Alire.TOML_Adapters.Tomify (Name'Image))
+          & Markup.Emph (Alire.TOML_Adapters.Tomify (Name'Image))
           & ": " & Description);
 
       function Building return Alire.Builds.Stop_Points
@@ -207,24 +207,27 @@ package body Alr.Commands.Build is
          & "whereas dependencies are built in release mode. Use "
          & Switch_Profiles & " for more overrides.")
        .New_Line
-       .Append (Switch_Profiles & "="
-         & TTY.Emph ("*|%|<crate1>=<profile>[,<crate2>=<profile>...]"))
+       .Append (Markup.Terminal (Switch_Profiles & "="
+         & ("*|%|<crate1>=<profile>[,<crate2>=<profile>...]")))
        .Append ("   Apply profiles to individual crates.")
-       .Append ("   Use " & TTY.Emph ("*=<profile>") & " to set all profiles.")
-       .Append ("   Use " & TTY.Emph ("%=<profile>") & " to set profiles of "
+       .Append ("   Use " & Markup.Terminal ("*=<profile>")
+                & " to set all profiles.")
+       .Append ("   Use " & Markup.Terminal ("%=<profile>")
+                & " to set profiles of "
          & "crates without a setting in a manifest only.")
        .New_Line
-       .Append ("Running '" & TTY.Terminal ("alr build") & "' without profile "
+       .Append ("Running '" & Markup.Terminal ("alr build")
+         & "' without profile "
          & "switches defaults to development (root crate) + release "
          & " (dependencies). Indirect builds through, e.g., '"
-         & TTY.Terminal ("alr run") & "' will use the last '"
-         & TTY.Terminal ("alr build") & "' configuration.")
+         & Markup.Terminal ("alr run") & "' will use the last '"
+         & Markup.Terminal ("alr build") & "' configuration.")
        .New_Line
          .Append (TTY.Bold ("Build stages"))
          .New_Line
          .Append ("Instead of a full build, the process can be stopped early "
-           & "using " & TTY.Terminal (Switch_Stop) & "=<stage>, where <stage> "
-                  & "is one of:")
+           & "using " & Markup.Terminal (Switch_Stop & "=<stage>")
+           & ", where " & Markup.Terminal ("<stage>") & " is one of:")
         .New_Line
         .Append (Stage (Sync, "      sync pristine sources to build location"))
         .Append (Stage (Generation, "generate configuration-dependent files"))
@@ -242,7 +245,7 @@ package body Alr.Commands.Build is
         .New_Line
         .Append ("After a partial build, to ensure a proper full build is"
                  & " performed, just run a regular "
-                 & TTY.Terminal ("alr build") &  " without "
+                 & Markup.Terminal ("alr build") &  " without "
                  & Switch_Stop & ".")
       ;
    end Long_Description;
@@ -275,7 +278,8 @@ package body Alr.Commands.Build is
         (Config,
          Cmd.Profiles'Access,
          "", Switch_Profiles & "=",
-         "Comma-separated list of <crate>=<profile> values (see description)",
+         "Comma-separated list of " & Markup.Terminal ("<crate>=<profile>")
+           & " values (see description)",
          Argument => "LIST");
 
       Define_Switch
