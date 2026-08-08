@@ -30,6 +30,10 @@ package Alire.Features is
       --  Require that binary origins are explicitly marked as such instead of
       --  relying on dynamic expressions.
 
+      Package_Features : constant Min_Version := +"1.5.0";
+      --  Require explicit support for additive package feature definitions,
+      --  including optional feature-gated dependency edges.
+
    end Index;
 
 end Alire.Features;

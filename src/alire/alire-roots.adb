@@ -2,6 +2,7 @@ with Ada.Directories;
 with Ada.Unchecked_Deallocation;
 
 with Alire.Conditional;
+with Alire.Crate_Features;
 with Alire.Dependencies.Containers;
 with Alire.Environment.Loading;
 with Alire.Errors;
@@ -537,31 +538,43 @@ package body Alire.Roots is
 
          --  Traverse direct dependencies of the given release
 
-         for Dep of Dependent.Flat_Dependencies (This.Environment) loop
+         declare
+            Selection : constant Crate_Features.Selection :=
+              (if This.Is_Root_Release (Dependent.Name)
+               then Crate_Features.Current
+               else Sol.Feature_Selection (Dependent.Name));
+         begin
+            for Dep of Conditional.Enumerate
+              (Dependent.Dependencies
+                 (This.Environment,
+                  Selection.Requested,
+                  Selection.Default_Features))
+            loop
 
-            --  For dependencies that appear in the solution as releases, get
-            --  their project files in the current environment.
+               --  For dependencies that appear in the solution as releases,
+               --  get their project files in the current environment.
 
-            if Sol.Releases.Contains (Dep.Crate) then
-               if Sol.Releases.Element (Dep.Crate).Auto_GPR_With then
-                  for File of Sol.Releases.Element (Dep.Crate).Project_Files
-                    (This.Environment, With_Path => False)
-                  loop
-                     Files.Include (File);
-                  end loop;
+               if Sol.Releases.Contains (Dep.Crate) then
+                  if Sol.Releases.Element (Dep.Crate).Auto_GPR_With then
+                     for File of Sol.Releases.Element (Dep.Crate).Project_Files
+                       (This.Environment, With_Path => False)
+                     loop
+                        Files.Include (File);
+                     end loop;
+                  end if;
+
+               elsif Sol.Links.Contains (Dep.Crate) then
+
+                  --  If a dependency appears as a link but not as a release,
+                  --  this means it is a "raw" link (no target manifest); we
+                  --  cannot know its project files so we default to using the
+                  --  crate name.
+
+                  Files.Include (Dep.Crate.As_String & ".gpr");
+
                end if;
-
-            elsif Sol.Links.Contains (Dep.Crate) then
-
-               --  If a dependency appears as a link but not as a release, this
-               --  means it is a "raw" link (no target manifest); we cannot
-               --  know its project files so we default to using the crate
-               --  name.
-
-               Files.Include (Dep.Crate.As_String & ".gpr");
-
-            end if;
-         end loop;
+            end loop;
+         end;
       end return;
    end Direct_Withs;
 
@@ -745,7 +758,11 @@ package body Alire.Roots is
          --  be replaced with the complete solution.
 
          Root.Set
-           (Solution => (if This.Dependencies (Env).Is_Empty
+           (Solution =>
+              (if This.Dependencies
+                    (Env,
+                     Crate_Features.Current.Requested,
+                     Crate_Features.Current.Default_Features).Is_Empty
                          then Alire.Solutions.Empty_Valid_Solution
                          else Alire.Solutions.Empty_Invalid_Solution));
 
@@ -1682,7 +1699,9 @@ package body Alire.Roots is
                              Lockfile : Absolute_Path)
    is
    begin
-      Lockfiles.Write (Contents => (Solution => Solution),
+      Lockfiles.Write (Contents =>
+                         (Solution      => Solution,
+                          Root_Features => Crate_Features.Current),
                        Filename => Lockfile);
    end Write_Solution;
 
@@ -1919,9 +1938,27 @@ package body Alire.Roots is
    is
       use type Conditional.Dependencies;
 
-      Deps : Conditional.Dependencies    :=
-               Release (This).Dependencies (This.Environment);
+      Selection : constant Crate_Features.Selection :=
+        Crate_Features.Current;
+      Deps : Conditional.Dependencies :=
+        Release (This).Dependencies
+          (This.Environment,
+           Selection.Requested,
+           Selection.Default_Features);
+      Active_Crates : Containers.Crate_Name_Sets.Set;
+      Suppressed_Pins : Containers.Crate_Name_Sets.Set;
    begin
+      for Dep of Conditional.Enumerate (Deps) loop
+         Active_Crates.Include (Dep.Crate);
+      end loop;
+      for Dep of Conditional.Enumerate
+        (Release (This).Dependencies (This.Environment))
+      loop
+         if Dep.Is_Optional and then not Active_Crates.Contains (Dep.Crate)
+         then
+            Suppressed_Pins.Include (Dep.Crate);
+         end if;
+      end loop;
 
       --  Identify crates that must be held back
 
@@ -1945,7 +1982,8 @@ package body Alire.Roots is
         (Deps    => Deps,
          Props   => This.Environment,
          Pins    => This.Pins,
-         Options => Options);
+         Options => Options,
+         Suppressed_Pins => Suppressed_Pins);
    end Compute_Update;
 
    -------------------------

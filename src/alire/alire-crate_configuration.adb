@@ -6,6 +6,7 @@ with AAA.Enum_Tools;
 with AAA.Strings; use AAA.Strings;
 
 with Alire.Containers;
+with Alire.Crate_Features;
 with Alire_Early_Elaboration;
 with Alire.Solutions;
 with Alire.Roots;
@@ -168,6 +169,7 @@ package body Alire.Crate_Configuration is
 
    function Is_Reserved_Name (Type_Name : String) return Boolean
    is (AAA.Strings.Has_Prefix (Type_Name, "alire_") or else
+       AAA.Strings.Has_Prefix (Type_Name, "feature_") or else
        Type_Name = "crate_version" or else
        Type_Name = "crate_name" or else
        Type_Name = "ada_compiler_switches" or else
@@ -554,6 +556,17 @@ package body Alire.Crate_Configuration is
       TIO.Put_Line (File, "   Crate_Name : constant String := """ &
                     (+Crate) & """;");
 
+      if This.Feature_Map.Contains (Crate) then
+         for Feature of This.Feature_Map (Crate).Declared loop
+            TIO.Put_Line
+              (File,
+               "   Feature_" & Crate_Features.Identifier (Feature)
+               & " : constant Boolean := "
+               & (if This.Feature_Map (Crate).Enabled.Contains (Feature)
+                  then "True" else "False") & ";");
+         end loop;
+      end if;
+
       for Elt of Host_Info loop
          TIO.New_Line (File);
          TIO.Put_Line (File,
@@ -667,6 +680,17 @@ package body Alire.Crate_Configuration is
       TIO.Put_Line (File, "   Crate_Version := """ & Version & """;");
       TIO.Put_Line (File, "   Crate_Name := """ & (+Crate) & """;");
 
+      if This.Feature_Map.Contains (Crate) then
+         for Feature of This.Feature_Map (Crate).Declared loop
+            TIO.Put_Line
+              (File,
+               "   Feature_" & Crate_Features.Identifier (Feature)
+               & " := """
+               & (if This.Feature_Map (Crate).Enabled.Contains (Feature)
+                  then "True" else "False") & """;");
+         end loop;
+      end if;
+
       for Elt of Host_Info loop
          TIO.New_Line (File);
          TIO.Put_Line (File,
@@ -740,6 +764,22 @@ package body Alire.Crate_Configuration is
 
       TIO.Put_Line (File, "#define CRATE_VERSION """ & Version & """");
       TIO.Put_Line (File, "#define CRATE_NAME """ & (+Crate) & """");
+
+      if This.Feature_Map.Contains (Crate) then
+         for Feature of This.Feature_Map (Crate).Declared loop
+            declare
+               Name : constant String := "FEATURE_" &
+                 To_Upper_Case (Crate_Features.Identifier (Feature));
+            begin
+               TIO.Put_Line (File, "#define " & Name & "_TRUE 1");
+               TIO.Put_Line (File, "#define " & Name & "_FALSE 0");
+               TIO.Put_Line
+                 (File, "#define " & Name & " "
+                  & (if This.Feature_Map (Crate).Enabled.Contains (Feature)
+                     then "1" else "0"));
+            end;
+         end loop;
+      end if;
 
       for Elt of Host_Info loop
          TIO.New_Line (File);
@@ -827,11 +867,21 @@ package body Alire.Crate_Configuration is
                                Crate : Crate_Name)
    is
 
-      Rel : constant Releases.Release := Root.Release (Crate);
+      Rel       : constant Releases.Release := Root.Release (Crate);
+      Selection : constant Crate_Features.Selection :=
+        (if Root.Is_Root_Release (Crate)
+         then Crate_Features.Current
+         else Root.Solution.Feature_Selection (Crate));
 
    begin
 
       This.Add_Definition (Crate, Builtin_Build_Profile);
+
+      This.Feature_Map.Include
+        (Crate,
+         (Declared => Rel.Features.Names,
+          Enabled  => Rel.Active_Features
+            (Selection.Requested, Selection.Default_Features)));
 
       for Prop of Rel.On_Platform_Properties (Root.Environment,
                                               Config_Type_Definition'Tag)

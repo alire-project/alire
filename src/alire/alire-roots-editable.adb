@@ -126,7 +126,10 @@ package body Alire.Roots.Editable is
                  Dependencies.New_Dependency
                    (Crate    => Dep.Crate,
                     Versions => Semver.Updatable
-                      (Sol.State (Dep.Crate).Release.Version));
+                      (Sol.State (Dep.Crate).Release.Version),
+                    Optional => Dep.Is_Optional,
+                    Features => Dep.Requested_Features,
+                    Default_Features => Dep.Uses_Default_Features);
             else
                return Dep;
             end if;

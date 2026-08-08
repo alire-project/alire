@@ -83,7 +83,10 @@ package body Alire.Dependencies.States is
 
       Crate        : constant String := "crate";
       Fulfilment   : constant String := "fulfilment";
+      Features     : constant String := "features";
+      Default_Features : constant String := "default_features";
       Link         : constant String := "link";
+      Optional     : constant String := "optional";
       Pin_Version  : constant String := "pin_version";
       Pinned       : constant String := "pinned";
       Reason       : constant String := "reason";
@@ -108,6 +111,22 @@ package body Alire.Dependencies.States is
                    Semantic_Versioning.Extended.Value
                      (From.Checked_Pop (Keys.Versions,
                       TOML_String).As_String);
+      Optional : constant Boolean :=
+        (if From.Contains (Keys.Optional)
+         then From.Checked_Pop
+           (Keys.Optional, TOML_Boolean).As_Boolean
+         else False);
+      Default_Features : constant Boolean :=
+        (if From.Contains (Keys.Default_Features)
+         then From.Checked_Pop
+           (Keys.Default_Features, TOML_Boolean).As_Boolean
+         else True);
+      Features : constant AAA.Strings.Set :=
+        (if From.Contains (Keys.Features)
+         then AAA.Strings.To_Set
+           (TOML_Adapters.To_Vector
+              (From.Checked_Pop (Keys.Features, TOML_Array)))
+         else AAA.Strings.Empty_Set);
 
       ---------------------
       -- Load_Fulfilment --
@@ -159,7 +178,9 @@ package body Alire.Dependencies.States is
       end Load_Fulfilment;
 
    begin
-      return This : State := New_Dependency (Crate, Versions) do
+      return This : State := New_Dependency
+        (Crate, Versions, Optional, Features, Default_Features)
+      do
 
          --  Transitivity
 
@@ -231,6 +252,15 @@ package body Alire.Dependencies.States is
 
          Table.Set (Keys.Crate, +(+This.Crate));
          Table.Set (Keys.Versions, +This.Versions.Image);
+         if This.Is_Optional then
+            Table.Set (Keys.Optional, Create_Boolean (True));
+         end if;
+         if not This.Uses_Default_Features then
+            Table.Set (Keys.Default_Features, Create_Boolean (False));
+         end if;
+         if not This.Requested_Features.Is_Empty then
+            Table.Set (Keys.Features, +This.Requested_Features.To_Vector);
+         end if;
 
          --  Transitivity
 

@@ -1,5 +1,8 @@
+with AAA.Strings;
+
 with Alire.Conditional;
 with Alire.Containers;
+with Alire.Crate_Features;
 with Alire.Dependencies.Containers;
 with Alire.Dependencies.States.Maps;
 with Alire.Interfaces;
@@ -220,6 +223,12 @@ package Alire.Solutions is
 
    function All_Dependencies (This : Solution) return State_Map;
    --  Get all states in the solution to e.g. iterate over
+
+   function Feature_Selection
+     (This    : Solution;
+      Release : Crate_Name) return Crate_Features.Selection;
+   --  Return the additive feature selection unified across every dependency
+   --  state fulfilled by Release.
 
    function Dependencies_That
      (This  : Solution;
@@ -468,10 +477,13 @@ package Alire.Solutions is
 
    function Pin_Dependencies (This  : Solution;
                               Crate : Crate_Name;
-                              Props : Alire.Properties.Vector)
+                              Props : Alire.Properties.Vector;
+                              Requested : AAA.Strings.Set;
+                              Default_Features : Boolean)
                               return Conditional.Dependencies
    is (if This.State (Crate).Has_Release
-       then This.State (Crate).Release.Dependencies (Props)
+       then This.State (Crate).Release.Dependencies
+         (Props, Requested, Default_Features)
        else Conditional.No_Dependencies);
    --  If Crate is pinned in This and it has a release, return its
    --  dependencies; otherwise return Empty. WORKAROUND FOR VISIBILITY BUG

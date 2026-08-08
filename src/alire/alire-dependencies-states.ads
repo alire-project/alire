@@ -1,4 +1,5 @@
 private with AAA.Containers.Indefinite_Holders;
+with AAA.Strings;
 
 with Alire.Releases.Containers;
 with Alire.TOML_Adapters;
@@ -50,8 +51,8 @@ package Alire.Dependencies.States is
                      return State;
    --  Returns a copy of Base fulfilled by Path
 
-   function Merging (Base     : State;
-                     Versions : Semantic_Versioning.Extended.Version_Set)
+   function Merging (Base : State;
+                     Dep  : Dependency)
                      return State;
    --  Returns a copy of Base with additional anded versions
 
@@ -219,7 +220,11 @@ private
    overriding
    function New_Dependency
      (Crate    : Crate_Name;
-      Versions : Semantic_Versioning.Extended.Version_Set)
+      Versions : Semantic_Versioning.Extended.Version_Set;
+      Optional : Boolean := False;
+      Features : AAA.Strings.Set := AAA.Strings.Empty_Set;
+      Default_Features : Boolean := True;
+      Feature_Syntax : Boolean := False)
       return State;
 
    package Link_Holders is
@@ -407,11 +412,19 @@ private
    -- Merging --
    -------------
 
-   function Merging (Base     : State;
-                     Versions : Semantic_Versioning.Extended.Version_Set)
+   function Merging (Base : State;
+                     Dep  : Dependency)
                      return State
-   is (Dependencies.New_Dependency (Base.Crate,
-                                    Base.Versions and Versions) with
+   is (Dependencies.New_Dependency
+         (Base.Crate,
+          Base.Versions and Dep.Versions,
+          Optional => Base.Is_Optional and then Dep.Is_Optional,
+          Features => Base.Requested_Features.Union
+            (Dep.Requested_Features),
+          Default_Features => Base.Uses_Default_Features
+            or else Dep.Uses_Default_Features,
+          Feature_Syntax => Base.Uses_Feature_Syntax
+            or else Dep.Uses_Feature_Syntax) with
        Name_Len     => Base.Name_Len,
        Fulfilled    => Base.Fulfilled,
        Pinning      => Base.Pinning,
@@ -468,9 +481,16 @@ private
    overriding
    function New_Dependency
      (Crate    : Crate_Name;
-      Versions : Semantic_Versioning.Extended.Version_Set)
+      Versions : Semantic_Versioning.Extended.Version_Set;
+      Optional : Boolean := False;
+      Features : AAA.Strings.Set := AAA.Strings.Empty_Set;
+      Default_Features : Boolean := True;
+      Feature_Syntax : Boolean := False)
       return State
-   is (New_State (Dependencies.New_Dependency (Crate, Versions)));
+   is (New_State
+         (Dependencies.New_Dependency
+            (Crate, Versions, Optional, Features, Default_Features,
+             Feature_Syntax)));
 
    --------------------
    -- New_Dependency --

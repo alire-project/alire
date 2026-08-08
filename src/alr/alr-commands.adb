@@ -11,6 +11,7 @@ with Alire_Early_Elaboration;
 with Alire.Settings.Builtins;
 with Alire.Settings.Edit;
 with Alire.Errors;
+with Alire.Crate_Features;
 with Alire.Features;
 with Alire.Formatting;
 with Alire.Index_On_Disk.Loading;
@@ -495,7 +496,8 @@ package body Alr.Commands is
          --  Before doing that, we need a trivial lock file as "old" solution.
 
          Alire.Lockfiles.Write
-           ((Solution => Alire.Solutions.Empty_Valid_Solution),
+           ((Solution      => Alire.Solutions.Empty_Valid_Solution,
+             Root_Features => Alire.Crate_Features.Current),
             Checked.Lock_File);
 
          --  If only manual updates are allowed, exit already. Since this point

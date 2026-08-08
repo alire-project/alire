@@ -1,4 +1,5 @@
 with Alire.Dependencies;
+with Alire.Containers;
 with Alire.Index;
 with Alire.Origins;
 with Alire.Properties;
@@ -136,7 +137,9 @@ package Alire.Solver is
    function Resolve (Deps    : Alire.Types.Abstract_Dependencies;
                      Props   : Properties.Vector;
                      Pins    : Solution;
-                     Options : Query_Options := Default_Options)
+                     Options : Query_Options := Default_Options;
+                     Suppressed_Pins : Alire.Containers.Crate_Name_Sets.Set :=
+                       Alire.Containers.Crate_Name_Sets.Empty_Set)
                      return Result;
    --  Exhaustively look for a solution to the given dependencies, under the
    --  given platform properties and lookup options. Pins can be supplied to

@@ -273,6 +273,79 @@ static, i.e. they cannot depend on the context.
    for more details on how to use the `depends-on` property for cross-compiling or
    compiler version selection.
 
+### Additive crate features
+
+Index format 1.5 adds Cargo-style additive crate features. Features may activate
+dependency edges marked as optional and forward features to dependencies. A
+dependency is declared with an inline table when it needs feature-related
+settings instead of only a version string:
+
+```toml
+[[depends-on]]
+flyology = { version = "^0.1", optional = true }
+reporter = { version = "^2", features = ["json"], default-features = false }
+```
+
+The keys in a dependency table are:
+
+- `version` (required): the usual Alire version-set string;
+- `optional` (default `false`): mark the dependency as feature-gated and omit it
+  from resolution unless a selected feature activates it;
+- `features` (default empty): additive features requested on the dependency;
+- `default-features` (default `true`): whether this edge requests the
+  dependency's `default` feature.
+
+Feature definitions form a top-level table whose values are arrays of feature
+references:
+
+```toml
+[features]
+default = []
+flyology-integration = ["dep:flyology", "flyology/runtime-hooks"]
+serialization = ["reporter/json"]
+extra-hooks = ["flyology?/diagnostics"]
+```
+
+A reference can have one of four forms:
+
+- `name` enables another feature in the same crate;
+- `dep:crate` activates an optional dependency without implicitly defining a
+  same-named feature;
+- `crate/feature` activates an optional dependency, if necessary, and requests
+  the dependency feature;
+- `crate?/feature` requests the dependency feature only if some other selected
+  feature or non-optional edge activates that dependency. This weak forwarding
+  never activates the dependency by itself.
+
+Feature names and crate names in references are case-insensitive. Feature
+selection is additive: every request for one selected crate release is unified,
+and no feature can disable another feature. `default` is an ordinary feature
+that is selected when at least one dependency edge enables default features.
+The solver repeatedly expands the unified selection until no newly activated
+dependency or forwarded feature remains. A release that does not define an
+explicitly requested feature is not a candidate for that dependency.
+
+For the root crate, `alr build --features=a,b` selects additional features and
+`alr build --no-default-features` disables its default feature. The selection
+is recorded in the lockfile so commands that do not expose feature switches use
+the same solved graph. To configure a newly added dependency edge, use
+`alr with crate --features=a,b --no-default-features`.
+
+Alire exposes every declared feature to the crate's generated Ada, GPR, and C
+configuration as, respectively, `Feature_<Name>`, `Feature_<Name>`, and
+`FEATURE_<NAME>`. The value reports the final unified selection. Inactive
+optional dependencies do not enter the solution, build order,
+`GPR_PROJECT_PATH`, automatic GPR `with` list, or build hash.
+Configuration variable names beginning with `feature_` are reserved for these
+generated values.
+
+Feature-bearing index entries require index format 1.5 so older Alire clients
+reject the index before parsing manifests they do not understand. Local
+feature-bearing manifests likewise require an Alire release that supports this
+syntax. Manifests without features keep their existing dependency-string form,
+and default lockfiles do not gain feature-only keys, preserving compatibility
+with older clients.
+
  - `project-files`: optional list of strings. Each is a path, relative to the
    root of the source directory, to a `.gpr` project file to be made available.
    Expressions are accepted. For instance:

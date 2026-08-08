@@ -58,5 +58,7 @@ private
       --  A string of "crate:profile" values, with "*" meaning all crates and
       --  "%" meaning all crates without a previous setting in a manifest.
       Stop_After      : aliased GNAT.OS_Lib.String_Access;
+      Features        : aliased GNAT.OS_Lib.String_Access;
+      No_Default_Features : aliased Boolean := False;
    end record;
 end Alr.Commands.Build;
