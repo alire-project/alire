@@ -1,4 +1,5 @@
 with Alire.Conditional;
+with Alire.Crate_Features;
 with Alire.Crates;
 with Alire.Provides;
 with Alire.TOML_Adapters;
@@ -24,6 +25,7 @@ package Alire.TOML_Load is
       From    : TOML_Adapters.Key_Queue;
       Props   : in out Conditional.Properties;
       Deps    : in out Conditional.Dependencies;
+      Features : in out Crate_Features.Definitions;
       Equiv   : in out Alire.Provides.Equivalences;
       Forbids : in out Conditional.Forbidden_Dependencies;
       Pins    : in out User_Pins.Maps.Map;

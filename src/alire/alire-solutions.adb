@@ -4,12 +4,14 @@ with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Errors;
 with Alire.Index;
+with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
 with Alire.Utils.Tools;
 with Alire.Utils.TTY;
 
+with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
 
 package body Alire.Solutions is
@@ -26,6 +28,29 @@ package body Alire.Solutions is
 
    function All_Dependencies (This : Solution) return State_Map
    is (This.Dependencies);
+
+   -----------------------
+   -- Feature_Selection --
+   -----------------------
+
+   function Feature_Selection
+     (This    : Solution;
+      Release : Crate_Name) return Crate_Features.Selection
+   is
+   begin
+      return Result : Crate_Features.Selection :=
+        (Requested        => AAA.Strings.Empty_Set,
+         Default_Features => False)
+      do
+         for State of This.All_Dependencies loop
+            if State.Has_Release and then State.Release.Name = Release then
+               Result.Requested.Union (State.Requested_Features);
+               Result.Default_Features :=
+                 Result.Default_Features or else State.Uses_Default_Features;
+            end if;
+         end loop;
+      end return;
+   end Feature_Selection;
 
    -----------------
    -- Composition --
@@ -403,7 +428,10 @@ package body Alire.Solutions is
       for Dep of
         Conditional.Enumerate
           (This.State (Dependent)
-               .Release.Dependencies (Root.Platform_Properties))
+               .Release.Dependencies
+                 (Root.Platform_Properties,
+                  This.State (Dependent).Requested_Features,
+                  This.State (Dependent).Uses_Default_Features))
       loop
          if Dep.Crate = Dependee then
             return Dep;
@@ -594,7 +622,12 @@ package body Alire.Solutions is
          for Dep of This.Dependencies loop
             if Dep.Is_Linked then
                Dependencies
-                 .Append (Conditional.New_Dependency (Dep.As_Dependency));
+                 .Append
+                   (Conditional.New_Dependency
+                      (Alire.Dependencies.New_Dependency
+                         (Dep.Crate,
+                          Dep.Versions,
+                          Default_Features => False)));
             end if;
          end loop;
       end return;
@@ -612,8 +645,13 @@ package body Alire.Solutions is
             if Dep.Is_Pinned then
                Dependencies :=
                  Dependencies and
-                 Conditional.New_Dependency (Dep.Crate,
-                                             Dep.Pin_Version);
+                 Conditional.New_Dependency
+                   (Alire.Dependencies.New_Dependency
+                      (Dep.Crate,
+                       Semantic_Versioning.Extended.To_Extended
+                         (Semantic_Versioning.Basic.Exactly
+                            (Dep.Pin_Version)),
+                       Default_Features => False));
             end if;
          end loop;
       end return;
@@ -772,7 +810,7 @@ package body Alire.Solutions is
                           This.Including (Root, Env, Add_Dependency => True);
             Graph : constant Alire.Dependencies.Graphs.Graph :=
                       Alire.Dependencies.Graphs
-                        .From_Solution (With_Root, Env);
+                        .From_Solution (With_Root, Root, Env);
          begin
             Graph.Print (With_Root, Prefix => Prefix & "   ");
          end;
@@ -800,7 +838,7 @@ package body Alire.Solutions is
                                (Root, Env, Add_Dependency => True);
                Graph     : constant Alire.Dependencies.Graphs.Graph :=
                              Alire.Dependencies.Graphs
-                               .From_Solution (With_Root, Env);
+                               .From_Solution (With_Root, Root, Env);
             begin
                Graph.Plot (With_Root);
             end;
@@ -932,6 +970,21 @@ package body Alire.Solutions is
       Printed   : AAA.Strings.Sets.Set;
       --  Dependencies already printed, to avoid reprinting in Concise mode
 
+      function Active_Dependencies
+        (Rel : Alire.Releases.Release;
+         Is_Root : Boolean := False) return Alire.Conditional.Dependencies
+      is
+         Selection : constant Crate_Features.Selection :=
+           (if Is_Root
+            then Crate_Features.Current
+            else This.Feature_Selection (Rel.Name));
+      begin
+         return Rel.Dependencies
+           (Platforms.Current.Properties,
+            Selection.Requested,
+            Selection.Default_Features);
+      end Active_Dependencies;
+
       -----------
       -- Label --
       -----------
@@ -967,7 +1020,8 @@ package body Alire.Solutions is
                                      return Boolean
          is (This.State (Dep.Crate).Has_Release
              and then not Conditional.Enumerate
-               (This.State (Dep.Crate).Release.Dependencies).Is_Empty);
+               (Active_Dependencies
+                  (This.State (Dep.Crate).Release)).Is_Empty);
 
          Last : UString;
          --  Used to store the last dependency name in a subtree, to be able to
@@ -1034,7 +1088,8 @@ package body Alire.Solutions is
                then
                   Print
                     (Conditional.Enumerate
-                       (This.State (Dep.Crate).Release.Dependencies).To_Set,
+                       (Active_Dependencies
+                          (This.State (Dep.Crate).Release)).To_Set,
                      Prefix =>
                        Prefix
                        --  Indent adding the proper running connector
@@ -1052,7 +1107,8 @@ package body Alire.Solutions is
       if Print_Root then
          Trace.Always (Prefix & Root.Milestone.TTY_Image);
       end if;
-      Print (Conditional.Enumerate (Root.Dependencies).To_Set,
+      Print (Conditional.Enumerate
+               (Active_Dependencies (Root, Is_Root => True)).To_Set,
              Prefix,
              not Print_Root);
    end Print_Tree;
@@ -1509,8 +1565,11 @@ package body Alire.Solutions is
                  --  Some dependency is still unvisited, either under its own
                  --  name or through some alias. These nested fors may merit
                  --  optimization in the future?
-                 (for some Rel_Dep of Dep.Release.Flat_Dependencies
-                    (Alire.Root.Platform_Properties) =>
+                 (for some Rel_Dep of Conditional.Enumerate
+                    (Dep.Release.Dependencies
+                       (Alire.Root.Platform_Properties,
+                        Dep.Requested_Features,
+                        Dep.Uses_Default_Features)) =>
                        not Visited.Contains (Rel_Dep.Crate)
                        and then
                        not (for some Rel of Rels =>

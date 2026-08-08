@@ -2,6 +2,8 @@ with Alire.Interfaces;
 with Alire.Milestones;
 with Alire.Utils;
 
+with AAA.Strings;
+
 with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
 
@@ -24,7 +26,11 @@ package Alire.Dependencies with Preelaborate is
 
    function New_Dependency
      (Crate    : Crate_Name;
-      Versions : Semver.Extended.Version_Set := Semver.Extended.Any)
+      Versions : Semver.Extended.Version_Set := Semver.Extended.Any;
+      Optional : Boolean := False;
+      Features : AAA.Strings.Set := AAA.Strings.Empty_Set;
+      Default_Features : Boolean := True;
+      Feature_Syntax : Boolean := False)
       return Dependency;
 
    function New_Dependency
@@ -48,6 +54,14 @@ package Alire.Dependencies with Preelaborate is
    function Versions (Dep : Dependency)
                       return Semantic_Versioning.Extended.Version_Set;
 
+   function Is_Optional (Dep : Dependency) return Boolean;
+
+   function Requested_Features (Dep : Dependency) return AAA.Strings.Set;
+
+   function Uses_Default_Features (Dep : Dependency) return Boolean;
+
+   function Uses_Feature_Syntax (Dep : Dependency) return Boolean;
+
    function Image (Dep : Dependency) return String;
    --  Standard-style version image, e.g. "make^3.1"
 
@@ -66,8 +80,9 @@ package Alire.Dependencies with Preelaborate is
      Pre =>
        (Key'Length >= Min_Name_Length or else
           raise Checked_Error with "dependency name too short") and then
-       (Value.Kind = TOML.TOML_String or else
-          raise Checked_Error with "dependency version must be a string");
+       (Value.Kind in TOML.TOML_String | TOML.TOML_Table or else
+          raise Checked_Error with
+            "dependency must be a version string or inline table");
    --  May raise Checked_Error with stored Alire.Errors.
 
    overriding
@@ -90,13 +105,24 @@ private
    with record
       Crate      : Crate_Name (Name_Len);
       Versions   : Semantic_Versioning.Extended.Version_Set;
+      Optional   : Boolean := False;
+      Features   : AAA.Strings.Set;
+      Default_Features : Boolean := True;
+      Feature_Syntax : Boolean := False;
    end record;
 
    function New_Dependency
      (Crate    : Crate_Name;
-      Versions : Semver.Extended.Version_Set := Semver.Extended.Any)
+      Versions : Semver.Extended.Version_Set := Semver.Extended.Any;
+      Optional : Boolean := False;
+      Features : AAA.Strings.Set := AAA.Strings.Empty_Set;
+      Default_Features : Boolean := True;
+      Feature_Syntax : Boolean := False)
       return Dependency
-   is (Crate.Name'Length, Crate, Versions);
+   is (Crate.Name'Length, Crate, Versions, Optional, Features,
+       Default_Features,
+       Feature_Syntax or else Optional or else not Features.Is_Empty
+         or else not Default_Features);
 
    function New_Dependency
      (Crate   : Crate_Name;
@@ -123,11 +149,19 @@ private
                       return Semantic_Versioning.Extended.Version_Set
    is (Dep.Versions);
 
+   function Is_Optional (Dep : Dependency) return Boolean is (Dep.Optional);
+
+   function Requested_Features (Dep : Dependency) return AAA.Strings.Set
+   is (Dep.Features);
+
+   function Uses_Default_Features (Dep : Dependency) return Boolean
+   is (Dep.Default_Features);
+
+   function Uses_Feature_Syntax (Dep : Dependency) return Boolean
+   is (Dep.Feature_Syntax);
+
    function Image (Dep : Dependency) return String is
      ((+Dep.Crate) & Dep.Versions.Image);
-
-   function Manifest_Image (Dep : Dependency) return String is
-     ((+Dep.Crate) & " = " & '"' & Dep.Versions.Image & '"');
 
    overriding
    function TTY_Image (Dep : Dependency) return String is
@@ -142,7 +176,15 @@ private
    overriding function Key (Dep : Dependency) return String is (+Dep.Crate);
 
    function Lexicographical_Sort (L, R : Dependency) return Boolean
-   is (L.Crate < R.Crate or else
-       (L.Crate = R.Crate and then L.Versions.Image < R.Versions.Image));
+   is (if L.Crate /= R.Crate then L.Crate < R.Crate
+       elsif L.Versions.Image /= R.Versions.Image
+         then L.Versions.Image < R.Versions.Image
+       elsif L.Optional /= R.Optional then not L.Optional
+       elsif L.Default_Features /= R.Default_Features
+         then not L.Default_Features
+       elsif L.Feature_Syntax /= R.Feature_Syntax
+         then not L.Feature_Syntax
+       else L.Features.To_Vector.Flatten (",")
+         < R.Features.To_Vector.Flatten (","));
 
 end Alire.Dependencies;

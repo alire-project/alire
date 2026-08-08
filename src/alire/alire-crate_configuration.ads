@@ -140,6 +140,14 @@ private
    is new Ada.Containers.Indefinite_Ordered_Maps
      (Crate_Name, Alire.Utils.Switches.Switch_List);
 
+   type Feature_State is record
+      Declared : AAA.Strings.Set;
+      Enabled  : AAA.Strings.Set;
+   end record;
+
+   package Feature_Maps is new Ada.Containers.Indefinite_Ordered_Maps
+     (Crate_Name, Feature_State);
+
    type Global_Config is tagged record
       Var_Map : Config_Maps.Map;
       --  Mapping "crate.var" --> setting
@@ -152,6 +160,7 @@ private
       --  Mapping crate -> setter, exists for all crates in solution
 
       Switches_Map : Switches_Maps.Map;
+      Feature_Map  : Feature_Maps.Map;
    end record;
 
    procedure Use_Default_Values (Conf : in out Global_Config);

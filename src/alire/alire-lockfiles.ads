@@ -1,4 +1,5 @@
 with Alire.Interfaces;
+with Alire.Crate_Features;
 with Alire.Solutions;
 with Alire.TOML_Adapters;
 
@@ -20,6 +21,8 @@ package Alire.Lockfiles is
      and Interfaces.Tomifiable with
    record
       Solution : Solutions.Solution;
+      Root_Features : Crate_Features.Selection :=
+        Crate_Features.Default_Selection;
    end record;
    --  Information that goes in the lockfile
 

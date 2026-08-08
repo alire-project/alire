@@ -1,4 +1,6 @@
 with Alire.Crate_Configuration.Hashes;
+with Alire.Crate_Features;
+with Alire.Conditional;
 with Alire.Directories;
 with Alire.Environment.Loading;
 with Alire.Errors;
@@ -48,7 +50,11 @@ package body Alire.Builds.Hashes is
       -------------
 
       procedure Compute (Rel : Releases.Release) is
-         Vars : Variables;
+         Vars      : Variables;
+         Selection : constant Crate_Features.Selection :=
+           (if Root.Is_Root_Release (Rel.Name)
+            then Crate_Features.Current
+            else Root.Solution.Feature_Selection (Rel.Name));
 
          ---------
          -- Add --
@@ -137,6 +143,19 @@ package body Alire.Builds.Hashes is
                raise;
          end Add_Switches;
 
+         ------------------
+         -- Add_Features --
+         ------------------
+
+         procedure Add_Features is
+         begin
+            Add ("features", Rel.Name_Str,
+                 Selection.Requested.To_Vector.Flatten (","));
+            Add ("default-features", Rel.Name_Str,
+                 AAA.Strings.To_Lower_Case
+                   (Selection.Default_Features'Image));
+         end Add_Features;
+
          -------------------
          -- Add_Externals --
          -------------------
@@ -222,7 +241,12 @@ package body Alire.Builds.Hashes is
             --  dependency hashes in our own hash. For dependencies without
             --  such things the hash won't change anyway.
          begin
-            for Dep of Rel.Flat_Dependencies loop
+            for Dep of Conditional.Enumerate
+              (Rel.Dependencies
+                 (Root.Environment,
+                  Selection.Requested,
+                  Selection.Default_Features))
+            loop
                for Target of Root.Solution.Releases loop
                   if Target.Origin.Requires_Build
                     and then Target.Satisfies (Dep)
@@ -248,6 +272,7 @@ package body Alire.Builds.Hashes is
          --  Add individual contributors to the hash input
          Add_Profile;       -- Build profile
          Add_Switches;      -- Exact list of build switches
+         Add_Features;      -- Unified additive feature selection
          Add_Configuration; -- Crate configuration variables
 
          --  These are only relevant for shared dependencies, as they don't

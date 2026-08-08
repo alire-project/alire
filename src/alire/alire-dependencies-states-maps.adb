@@ -74,7 +74,7 @@ package body Alire.Dependencies.States.Maps is
    is
       New_Dep : constant State :=
                   (if Base.Contains (Dep.Crate)
-                   then Base (Dep.Crate).Merging (Dep.Versions)
+                   then Base (Dep.Crate).Merging (Dep)
                    else States.New_State (Dep));
    begin
       return Result : Map := Base do

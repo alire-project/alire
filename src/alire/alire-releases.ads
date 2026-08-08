@@ -5,6 +5,7 @@ with AAA.Strings;
 
 with Alire.Conditional;
 with Alire.Containers;
+with Alire.Crate_Features;
 with Alire.Dependencies.Containers;
 with Alire.GPR;
 with Alire.Interfaces;
@@ -146,6 +147,22 @@ package Alire.Releases is
                           P : Alire.Properties.Vector)
                           return Conditional.Dependencies;
    --  Retrieve only the dependencies that apply on platform P
+
+   function Dependencies
+     (R                : Release;
+      P                : Alire.Properties.Vector;
+      Requested        : AAA.Strings.Set;
+      Default_Features : Boolean) return Conditional.Dependencies;
+   --  Retrieve the platform dependencies activated by an additive feature
+   --  request. Inactive optional dependencies are omitted and forwarded
+   --  dependency features are attached to the returned edges.
+
+   function Features (R : Release) return Crate_Features.Definitions;
+
+   function Active_Features
+     (R                : Release;
+      Requested        : AAA.Strings.Set;
+      Default_Features : Boolean) return AAA.Strings.Set;
 
    function Dependency_On (R     : Release;
                            Crate : Crate_Name;
@@ -414,6 +431,7 @@ private
       Notes        : Description_String (1 .. Notes_Len);
       Equivalences : Alire.Provides.Equivalences;
       Dependencies : Conditional.Dependencies;
+      Features     : Crate_Features.Definitions;
       Pins         : User_Pins.Maps.Map;
       Forbidden    : Conditional.Dependencies;
       Properties   : Conditional.Properties;
