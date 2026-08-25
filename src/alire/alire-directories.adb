@@ -519,6 +519,36 @@ package body Alire.Directories is
        (Den.Scrub
           (Path)));
 
+   ----------------------------
+   -- Exists_With_Exact_Case --
+   ----------------------------
+
+   function Exists_With_Exact_Case (Path : Any_Path) return Boolean is
+      Wanted : constant String := Adirs.Simple_Name (Path);
+      Found  : Boolean := False;
+
+      -----------
+      -- Check --
+      -----------
+
+      procedure Check (Item : Any_Path; Stop : in out Boolean) is
+      begin
+         if Adirs.Simple_Name (Item) = Wanted then
+            Found := True;
+            Stop := True;
+         end if;
+      end Check;
+
+   begin
+      if not Exists (Path) then
+         return False;
+      end if;
+
+      Traverse_Tree (Parent (Path), Check'Access);
+
+      return Found;
+   end Exists_With_Exact_Case;
+
    ------------------
    -- Is_Directory --
    ------------------

@@ -239,6 +239,13 @@ package body Alire.Origins is
           when others         => Hash_Vectors.Empty_Vector);
 
    ----------------
+   -- Has_Hashes --
+   ----------------
+
+   function Has_Hashes (This : Origin) return Boolean
+   is (not This.Get_Hashes.Is_Empty);
+
+   ----------------
    -- Unique_Ids --
    ----------------
 
@@ -855,7 +862,7 @@ package body Alire.Origins is
 
    function Short_Unique_Id (This : Origin) return String
    is (Short_Commit
-         (if This.Kind in Source_Archive | Binary_Archive
+         (if This.Kind in Source_Archive | Binary_Archive | Filesystem
           then AAA.Strings.Tail (String (This.Get_Hashes.First_Element), ':')
           else This.Commit));
 

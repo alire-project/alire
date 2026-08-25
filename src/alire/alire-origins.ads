@@ -139,8 +139,15 @@ package Alire.Origins is
    --  an empty vector for origins without a hash (e.g. external or system or
    --  unavailable).
 
+   function Has_Hashes (This : Origin) return Boolean;
+   --  Whether the origin carries integrity hashes.
+   --
+   --  Mandatory for remote source archives but optional if they are on the
+   --  local filesystem.
+
    function Short_Unique_Id (This : Origin) return String with
-     Pre => This.Kind in Git | Hg | Archive_Kinds;
+     Pre => This.Kind in Git | Hg | Archive_Kinds
+            or else (This.Kind = Filesystem and then This.Has_Hashes);
 
    --  Helper types
 

@@ -217,16 +217,19 @@ package body Alire.Releases is
           --  Name of the release
           R.Name_Str & "_" &
 
-         --  Version without pre-release/build strings
-            AAA.Strings.Head
-            (AAA.Strings.Head (Image (R.Version), '-'), '+') & "_" &
-          --  Remove patch/build strings that may violate folder valid chars
+          --  Version, excluding build metadata (sanitizing any `-`s in the
+          --  pre-release to `_`).
+          AAA.Strings.Replace
+            (AAA.Strings.Head (Image (R.Version), '+'), "-", "_") & "_" &
 
           --  Unique hash when available
           (case R.Origin.Kind is
                 when Binary_Archive => R.Origin.Short_Unique_Id,
                 when External       => "external",
-                when Filesystem     => "filesystem",
+                when Filesystem     =>
+                  (if R.Origin.Has_Hashes
+                   then R.Origin.Short_Unique_Id
+                   else "filesystem"),
                 when System         => "system",
                 when Source_Archive => R.Origin.Short_Unique_Id,
                 when Git | Hg       => R.Origin.Short_Unique_Id,
@@ -259,6 +262,9 @@ package body Alire.Releases is
       Rel_Folder  : constant Any_Path :=
                       Parent_Folder / This.Base_Folder;
       Completed   : Flags.Flag := Flags.Complete_Copy (Repo_Folder);
+
+      Skip_Cleanup : Boolean := False;
+      --  Set before raising to skip the cleanup deletion of `Repo_Folder`.
 
       ------------------------------
       -- Backup_Upstream_Manifest --
@@ -320,6 +326,29 @@ package body Alire.Releases is
       --  the deployer.
 
       if This.Origin.Is_Index_Provided and then Completed.Exists then
+
+         --  Fail loudly if a directory is already present with which the
+         --  target dir cannot coexist due to a case-insensitive filesystem.
+         --
+         --  Different crates from the same monorepo may legitimately publish
+         --  different casings of the same URL, which would yield a false
+         --  positive. Genuine collisions are prevented by the commit hash
+         --  anyway.
+
+         if not This.Origin.Is_Monorepo
+           and then not Exists_With_Exact_Case (Repo_Folder)
+         then
+            Skip_Cleanup := True;
+            --  The clashing deployment belongs to another release; the cleanup
+            --  handler must not delete it.
+
+            Raise_Checked_Error
+              ("Cannot deploy " & This.Milestone.TTY_Image & " into '"
+               & TTY.URL (Repo_Folder) & "': a release whose version differs "
+               & "only in character case is already deployed there, and the "
+               & "filesystem at that location is case-insensitive.");
+         end if;
+
          Was_There := True;
          Trace.Detail ("Skipping checkout of already available " &
                          This.Milestone.Image);
@@ -371,7 +400,7 @@ package body Alire.Releases is
          --  during an action).
          Log_Exception (E);
 
-         if Ada.Directories.Exists (Repo_Folder) then
+         if not Skip_Cleanup and then Ada.Directories.Exists (Repo_Folder) then
             Trace.Debug ("Cleaning up failed release deployment of "
                          & This.Milestone.TTY_Image);
             Directories.Force_Delete (Repo_Folder);

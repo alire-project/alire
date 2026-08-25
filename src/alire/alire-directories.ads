@@ -79,6 +79,11 @@ package Alire.Directories is
    function Exists (Path : Any_Path) return Boolean;
    --  Path designates something, be it file, dir or symbolic link
 
+   function Exists_With_Exact_Case (Path : Any_Path) return Boolean;
+   --  Same as Exists, but additionally requiring that the simple name of Path
+   --  matches the name on disk exactly, even on case-insensitive filesystems
+   --  (parent components are not verified).
+
    function Is_Directory (Path : Any_Path) return Boolean;
    --  Returns false for non-existing paths too
 
