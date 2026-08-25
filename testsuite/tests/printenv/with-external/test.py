@@ -14,7 +14,7 @@ import platform
 
 # Retrieve a crate with an external dependency
 run_alr('get', 'libhello=0.9-test-unav-native', force=True)
-os.chdir('libhello_0.9.0_filesystem')
+os.chdir('libhello_0.9.0_test_unav_native_filesystem')
 
 # Run it not quietly to ensure that at normal level
 # the output is not broken by some log message
@@ -23,9 +23,9 @@ assert_eq(0, p.status)
 
 expected_gpr_path = ""
 if platform.system() == 'Windows':
-    expected_gpr_path = '.*\\\\libhello_0.9.0_filesystem'
+    expected_gpr_path = '.*\\\\libhello_0.9.0_test_unav_native_filesystem'
 else:
-    expected_gpr_path = '.*/libhello_0.9.0_filesystem'
+    expected_gpr_path = '.*/libhello_0.9.0_test_unav_native_filesystem'
 
 # Check the printenv output
 assert_match('.*warn: Generating possibly incomplete environment'

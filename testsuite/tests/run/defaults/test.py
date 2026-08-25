@@ -7,10 +7,8 @@ from drivers.asserts import assert_match
 
 import os, re, shutil
 
-target = 'noop_1.0.0_filesystem'
 
-
-def check_run(release, match=""):
+def check_run(release, target, match=""):
     p = run_alr('get', release, quiet=True)
     # Enter working copy and try to run default executable
     os.chdir(target)
@@ -25,13 +23,17 @@ def check_run(release, match=""):
 
 
 # Check success using a single, undeclared default-named executable:
-check_run('noop=1.0-default')
+check_run('noop=1.0-default', 'noop_1.0.0_default_de676fbd')
 
 # Check success using a single, non-default named executable:
-check_run('noop=1.0-nondef')
+check_run('noop=1.0-nondef', 'noop_1.0.0_nondef_a5807a3f')
 
 # Try running when more than one exec, error must happen
-check_run('noop=1.0-multi', match=".*No executable specified but the release builds more than one executable.*")
+check_run(
+    'noop=1.0-multi',
+    'noop_1.0.0_multi_ce2fc754',
+    match=".*No executable specified but the release builds more than one executable.*"
+)
 
 
 print('SUCCESS')

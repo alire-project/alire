@@ -8,7 +8,7 @@ from subprocess import run
 
 import os, re, shutil
 
-target = 'echo_arguments_1.0.0_filesystem'
+target = 'echo_arguments_1.0.0_881ce9c2'
 alr_path = os.environ['ALR_PATH']
 
 def check_run(arguments, match="", should_fail=False):

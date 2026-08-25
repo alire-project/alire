@@ -1,0 +1,7 @@
+driver: python-script
+indexes:
+    index_lower:
+        in_fixtures: false
+    index_upper:
+        in_fixtures: false
+    compiler_only_index: {}

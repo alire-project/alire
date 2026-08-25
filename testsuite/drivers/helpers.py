@@ -9,7 +9,9 @@ import platform
 import re
 import shutil
 import stat
+from pathlib import Path
 from subprocess import run
+from textwrap import dedent
 from typing import Union
 from zipfile import ZipFile
 
@@ -85,6 +87,46 @@ def on_macos():
 
 def on_windows():
     return platform.system() == "Windows"
+
+
+def fs_folds_case(directory: Union[str, os.PathLike] = ".") -> bool:
+    """Return whether the filesystem is case-insensitive-but-case-preserving."""
+    probe = Path(directory) / "case_probe_marker"
+    probe_upper = Path(directory) / "CASE_PROBE_MARKER"
+    assert not (probe.exists() or probe_upper.exists())
+    probe.touch()
+    folds = probe_upper.exists()
+    probe.unlink()
+    return folds
+
+
+def write_version_crate(
+    crate: str, version: str, into: Union[str, os.PathLike]
+) -> None:
+    """Write a crate whose `crate.title()` unit exports a `Version` string."""
+    unit = crate.title()
+    into = Path(into)
+
+    (into / "src").mkdir(parents=True, exist_ok=True)
+    (into / f"{crate}.gpr").write_text(
+        dedent(
+            f"""\
+            project {unit} is
+               for Source_Dirs use ("src");
+               for Object_Dir use "obj";
+            end {unit};
+            """
+        )
+    )
+    (into / "src" / f"{crate}.ads").write_text(
+        dedent(
+            f"""\
+            package {unit} is
+               Version : constant String := "{version}";
+            end {unit};
+            """
+        )
+    )
 
 
 def distributions_from_alire():

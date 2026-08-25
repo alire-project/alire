@@ -35,7 +35,7 @@ alr_with("crate_real")  # This release will go in the cache
 
 # Read-only vault
 assert \
-    os.path.isdir(f"{base}/releases/crate_real_1.0.0_filesystem"), \
+    os.path.isdir(f"{base}/releases/crate_real_1.0.0_99fa3a55"), \
     f"Vault not found at the expected location: f{contents(base)}"
 
 # Shared builds
@@ -49,7 +49,7 @@ run_alr("build", complain_on_error=False)
 # procedures)
 hash = "0774083df8ff003084c32cabdec6090a58b41c6be317cec0475df5eacbca0d23"
 assert \
-    os.path.isdir(f"{base}/builds/crate_real_1.0.0_filesystem/{hash}"), \
+    os.path.isdir(f"{base}/builds/crate_real_1.0.0_99fa3a55/{hash}"), \
     f"Shared build not found at the expected location: f{contents(base)}"
 
 print('SUCCESS')
