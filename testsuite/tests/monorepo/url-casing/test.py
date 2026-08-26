@@ -1,6 +1,5 @@
 """
-Check that two crates of the same monorepo whose manifests reference it with
-URLs differing only in character case can coexist.
+Check two crates from the same monorepo with differently cased URLs can coexist.
 """
 
 from pathlib import Path
@@ -47,8 +46,7 @@ commit = init_git_repo(START_DIR / "MonoRepo")
 #
 # On case-insensitive filesystems, the lowercase URL reaches the same
 # repository by case folding; otherwise we materialize it as a clone.
-CASE_SENSITIVE = not fs_folds_case(START_DIR)
-if CASE_SENSITIVE:
+if not fs_folds_case(START_DIR):
     run(
         ["git", "clone", START_DIR / "MonoRepo", START_DIR / "monorepo"],
         capture_output=True,

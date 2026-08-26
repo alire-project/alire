@@ -59,8 +59,8 @@ for version in VERSIONS:
     add_manifest(
         "monorepo_crate",
         version,
-        f"url = 'git+file:{repo}'\ncommit = '{commit}'\n"
-        'subdir = "crates/monorepo_crate"\n',
+        f"url = 'git+file:{repo}'\n"
+        f'commit = "{commit}"\nsubdir = "crates/monorepo_crate"\n',
     )
 
 # A crate in a plain directory

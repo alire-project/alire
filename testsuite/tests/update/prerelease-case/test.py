@@ -14,17 +14,19 @@ CRATE = "dir_crate"
 LOWER = "1.0.0-pre"
 UPPER = "1.0.0-PRE"
 
-START = Path.cwd()
+START_DIR = Path.cwd()
 
-CASE_INSENSITIVE = fs_folds_case(START)
+CASE_INSENSITIVE = fs_folds_case(START_DIR)
 
-CRATE_DIRS = {LOWER: START / "src_lower", UPPER: START / "src_upper"}
+CRATE_DIRS = {LOWER: START_DIR / "src_lower", UPPER: START_DIR / "src_upper"}
 # The manifests cannot coexist in the same index on a case-insensitive filesystem.
-INDEXES = {LOWER: START / "index_lower", UPPER: START / "index_upper"}
+INDEXES = {LOWER: START_DIR / "index_lower", UPPER: START_DIR / "index_upper"}
 
 
-def add_manifest(version: str, src_dir: Path) -> None:
-    """Add a release to the index for its version, with a plain dir origin."""
+# Create two releases differing only in version prerelease casing.
+for version in (LOWER, UPPER):
+    crate_dir = CRATE_DIRS[version]
+    write_version_crate(CRATE, version, into=crate_dir)
     manifest_dir = INDEXES[version] / CRATE[:2] / CRATE
     manifest_dir.mkdir(parents=True, exist_ok=True)
     (manifest_dir / f"{CRATE}-{version}.toml").write_text(
@@ -36,17 +38,10 @@ def add_manifest(version: str, src_dir: Path) -> None:
             maintainers = ["some@one.com"]
 
             [origin]
-            url = 'file:{src_dir}'
+            url = 'file:{crate_dir}'
             """
         )
     )
-
-
-# Create the two releases.
-for version in (LOWER, UPPER):
-    crate_dir = CRATE_DIRS[version]
-    write_version_crate(CRATE, version, into=crate_dir)
-    add_manifest(version, crate_dir)
 
 # Create a workspace whose main program prints the version reported by the
 # dependency's deployed sources.
@@ -74,6 +69,7 @@ def check_version(version: str) -> None:
     assert_eq(f"{version}\n", p.out)
 
 
+# Test switching between the two releases.
 run_alr("with", f"{CRATE}={LOWER}")
 check_version(LOWER)
 
