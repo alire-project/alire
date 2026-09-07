@@ -111,8 +111,8 @@ url    = "https://github.com/alire-project/semantic_versioning"
 commit = "4861e32bd8a2f0df038d3ecc9a72b6381e7a34cc"
 
 [pins.simple_logging]
-url    = "https://github.com/alire-project/simple_logging"
-commit = "f45bf378588dc1d0479cc24eb0eb41dc99f69cb4"
+url    = "https://github.com/Seb-MCaw/simple_logging"
+commit = "dbf333afb2fb8d9812424bdb091bb2cd4628d5bf"
 
 [pins.si_units]
 url    = "https://github.com/mosteo/si_units"
