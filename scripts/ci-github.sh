@@ -21,8 +21,8 @@ popd
 
 echo "Running as user: $(whoami) (uid: $(id -u), gid: $(id -g))"
 
-# Mark location safe to assuage git if necessary (happens under docker as we
-# run with a different user).
+# Mark location safe to assuage git if necessary (happens under docker & Cygwin
+# as we run with a different user).
 if git status 2>&1 | grep -q "dubious ownership"; then
    echo "Marking $PWD as safe for git"
    git config --global --add safe.directory "$PWD"
@@ -31,7 +31,11 @@ if git status 2>&1 | grep -q "dubious ownership"; then
    # as we have there some pre-created git repositories that would fail too.
    # These are copied to temporary locations by the test runner, so we cannot
    # simply use the `git config` trick.
-   sudo chown -R $(id -u):$(id -g) testsuite
+   if [ "$(get_OS)" == "windows" ]; then
+      takeown /R /D Y /F testsuite
+   else
+      sudo chown -R $(id -u):$(id -g) testsuite
+   fi
 fi
 
 # Patch version
