@@ -6,6 +6,18 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Support for Git from Cygwin and MSYS2
+
+PR [#2186](https://github.com/alire-project/alire/pull/2186)
+
+`alr` now supports the versions of `git` that come with Cygwin or MSYS2 on
+Windows for its Git operations, in addition to Git for Windows.
+
+Note that, to avoid inconsistencies when more than one of git4win/MSYS2/Cygwin
+is on PATH, `alr` requires the corresponding `cygpath` to be located in the same
+directory as the `git` executable; this is the case for default installations of
+Cygwin and MSYS2.
+
 ### Updated SPDX license expression support
 
 PR [#2096](https://github.com/alire-project/alire/pull/2096)
