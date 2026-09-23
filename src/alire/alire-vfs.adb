@@ -80,6 +80,8 @@ package body Alire.VFS is
 
       --  To be absolutely sure, touch a temp file in one of the dirs and
       --  verify whether it exist in the other.
+      --
+      --  If the write fails for some reason, assume the dirs are different.
 
       declare
          Tmp : constant Directories.Temp_File := Directories.In_Dir (P1);
@@ -88,6 +90,12 @@ package body Alire.VFS is
          Directories.Touch (Tmp.Filename);
          return Is_Regular_File (P2
                                  / Ada.Directories.Simple_Name (Tmp.Filename));
+      exception
+         when E : others =>
+            Trace.Debug ("Failed to write probe file to '" & P1
+                         & "'. Assuming different from '" & P2 & "'.");
+            Log_Exception (E);
+            return False;
       end;
    end Is_Same_Dir;
 

@@ -4,10 +4,10 @@ with Ada.Containers;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
+with Alire.Platforms.Current;
 with Alire.URI;
 with Alire.Utils.Tools;
 with Alire.Utils.User_Input.Query_Config;
-with Alire.VFS;
 
 with GNAT.Source_Info;
 
@@ -61,6 +61,162 @@ package body Alire.VCSs.Git is
          Err_To_Out          => True);
    end Unchecked_Run_Git_And_Capture;
 
+   -------------
+   -- Cygpath --
+   -------------
+
+   function Cygpath return String;
+   --  Return the path of the `cygpath` in the same directory as the `git` on
+   --  PATH, if any and on Windows. Otherwise, return "".
+   --
+   --  Merely relying on the `cygpath` from PATH can lead to inconsistencies
+   --  when more than one of Cygwin, MSYS2, and Git for Windows are installed.
+   --  Standard installs of Cygwin and MSYS2 put `cygpath` in the same
+   --  directory as `git`. Git for Windows does not, but does not require path
+   --  translations. Other non-standard arrangements of Cygwin/MSYS2 Git are
+   --  not presently supported.
+
+   function Cygpath return String is
+   begin
+      if not Platforms.Current.On_Windows then
+         return "";
+      end if;
+
+      declare
+         use Alire.Directories.Operators;
+         Git_Exec : constant String :=
+           OS_Lib.Subprocess.Locate_In_Path ("git");
+      begin
+         if Git_Exec = "" then
+            return "";
+         end if;
+
+         declare
+            Candidate : constant String :=
+              Ada.Directories.Containing_Directory (Git_Exec)
+              / ("cygpath" & OS_Lib.Exe_Suffix);
+         begin
+            if Ada.Directories.Exists (Candidate) then
+               return Candidate;
+            else
+               return "";
+            end if;
+         end;
+      end;
+   end Cygpath;
+
+   -----------------
+   -- Run_Cygpath --
+   -----------------
+
+   function Run_Cygpath
+     (Exec : String; Flag : String; Path : String) return String;
+   --  Return the result of `cygpath <Flag> <Path>` from the `cygpath` at
+   --  `Exec`.
+
+   function Run_Cygpath
+     (Exec : String; Flag : String; Path : String) return String
+   is
+      Output : constant AAA.Strings.Vector :=
+        OS_Lib.Subprocess.Checked_Spawn_And_Capture
+          (Command    => Exec,
+           Arguments  => Empty_Vector & Flag & Path,
+           Err_To_Out => True);
+   begin
+      if Output.Length not in 1 then
+         Raise_Checked_Error
+           ("Unexpected output from `cygpath "
+            & Flag
+            & " "
+            & Path
+            & "`: "
+            & Output.Flatten (New_Line & "  "));
+      end if;
+
+      Trace.Debug
+        ("Path converted with `cygpath "
+         & Flag
+         & "`: "
+         & Path
+         & " --> "
+         & Output.First_Element);
+
+      return Output.First_Element;
+   end Run_Cygpath;
+
+   --------------------
+   -- To_Native_Path --
+   --------------------
+
+   function To_Native_Path (Path : String) return String;
+   --  Convert a path reported by Git into a native path.
+   --
+   --  On Windows, uses `cygpath` if one is detected, otherwise replaces
+   --  `/` -> `\`. On other platforms `Path` is returned unmodified.
+
+   function To_Native_Path (Path : String) return String is
+   begin
+      if Path = "" or else not Platforms.Current.On_Windows then
+         return Path;
+      end if;
+
+      declare
+         Exec : constant String := Cygpath;
+      begin
+         if Exec = "" then
+            return Replace (Path, "/", "\");
+         else
+            return Run_Cygpath (Exec, "-w", Path);
+         end if;
+      end;
+   end To_Native_Path;
+
+   -----------------
+   -- To_Git_Path --
+   -----------------
+
+   function To_Git_Path (Path : String) return String;
+   --  Convert a native path into one suitable for passing to Git.
+   --
+   --  Uses `cygpath` if one is detected on Windows, otherwise returns `Path`
+   --  unmodified.
+
+   function To_Git_Path (Path : String) return String is
+   begin
+      if Path = "" then
+         return Path;
+      end if;
+
+      declare
+         Exec : constant String := Cygpath;
+      begin
+         if Exec = "" then
+            return Path;
+         else
+            return Run_Cygpath (Exec, "-u", Path);
+         end if;
+      end;
+   end To_Git_Path;
+
+   ----------------
+   -- To_Git_URL --
+   ----------------
+
+   function To_Git_URL (This : String) return String
+   is (if URI.URI_Kind (This) in URI.Bare_Path
+       then To_Git_Path (This)
+       else This);
+   --  Convert paths with `To_Git_Path` and return other URLs unmodified.
+
+   -------------------
+   -- To_Native_URL --
+   -------------------
+
+   function To_Native_URL (This : String) return String
+   is (if URI.URI_Kind (This) in URI.Bare_Path
+       then To_Native_Path (This)
+       else This);
+
    ----------------
    -- Add_Remote --
    ----------------
@@ -71,7 +227,7 @@ package body Alire.VCSs.Git is
    is
       Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
    begin
-      Run_Git (To_Vector ("remote") & "add" & Name & URL);
+      Run_Git (To_Vector ("remote") & "add" & Name & To_Git_URL (URL));
    end Add_Remote;
 
    ------------
@@ -226,11 +382,21 @@ package body Alire.VCSs.Git is
                       (if Branch /= ""
                        then Empty_Vector & "--branch" & Branch
                        else Empty_Vector);
+      Hardlink_Opts : constant Vector :=
+                        (if Cygpath /= ""
+                         then Empty_Vector & "--no-hardlinks"
+                         else Empty_Vector);
+      --  Cygwin's heuristic `lstat()` emulation can return different results
+      --  for the same file viewed through different mounts, which fails
+      --  `git`'s hardlink sanity checks, so we disable hardlinks on
+      --  Cygwin/MSYS2.
    begin
       Trace.Detail ("Checking out [git]: " & From);
 
-      Run_Git (Empty_Vector & "clone" & "--recursive" &
-                 Extra & Branch_Opts & Depth_Opts & Repo_URL (From) & Into);
+      Run_Git (Empty_Vector & "clone" & "--recursive"
+               & Extra & Branch_Opts & Depth_Opts & Hardlink_Opts
+               & To_Git_URL (Repo_URL (From))
+               & To_Git_Path (Into));
 
       if Commit /= "" then
          declare
@@ -427,7 +593,7 @@ package body Alire.VCSs.Git is
       for Line of Output loop
          if Has_Prefix (Line, "remote." & Origin & ".url") then
             declare
-               URL : constant Alire.URL := Tail (Line, '=');
+               URL : constant Alire.URL := To_Native_URL (Tail (Line, '='));
             begin
                if Public then
                   return Transform_To_Public (URL);
@@ -553,7 +719,8 @@ package body Alire.VCSs.Git is
             Cols : constant Vector := Split (Line, Latin_1.HT, Trim => True);
          begin
             if Cols (1) = Remote then
-               return AAA.Strings.Split (Cols (2), ' ').First_Element;
+               return To_Native_URL
+                 (AAA.Strings.Split (Cols (2), ' ').First_Element);
             end if;
          end;
       end loop;
@@ -587,7 +754,8 @@ package body Alire.VCSs.Git is
                            Ref  : String := "HEAD") return String
    is
       Output : constant AAA.Strings.Vector :=
-        Run_Git_And_Capture (Empty_Vector & "ls-remote" & Repo_URL (From));
+        Run_Git_And_Capture
+          (Empty_Vector & "ls-remote" & To_Git_URL (Repo_URL (From)));
    begin
       --  Sample output from git (space is tab):
       --  95818710c1a2bea0cbfa617a67972fe984761227        HEAD
@@ -842,8 +1010,7 @@ package body Alire.VCSs.Git is
          --  have also a drive letter. So we convert this path to a native one,
          --  as promised by the type in use.
 
-         Data.Worktree :=
-           +VFS.To_Native (Portable_Path (Tail (Output (1), ' ')));
+         Data.Worktree := +To_Native_Path (Tail (Output (1), ' '));
          Data.Head     :=  Tail (Output (2), ' ');
          Data.Branch   := +Tail (Output (3), ' ');
       end return;
@@ -890,8 +1057,9 @@ package body Alire.VCSs.Git is
         with Unreferenced;
    begin
       return "." /
-        Run_Git_And_Capture
-         (Empty_Vector & "rev-parse" & "--show-prefix").First_Element;
+        To_Native_Path
+          (Run_Git_And_Capture
+             (Empty_Vector & "rev-parse" & "--show-prefix").First_Element);
    end Get_Rel_Path_Inside_Repo;
 
    ----------
@@ -913,7 +1081,8 @@ package body Alire.VCSs.Git is
                       & " at " & GNAT.Source_Info.Source_Location);
          return Optional.Absolute_Paths.Empty;
       else
-         return Optional.Absolute_Paths.Unit (Output.First_Element);
+         return Optional.Absolute_Paths.Unit
+           (To_Native_Path (Output.First_Element));
       end if;
    end Root;
 

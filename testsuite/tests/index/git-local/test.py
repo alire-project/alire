@@ -173,7 +173,7 @@ os.chdir(os.path.join("my_index", "index"))
 run(["git", "branch", "other_branch"])
 run(["git", "checkout", default_branch])
 shutil.rmtree("li")
-run(["git", "add", "*"])
+run(["git", "add", "."])
 run(["git", "commit", "-m", "Remove libhello"])
 os.chdir(TEST_ROOT_DIR)
 

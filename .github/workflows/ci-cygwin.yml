@@ -1,0 +1,68 @@
+# Run the testsuite on Windows in a Cygwin environment.
+
+name: CI Cygwin
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Use Cygwin's `bash`.
+defaults:
+  run:
+    shell: D:\cygwin\bin\bash.exe --noprofile --norc -o igncr -eo pipefail '{0}'
+
+
+jobs:
+
+  build:
+    name: CI on Cygwin
+
+    runs-on: windows-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v7
+      with:
+        submodules: recursive
+
+    - name: Install FSF toolchain
+      uses: alire-project/alr-install@v2
+      with:
+        crates: gnat_native gprbuild
+
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.x'
+
+    - name: Install Cygwin
+      uses: cygwin/cygwin-install-action@v6
+      with:
+        packages: |
+          curl
+          git
+          unzip
+
+    - name: Run test script
+      run: scripts/ci-github.sh
+      env:
+        BRANCH: ${{ github.base_ref }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: e3-log-cygwin.zip
+        path: testsuite/out

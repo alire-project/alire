@@ -39,6 +39,9 @@ package Alire.VFS is
    --  Check if two paths are to the same dir, even if they're given as
    --  different equivalent full paths in the filesystem (e.g., Windows
    --  short and long names).
+   --
+   --  In some cases, equivalent paths may return `False` if we don't have
+   --  write access to `P1` to create a temporary probe file.
 
    --  Basic types:
 
