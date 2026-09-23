@@ -19,7 +19,7 @@ ada_toml = "~0.5"
 ajunitgen = "^1.0.1"
 ansiada = "^1.1"
 c_strings = "^1.0"
-clic = "~0.3"
+clic = "~0.4"
 den = "~0.2"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
@@ -72,7 +72,7 @@ commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 
 [pins.clic]
 url    = "https://github.com/alire-project/clic"
-commit = "7f3af9f2d6bf0f3e41dc0ab61907364c6acc5b1c"
+commit = "4bb4a608e98a09256f5ac0a62897685e9ae147e0"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"

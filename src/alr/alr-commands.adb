@@ -5,6 +5,7 @@ with Ada.Environment_Variables;
 
 with CLIC.TTY;
 with CLIC.User_Input;
+with CLIC.Utils;
 
 with Alire.Platforms;
 with Alire_Early_Elaboration;
@@ -22,7 +23,6 @@ with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions;
 with Alire.Toolchains;
-with Alire.Utils.Did_You_Mean;
 with Alire.Utils.Tables;
 with Alire.Utils.User_Input;
 
@@ -153,9 +153,9 @@ package body Alr.Commands is
         AAA.Strings.To_Lower_Case (AAA.Strings.Trim (Value, '='));
 
       function Suggest is new
-        Alire.Utils.Did_You_Mean.Enum_Suggestion
+        CLIC.Utils.Enum_Suggestion
           (Color_Config_Values,
-           Alire.Utils.Did_You_Mean.Lower_Case);
+           CLIC.Utils.Lower_Case);
    begin
       if Stripped_Value = "always" then
          Color_Config := Always;
@@ -560,9 +560,9 @@ package body Alr.Commands is
            new AAA.Enum_Tools.Is_Valid (Tables.Formats);
 
          function Suggest is
-           new Alire.Utils.Did_You_Mean.Enum_Suggestion
+           new CLIC.Utils.Enum_Suggestion
              (Tables.Formats,
-              Alire.Utils.Did_You_Mean.Upper_Case);
+              CLIC.Utils.Upper_Case);
 
       begin
          --  Do nothing if there is no `--format` argument (or in the unlikely

@@ -1,6 +1,6 @@
 with AAA.Enum_Tools;
 
-with Alire.Utils.Did_You_Mean;
+with CLIC.Utils;
 
 package body Alire.Properties.Actions.Runners is
 
@@ -65,8 +65,8 @@ package body Alire.Properties.Actions.Runners is
          function Is_Valid is new AAA.Enum_Tools.Is_Valid (Moments);
 
          function Suggestion
-         is new Utils.Did_You_Mean.Enum_Suggestion
-           (Moments, Utils.Did_You_Mean.Tomify);
+         is new CLIC.Utils.Enum_Suggestion
+           (Moments, CLIC.Utils.Tomify);
 
       begin
          if not From.Pop (TOML_Keys.Action_Type, Kind) then

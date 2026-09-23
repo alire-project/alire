@@ -1,49 +1,49 @@
 with Alire.TOML_Keys;
 with TOML; use TOML;
 
-with Alire.Utils.Did_You_Mean;
+with CLIC.Utils;
 
 package body Alire.Properties.Build_Switches is
 
    function Profile_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Profile_Kind, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Profile_Kind, CLIC.Utils.Lower_Case);
 
    function Switches_Categories_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Switches_Categories, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Switches_Categories, CLIC.Utils.Lower_Case);
 
    function Optimization_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Optimization_Kind, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Optimization_Kind, CLIC.Utils.Lower_Case);
 
    function Debug_Info_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Debug_Info_Kind, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Debug_Info_Kind, CLIC.Utils.Lower_Case);
 
    function Runtime_Checks_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Runtime_Checks_Kind, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Runtime_Checks_Kind, CLIC.Utils.Lower_Case);
 
    function Compile_Checks_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Compile_Checks_Kind, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Compile_Checks_Kind, CLIC.Utils.Lower_Case);
 
    function Contracts_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Contracts_Kind, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Contracts_Kind, CLIC.Utils.Lower_Case);
 
    function Style_Checks_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Style_Checks_Kind, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Style_Checks_Kind, CLIC.Utils.Lower_Case);
 
    function Ada_Version_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Ada_Version_Kind, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Ada_Version_Kind, CLIC.Utils.Lower_Case);
 
    function Source_Encoding_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Source_Encoding_Kind, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Source_Encoding_Kind, CLIC.Utils.Lower_Case);
 
    -----------------------
    -- Switch_Suggestion --

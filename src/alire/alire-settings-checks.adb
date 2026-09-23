@@ -2,7 +2,8 @@ with AAA.Enum_Tools;
 
 with Alire.Platforms;
 with Alire.Test;
-with Alire.Utils.Did_You_Mean;
+
+with CLIC.Utils;
 
 package body Alire.Settings.Checks is
 
@@ -12,8 +13,8 @@ package body Alire.Settings.Checks is
 
    function Is_Valid (Value : TOML.TOML_Value) return Boolean is
       function Enum_Valid is new AAA.Enum_Tools.Is_Valid (Values);
-      function Suggestion is new Utils.Did_You_Mean.Enum_Suggestion
-        (Values, Utils.Did_You_Mean.Lower_Case);
+      function Suggestion is new CLIC.Utils.Enum_Suggestion
+        (Values, CLIC.Utils.Lower_Case);
    begin
       if Value.Kind not in TOML.TOML_String then
          Trace.Error

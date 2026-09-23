@@ -3,7 +3,8 @@ with AAA.Enum_Tools;
 with TOML; use TOML;
 
 with Alire.Utils.YAML;
-with Alire.Utils.Did_You_Mean;
+
+with CLIC.Utils;
 
 with Ada.Characters.Handling;
 
@@ -22,8 +23,8 @@ package body Alire.Properties.Configurations is
 
    function Is_Valid is new AAA.Enum_Tools.Is_Valid (Valid_Keys);
    function Valid_Keys_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Valid_Keys, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Valid_Keys, CLIC.Utils.Lower_Case);
 
    -------------
    -- To_Type --
