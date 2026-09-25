@@ -1,3 +1,4 @@
+pragma Alire_Test;
 with Alire.Utils; use Alire.Utils;
 
 procedure Alr_Tests.String_Utils is

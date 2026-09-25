@@ -10,6 +10,10 @@ package body Alire.Utils.Tools is
 
    Already_Detected : array (Tool_Kind) of Boolean := (others => False);
 
+   Bsd_Tar_Known : Boolean := False;
+   Bsd_Tar       : Boolean := False;
+   --  Cache for Is_BSD_Tar, as it spawns a subprocess to find out
+
    function Exec_For_Tool (Tool : Tool_Kind) return String;
 
    ---------------
@@ -167,11 +171,16 @@ package body Alire.Utils.Tools is
    function Is_BSD_Tar return Boolean is
       use AAA.Strings;
    begin
-      return Contains
-        (To_Lower_Case
-           (Checked_Spawn_And_Capture
-                ("tar", To_Vector ("--version")).Flatten),
-         "bsdtar");
+      if not Bsd_Tar_Known then
+         Bsd_Tar := Contains
+           (To_Lower_Case
+              (Checked_Spawn_And_Capture
+                   ("tar", To_Vector ("--version")).Flatten),
+            "bsdtar");
+         Bsd_Tar_Known := True;
+      end if;
+
+      return Bsd_Tar;
    end Is_BSD_Tar;
 
 end Alire.Utils.Tools;

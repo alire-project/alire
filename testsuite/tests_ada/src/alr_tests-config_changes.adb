@@ -1,3 +1,4 @@
+pragma Alire_Test;
 with Alire.Settings.Edit;
 
 procedure Alr_Tests.Config_Changes is

@@ -78,3 +78,6 @@
 [submodule "deps/json-ada"]
 	path = deps/json-ada
 	url = https://github.com/onox/json-ada
+[submodule "deps/yamlfk"]
+	path = deps/yamlfk
+	url = https://github.com/mosteo/yamlfk

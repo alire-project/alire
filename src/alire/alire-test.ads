@@ -1,12 +1,15 @@
 package Alire.Test with Preelaborate is
 
-   --  TODO: document in user changes
-
    Pragma_Name : constant String := "Alire_Test";
    --  The pragma name recognized by the alr test runner.
 
-   --  Test configuration is achieved through pragmas in the context part:
+   --  A test is a parameterless main procedure under the test crate's src/
+   --  that declares itself with an Alire_Test pragma in its context part.
+   --  Sources that cannot be a runnable main (packages, functions, generics,
+   --  subunits, ...) are ignored without needing any pragma.
    --
+   --  `pragma Alire_Test;`           -- declare as a test, with defaults
+   --  `pragma Alire_Test (<key> => <value);` -- alt syntax
    --  `pragma Alire_Test (<key>, <value>);`
    --          |           |      |
    --          |           |      \_ Value: the setting to apply
@@ -28,13 +31,10 @@ package Alire.Test with Preelaborate is
    --  Keys accepted in `pragma Alire_Test (<key>, <value>);`.
    type Pragmas is
      (Auxiliary_File,
-      --  When True, the file is a support unit (not a test main) and must not
-      --  be turned into a test.
+      --  When True (or value omitted), the source is a support unit, not a
+      --  test main, and is excluded from testing. Must be the only key in its
+      --  Alire_Test configuration. Applies to files that could be a test only.
       --  Value is an optional Boolean.
-      --  TODO: recognized but not yet implemented.
-      --  TODO: we can also not try to turn into a test a .adb that has a
-      --  corresponding .ads, since that's for sure a package. So this might be
-      --  useful only for `separate` definitions.
       Name,
       --  Override the displayed test name.
       --  Value is a mandatory String.
