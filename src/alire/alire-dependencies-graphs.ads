@@ -1,5 +1,7 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
+with AAA.Strings;
+
 with Alire.Containers;
 with Alire.Properties;
 with Alire.Releases;
@@ -12,13 +14,17 @@ package Alire.Dependencies.Graphs is
    function Empty_Graph return Graph;
 
    function From_Solution (Sol : Solutions.Solution;
+                           Root : Releases.Release;
                            Env : Properties.Vector)
                            return Graph;
 
    function Including (This : Graph;
                        R    : Releases.Release;
-                       Env  : Properties.Vector) return Graph;
-   --  Add a release and ALL its potential direct dependencies (even OR'ed)
+                       Env  : Properties.Vector;
+                       Requested : AAA.Strings.Set;
+                       Default_Features : Boolean) return Graph;
+   --  Add a release and all direct dependencies active for its unified
+   --  feature selection (including OR alternatives).
 
    function Filtering_Unused (This : Graph;
                               Used : Alire.Containers.Crate_Name_Sets.Set)

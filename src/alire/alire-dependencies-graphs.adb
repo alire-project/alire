@@ -1,3 +1,5 @@
+with Alire.Conditional;
+with Alire.Crate_Features;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
@@ -17,11 +19,23 @@ package body Alire.Dependencies.Graphs is
    -------------------
 
    function From_Solution (Sol : Solutions.Solution;
+                           Root : Releases.Release;
                            Env : Properties.Vector) return Graph is
    begin
       return Result : Graph do
          for Rel of Sol.Releases loop
-            Result := Result.Including (Rel, Env);
+            declare
+               Selection : constant Crate_Features.Selection :=
+                 (if Rel.Name = Root.Name
+                  then Crate_Features.Current
+                  else Sol.Feature_Selection (Rel.Name));
+            begin
+               Result := Result.Including
+                 (Rel,
+                  Env,
+                  Selection.Requested,
+                  Selection.Default_Features);
+            end;
          end loop;
 
          Result := Result.Filtering_Unused (Sol.Crates);
@@ -34,12 +48,16 @@ package body Alire.Dependencies.Graphs is
 
    function Including (This : Graph;
                        R    : Releases.Release;
-                       Env  : Properties.Vector)
+                       Env  : Properties.Vector;
+                       Requested : AAA.Strings.Set;
+                       Default_Features : Boolean)
                        return Graph
    is
    begin
       return Result : Graph := This do
-         for Dep of R.Flat_Dependencies (Env) loop
+         for Dep of Conditional.Enumerate
+           (R.Dependencies (Env, Requested, Default_Features))
+         loop
             Result.Include (New_Dependency (R.Name, Dep.Crate));
          end loop;
       end return;

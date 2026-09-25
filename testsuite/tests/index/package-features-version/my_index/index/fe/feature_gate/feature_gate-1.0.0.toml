@@ -1,0 +1,12 @@
+name = "feature_gate"
+description = "Index feature syntax compatibility fixture"
+version = "1.0.0"
+licenses = "MIT"
+maintainers = ["tester@example.com"]
+maintainers-logins = ["tester"]
+
+[[depends-on]]
+plain_dependency = { version = "*", default-features = false }
+
+[origin]
+url = "file:."

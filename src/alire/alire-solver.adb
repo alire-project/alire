@@ -1,7 +1,8 @@
 with Ada.Containers; use Ada.Containers;
 with Ada.Containers.Indefinite_Ordered_Sets;
 
-with Alire.Containers;
+with AAA.Strings;
+
 with Alire.Dependencies.States;
 with Alire.Milestones;
 with Alire.Optional;
@@ -291,7 +292,9 @@ package body Alire.Solver is
    function Resolve (Deps    : Alire.Types.Abstract_Dependencies;
                      Props   : Properties.Vector;
                      Pins    : Solution;
-                     Options : Query_Options := Default_Options)
+                     Options : Query_Options := Default_Options;
+                     Suppressed_Pins : Containers.Crate_Name_Sets.Set :=
+                       Containers.Crate_Name_Sets.Empty_Set)
                      return Result
    is
       Tmp_Pool : System.Pool_Local.Unbounded_Reclaim_Pool;
@@ -1218,7 +1221,14 @@ package body Alire.Solver is
                    and then not This.Seen.Contains (Dep.Value)
                    and then not -- Both seen and solved already
                      (This.Solution.Depends_Directly_On (Dep.Value.Crate)
-                      and then This.Solution.Satisfies (Dep.Value))
+                      and then This.Solution.Satisfies (Dep.Value)
+                      and then Dep.Value.Requested_Features.Is_Subset
+                        (This.Solution.Dependency
+                           (Dep.Value.Crate).Requested_Features)
+                      and then
+                        (not Dep.Value.Uses_Default_Features
+                         or else This.Solution.Dependency
+                           (Dep.Value.Crate).Uses_Default_Features))
                   )
                  or else not Dep.Is_Value
                then
@@ -1504,13 +1514,60 @@ package body Alire.Solver is
                --  when adding its dependencies.
 
                declare
-                  --  We only need to add dependencies if it is the first
-                  --  time we see this release.
-                  New_Deps : constant Conditional.Platform_Dependencies :=
-                               (if Is_Reused
-                                then Conditional.No_Dependencies
-                                else R.Dependencies (Props));
+                  Had_Dependency : constant Boolean :=
+                    R.Name = Dep.Crate
+                    and then State.Solution.Depends_Directly_On (Dep.Crate);
+                  Old_Dep : constant Dependencies.Dependency :=
+                    (if Had_Dependency
+                     then State.Solution.Dependency (Dep.Crate)
+                     else Dependencies.New_Dependency
+                       (Dep.Crate, Default_Features => False));
+                  Unified_Features : AAA.Strings.Set :=
+                    Dep.Requested_Features;
+                  Unified_Defaults : constant Boolean :=
+                    Dep.Uses_Default_Features
+                    or else Old_Dep.Uses_Default_Features;
+                  Feature_Request_Changed : constant Boolean :=
+                    not Is_Reused
+                    or else
+                      (R.Name = Dep.Crate
+                       and then
+                         (not Had_Dependency
+                          or else not Dep.Requested_Features.Is_Subset
+                            (Old_Dep.Requested_Features)
+                          or else
+                            (Dep.Uses_Default_Features
+                             and then not Old_Dep.Uses_Default_Features)));
+
+                  New_Deps : Conditional.Platform_Dependencies;
                begin
+                  Unified_Features.Union (Old_Dep.Requested_Features);
+
+                  if R.Name = Dep.Crate then
+                     for Feature of Unified_Features loop
+                        if not R.Features.Contains (Feature) then
+                           Trace.Debug
+                             ("SOLVER: discarding " & R.Milestone.Image
+                              & " because it does not define requested "
+                              & "feature '" & Feature & "'");
+                           if Is_Reused then
+                              Expand_Missing (Conflict);
+                           end if;
+                           return;
+                        end if;
+                     end loop;
+                  end if;
+
+                  New_Deps :=
+                               (if not Feature_Request_Changed
+                                then Conditional.No_Dependencies
+                                elsif R.Name /= Dep.Crate
+                                then R.Dependencies
+                                  (Props, AAA.Strings.Empty_Set, False)
+                                else R.Dependencies
+                                  (Props,
+                                   Unified_Features,
+                                   Unified_Defaults));
                   Enqueue
                     ("FROZEN: " & R.Milestone.Image &
                        " to satisfy " & Dep.TTY_Image &
@@ -1756,8 +1813,15 @@ package body Alire.Solver is
                --  Early skip if there is already a pin for this crate caused
                --  by a different dependency.
 
-               if Solution.Depends_On (Dep.Crate) and then
-                 Solution.State (Dep.Crate).Is_Linked
+               if State.Solution.Depends_On (Dep.Crate)
+                 and then State.Solution.State (Dep.Crate).Is_Linked
+                 and then Dep.Requested_Features.Is_Subset
+                   (State.Solution.Dependency
+                      (Dep.Crate).Requested_Features)
+                 and then
+                   (not Dep.Uses_Default_Features
+                    or else State.Solution.Dependency
+                      (Dep.Crate).Uses_Default_Features)
                then
                   Skip_Dependency ("linked");
                   return;
@@ -1766,20 +1830,36 @@ package body Alire.Solver is
                --  The dependency is softlinked in the starting solution, hence
                --  we need not look further for releases.
 
-               Enqueue
-                 ("LINKED to " &
-                    Pins.State (Dep.Crate).Link.Path,
-                  Next (State)
-                  .Seeing (Raw_Dep)
-                  .Expanding
-                    (if Pins.State (Dep.Crate).Has_Release
-                     then Pins.State (Dep.Crate).Release.To_Dependency
-                     else Conditional.No_Dependencies)
-                  .Targeting (State.Remaining)
-                  .With_More (Pins.Pin_Dependencies (Dep.Crate, Props))
-                  .Solved
-                    (Solution.Linking
-                         (Dep.Crate, Pins.State (Dep.Crate).Link)));
+               declare
+                  Unified_Features : AAA.Strings.Set :=
+                    Dep.Requested_Features;
+                  Unified_Defaults : Boolean := Dep.Uses_Default_Features;
+               begin
+                  if Solution.Depends_On (Dep.Crate) then
+                     Unified_Features.Union
+                       (Solution.Dependency (Dep.Crate).Requested_Features);
+                     Unified_Defaults := Unified_Defaults or else
+                       Solution.Dependency (Dep.Crate).Uses_Default_Features;
+                  end if;
+
+                  Enqueue
+                    ("LINKED to " & Pins.State (Dep.Crate).Link.Path,
+                     Next (State)
+                     .Seeing (Raw_Dep)
+                     .Expanding
+                       (if Pins.State (Dep.Crate).Has_Release
+                        then Pins.State (Dep.Crate).Release.To_Dependency
+                        else Conditional.No_Dependencies)
+                     .Targeting (State.Remaining)
+                     .With_More
+                       (Pins.Pin_Dependencies
+                          (Dep.Crate, Props,
+                           Unified_Features,
+                           Unified_Defaults))
+                     .Solved
+                       (Solution.Linking
+                            (Dep.Crate, Pins.State (Dep.Crate).Link)));
+               end;
             end Check_Link;
 
             ---------------------------
@@ -2258,8 +2338,19 @@ package body Alire.Solver is
          end;
       end Solution_With_Extras;
 
+      function Active_Pins return Conditional.Dependencies is
+      begin
+         return Result : Conditional.Dependencies do
+            for Dep of Conditional.Enumerate (Pins.User_Pins) loop
+               if not Suppressed_Pins.Contains (Dep.Crate) then
+                  Result := Result and Dep;
+               end if;
+            end loop;
+         end return;
+      end Active_Pins;
+
       Full_Dependencies : constant Conditional.Dependencies :=
-                            Tree'(Pins.User_Pins and Deps).Evaluate (Props);
+                            Tree'(Active_Pins and Deps).Evaluate (Props);
       --  Include pins before other dependencies. This makes their dependency
       --  show in solutions explicitly.
 

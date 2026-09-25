@@ -38,7 +38,17 @@ package body Alire.Dependencies.Containers is
                This.Insert (Dep.Crate,
                             Dependencies.New_Dependency
                               (Dep.Crate,
-                               Old.Versions and Dep.Versions));
+                               Old.Versions and Dep.Versions,
+                               Optional => Old.Is_Optional
+                                 and then Dep.Is_Optional,
+                               Features => Old.Requested_Features.Union
+                                 (Dep.Requested_Features),
+                               Default_Features =>
+                                 Old.Uses_Default_Features
+                                 or else Dep.Uses_Default_Features,
+                               Feature_Syntax =>
+                                 Old.Uses_Feature_Syntax
+                                 or else Dep.Uses_Feature_Syntax));
             end if;
          end;
       else

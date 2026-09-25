@@ -46,6 +46,8 @@ private
       Tree     : aliased Boolean := False;
       URL      : aliased GNAT.Strings.String_Access;
       Versions : aliased Boolean := False;
+      Features : aliased GNAT.Strings.String_Access;
+      No_Default_Features : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Withing;

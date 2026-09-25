@@ -22,16 +22,42 @@ package body Alr.Commands.Withing is
 
    Switch_URL : constant String := "--use";
 
+   function Feature_Selection (Cmd : Command) return AAA.Strings.Set is
+   begin
+      return Result : AAA.Strings.Set do
+         for Name of AAA.Strings.Split
+           (Cmd.Features.all, ',', Trim => True)
+         loop
+            if Name = "" then
+               Reportaise_Wrong_Arguments
+                 ("Feature names in --features cannot be empty");
+            end if;
+            Result.Include (AAA.Strings.To_Lower_Case (Name));
+         end loop;
+      end return;
+   end Feature_Selection;
+
    ---------
    -- Add --
    ---------
 
    procedure Add (Root : in out Alire.Roots.Editable.Root;
-                  Args :        AAA.Strings.Vector)
+                  Args :        AAA.Strings.Vector;
+                  Features :    AAA.Strings.Set;
+                  Default_Features : Boolean)
    is
    begin
       for I in Args.First_Index .. Args.Last_Index loop
-         Root.Add_Dependency (Alire.Dependencies.From_String (Args (I)));
+         declare
+            Base : constant Alire.Dependencies.Dependency :=
+              Alire.Dependencies.From_String (Args (I));
+         begin
+            Root.Add_Dependency
+              (Alire.Dependencies.New_Dependency
+                 (Base.Crate, Base.Versions,
+                  Features => Features,
+                  Default_Features => Default_Features));
+         end;
       end loop;
    end Add;
 
@@ -184,12 +210,21 @@ package body Alr.Commands.Withing is
          declare
             use type Semantic_Versioning.Extended.Version_Set;
             Dep : constant Alire.Dependencies.Dependency :=
-                    Alire.Dependencies.From_String (Args (1));
+              Alire.Dependencies.From_String (Args (1));
+            Selected : constant AAA.Strings.Set :=
+              Feature_Selection (Cmd);
+            Enriched : constant Alire.Dependencies.Dependency :=
+              Alire.Dependencies.New_Dependency
+                (Dep.Crate, Dep.Versions,
+                 Features => Selected,
+                 Default_Features => not Cmd.No_Default_Features);
          begin
-            if Dep.Versions /= Semantic_Versioning.Extended.Any and then
-              not Cmd.Root.Solution.Depends_On (Dep.Crate)
+            if (Dep.Versions /= Semantic_Versioning.Extended.Any
+                or else not Selected.Is_Empty
+                or else Cmd.No_Default_Features)
+              and then not Cmd.Root.Solution.Depends_On (Dep.Crate)
             then
-               Root.Add_Dependency (Dep);
+               Root.Add_Dependency (Enriched);
             end if;
          end;
       end if;
@@ -252,6 +287,7 @@ package body Alr.Commands.Withing is
                       Args :        AAA.Strings.Vector)
    is
       Flags : Natural := 0;
+      Requested_Features : AAA.Strings.Set;
 
       -----------
       -- Check --
@@ -270,6 +306,8 @@ package body Alr.Commands.Withing is
       end Check;
 
    begin
+      Requested_Features := Feature_Selection (Cmd);
+
       Cmd.Requires_Workspace;
       Cmd.Forbids_Structured_Output;
 
@@ -283,6 +321,16 @@ package body Alr.Commands.Withing is
       Check (Cmd.Solve);
       Check (Cmd.Tree);
       Check (Cmd.Versions);
+
+      if (not Requested_Features.Is_Empty or else Cmd.No_Default_Features)
+        and then (Args.Is_Empty or else Cmd.Del or else Cmd.From
+                  or else Cmd.Graph or else Cmd.Solve or else Cmd.Tree
+                  or else Cmd.Versions)
+      then
+         Reportaise_Wrong_Arguments
+           ("--features and --no-default-features require dependencies "
+            & "being added");
+      end if;
 
       if Cmd.Commit.all /= "" and then Cmd.Branch.all /= "" then
          Reportaise_Wrong_Arguments
@@ -334,7 +382,8 @@ package body Alr.Commands.Withing is
                Cmd.Add_With_Pin (New_Root, Args);
             else
                Cmd.Auto_Update_Index;
-               Add (New_Root, Args);
+               Add (New_Root, Args, Requested_Features,
+                    not Cmd.No_Default_Features);
             end if;
 
          elsif Cmd.Del then
@@ -378,6 +427,9 @@ package body Alr.Commands.Withing is
        .Append ("Dependencies are added by giving their name, and removed"
                 & " by using the --del flag. Dependencies cannot be"
                 & " simultaneously added and removed in a single invocation.")
+       .Append ("Use --features=<name>[,<name>...] to request additive "
+                & "features on every dependency being added, and "
+                & "--no-default-features to suppress their default feature.")
        .New_Line
        .Append ("* Adding dependencies pinned to external sources:")
        .Append ("When a single crate name is accompanied by an --use PATH|URL"
@@ -471,6 +523,19 @@ package body Alr.Commands.Withing is
                      Cmd.Versions'Access,
                      "", "--versions",
                      "Show version status of dependencies");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Features'Access,
+         Long_Switch => "--features=",
+         Argument    => "LIST",
+         Help        => "Features to request on added dependencies");
+
+      Define_Switch
+        (Config,
+         Cmd.No_Default_Features'Access,
+         "", "--no-default-features",
+         "Disable default features on added dependencies");
    end Setup_Switches;
 
 end Alr.Commands.Withing;
