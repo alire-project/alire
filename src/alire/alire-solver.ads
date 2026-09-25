@@ -1,8 +1,11 @@
 with Alire.Dependencies;
+with Alire.Containers;
 with Alire.Index;
 with Alire.Origins;
+with Alire.Platforms.Current;
 with Alire.Properties;
 with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.Settings.Builtins;
 with Alire.Solutions;
 with Alire.Types;
@@ -64,16 +67,28 @@ package Alire.Solver is
    --  Basic queries  --
    --  Merely check the index
 
+   function Is_Eligible (R : Releases.Release) return Boolean;
+   --  Whether all temporary delivery gates needed by R are enabled.
+
+   function Releases_Satisfying
+     (Dep              : Dependencies.Dependency;
+      Env              : Properties.Vector := Platforms.Current.Properties;
+      Opts             : Index.Query_Options := Index.Query_Defaults;
+      Use_Equivalences : Boolean := True;
+      Available_Only   : Boolean := True;
+      With_Origin      : Origins.Kinds_Set := (others => True))
+      return Releases.Containers.Release_Set;
+   --  Index releases satisfying Dep after applying delivery gates.
+
    function Exists (Name    : Alire.Crate_Name;
                     Version : Semantic_Versioning.Version;
                     Opts    : Index.Query_Options := Index.Query_Defaults)
-                    return Boolean renames Alire.Index.Exists;
+                    return Boolean;
 
    function Find (Name    : Alire.Crate_Name;
                   Version : Semantic_Versioning.Version;
                   Opts    : Index.Query_Options := Index.Query_Defaults)
-                  return Release
-   renames Alire.Index.Find;
+                  return Release;
 
    function Exists
      (Name    : Alire.Crate_Name;
@@ -136,7 +151,9 @@ package Alire.Solver is
    function Resolve (Deps    : Alire.Types.Abstract_Dependencies;
                      Props   : Properties.Vector;
                      Pins    : Solution;
-                     Options : Query_Options := Default_Options)
+                     Options : Query_Options := Default_Options;
+                     Suppressed_Pins : Alire.Containers.Crate_Name_Sets.Set :=
+                       Alire.Containers.Crate_Name_Sets.Empty_Set)
                      return Result;
    --  Exhaustively look for a solution to the given dependencies, under the
    --  given platform properties and lookup options. Pins can be supplied to

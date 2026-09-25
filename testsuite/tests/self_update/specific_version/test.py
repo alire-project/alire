@@ -7,6 +7,7 @@ from drivers.helpers import exe_name, MockCommand, run, shutil
 from drivers.asserts import assert_substring
 import time
 import os
+import sys
 
 v_init = drivers.alr.run_alr("version").out
 
@@ -29,10 +30,16 @@ subprocess.call(["curl", *token_header, *sys.argv[1:]], env=env2)
 
 def run_alr(args: list[str], expect_success: bool = True) -> str:
     p = run([local_alr, "-n", *args], capture_output=True)
+    output = f"""stdout: {p.stdout.decode(errors="replace")}
+stderr: {p.stderr.decode(errors="replace")}"""
+    # Shared CI runner IPs can exhaust the live API's anonymous quota. Skip
+    # only its explicit rate-limit diagnostic so other failures stay visible.
+    if "GitHub API rate limit exceeded" in output:
+        print("SKIP: GitHub API rate limit exceeded")
+        sys.exit()
     assert expect_success == (
         p.returncode == 0
-    ), f"""stdout: {p.stdout.decode(errors="replace")}
-stderr: {p.stderr.decode(errors="replace")}"""
+    ), output
     return p.stdout.decode(errors="replace")
 
 

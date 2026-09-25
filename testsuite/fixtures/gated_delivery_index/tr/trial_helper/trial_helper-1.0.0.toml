@@ -1,0 +1,9 @@
+name = "trial_helper"
+description = "Dependency activated by the gated delivery fixture"
+version = "1.0.0"
+licenses = "MIT"
+maintainers = ["tester@example.com"]
+maintainers-logins = ["tester"]
+
+[origin]
+url = "file:."

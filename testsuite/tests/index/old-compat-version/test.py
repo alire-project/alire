@@ -17,7 +17,7 @@ p = run_alr("search", "--crates",  # Causes loading of the index
             quiet=False)
 
 assert_match(".*Index 'community' version .* is older"
-             " than the newest supported by alr.*",
+             " than the preferred version for alr.*",
              p.out)
 
 

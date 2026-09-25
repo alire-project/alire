@@ -29,7 +29,7 @@ package body Alire.Toolchains.Solutions is
 
          --  It must be redeployed
          Put_Warning ("Tool " & Mil.TTY_Image & " is missing, redeploying...");
-         Toolchains.Deploy (Index.Find (Mil.Crate, Mil.Version));
+         Toolchains.Deploy (Solver.Find (Mil.Crate, Mil.Version));
       end Redeploy_If_Needed;
 
       Result : Alire.Solutions.Solution := Solution;

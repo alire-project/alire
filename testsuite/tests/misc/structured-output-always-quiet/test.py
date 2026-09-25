@@ -12,8 +12,10 @@ plain_search = run_alr("search", "--list", quiet=False)
 
 # The warning should be included in the plain output, but not in the formatted
 # output, which should parse as valid JSON.
-assert_substring("is older than the newest supported by alr", plain_search.out)
-assert_not_substring("is older than the newest supported by alr", json_search.out)
+assert_substring("is older than the preferred version for alr",
+                 plain_search.out)
+assert_not_substring("is older than the preferred version for alr",
+                     json_search.out)
 parsed_search = json.loads(json_search.out)
 assert_eq(["hello", "libhello"], [c["name"] for c in parsed_search])
 

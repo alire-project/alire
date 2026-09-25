@@ -5,6 +5,7 @@ with Ada.Directories;
 
 with Alire.Cache;
 with Alire.Directories;
+with Alire.Gated_Delivery;
 with Alire.Index;
 with Alire.Manifest;
 with Alire.Origins.Deployers.System;
@@ -13,6 +14,7 @@ with Alire.Platforms.Current;
 with Alire.Properties;
 with Alire.Root;
 with Alire.Settings.Edit;
+with Alire.Solver;
 with Alire.Toolchains.Solutions;
 with Alire.Warnings;
 
@@ -122,8 +124,8 @@ package body Alire.Toolchains is
          --  collections in sync.
 
          --  Identify possible externals first (but after the newest Alire one)
-         for Release of reverse Index.Releases_Satisfying (Any_Tool (Crate),
-                                                           Env)
+         for Release of reverse Solver.Releases_Satisfying (Any_Tool (Crate),
+                                                            Env)
          loop
             if Release.Origin.Kind in System | External and then
               Is_Valid_Choice (Release)
@@ -142,8 +144,8 @@ package body Alire.Toolchains is
          begin
             for Release of reverse
               Releases.Containers.From_Set -- This sorts by version
-                (Index.Releases_Satisfying (Any_Tool (Crate),
-                 Env))
+                (Solver.Releases_Satisfying (Any_Tool (Crate),
+                                             Env))
             loop
                if Release.Origin.Is_Index_Provided and then
                   Is_Valid_Choice (Release)
@@ -293,9 +295,10 @@ package body Alire.Toolchains is
          end if;
 
          --  Find the newest regular release in our index:
-         if not Index.Releases_Satisfying (Any_Tool (Crate),
-                                           Root.Platform_Properties,
-                                           Opts => Index.Query_Fully).Is_Empty
+         if not Solver.Releases_Satisfying
+           (Any_Tool (Crate),
+            Root.Platform_Properties,
+            Opts => Index.Query_Fully).Is_Empty
          then
             Pick_Up_Tool (Crate, Fill_Version_Choices (Crate));
          else
@@ -541,11 +544,17 @@ package body Alire.Toolchains is
                Trace.Debug ("Detected toolchain release at "
                             & TTY.URL (Full_Name (Item)));
 
-               Result.Include
-                 (Releases.From_Manifest
-                    (File_Name => Full_Name (Item) / Paths.Crate_File_Name,
-                     Source    => Manifest.Index,
-                     Strict    => True));
+               declare
+                  Release : constant Releases.Release :=
+                    Releases.From_Manifest
+                      (File_Name => Full_Name (Item) / Paths.Crate_File_Name,
+                       Source    => Manifest.Index,
+                       Strict    => True);
+               begin
+                  if Solver.Is_Eligible (Release) then
+                     Result.Include (Release);
+                  end if;
+               end;
             else
                Warnings.Warn_Once
                  ("Unexpected folder in toolchain crates path: "
@@ -582,8 +591,8 @@ package body Alire.Toolchains is
             Index.Detect_Externals (Tool, Root.Platform_Properties);
          end if;
 
-         for Release of Index.Releases_Satisfying (Toolchains.Any_Tool (Tool),
-                                                   Root.Platform_Properties)
+         for Release of Solver.Releases_Satisfying
+           (Toolchains.Any_Tool (Tool), Root.Platform_Properties)
          loop
             if not Release.Origin.Is_Index_Provided then
                --  For a system external, we must make sure it is installed
@@ -689,6 +698,11 @@ package body Alire.Toolchains is
    is
       Already_Installed : Boolean := False;
    begin
+      if not Solver.Is_Eligible (Release) then
+         Alire.Gated_Delivery.Require
+           (Alire.Gated_Delivery.Package_Features,
+            "toolchain release package features");
+      end if;
 
       --  See if it can be skipped. We cannot rely on copy flags as external
       --  toolchains don't leave a trace on disk.
@@ -751,7 +765,7 @@ package body Alire.Toolchains is
                Put_Warning ("Tool " & Mil.TTY_Image
                             & " is missing, redeploying...");
                if Index.Exists (Mil.Crate, Mil.Version) then
-                  Deploy (Index.Find (Mil.Crate, Mil.Version));
+                  Deploy (Solver.Find (Mil.Crate, Mil.Version));
                else
                   Raise_Checked_Error
                     (Errors.Wrap

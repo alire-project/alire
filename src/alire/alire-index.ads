@@ -5,6 +5,7 @@ pragma Unreferenced (Alire_Early_Elaboration);
 with Alire.Settings.Builtins;
 with Alire.Crates.Containers;
 with Alire.Dependencies;
+with Alire.Features;
 with Alire.Origins;
 with Alire.Platforms.Current;
 with Alire.Policies;
@@ -58,8 +59,10 @@ package Alire.Index is
    Valid_Versions : constant Semantic_Versioning.Extended.Version_Set;
 
    Version : constant Semantic_Versioning.Version;
-   --  The index version understood by alire must match the one in the indexes
-   --  being loaded.
+   --  Preferred index version used by the configured community branch.
+
+   Max_Compatible_Version : constant Semantic_Versioning.Version;
+   --  Newest index version this build can read.
 
    Branch_Kind : constant String := AAA.Strings.Head (Community_Branch, "-");
 
@@ -177,8 +180,14 @@ private
    Min_Compatible_Version_Str : constant String := "1.1";
    --  Update as needed in case of backward-incompatible changes
 
+   Current_Version_Str : constant String :=
+     AAA.Strings.Tail (Community_Branch, '-');
+   --  Preferred index version used by the configured community branch.
+
    Max_Compatible_Version_Str : constant String :=
-                              AAA.Strings.Tail (Community_Branch, '-');
+     Features.Index.Package_Features.Image;
+   --  Keep the maximum readable format separate from the version preferred by
+   --  the configured community branch.
 
    Min_Compatible_Version : constant Semantic_Versioning.Version :=
      Semantic_Versioning.New_Version (Min_Compatible_Version_Str);
@@ -189,6 +198,9 @@ private
                            & " & <=" & Max_Compatible_Version_Str);
 
    Version : constant Semantic_Versioning.Version :=
+     Semantic_Versioning.New_Version (Current_Version_Str);
+
+   Max_Compatible_Version : constant Semantic_Versioning.Version :=
      Semantic_Versioning.New_Version (Max_Compatible_Version_Str);
 
 end Alire.Index;

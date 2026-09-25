@@ -6,8 +6,11 @@ with Alire.Crates;
 with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
+with Alire.Features;
 with Alire.Flags;
 with Alire.Formatting;
+with Alire.Gated_Delivery;
+with Alire.Loading;
 with Alire.Origins.Deployers.System;
 with Alire.Paths;
 with Alire.Properties.Bool;
@@ -27,6 +30,161 @@ with TOML.File_IO;
 with Ada.Strings.Fixed;
 
 package body Alire.Releases is
+
+   use type Alire.Loading.Kinds;
+
+   package Forwarded_Feature_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps
+       (String, AAA.Strings.Set, "<", AAA.Strings."=");
+
+   function Features (R : Release) return Crate_Features.Definitions
+   is (R.Features);
+
+   function Uses_Package_Features (R : Release) return Boolean
+   is (not R.Features.Is_Empty
+       or else
+         (for some Dep of R.Flat_Dependencies => Dep.Uses_Feature_Syntax));
+
+   function Active_Features
+     (R                : Release;
+      Requested        : AAA.Strings.Set;
+      Default_Features : Boolean) return AAA.Strings.Set
+   is
+      Enabled : AAA.Strings.Set;
+
+      procedure Enable (Name : String) is
+      begin
+         if Enabled.Contains (Name) then
+            return;
+         elsif not R.Features.Contains (Name) then
+            Raise_Checked_Error
+              ("crate " & R.Name_Str & " does not define feature '"
+               & Name & "'");
+         end if;
+
+         Enabled.Include (Name);
+         for Reference of R.Features.Members (Name) loop
+            if not AAA.Strings.Has_Prefix (Reference, "dep:")
+              and then Ada.Strings.Fixed.Index (Reference, "/") = 0
+            then
+               Enable (Reference);
+            end if;
+         end loop;
+      end Enable;
+   begin
+      if Default_Features and then R.Features.Contains ("default") then
+         Enable ("default");
+      end if;
+      for Name of Requested loop
+         Enable (Name);
+      end loop;
+      return Enabled;
+   end Active_Features;
+
+   function Dependencies
+     (R                : Release;
+      P                : Alire.Properties.Vector;
+      Requested        : AAA.Strings.Set;
+      Default_Features : Boolean) return Conditional.Dependencies
+   is
+      use Ada.Strings.Fixed;
+      use Conditional.For_Dependencies;
+
+      Raw        : constant Conditional.Dependencies :=
+        R.Dependencies.Evaluate (P);
+      Enabled    : constant AAA.Strings.Set :=
+        R.Active_Features (Requested, Default_Features);
+      Active     : AAA.Strings.Set;
+      Forwarded  : Forwarded_Feature_Maps.Map;
+
+      procedure Add_Forward (Crate, Feature : String) is
+         Existing : AAA.Strings.Set;
+      begin
+         if Forwarded.Contains (Crate) then
+            Existing := Forwarded (Crate);
+            Forwarded.Delete (Crate);
+         end if;
+         Existing.Include (Feature);
+         Forwarded.Insert (Crate, Existing);
+      end Add_Forward;
+
+      function Activate
+        (Tree : Conditional.Dependencies) return Conditional.Dependencies
+      is
+      begin
+         if Tree.Is_Empty then
+            return Conditional.No_Dependencies;
+         elsif Tree.Is_Value then
+            declare
+               Dep : Alire.Dependencies.Dependency := Tree.Value;
+               Dep_Name : constant String := +Dep.Crate;
+               Is_Active : constant Boolean :=
+                 not Dep.Is_Optional or else Active.Contains (Dep_Name);
+               Extra : AAA.Strings.Set := Dep.Requested_Features;
+            begin
+               if not Is_Active then
+                  return Conditional.No_Dependencies;
+               end if;
+
+               if Forwarded.Contains (Dep_Name) then
+                  Extra.Union (Forwarded (Dep_Name));
+               end if;
+
+               Dep := Alire.Dependencies.New_Dependency
+                 (Dep.Crate,
+                  Dep.Versions,
+                  Optional => False,
+                  Features => Extra,
+                  Default_Features => Dep.Uses_Default_Features);
+               return New_Value (Dep);
+            end;
+         else
+            return Result : Conditional.Dependencies do
+               for Child of Tree loop
+                  case Tree.Conjunction is
+                     when Anded => Result := Result and Activate (Child);
+                     when Ored  => Result := Result or Activate (Child);
+                  end case;
+               end loop;
+            end return;
+         end if;
+      end Activate;
+
+   begin
+      --  Active_Features has already followed local references. Interpret the
+      --  dependency activation and forwarding effects of the resulting set.
+      for Name of Enabled loop
+         for Reference of R.Features.Members (Name) loop
+            declare
+               Slash : constant Natural := Index (Reference, "/");
+            begin
+               if AAA.Strings.Has_Prefix (Reference, "dep:") then
+                  Active.Include
+                    (Reference (Reference'First + 4 .. Reference'Last));
+               elsif Slash /= 0 then
+                  declare
+                     Weak : constant Boolean :=
+                       Slash > Reference'First
+                       and then Reference (Slash - 1) = '?';
+                     Last : constant Natural :=
+                       (if Weak then Slash - 2 else Slash - 1);
+                     Crate : constant String :=
+                       Reference (Reference'First .. Last);
+                     Feature : constant String :=
+                       Reference (Slash + 1 .. Reference'Last);
+                  begin
+                     if not Weak then
+                        Active.Include (Crate);
+                     end if;
+                     Add_Forward (Crate, Feature);
+                  end;
+               end if;
+            end;
+         end loop;
+      end loop;
+
+      return Activate (Raw);
+   end Dependencies;
 
    package Semver renames Semantic_Versioning;
 
@@ -513,6 +671,7 @@ package body Alire.Releases is
          Origin       => Base.Origin,
          Mirrors      => Base.Mirrors,
          Dependencies => Base.Dependencies,
+         Features     => Base.Features,
          Equivalences => Base.Equivalences,
          Pins         => Base.Pins,
          Forbidden    => Base.Forbidden,
@@ -570,6 +729,7 @@ package body Alire.Releases is
        Mirrors      => <>,
        Notes        => Notes,
        Dependencies => Dependencies,
+       Features     => <>,
        Equivalences => <>,
        Pins         => <>,
        Forbidden    => Conditional.For_Dependencies.Empty,
@@ -605,6 +765,7 @@ package body Alire.Releases is
       Mirrors      => <>,
       Notes        => "",
       Dependencies => Dependencies,
+      Features     => <>,
       Equivalences => <>,
       Pins         => <>,
       Forbidden    => Conditional.For_Dependencies.Empty,
@@ -1127,6 +1288,12 @@ package body Alire.Releases is
    is
       package Dirs    renames Ada.Directories;
       package Labeled renames Alire.Properties.Labeled;
+      use type Manifest.Sources;
+
+      Has_Feature_Table : constant Boolean :=
+        From.Unwrap.Has (TOML_Keys.Features);
+      --  Preserve the syntax boundary even when an explicitly present
+      --  [features] table contains no definitions.
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
 
@@ -1155,12 +1322,45 @@ package body Alire.Releases is
          From    => From,
          Props   => This.Properties,
          Deps    => This.Dependencies,
+         Features => This.Features,
          Equiv   => This.Equivalences,
          Forbids => This.Forbidden,
          Pins    => This.Pins,
          Avail   => This.Available);
 
+      if Source = Manifest.Index
+        and then (Has_Feature_Table or else This.Uses_Package_Features)
+        and then From.Metadata.Kind = Alire.Loading.Index
+        and then From.Metadata.Version < Alire.Features.Index.Package_Features
+      then
+         Raise_Checked_Error
+           ("crate features require index version "
+            & Alire.Features.Index.Package_Features.Image
+            & " or newer");
+      end if;
+
+      if Source = Manifest.Local
+        and then (Has_Feature_Table or else This.Uses_Package_Features)
+      then
+         Alire.Gated_Delivery.Require
+           (Alire.Gated_Delivery.Package_Features,
+            "manifest package feature syntax");
+      end if;
+
       --  Consolidate/validate some properties as fields:
+
+      declare
+         All_Dependencies : AAA.Strings.Set;
+         Optional         : AAA.Strings.Set;
+      begin
+         for Dep of This.Flat_Dependencies loop
+            All_Dependencies.Include (Dep.Crate.As_String);
+            if Dep.Is_Optional then
+               Optional.Include (Dep.Crate.As_String);
+            end if;
+         end loop;
+         This.Features.Validate (All_Dependencies, Optional);
+      end;
 
       Assert (This.Name_Str = This.Property (Labeled.Name),
               "Mismatched name property and given name at release creation");
@@ -1278,6 +1478,10 @@ package body Alire.Releases is
          end;
       end if;
 
+      if not R.Features.Is_Empty then
+         Root.Set (TOML_Keys.Features, R.Features.To_TOML);
+      end if;
+
       --  Forbidden, wrapped as an array
       if not R.Forbidden.Is_Empty then
          declare
@@ -1364,6 +1568,7 @@ package body Alire.Releases is
        Mirrors      => R.Mirrors.Whenever (P),
        Notes        => R.Notes,
        Dependencies => R.Dependencies.Evaluate (P),
+       Features     => R.Features,
        Equivalences => R.Equivalences,
        Pins         => R.Pins,
        Forbidden    => R.Forbidden.Evaluate (P),

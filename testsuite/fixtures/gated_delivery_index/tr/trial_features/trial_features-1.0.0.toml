@@ -1,0 +1,16 @@
+name = "trial_features"
+description = "Feature-bearing gated delivery fixture"
+version = "1.0.0"
+licenses = "MIT"
+maintainers = ["tester@example.com"]
+maintainers-logins = ["tester"]
+
+[[depends-on]]
+trial_helper = { version = "*", optional = true }
+
+[features]
+default = ["dep:trial_helper"]
+extra = ["dep:trial_helper"]
+
+[origin]
+url = "file:."

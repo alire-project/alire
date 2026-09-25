@@ -1,6 +1,7 @@
 with AAA.Enum_Tools;
 
 with Alire.Crates;
+with Alire.Crate_Features;
 with Alire.Externals.From_Output;
 with Alire.Externals.From_System;
 with Alire.Externals.Unindexed;
@@ -78,6 +79,7 @@ package body Alire.Externals is
       --  These cannot appear in externals:
       Unused_Deps  : Conditional.Dependencies;
       Unused_Equiv : Provides.Equivalences;
+      Unused_Features : Crate_Features.Definitions;
       Unused_Pins  : User_Pins.Maps.Map;
 
    begin
@@ -109,6 +111,7 @@ package body Alire.Externals is
             From    => From,
             Props   => Ext.Properties,
             Deps    => Unused_Deps,
+            Features => Unused_Features,
             Equiv   => Unused_Equiv,
             Forbids => Unused_Deps,
             Pins    => Unused_Pins,

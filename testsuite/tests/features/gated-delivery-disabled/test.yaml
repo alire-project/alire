@@ -1,0 +1,7 @@
+driver: python-script
+build_mode: sandboxed
+indexes:
+    my_index:
+        dir: gated_delivery_index
+    legacy_index:
+        dir: gated_delivery_legacy_index

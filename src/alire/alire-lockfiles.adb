@@ -2,6 +2,7 @@ with Ada.Directories;
 with Ada.Text_IO;
 
 with Alire.Directories;
+with Alire.Gated_Delivery;
 with Alire.Paths;
 with Alire.TOML_Load;
 
@@ -20,6 +21,7 @@ package body Alire.Lockfiles is
       --  Key used internally for TOML serialization
 
       Solution : constant String := "solution";
+      Root_Features : constant String := "root_features";
 
    end Keys;
 
@@ -47,6 +49,20 @@ package body Alire.Lockfiles is
                 (Key  => Keys.Solution,
                  Kind => TOML.TOML_Table),
               Keys.Solution));
+
+      if From.Contains (Keys.Root_Features) then
+         Alire.Gated_Delivery.Require
+           (Alire.Gated_Delivery.Package_Features,
+            "lockfile root feature selection");
+         This.Root_Features := Crate_Features.Selection_From_TOML
+           (From.Descend
+              (From.Checked_Pop (Keys.Root_Features, TOML.TOML_Table),
+               Keys.Root_Features));
+      else
+         This.Root_Features := Crate_Features.Default_Selection;
+      end if;
+
+      Crate_Features.Adopt (This.Root_Features);
 
       From.Report_Extra_Keys;
 
@@ -87,9 +103,14 @@ package body Alire.Lockfiles is
    overriding
    function To_TOML (This : Contents) return TOML.TOML_Value
    is
+      use type Crate_Features.Selection;
    begin
       return Table : constant TOML.TOML_Value := TOML.Create_Table do
          Table.Set (Keys.Solution, This.Solution.To_TOML);
+         if This.Root_Features /= Crate_Features.Default_Selection then
+            Table.Set (Keys.Root_Features,
+                       Crate_Features.To_TOML (This.Root_Features));
+         end if;
       end return;
    end To_TOML;
 
@@ -112,6 +133,8 @@ package body Alire.Lockfiles is
       end;
 
    exception
+      when Gated_Delivery.Feature_Disabled =>
+         raise;
       when E : others =>
          Trace.Debug ("Exception while loading lockfile is: ");
          Log_Exception (E, Debug);

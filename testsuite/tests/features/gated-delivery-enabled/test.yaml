@@ -1,0 +1,6 @@
+driver: python-script
+build_mode: sandboxed
+indexes:
+    my_index:
+        dir: gated_delivery_index
+        copy_crates_src: true

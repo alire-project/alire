@@ -1,4 +1,5 @@
 with Alire.Index;
+with Alire.Crate_Features;
 with Alire.Origins;
 with Alire.Properties.Labeled;
 with Alire.Provides;
@@ -161,6 +162,7 @@ package body Alire.Crates is
          Unused_Avail : Conditional.Availability;
          Unused_Deps  : Conditional.Dependencies;
          Unused_Equiv : Provides.Equivalences;
+         Unused_Features : Crate_Features.Definitions;
          Unused_Pins  : User_Pins.Maps.Map;
          Properties   : Conditional.Properties;
       begin
@@ -170,6 +172,7 @@ package body Alire.Crates is
             From    => From,
             Props   => Properties,
             Deps    => Unused_Deps,
+            Features => Unused_Features,
             Equiv   => Unused_Equiv,
             Forbids => Unused_Deps,
             Pins    => Unused_Pins,

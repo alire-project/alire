@@ -1,6 +1,9 @@
 with AAA.Enum_Tools;
 
 with Alire.Crate_Configuration;
+with Alire.Crate_Features;
+with Alire.Gated_Delivery;
+with Alire.Lockfiles;
 with Alire.TOML_Adapters;
 with Alire.Utils.Switches;
 
@@ -10,6 +13,8 @@ package body Alr.Commands.Build is
 
    Switch_Profiles : constant String := "--profiles";
    Switch_Stop     : constant String := "--stop-after";
+   Switch_Features : constant String := "--features";
+   Switch_No_Default_Features : constant String := "--no-default-features";
 
    --------------------
    -- Apply_Profiles --
@@ -65,6 +70,28 @@ package body Alr.Commands.Build is
       Profile : Profile_Kind;
       Stop_After : Alire.Builds.Stop_Points := Alire.Builds.Stop_Points'Last;
    begin
+      if Cmd.Features.all /= "" or else Cmd.No_Default_Features then
+         Alire.Gated_Delivery.Require
+           (Alire.Gated_Delivery.Package_Features,
+            "build feature selection");
+         declare
+            Requested : AAA.Strings.Set;
+         begin
+            for Name of AAA.Strings.Split
+              (Cmd.Features.all, ',', Trim => True)
+            loop
+               if Name = "" then
+                  Reportaise_Wrong_Arguments
+                    ("Feature names in --features cannot be empty");
+               end if;
+               Requested.Include (AAA.Strings.To_Lower_Case (Name));
+            end loop;
+            Alire.Crate_Features.Configure
+              ((Requested        => Requested,
+                Default_Features => not Cmd.No_Default_Features));
+         end;
+      end if;
+
       --  Validation
 
       if Profiles_Selected > 1 then
@@ -85,6 +112,20 @@ package body Alr.Commands.Build is
       end if;
 
       Cmd.Requires_Workspace;
+
+      declare
+         use type Alire.Crate_Features.Selection;
+         Stored : constant Alire.Crate_Features.Selection :=
+           Alire.Lockfiles.Read
+             (Cmd.Root.Path, Cmd.Root.Lock_File).Root_Features;
+      begin
+         if Stored /= Alire.Crate_Features.Current then
+            Cmd.Root.Sync_From_Manifest
+              (Silent   => False,
+               Interact => False,
+               Force    => True);
+         end if;
+      end;
 
       --  Build profile in the command line takes precedence. The configuration
       --  will have been loaded at this time with all profiles found in
@@ -199,6 +240,10 @@ package body Alr.Commands.Build is
       return AAA.Strings.Empty_Vector
        .Append ("Invokes gprbuild to compile all targets in the current"
          & " crate.")
+       .Append ("Use " & Switch_Features & "=<name>[,<name>...] to enable "
+         & "additive root-crate features. Use "
+         & Switch_No_Default_Features & " to omit the root crate's default "
+         & "feature. The selection is stored with the solved dependencies.")
        .New_Line
        .Append (TTY.Bold ("Build profiles"))
        .New_Line
@@ -284,6 +329,19 @@ package body Alr.Commands.Build is
          "", Switch_Stop & "=",
          "Build stage after which to stop (see description)",
          Argument => "STAGE");
+
+      Define_Switch
+        (Config,
+         Cmd.Features'Access,
+         "", Switch_Features & "=",
+         "Experimental root crate features (disabled by default)",
+         Argument => "LIST");
+
+      Define_Switch
+        (Config,
+         Cmd.No_Default_Features'Access,
+         "", Switch_No_Default_Features,
+         "Experimental: disable default features (disabled by default)");
 
    end Setup_Switches;
 

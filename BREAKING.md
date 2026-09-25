@@ -16,6 +16,11 @@ may change.
 - manifest: `licenses` now supports SPDX v3.0.0 syntax, with the exception that license and exception identifiers are still matched case-sensitively.
 - manifest: `licenses` now uses v3.24.0 of the SPDX License List.
 - manifest: new `mirror` property (array of alternative origins).
+- manifest: additive crate features require index version 1.5.0, including
+  optional feature-gated dependency edges. Feature-free manifests remain
+  compatible with older clients. This experimental support is disabled unless
+  `ALIRE_GATE_FEATURES` is set. Ungated clients can inspect a 1.5 index but
+  ignore feature-bearing releases during dependency solving.
 
 ### We are here
 

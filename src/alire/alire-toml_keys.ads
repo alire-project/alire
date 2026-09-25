@@ -8,6 +8,7 @@ package Alire.TOML_Keys with Preelaborate is
    Action_Folder  : constant String := "directory";
    Author         : constant String := "authors";
    Auto_GPR_With  : constant String := "auto-gpr-with";
+   Default_Features : constant String := "default-features";
    Available      : constant String := "available";
    Build_Profiles : constant String := "build-profiles";
    Build_Switches : constant String := "build-switches";
@@ -21,6 +22,7 @@ package Alire.TOML_Keys with Preelaborate is
    Distribution   : constant String := "distribution";
    Environment    : constant String := "environment";
    Executable     : constant String := "executables";
+   Features       : constant String := "features";
    External       : constant String := "external";
    External_Kind  : constant String := "kind";
    Forbidden      : constant String := "forbids";

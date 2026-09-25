@@ -44,6 +44,7 @@ package body Alire.TOML_Load is
 
    type Tables is (Available,
                    Dependencies,
+                   Feature_Table,
                    Forbids,
                    Provides,
                    Origin);
@@ -81,6 +82,7 @@ package body Alire.TOML_Load is
       From    : TOML_Adapters.Key_Queue;
       Props   : in out Conditional.Properties;
       Deps    : in out Conditional.Dependencies;
+      Features : in out Crate_Features.Definitions;
       Equiv   : in out Alire.Provides.Equivalences;
       Forbids : in out Conditional.Forbidden_Dependencies;
       Pins    : in out User_Pins.Maps.Map;
@@ -93,6 +95,7 @@ package body Alire.TOML_Load is
       TOML_Avail   : TOML.TOML_Value;
       TOML_Deps    : TOML.TOML_Value;
       TOML_Equiv   : TOML.TOML_Value;
+      TOML_Features : TOML.TOML_Value;
       TOML_Forbids : TOML.TOML_Value;
 
    begin
@@ -135,6 +138,22 @@ package body Alire.TOML_Load is
       elsif From.Unwrap.Has (TOML_Keys.Depends_On) then
          From.Checked_Error ("found field not allowed in manifest section: "
                              & TOML_Keys.Depends_On);
+      end if;
+
+      --  Process additive package features
+
+      if Allowed_Tables (Section, Feature_Table) then
+         if From.Pop (TOML_Keys.Features, TOML_Features) then
+            From.Assert
+              (TOML_Features.Kind = TOML_Table,
+               "features must be specified as a table of string arrays");
+            Features := Crate_Features.From_TOML
+              (From.Descend (Value   => TOML_Features,
+                             Context => TOML_Keys.Features));
+         end if;
+      elsif From.Unwrap.Has (TOML_Keys.Features) then
+         From.Checked_Error ("found field not allowed in manifest section: "
+                             & TOML_Keys.Features);
       end if;
 
       --  Process Forbids
