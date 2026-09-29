@@ -921,7 +921,10 @@ package body Alire.Directories is
                Recoverable_User_Error ("Cannot copy " & TTY.URL (Src)
                                   & " into place, file already exists: "
                                   & TTY.URL (Dst));
-            elsif Den.Kind (Dst) /= File then
+               --  A softlink left by a previous installation is unlinked
+               --  (never its target), so it can be replaced just like a
+               --  regular file.
+            elsif Den.Kind (Dst) not in File | Softlink then
                Raise_Checked_Error ("Cannot overwrite " & TTY.URL (Dst)
                                     & " as it is not a regular file");
             else

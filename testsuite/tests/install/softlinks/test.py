@@ -48,6 +48,10 @@ def ls(path):
 # This command should succeed normally
 run_alr("install", "--prefix=install", "crate")
 
+# Installing over a previous installation must replace the softlinks left
+# behind by the former one instead of choking on them
+run_alr("install", "--prefix=install", "crate", force=True)
+
 # Contents should be identical. For that, we first untar the crate and then
 # directly compare with the destination.
 
