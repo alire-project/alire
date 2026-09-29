@@ -518,6 +518,7 @@ package body Alire.Releases is
          Forbidden    => Base.Forbidden,
          Properties   => Base.Properties,
          Available    => Base.Available,
+         Source       => Base.Source,
          Imported     => Base.Imported)
       do
          null;
@@ -575,6 +576,7 @@ package body Alire.Releases is
        Forbidden    => Conditional.For_Dependencies.Empty,
        Properties   => Properties,
        Available    => Available,
+       Source       => Manifest.Index,
        Imported     => No_TOML_Value);
 
    -----------------------
@@ -610,6 +612,7 @@ package body Alire.Releases is
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
       Available    => Conditional.Empty,
+      Source       => Manifest.Local,
       Imported     => No_TOML_Value
      );
 
@@ -894,11 +897,7 @@ package body Alire.Releases is
             Formatting.Print (R.Imported.all);
          else
             if R.Properties.Is_Unconditional then
-               Formatting.Print
-                 (R.To_TOML
-                    (if R.Origin.Kind in Origins.Filesystem
-                     then Manifest.Local
-                     else Manifest.Index));
+               Formatting.Print (R.To_TOML (R.Source));
             else
                --  Shouldn't happen as conditional releases should have the
                --  Imported field populated (they always come from a loaded
@@ -1145,6 +1144,8 @@ package body Alire.Releases is
             --  is already in place.
       end case;
 
+      This.Source := Source;
+
       --  Properties
 
       TOML_Load.Load_Crate_Section
@@ -1369,6 +1370,11 @@ package body Alire.Releases is
        Forbidden    => R.Forbidden.Evaluate (P),
        Properties   => R.Properties.Evaluate (P),
        Available    => R.Available.Evaluate (P),
+
+       Source       => R.Source,
+       --  Where we come from is not affected by the whenever operation, and
+       --  it must be preserved so that exports keep the origin of index
+       --  releases pointing to the local filesystem.
 
        Imported     => No_TOML_Value
        --  We are discarding information above, so the imported information
