@@ -37,6 +37,8 @@ assert hash1 != hash2, "Hashes should be different"
 
 assert_eq(
     'config:libhello.var1=false\n'           # crate config var (set by hello)
+    # The type definition is also an input, as it shapes the generated config
+    "config_type:libhello.var1=Config type: Var1 : Boolean default: 'true'\n"
     'environment:TEST_ENV=myenv\n'           # plain env var set
     'external:LIBHELLO_LIBRARY_TYPE=default\n'
     'external:LIBRARY_TYPE=default\n'        # hardcoded undeclared GPR external
@@ -60,6 +62,16 @@ assert_eq(
     'config:hello.var5=0\n'
     'config:hello.var6=0.00000000000000E+00\n'
     'config:hello.var7=0.00000000000000E+00\n'
+    'config_type:hello.var1=Config type: Var1 : Boolean\n'
+    "config_type:hello.var2=Config type: Var2 : String default: 'str'\n"
+    "config_type:hello.var3=Config type: Var3 : Enum (A, B) default: 'A'\n"
+    "config_type:hello.var4=Config type: Var4 : Integer range "
+    "-9223372036854775808 .. 9223372036854775807 default: '0'\n"
+    "config_type:hello.var5=Config type: Var5 : Integer range -1 .. 1 default: '0'\n"
+    "config_type:hello.var6=Config type: Var6 : Real range "
+    "-1.00000000000000E+00 .. 1.00000000000000E+00 default: '0.00000000000000E+00'\n"
+    "config_type:hello.var7=Config type: Var7 : Real range -inf .. +inf "
+    "default: '0.00000000000000E+00'\n"
     f'dependency:libhello=1.0.0={find_hash("libhello")}\n'
     'external:HELLO_LIBRARY_TYPE=default\n'
     'external:LIBRARY_TYPE=default\n'
