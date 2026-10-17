@@ -80,25 +80,43 @@ Index repository and CI
    - the "previous" release is resolved from the PR's own index, so a PR can
      add an intermediate release that it controls;
    - `*-external.toml` files are skipped entirely.
+
+   *Fixed in [alire-index-checks#24](https://github.com/alire-project/alire-index-checks/pull/24): authority now comes from the latest base-branch
+   release, externals included.*
 1. **Unchecked kinds of change.** `changed_manifests` in `common.sh`:
    - silently skips deleted files, so a PR can remove other crates' releases;
-   - does not enforce that a PR touches a single crate, adds only new files,
-     or stays under `index/`;
+   - does not enforce that a PR only adds new files, or that it stays under
+     `index/`;
    - does not check `index/index.toml` or non-TOML files.
+
+   *Fixed in [alire-index-checks#23](https://github.com/alire-project/alire-index-checks/pull/23) and [alire-index#2240](https://github.com/alire-project/alire-index/pull/2240): `check-changes.py` runs on every
+   PR and rejects these changes.*
 1. **Script injection.** `check-crate-name.yml` passes the PR title into a
    `run:` step via `${{inputs.script_arg}}`. A crafted title runs commands in
    the runner. On fork PRs the token is read-only, but the attacker can still
    forge or skip that check's result.
+
+   *Fixed in [alire-index#2244](https://github.com/alire-project/alire-index/pull/2244): script arguments go through `env:`, and the title
+   is no longer passed.*
 1. **CI does not gate merging.**
    - Branch protection on `stable-1.4.0` has no required status checks.
    - Default workflow permissions are `write` and Actions can approve PRs.
-   - Third-party actions and Docker images use mutable tags
-     (`setup-alire@latest`, `docker-run@v2`, ...).
+   - Actions and Docker images use mutable tags (`setup-alire@latest`,
+     `docker-run@v2`, ...). A retargeted tag would run new code without any
+     change in the index repository.
    - `GITHUB_TOKEN` is exported to the environment where crate builds (that
      is, untrusted code) run.
-   - The JSON schema is taken from `alire` HEAD, unpinned.
    - Changes in `alire-index-checks` take effect on the index without review
      in `alire-index`.
+
+   *Fixed 2026-10-18, except that Docker images keep mutable tags by design:*
+   - *required checks and protection of alire-index-checks, through
+     `stable-*` rules in both repositories;*
+   - *read-only default token, and no PR approval by Actions;*
+   - *pinning where it matters
+     ([alire-index#2246](https://github.com/alire-project/alire-index/pull/2246));*
+   - *no token in crate builds
+     ([alire-index#2245](https://github.com/alire-project/alire-index/pull/2245)).*
 1. **The diff check is informational only.** `diff-release.yml` runs
    `diff-release.sh || true`, its labeling is commented out, and it treats a
    change of `url` as trivial (an attacker can point to their own fork).
@@ -252,29 +270,62 @@ is enabled. Phase 5 is defense in depth.
 Phase 0: fix existing CI holes (alire-index, alire-index-checks)
 ----------------------------------------------------------------
 
+*Completed 2026-10-18. See the implementation checklist for the PRs.*
+
 1. Take author authority from the latest release in the base branch.
    - Apply the author check to every non-first release, whatever its version.
    - Treat a release as "first" only if the crate has no release at all in
      the base branch.
+
+   *Done in [alire-index-checks#24](https://github.com/alire-project/alire-index-checks/pull/24).*
 1. Fail on deletions, and on modifications of existing release files except
-   the `available = false` withdrawal described above.
-1. Fail PRs that touch anything outside `index/`, or more than one crate. Keep
+   the `available = false` withdrawal described above. *Done in [alire-index-checks#23](https://github.com/alire-project/alire-index-checks/pull/23)
+   and [alire-index#2240](https://github.com/alire-project/alire-index/pull/2240).*
+1. Fail PRs that touch anything outside `index/`. Keep
    `index/index.toml` and `.github/` for maintainers, via CODEOWNERS.
+
+   *The check is done in [alire-index-checks#23](https://github.com/alire-project/alire-index-checks/pull/23) and [alire-index#2240](https://github.com/alire-project/alire-index/pull/2240). CODEOWNERS for
+   `index/index.toml` was added in [alire-index#2250](https://github.com/alire-project/alire-index/pull/2250); `.github/` was already covered.*
 1. Remove the PR-title injection. Pass untrusted values through `env:`, never
-   through `${{ }}` inside `run:`.
+   through `${{ }}` inside `run:`. *Done in [alire-index#2244](https://github.com/alire-project/alire-index/pull/2244).*
 1. Set workflow permissions:
    - add explicit `permissions: contents: read` blocks;
    - set the default token permission to read;
    - disable Actions approving PRs.
-1. Do not export `GITHUB_TOKEN` to steps that run crate builds. Apply labels
-   from a separate job that does not run crate builds.
-1. Pin third-party actions to commit SHAs. Pin the manifest schema to the
-   `alr` release used by CI.
+
+   *Done: blocks in
+   [alire-index#2245](https://github.com/alire-project/alire-index/pull/2245),
+   settings changed by hand in both repositories.*
+1. Do not export `GITHUB_TOKEN` to steps that run crate builds. Build
+   labeling is disabled rather than moved elsewhere: fork PRs get a
+   read-only token, so it only ever worked for same-repo PRs. *Done in
+   [alire-index#2245](https://github.com/alire-project/alire-index/pull/2245),
+   which also added explicit `permissions:` blocks.*
+1. Pin actions to commit SHAs where it matters, not everywhere. Actions from
+   GitHub (`actions/*`) and from alire-project or its maintainers are trusted
+   like the repository itself and keep their `@vX` tags. Two rules apply:
+   - third-party actions are always pinned;
+   - any workflow holding a write token or secrets pins every action it uses
+     (today `cleaner.yml`, later the auto-merge bot).
+
+   Once checks gate merging, the same reasoning may justify pinning
+   everything. Today all check workflows run with read-only tokens and no
+   secrets, so a hijacked action could only falsify results that a human
+   still reviews. *Done in
+   [alire-index#2246](https://github.com/alire-project/alire-index/pull/2246),
+   which also documents these rules in `.github/WORKFLOWS.md`.*
 1. Make the check and build workflows required status checks in branch
-   protection.
+   protection. *Done 2026-10-18 on the `stable-*` rule, after
+   [alire-index#2247](https://github.com/alire-project/alire-index/pull/2247)
+   and [alire-index#2249](https://github.com/alire-project/alire-index/pull/2249)
+   gave the checks stable, unique names.*
 1. Protect `alire-index-checks` with the same review requirements as
-   `alire-index`. Consider pinning the checks repo to a commit or tag from
-   `alire-index`.
+   `alire-index`. *Done 2026-10-18 as a `stable-*` rule. Pinning the checks
+   repository to a commit or tag from `alire-index` was considered and
+   dropped: protection already ensures that checks changes are reviewed, and
+   pinning would require a lockstep `alire-index` PR for every checks
+   change. `devel-*` branches are out of scope, since releases are never
+   merged automatically into them.*
 
 Phase 1: harden the `alr` index loader
 --------------------------------------
@@ -352,7 +403,8 @@ Phase 4: auto-merge bot
    complete) or `pull_request_target`. It must:
    - never check out or execute PR content, and read the diff through the
      GitHub API only;
-   - run with the minimum token scopes, ideally as a GitHub App.
+   - run with the minimum token scopes, ideally as a GitHub App;
+   - pin every action it uses to a commit SHA, as it holds a write token.
 1. The bot recomputes eligibility itself, using the trusted `alr` and the base
    branch, rather than trusting labels or results produced by PR-controlled
    jobs.
@@ -463,39 +515,201 @@ Conventions for `alr` PRs:
 Phase 0: CI holes
 -----------------
 
-These require no `alr` release.
+*Completed 2026-10-18.*
 
-- [ ] **[alire-index-checks] Strict changed-file classification.**
-  - Use `git diff --name-status` against the base branch.
-  - Fail on deleted, renamed or modified manifests, on files outside
-    `index/`, on changes to `index/index.toml`, and on more than one crate per
-    PR.
-  - Exception: a diff to an existing release that only sets
-    `available = false`.
-  - Add self-test fixtures for each case.
-- [ ] **[alire-index-checks] Base-branch author authority.**
-  - Resolve the latest release of the crate from the base branch, not the
-    PR's index.
-  - "First release" means no release at all in the base branch.
-  - Stop skipping `*-external.toml`.
-  - Add fixtures for a lower version, an intermediate version, and an
-    external.
-- [ ] **[alire-index] Remove the PR-title injection** in
-  `check-crate-name.yml`. Drop the unused argument, or pass it through `env:`.
-- [ ] **[alire-index] Least-privilege workflows.** Add explicit
-  `permissions:` blocks to every workflow.
-- [ ] **[alire-index settings] Repository settings.** Set the default token
+These require no `alr` release. Every check that alire-index runs needs a
+mirror workflow in alire-index-checks, which runs it on that repository's
+sample index. See "Mirror workflows" in the alire-index-checks README.
+
+- [x] **[alire-index-checks] Strict changed-file classification.** ([#23](https://github.com/alire-project/alire-index-checks/pull/23)) A new
+  script, `scripts/check-changes.py`, classifies the PR diff with
+  `git diff --name-status --no-renames` against the base commit. It parses
+  manifests with `tomllib`, so comparisons are semantic rather than textual.
+  - It accepts:
+    - added manifests at `index/<shelf>/<crate>/<crate>-<version>.toml`,
+      which must be valid TOML;
+    - withdrawals: a modified manifest is accepted if, once parsed, it is
+      identical to the base version except that the top-level `available`
+      is now `false`;
+    - formatting- or comment-only modifications of `libhello` manifests,
+      which are used to test the index CI.
+  - It fails, listing every problem, on:
+    - deletions and renames;
+    - other modifications;
+    - symlinks;
+    - invalid TOML;
+    - malformed or misplaced manifest paths;
+    - files outside `index/`;
+    - changes to `index/index.toml`.
+  - It allows several crates in one PR, since releases from the same project
+    (monorepos, runtimes, cross-compilers) are common: about 10% of recent
+    PRs. Who may change each crate is left to the authorship check.
+    Auto-merge eligibility can still require a single crate.
+  - Replayed over the last 300 index commits, it accepts every pure release
+    PR. It flags metadata fixes to existing manifests, edits to externals,
+    and CI or documentation PRs, all of which need manual review.
+  - `tests/test-check-changes.sh` builds throwaway repositories to test each
+    case offline, and runs as the `Self-test / check-changes` check.
+- [x] **[alire-index] Run `check-changes.py` on every PR.** ([#2240](https://github.com/alire-project/alire-index/pull/2240)) Add a caller of
+  `check-with-script.yml` with no `paths:` filter, so that PRs touching only
+  non-manifest files are classified too. A new script has no effect on the
+  index until this workflow is added. Merge it after the checks PR: the
+  workflow fetches the checks repo at the PR's base branch, so the script
+  must already be there. This PR fails its own check (it touches
+  `.github/`), as intended.
+- [x] **[alire-index] Install Python for the author check.** ([#2242](https://github.com/alire-project/alire-index/pull/2242))
+  Add `setup_python: true` to `check-authorship.yml`, keeping
+  `setup_alr: true` so that it works with both the old and the new author
+  script. Merge before the next item, otherwise the new script lacks its
+  dependencies.
+- [x] **[alire-index-checks] Base-branch author authority.** ([#24](https://github.com/alire-project/alire-index-checks/pull/24))
+  `scripts/check-author.py` replaces the `alr`-based script.
+  `check-author.sh` remains as a wrapper, so the index workflow keeps
+  calling it unchanged.
+  - The PR author must be in `maintainers-logins` of the latest release of
+    each touched crate in the base branch. For crates
+    without releases, the external manifest is used instead. The PR's own
+    files are never consulted, and GitHub logins are compared
+    case-insensitively.
+  - "Latest" follows semver precedence, using the `semver` library (added to
+    `requirements.txt`) rather than `alr`. Ordering fails closed: if the
+    latest base releases tie (e.g. `2.0.0` and `2.0.0+x`, since build
+    metadata is ignored) or a version is not strict semver, the check fails
+    and the PR goes to manual review. Versions where `alr` would apply its
+    own lenient interpretation can therefore never decide authority.
+  - A crate is new only if it has no manifest at all in the base branch.
+    New crates are skipped and left to manual review.
+  - Every change to an existing crate is subject to the check: new
+    releases, externals, withdrawals and deletions. Which kinds of change
+    are acceptable at all remains the job of `check-changes.py`. Together
+    they accept withdrawals by current maintainers.
+  - Shared Python helpers live in `scripts/common.py`, and shared test
+    helpers in `tests/lib.sh`.
+  - `tests/test-check-author.sh` covers:
+    - lower, intermediate and self-declared releases;
+    - pre-release ordering and numeric ordering;
+    - ties and non-semver versions;
+    - externals, withdrawals and deletions;
+    - multi-crate PRs.
+
+    It runs as the `Self-test / check-author` check. That PR also removed the
+    `Maintainer` mirror workflow and made the scripts ignore `ALL_CRATES`.
+    Both mistakes are fixed by the mirror item below.
+  - Replayed over the last 80 index PRs, it flags only one: a release by a
+    non-maintainer (#2128), which the old check also flagged.
+- [x] **[alire-index-checks] Restore mirror workflows.** ([#25](https://github.com/alire-project/alire-index-checks/pull/25))
+  - `ALL_CRATES` now checks every sample manifest in both Python scripts,
+    instead of doing nothing.
+  - Restore the author-check mirror and add mirrors for "Check Files" and
+    "Check Index".
+  - Rename all mirrors after their alire-index sibling: file
+    `mirror-<file>.yml`, workflow name `Mirror: <name>`.
+  - Document the convention, `ALL_CRATES` and `DRY_RUN` once, in the
+    checks repo README. Code and workflows point there.
+  - Fix older mirrors that checked nothing on script-only PRs:
+    - the crate name check now treats every crate as new under
+      `ALL_CRATES`, and its mirror uses `DRY_RUN`, as the sample `libhello`
+      is flagged;
+    - the schema mirror's `check-changed` job now sets `ALL_CRATES`;
+    - the diff-release mirror lost its `paths:` filter and its `|| true`;
+    - `website.yml` now sets `ALL_CRATES`.
+  - New self-test `Self-test / check-crate-name`. `tests/lib.sh` now takes a
+    per-script failure pattern (`FAIL_PATTERN`).
+- [x] **[alire-index] Drop `alr` from the author check and close the
+  script-argument injection.** ([#2244](https://github.com/alire-project/alire-index/pull/2244))
+  - Set `setup_alr: false` in `check-authorship.yml`, since the new script
+    no longer needs `alr`.
+  - `check-with-script.yml` now passes the script name and argument through
+    `env:` and quotes them in the shell, instead of expanding `${{ }}` into
+    the `run:` script. This protects every caller, including the author
+    login.
+  - `check-crate-name.yml` no longer passes the PR title, which the script
+    ignored anyway.
+- [x] **[alire-index] Least-privilege workflows and no token in crate
+  builds.** ([#2245](https://github.com/alire-project/alire-index/pull/2245))
+  - Every workflow gets an explicit `permissions: contents: read`, except
+    `cleaner.yml`, which already declared `pull-requests: write` for its
+    job.
+  - Build steps no longer receive `GITHUB_TOKEN`. That token was only used
+    by `gh-build-crate.sh` to label PRs ("unavailable", "missing
+    dependencies"). On fork PRs, which is most submissions, the token is
+    read-only, so labels only ever worked for PRs from the index repository
+    itself.
+  - Labeling is therefore disabled rather than moved to a separate job. The
+    lines are kept commented out for the record. Without a token, the script
+    logs the label it would have applied.
+- [x] **[alire-index settings] Repository settings.** Set the default token
   permission to read, and disallow Actions from approving PRs. This is a
-  settings change, not a PR.
-- [ ] **[alire-index] Keep tokens away from crate builds.** Remove
-  `GITHUB_TOKEN` from build steps, and move labeling to a separate job that
-  consumes build results as artifacts.
-- [ ] **[alire-index] Pin dependencies.** Pin third-party actions to commit
-  SHAs and the manifest schema to the `alr` release used in CI. Add
-  Dependabot for action updates.
-- [ ] **[alire-index settings] Require checks to merge.** Make the check and
-  build workflows required status checks. Give `alire-index-checks` the same
-  branch protection as `alire-index`. This is a settings change, not a PR.
+  settings change, not a PR. *Done 2026-10-17 in both alire-index and
+  alire-index-checks.*
+- [x] **[alire-index] Pin dependencies where it matters.** ([#2246](https://github.com/alire-project/alire-index/pull/2246))
+  Following the rules in the Phase 0 roadmap:
+  - pin `melusina-org/setup-macports`, the only third-party action;
+  - pin `actions/stale` in `cleaner.yml`, the only workflow with a write
+    token.
+
+  Everything else keeps its `@vX` tags. Without that churn, Dependabot is not
+  needed. The `gnat` Docker images keep their tags, since they are
+  first-party and following new toolchains is intended. The manifest schema
+  is still cloned from alire HEAD: that is about stability, not hardening.
+  - Add `.github/WORKFLOWS.md` to alire-index, documenting the workflow rules
+    from Phase 0: explicit permissions, untrusted values through `env:`, no
+    token in crate builds, pinning, and mirrors in alire-index-checks. It is
+    not named `README.md`, because GitHub would show it instead of the
+    repository's main README. The workflows' existing "please read TESTING"
+    headers now point to it too.
+- [x] **[alire-index, alire-index-checks] Unique check names.**
+  ([alire-index#2247](https://github.com/alire-project/alire-index/pull/2247),
+  [alire-index-checks#26](https://github.com/alire-project/alire-index-checks/pull/26)) Prerequisites for requiring checks, since branch
+  protection matches required checks by job name:
+  - In alire-index:
+    - give jobs unique names (`native / <os>`, `alr dev / <os>`,
+      `distro / <tag>`, `macports / <os>`, and `Index` for Check Index);
+    - document in `.github/WORKFLOWS.md` the naming rule, and why the
+      `paths: index/**.toml` filters can stay. A required check that does
+      not run blocks the PR rather than passing it. The PRs it skips change
+      no manifest, so they fail `Release-only` and need an admin anyway.
+      Every PR that can be auto-merged changes a manifest, so the filtered
+      checks always run on it.
+  - In alire-index-checks:
+    - name mirror jobs `Mirror: <sibling job name>`;
+    - name self-test jobs `Self-test: <script>`;
+    - document the naming scheme in the README.
+- [x] **[alire-index, alire-index-checks] One summary job per build
+  workflow.**
+  ([alire-index#2249](https://github.com/alire-project/alire-index/pull/2249),
+  [alire-index-checks#27](https://github.com/alire-project/alire-index-checks/pull/27))
+  - Requiring each matrix job by name would tie branch protection to runner
+    labels, which change often. Each build workflow instead ends with an
+    `all` job (`native / all`, `alr dev / all`, `distro / all`,
+    `macports / all`, and `Mirror: native / all`). It succeeds only if the
+    whole matrix did.
+  - It uses `if: always()` and checks `needs.build.result` explicitly. Without
+    that, a failing matrix would skip it, and a skipped required check counts
+    as passed.
+- [x] **[alire-index, alire-index-checks settings] Require checks to merge.**
+  - alire-index: require the checks (`check / Release-only`,
+    `check / Author`, `check / Crate Name`, `check / Schema`, `Index`) and
+    the four build summary jobs. That is 9 fixed names, independent of the
+    runners. *Done 2026-10-18 on the `stable-*` rule, so future
+    stable branches inherit it. Each check is tied to the GitHub Actions
+    app.*
+    - Checks and builds keep their `paths:` filters, so PRs that change no
+      manifest need an admin bypass. They fail `Release-only` anyway.
+    - So do PRs that fail checks by design (Release-only, Crate Name). The
+      reviewers who merge are admins.
+    - `DIFF` stays informational.
+  - alire-index-checks: currently unprotected. Require one approving review,
+    every mirror and self-test check, and `Mirror: native / all` rather than
+    the individual build mirror jobs. *Done 2026-10-18 as a `stable-*` rule, mirroring
+    alire-index: 1 approval, 12 required checks, linear history, pushes
+    restricted to admins.*
+- [x] **[alire-index] Code owner for `index/index.toml`.**
+  ([#2250](https://github.com/alire-project/alire-index/pull/2250)) Add
+  `/index/index.toml @alire-project/alire-developers` to `.github/CODEOWNERS`.
+  The `stable-*` rule already requires code-owner reviews, so changes to the
+  index format version need a developer's approval. `Release-only` also
+  flags such changes.
 
 Phase 1: `alr` loader hardening
 -------------------------------
