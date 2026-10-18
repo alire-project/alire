@@ -46,15 +46,24 @@ package body Alr.Commands.Get is
       Solver_Timed_out : Boolean := False;
       Solution         : Alire.Solutions.Solution;
 
-      Relative_Path : constant Alire.Directory_Path :=
-        Alire.Directory_Path (Cmd.Subdir.all);
+      Relative_Path : constant Alire.Relative_Path :=
+        Alire.Relative_Path (Cmd.Subdir.all);
 
-      Target_Path : constant Alire.Directory_Path :=
+      Target_Path : Alire.Directory_Path :=
         Alire.Directories."/" (
-        Ada.Directories.Current_Directory, Relative_Path);
+          Ada.Directories.Current_Directory, Relative_Path);
 
       use all type Alire.Origins.Kinds;
    begin
+
+      --  check if the the given Relative_Path is Valid
+      if Relative_Path = "" then
+         Target_Path := Ada.Directories.Current_Directory;
+      end if;
+
+      Trace.Info ("Target_Path is " & Target_Path &
+                  " with given Relative_Path " & Relative_Path);
+
       if Cmd.Dirname then
          Trace.Always (Rel.Base_Folder);
          return;
@@ -142,7 +151,7 @@ package body Alr.Commands.Get is
       --  directory, but delay its post-fetch:
       declare
          Root_Dir : Alire.Directories.Temp_File :=
-           Alire.Directories.In_Dir (Relative_Path, Rel.Deployment_Folder);
+           Alire.Directories.In_Dir (Target_Path, Rel.Deployment_Folder);
 
          --  Root_Dir : Alire.Directories.Temp_File :=
          --              Alire.Directories.With_Name (Rel.Deployment_Folder);
