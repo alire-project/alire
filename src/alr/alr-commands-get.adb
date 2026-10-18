@@ -46,6 +46,13 @@ package body Alr.Commands.Get is
       Solver_Timed_out : Boolean := False;
       Solution         : Alire.Solutions.Solution;
 
+      Relative_Path : constant Alire.Directory_Path :=
+        Alire.Directory_Path (Cmd.Subdir.all);
+
+      Target_Path : constant Alire.Directory_Path :=
+        Alire.Directories."/" (
+        Ada.Directories.Current_Directory, Relative_Path);
+
       use all type Alire.Origins.Kinds;
    begin
       if Cmd.Dirname then
@@ -131,21 +138,24 @@ package body Alr.Commands.Get is
          end;
       end if;
 
-      --  Check out requested crate release under current directory,
-      --  but delay its post-fetch:
+      --  Check out requested crate release under current or requested
+      --  directory, but delay its post-fetch:
       declare
          Root_Dir : Alire.Directories.Temp_File :=
-                      Alire.Directories.With_Name (Rel.Deployment_Folder);
+           Alire.Directories.In_Dir (Relative_Path, Rel.Deployment_Folder);
+
+         --  Root_Dir : Alire.Directories.Temp_File :=
+         --              Alire.Directories.With_Name (Rel.Deployment_Folder);
       begin
          --  Create the Root for the given release, and store it for possible
          --  future use.
 
          Cmd.Set
            (Alire.Roots.Create_For_Release
-              (Rel,
-               Ada.Directories.Current_Directory,
-               Platform.Properties,
-               Up_To => Alire.Roots.Deploy));
+             (Rel,
+              Target_Path,
+              Platform.Properties,
+              Up_To => Alire.Roots.Deploy));
 
          --  Set the initial solution we just found
 
@@ -161,7 +171,7 @@ package body Alr.Commands.Get is
       end;
 
       declare
-         Guard : Folder_Guard (Enter_Folder (Rel.Base_Folder))
+         Guard : Folder_Guard (Enter_Folder (Target_Path))
            with Unreferenced;
       begin
          --  When --only was used, mark as only to be updated manually and bail
@@ -169,10 +179,10 @@ package body Alr.Commands.Get is
 
          if Cmd.Only then
             Trace.Detail ("By your command, dependencies not resolved nor" &
-                            " retrieved: compilation might fail");
+                          " retrieved: compilation might fail");
             Trace.Info ("Because --only was used, automatic dependency" &
-                          " retrieval is disabled in this workspace:" &
-                          " use `alr update` to apply dependency changes");
+                        " retrieval is disabled in this workspace:" &
+                        " use `alr update` to apply dependency changes");
             Alire.Settings.Builtins.Update_Manually_Only.Set
               (Alire.Settings.Local, True);
 
@@ -231,12 +241,12 @@ package body Alr.Commands.Get is
                     then ""
                     else " with missing dependencies")
                  & (if Cmd.Build
-                   then (if Build_OK
-                         then (if Rel.Origin.Kind in Binary_Archive
-                               then " and deployed."
-                               else " and built.")
-                         else " but its build failed.")
-                   else "."),
+                    then (if Build_OK
+                          then (if Rel.Origin.Kind in Binary_Archive
+                                then " and deployed."
+                                else " and built.")
+                          else " but its build failed.")
+                    else "."),
                  Level => (if not Cmd.Build or else Build_OK
                            then Info
                            else Warning));
@@ -420,6 +430,14 @@ package body Alr.Commands.Get is
       Define_Switch (Config,
                      Cmd.Build'Access,
                      "-b", "--build", "Build after download");
+
+      Define_Switch (Config,
+                     Cmd.Subdir'Access,
+                     Switch      => "",
+                     Long_Switch => "--subdir=",
+                     Argument    => "REL_PATH",
+                     Help        =>
+                       "Relative path to crate inside repository");
 
       Define_Switch (Config,
                      Cmd.Dirname'Access,

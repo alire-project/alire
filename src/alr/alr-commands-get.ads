@@ -1,5 +1,7 @@
 with AAA.Strings;
 
+with GNAT.Strings;
+
 package Alr.Commands.Get is
 
    type Command is new Commands.Command with private;
@@ -29,9 +31,10 @@ package Alr.Commands.Get is
 private
 
    type Command is new Commands.Command with record
-      Build   : aliased Boolean := False;
-      Dirname : aliased Boolean := False;
-      Only    : aliased Boolean := False;
+      Build      : aliased Boolean := False;
+      Subdir     : aliased GNAT.Strings.String_Access;
+      Dirname    : aliased Boolean := False;
+      Only       : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Get;
