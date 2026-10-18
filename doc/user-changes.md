@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### Invalid index manifests are skipped with a warning
 
-PR [#TBD](https://github.com/alire-project/alire/pull/TBD)
+PR [#2194](https://github.com/alire-project/alire/pull/2194)
 
 A single invalid manifest in an index no longer breaks `alr` for every command
 that needs the index. Commands now skip the invalid manifest, warn about it,
