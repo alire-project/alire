@@ -2,14 +2,10 @@
 Test that origins of unknown kinds in indexes are properly reported.
 """
 
-from drivers.alr import run_alr
-from drivers.asserts import assert_match
+from drivers.asserts import assert_invalid_manifest
 
 
-p = run_alr('index', '--check',
-            complain_on_error=False, debug=False, quiet=False)
-assert_match(
-    'ERROR: .* unsupported scheme .*'
-    '\n', p.out)
+# The manifest is skipped with a warning, and rejected by `alr index --check`
+assert_invalid_manifest(' unsupported scheme .*\n')
 
 print('SUCCESS')

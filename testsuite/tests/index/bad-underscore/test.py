@@ -2,15 +2,11 @@
 Test underscores are properly rejected in property keys
 """
 
-from drivers.alr import run_alr
-from drivers.asserts import assert_match
+from drivers.asserts import assert_invalid_manifest
 
 
-p = run_alr('index', '--check',
-            complain_on_error=False, debug=False, quiet=True)
-assert_match(
-             ".*TOML keys should use hyphens instead of underscores,"
-             " but found key: depends_on.*",
-             p.out)
+# The manifest is skipped with a warning, and rejected by `alr index --check`
+assert_invalid_manifest('TOML keys should use hyphens instead of underscores,'
+                        ' but found key: depends_on')
 
 print('SUCCESS')
