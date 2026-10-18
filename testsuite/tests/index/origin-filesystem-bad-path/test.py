@@ -13,9 +13,10 @@ def run(i, error):
     prepare_env(config_dir, os.environ)
     prepare_indexes(
         config_dir, '.', {'bad_index_{}'.format(i): {'in_fixtures': False}})
-    p = run_alr("search", "--crates", complain_on_error=False, debug=False)
+    # Normal commands skip an invalid manifest, so validate strictly
+    p = run_alr("index", "--check", complain_on_error=False, debug=False)
     assert_match(
-        'ERROR: {}\n'.format(error),
+        '.*ERROR:.*{}\n'.format(error),
         p.out)
 
 

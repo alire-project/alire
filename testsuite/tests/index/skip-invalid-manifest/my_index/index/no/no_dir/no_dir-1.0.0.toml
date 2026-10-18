@@ -1,0 +1,9 @@
+description = "Test crate"
+name = "no_dir"
+version = "1.0.0"
+licenses = "GPL-3.0-only"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:non-existing-path"

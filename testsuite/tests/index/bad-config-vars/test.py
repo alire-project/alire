@@ -32,7 +32,8 @@ def check_error(var_def, expected):
 
    make_manifest(var_def)
 
-   p = run_alr('show', 'hello_world',
+   # Normal commands skip an invalid manifest, so validate strictly
+   p = run_alr('index', '--check',
                complain_on_error=False, debug=False, quiet=True)
    assert_match('ERROR:.*' + expected + '\n', p.out)
 

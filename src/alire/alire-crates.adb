@@ -133,16 +133,6 @@ package body Alire.Crates is
                         Strict));
                end loop;
             end if;
-
-            --  Register any aliased in the detectors for this crate, so we
-            --  know when to detect.
-
-            for Detector of This.Externals.Detectors loop
-               for Alias of Detector.Equivalences loop
-                  Index.Register_Alias (Provider  => This.Name,
-                                        Providing => Alias);
-               end loop;
-            end loop;
          end if;
       end Load_Externals_Array;
 
@@ -193,6 +183,17 @@ package body Alire.Crates is
       end;
 
       From.Report_Extra_Keys;
+
+      --  Register any aliased in the detectors for this crate, so we know
+      --  when to detect. Only now that the whole file has been loaded, so an
+      --  invalid externals manifest, which is skipped, leaves no orphan alias.
+
+      for Detector of This.Externals.Detectors loop
+         for Alias of Detector.Equivalences loop
+            Index.Register_Alias (Provider  => This.Name,
+                                  Providing => Alias);
+         end loop;
+      end loop;
    end Load_Externals;
 
    ---------------------
