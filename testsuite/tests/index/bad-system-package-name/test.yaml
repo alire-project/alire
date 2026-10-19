@@ -1,1 +1,2 @@
 driver: python-script
+build_mode: sandboxed  # Nothing is built, so running in shared mode adds nothing
