@@ -2,7 +2,8 @@ package Alire.Utils.Regex is
 
    function Escape (Literal : String) return String;
    --  Prepare a string to be interpreted literally by GNAT.Regpat, like e.g.
-   --  "stdc++" --> "stdc\+\+"
+   --  "stdc++" --> "stdc\+\+". The result is also valid as a literal in POSIX
+   --  extended regular expressions, as used by some external tools.
 
    function First_Match (Regex : String; Text : String) return String
      with Pre => (for some Char of Regex => Char = '(');
