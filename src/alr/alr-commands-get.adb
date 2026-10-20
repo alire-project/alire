@@ -46,7 +46,7 @@ package body Alr.Commands.Get is
       Solver_Timed_out : Boolean := False;
       Solution         : Alire.Solutions.Solution;
 
-      Relative_Path : constant Alire.Relative_Path :=
+      Relative_Path    : constant Alire.Relative_Path :=
         Alire.Relative_Path (Cmd.Subdir.all);
 
       Target_Path : Alire.Directory_Path :=
@@ -152,9 +152,6 @@ package body Alr.Commands.Get is
       declare
          Root_Dir : Alire.Directories.Temp_File :=
            Alire.Directories.In_Dir (Target_Path, Rel.Deployment_Folder);
-
-         --  Root_Dir : Alire.Directories.Temp_File :=
-         --              Alire.Directories.With_Name (Rel.Deployment_Folder);
       begin
          --  Create the Root for the given release, and store it for possible
          --  future use.
@@ -218,13 +215,22 @@ package body Alr.Commands.Get is
             else
                --  Require the workspace to ensure the same checks as in a
                --  manual `get` followed by `cd` and `build` are performed.
+               --  NOTE: Only if --subdir hasn't been specified
 
-               Cmd.Optional_Root.Discard;
-               --  It will be reloaded next. This is needed or otherwise the
-               --  following call would do nothing (it would see a proper root
-               --  already available so it would just return).
+               if Cmd.Subdir.all /= "" then
+                  Cmd.Optional_Root.Discard;
+                  --  It will be reloaded next. This is needed or otherwise the
+                  --  following call would do nothing (it would see a proper
+                  --  root already available so it would just return).
 
-               Cmd.Requires_Workspace;
+                  Cmd.Requires_Workspace;
+               else
+                  --  TODO: add checks for different subdirectories. Currently
+                  --  it's based around the fact "alr get" is always called in
+                  --  the current directory.
+
+                  null;
+               end if;
 
                --  Build in release mode for a `get --build`
                Cmd.Root.Set_Build_Profile
