@@ -44,6 +44,7 @@ package body Alire.Origins.Deployers.System.Pacman is
                    ("pacman",
                     Empty_Vector &
                       "-Qq" &
+                      "--" &
                       This.Base.Package_Name,
                     Valid_Exit_Codes => (0, 1), -- Returned when not found
                     Err_To_Out       => True);
@@ -117,6 +118,7 @@ package body Alire.Origins.Deployers.System.Pacman is
            "--needed" &
            "--noconfirm" &
            "-S" &
+           "--" &
            This.Base.Package_Name);
 
       return Outcome_Success;
