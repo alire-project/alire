@@ -2,13 +2,11 @@
 Check detection of manifest in wrong parent
 """
 
-import re
+from drivers.asserts import assert_invalid_manifest
 
-from drivers.alr import run_alr
-from drivers.asserts import assert_match
-
-p = run_alr("search", "--crates", complain_on_error=False)
-assert_match('.*ERROR: Mismatch between manifest and parent:.*',
-             p.out, flags=re.S)
+# The file is skipped with a warning, while the search still works, and
+# it is rejected by `alr index --check`
+assert_invalid_manifest('Mismatch between manifest and parent:',
+                        "search", "--crates", command_fails=False)
 
 print('SUCCESS')
