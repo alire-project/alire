@@ -2,6 +2,7 @@ with Ada.Directories;
 with Ada.Exceptions;
 
 with Alire.Errors;
+with Alire.Features;
 with Alire.Settings.Builtins;
 with Alire.Crates;
 with Alire.Directories;
@@ -25,6 +26,8 @@ with Alire.VCSs.Git;
 with Alire.Utils;
 with Alire.Utils.TTY;
 with Alire.Warnings;
+
+with Den.Walk;
 
 with GNATCOLL.VFS;
 
@@ -75,6 +78,13 @@ package body Alire.TOML_Index is
    --  Do the actual loading of a file that pass tests based on name/location.
    --  Name and version have been deduced from the file name and will be used
    --  for double-checks.
+
+   procedure Check_No_Duplicate_Version (File_Name : Absolute_Path;
+                                         Version   : String);
+   --  Raise Checked_Error if another release manifest of the same crate in
+   --  the index has the same version, ignoring build metadata as semantic
+   --  versioning does. Every manifest of such a group finds the others, so
+   --  all of them are rejected regardless of the order in which they load.
 
    Package_File_Suffix : constant String := "toml";
    --  Suffix for the name of package description files
@@ -482,6 +492,52 @@ package body Alire.TOML_Index is
          Skip (E);
    end Load_Manifest;
 
+   --------------------------------
+   -- Check_No_Duplicate_Version --
+   --------------------------------
+
+   procedure Check_No_Duplicate_Version (File_Name : Absolute_Path;
+                                         Version   : String)
+   is
+      use type Semver.Version;
+
+      This       : constant Semver.Version := Semver.Parse (Version);
+      Suffix     : constant String := "." & Package_File_Suffix;
+      Duplicates : AAA.Strings.Vector;
+   begin
+      for Sibling of Den.Walk.Ls (Den.Parent (File_Name)) loop
+         if Sibling /= Den.Name (File_Name)
+           and then AAA.Strings.Has_Suffix (Sibling, Suffix)
+           and then AAA.Strings.Contains (Sibling, "-")
+         then
+            declare
+               Base            : constant String :=
+                                   Sibling (Sibling'First
+                                            .. Sibling'Last - Suffix'Length);
+               Sibling_Version : constant String :=
+                                   AAA.Strings.Tail (Base, '-');
+            begin
+               if Sibling_Version /= External_File_Marker
+                 and then Semver.Parse (Sibling_Version) = This
+               then
+                  Duplicates.Append (Sibling);
+               end if;
+            exception
+               when Semver.Malformed_Input =>
+                  null; --  Reported when that manifest is loaded
+            end;
+         end if;
+      end loop;
+
+      if not Duplicates.Is_Empty then
+         Raise_Checked_Error
+           ("Duplicate version " & Version & " of manifest "
+            & Den.Name (File_Name) & ", also in: "
+            & Duplicates.Flatten (", ")
+            & " (versions differing only in build metadata are the same)");
+      end if;
+   end Check_No_Duplicate_Version;
+
    ------------------------------
    -- Load_From_Index_Internal --
    ------------------------------
@@ -541,11 +597,33 @@ package body Alire.TOML_Index is
             Internal : constant String :=
                          Value.Get (TOML_Keys.Version).As_String;
          begin
-            Assert (Semver.Parse (Version) = Semver.Parse (Internal),
+            --  Versions must be the same in both places, including the build
+            --  metadata that version equality ignores, so the file name cannot
+            --  misrepresent the release. Short forms like "1.0" for "1.0.0"
+            --  are the same version.
+
+            Assert (Semver.Parse (Version) = Semver.Parse (Internal)
+                    and then Semver.Build (Semver.Parse (Version))
+                             = Semver.Build (Semver.Parse (Internal)),
                     Error_In_File (File_Name,
                       "Mismatched versions: file name says " & Version
                       & " but contents say " & Internal));
+
+            --  From the index version that requires it, versions in file
+            --  names must be strict semantic versions.
+
+            if Loading_Index_Version >= Features.Index.Strict_Release_Versions
+            then
+               declare
+                  Error : constant String :=
+                            Alire.Index.Error_In_Release_Version (Version);
+               begin
+                  Assert (Error = "", Error_In_File (File_Name, Error));
+               end;
+            end if;
          end;
+
+         Check_No_Duplicate_Version (File_Name, Version);
       end if;
 
       --  Decode as release/externals
