@@ -1,3 +1,4 @@
+pragma Alire_Test;
 procedure Alr_Tests.Assertions_Enabled is
 begin
    --  Ensure assertions are enabled and working as expected

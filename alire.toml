@@ -24,7 +24,7 @@ den = "~0.2"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
 gnatcoll = "^21"
-lml = "~0.2"
+lml = "~0.3"
 minirest = "~0.3"
 optional = "~0.1.1"
 resources = "~0.1"
@@ -92,7 +92,7 @@ commit = "40cb993cc0bdd84bd7c4d5ff0438380751497c16"
 
 [pins.lml]
 url    = "https://github.com/mosteo/lml_ada.git"
-commit = "6e775b785f795af21bb6d8cb870b59f549dae159"
+commit = "1c4e2235339e2c71d87aa6bcb1c32e2014306d87"
 
 [pins.minirest]
 url    = "https://github.com/mosteo/minirest.git"
