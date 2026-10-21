@@ -4,8 +4,8 @@ Test that invalid filesystem origins are reported.
 
 import os
 
-from drivers.alr import prepare_env, prepare_indexes, run_alr
-from drivers.asserts import assert_match
+from drivers.alr import prepare_env, prepare_indexes
+from drivers.asserts import assert_invalid_manifest
 
 
 def run(i, error):
@@ -13,10 +13,10 @@ def run(i, error):
     prepare_env(config_dir, os.environ)
     prepare_indexes(
         config_dir, '.', {'bad_index_{}'.format(i): {'in_fixtures': False}})
-    p = run_alr("search", "--crates", complain_on_error=False, debug=False)
-    assert_match(
-        'ERROR: {}\n'.format(error),
-        p.out)
+    # The manifest is skipped with a warning, while the search still works,
+    # and it is rejected by `alr index --check`
+    assert_invalid_manifest(error + '\n', "search", "--crates",
+                            command_fails=False)
 
 
 run(1, '.*empty path given in local origin')

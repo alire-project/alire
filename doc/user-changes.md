@@ -6,6 +6,23 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Invalid index manifests are skipped with a warning
+
+PR [#2194](https://github.com/alire-project/alire/pull/2194)
+
+A single invalid manifest in an index no longer breaks `alr` for every command
+that needs the index. Commands now skip the invalid manifest, warn about it,
+and load the rest of the index as usual:
+
+```
+Warning: Skipping invalid index manifest .../he/hello/hello-1.0.0.toml: ...
+```
+
+Strict loading still fails on the first invalid manifest. Strict loading is
+used by `alr index --check`, which is the way to validate an index, and by
+`alr publish`. Unexpected errors in a manifest are now also reported there as
+regular errors.
+
 ### Suggest closest command when misstyping
 
 PR [#2176](https://github.com/alire-project/alire/pull/2176)

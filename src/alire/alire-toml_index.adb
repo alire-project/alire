@@ -1,5 +1,7 @@
 with Ada.Directories;
+with Ada.Exceptions;
 
+with Alire.Errors;
 with Alire.Settings.Builtins;
 with Alire.Crates;
 with Alire.Directories;
@@ -22,6 +24,7 @@ with Alire.TOML_Load;
 with Alire.VCSs.Git;
 with Alire.Utils;
 with Alire.Utils.TTY;
+with Alire.Warnings;
 
 with GNATCOLL.VFS;
 
@@ -61,7 +64,8 @@ package body Alire.TOML_Index is
    procedure Load_Manifest (Item   : Any_Path;
                             Stop   : in out Boolean);
    --  Check if entry is a candidate to manifest file, and in that case load
-   --  its contents. May raise Checked_Error.
+   --  its contents. An invalid manifest raises Checked_Error when loading in
+   --  strict mode, and is otherwise skipped with a warning.
 
    procedure Load_From_Index_Internal
      (File_Name : Absolute_Path;
@@ -364,6 +368,23 @@ package body Alire.TOML_Index is
       pragma Unreferenced (Stop);
       use Ada.Directories;
       use AAA.Strings;
+
+      ----------
+      -- Skip --
+      ----------
+
+      procedure Skip (E : Ada.Exceptions.Exception_Occurrence) is
+         Id : constant String := "invalid index manifest " & Item;
+      begin
+         Log_Exception (E);
+
+         --  Stored errors put each context level on its own line
+         Warnings.Warn_Once
+           ("Skipping invalid index manifest " & Item & ": "
+            & Split (Errors.Get (E), Latin_1.LF).Flatten (": "),
+            Id => Warnings.Warning_Id (Id));
+      end Skip;
+
    begin
       if Kind (Item) /= Ordinary_File then
          return;
@@ -434,6 +455,31 @@ package body Alire.TOML_Index is
                                         Strict    => Strict);
          end;
       end;
+   exception
+      --  A single bad manifest must not break the whole index for everyone,
+      --  so it is skipped. Releases are only added to the index once fully
+      --  loaded, so skipping leaves no partial state behind. Strict loading
+      --  (`alr index --check`, `alr publish`) must still fail, with a proper
+      --  error message even for unexpected exceptions.
+
+      when E : Checked_Error =>
+         if Strict then
+            raise;
+         end if;
+
+         Skip (E);
+
+      when E : others =>
+         if Strict then
+            Log_Exception (E);
+            Raise_Checked_Error
+              (Errors.Wrap
+                 ("Unexpected error loading index manifest: " & Item,
+                  Ada.Exceptions.Exception_Name (E) & ": "
+                  & Ada.Exceptions.Exception_Message (E)));
+         end if;
+
+         Skip (E);
    end Load_Manifest;
 
    ------------------------------
