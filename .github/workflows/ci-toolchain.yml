@@ -178,11 +178,8 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Install e3
-      run: pip install --upgrade -r testsuite/requirements.txt
-
     - name: Run testsuite # But ensure a new alr is not build
-      run: scripts/ci-github.sh build=false
+      run: scripts/ci-github.sh skip_build
       shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
