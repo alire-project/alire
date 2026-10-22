@@ -48,6 +48,8 @@ jobs:
         BRANCH: ${{ github.base_ref }}
         ALIRE_DISABLE_DISTRO: true
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Tests that use the network run only in CI Release, to limit flakes
+        ALIRE_TESTSUITE_DISABLE_NETWORK_TESTS: true
 
     - name: Upload logs (if failed)
       if: failure()
