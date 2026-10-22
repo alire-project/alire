@@ -60,7 +60,7 @@ def prepare_env(settings_dir, env):
     env['ALIRE_SETTINGS_DIR'] = settings_dir
 
     # If the testsuite already prepared these settings once (see run.py), copy
-    # them instead of running alr again for every test.
+    # them instead of running alr again for every test, which is faster.
     template_dir = os.environ.get('ALR_TESTSUITE_SETTINGS_TEMPLATE')
     if template_dir:
         copytree(template_dir, settings_dir, dirs_exist_ok=True)
