@@ -15,6 +15,12 @@ package Alire.TOML_Load is
                           Result : TOML.Read_Result) return String with
      Pre => not Result.Success;
 
+   function Read_File (File_Name : Any_Path) return TOML.Read_Result;
+   --  Same as TOML.File_IO.Load_File, but parses the file contents from
+   --  memory. TOML.File_IO detects the end of the file by handling an
+   --  exception, and raising one is very slow on macOS for a binary the size
+   --  of alr (it unwinds the stack to record a traceback).
+
    function Load_File (File_Name : Any_Path) return TOML.TOML_Value;
    --  Will raise Checked_Error if file contents aren't valid TOML
 
