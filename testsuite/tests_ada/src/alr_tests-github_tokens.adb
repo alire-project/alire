@@ -9,6 +9,10 @@ begin
                   "Failed for GitHub fine-grained PAT format");
    pragma Assert (Is_Possibly_A_Token ("ghp_1234567890abcdef"),
                   "Failed new GitHub PAT format");
+   pragma Assert
+     (Is_Possibly_A_Token
+        ("ghs_abcdefghijklmnopqrstuvwxyz0123456789-._"),
+      "Failed GitHub App installation token format with punctuation");
    pragma Assert (not Is_Possibly_A_Token ("MY_PERSONAL_TOKEN"),
                   "Should not accept invalid GitHub PAT format");
 end Alr_Tests.Github_Tokens;
