@@ -81,6 +81,13 @@ jobs:
       with:
         submodules: recursive
 
+    # Real-time scanning of the many processes and files the build and
+    # testsuite create can slow Windows runners down considerably
+    - name: Disable Windows Defender real-time scanning
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: Set-MpPreference -DisableRealtimeMonitoring $true
+
     - name: Install Alire toolchain
       uses: alire-project/alr-install@v2
       with:
