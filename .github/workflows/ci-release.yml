@@ -101,6 +101,8 @@ jobs:
       uses: actions/setup-python@v6
       with:
         python-version: '3.x'
+        cache: pip # Downloads only; the test script installs into its own venv
+        cache-dependency-path: testsuite/requirements.txt
 
     # The test script itself will build alr
 
