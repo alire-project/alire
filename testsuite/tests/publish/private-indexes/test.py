@@ -86,9 +86,10 @@ def test(
         if github_user is not None:
             run_alr("settings", "--set", "user.github_login", github_user)
 
-        # Run alr
+        # Run alr. Its own build check is skipped, as the retrieval and build
+        # of the published crate is verified below.
         p = run_alr_interactive(
-            args,
+            args + ["--skip-build"],
             output=num_confirms * [
                 "Do you want to proceed with this information?"
             ],

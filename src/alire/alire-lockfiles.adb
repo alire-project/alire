@@ -67,7 +67,7 @@ package body Alire.Lockfiles is
 
       declare
          Result : constant TOML.Read_Result :=
-                    TOML.File_IO.Load_File (Filename);
+                    TOML_Load.Read_File (Filename);
       begin
          if Result.Success then
             return This : Contents do

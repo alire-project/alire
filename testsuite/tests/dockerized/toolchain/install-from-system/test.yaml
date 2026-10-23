@@ -1,5 +1,6 @@
 driver: docker-wrapper
 control:
     - [SKIP, "skip_docker",  "Docker disabled"]
+    - [SKIP, "skip_network", "Network disabled"]
 indexes:
     system_toolchain_ubuntu: {}

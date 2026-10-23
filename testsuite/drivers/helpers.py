@@ -540,22 +540,30 @@ class MockCommand:
         with open(self._script_path, "x") as f:
             f.write(self._script)
         # Only binary executables are consistently recognised on the `PATH` in
-        # Windows, so we need to compile a binary wrapper for the script.
-        build_dir = os.path.join(self._dir, "build")
-        os.makedirs(build_dir)
-        with open(os.path.join(build_dir, "main.adb"), "x") as f:
-            f.write(MOCK_COMMAND_TEMPLATE.format(script_path=self._script_path))
-        run(
-            ["gnat", "make", "-q", os.path.join(build_dir, "main.adb")],
-            cwd=build_dir
-        ).check_returncode()
-        # Copy the binary to a directory on PATH
+        # Windows, so we need to compile a binary wrapper for the script. The
+        # wrapper depends only on the script path, so it is compiled once and
+        # reused by later mocks of the same command in the same directory.
         suffix = ".exe" if on_windows() else ""
+        wrapper_path = os.path.join(self._dir, "wrappers", self._name + suffix)
+        if not os.path.exists(wrapper_path):
+            build_dir = os.path.join(self._dir, "build")
+            os.makedirs(build_dir)
+            with open(os.path.join(build_dir, "main.adb"), "x") as f:
+                f.write(
+                    MOCK_COMMAND_TEMPLATE.format(script_path=self._script_path)
+                )
+            run(
+                ["gnat", "make", "-q", os.path.join(build_dir, "main.adb")],
+                cwd=build_dir
+            ).check_returncode()
+            os.makedirs(os.path.dirname(wrapper_path), exist_ok=True)
+            shutil.copy(os.path.join(build_dir, "main" + suffix), wrapper_path)
+            shutil.rmtree(build_dir)
+        # Copy the binary to a directory on PATH
         self._bin_dir = os.path.join(self._dir, "path_dir")
         self._bin_path = os.path.join(self._bin_dir, self._name + suffix)
         os.makedirs(self._bin_dir, exist_ok=True)
-        shutil.copy(os.path.join(build_dir, "main" + suffix), self._bin_path)
-        shutil.rmtree(build_dir)
+        shutil.copy(wrapper_path, self._bin_path)
         os.environ["PATH"] = f'{self._bin_dir}{os.pathsep}{os.environ["PATH"]}'
 
     def disable(self):

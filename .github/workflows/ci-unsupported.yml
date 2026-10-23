@@ -27,7 +27,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         submodules: recursive
 
@@ -37,9 +37,11 @@ jobs:
         crates: gnat_native gprbuild
 
     - name: Install Python 3.x (required for the testsuite)
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.x'
+        cache: pip # Downloads only; the test script installs into its own venv
+        cache-dependency-path: testsuite/requirements.txt
 
     - name: Run test script
       run: scripts/ci-github.sh
@@ -48,6 +50,8 @@ jobs:
         BRANCH: ${{ github.base_ref }}
         ALIRE_DISABLE_DISTRO: true
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Tests that use the network run only in CI Release, to limit flakes
+        ALIRE_TESTSUITE_DISABLE_NETWORK_TESTS: true
 
     - name: Upload logs (if failed)
       if: failure()

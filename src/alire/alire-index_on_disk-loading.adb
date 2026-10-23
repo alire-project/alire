@@ -9,6 +9,7 @@ with Alire.Index_On_Disk.Updates;
 with Alire.Platforms.Current;
 with Alire.Provides;
 with Alire.TOML_Adapters;
+with Alire.TOML_Load;
 with Alire.Utils.TTY;
 with Alire.Warnings;
 
@@ -549,7 +550,7 @@ package body Alire.Index_On_Disk.Loading is
    function Load_Index_Metadata (File  : String;
                                  Value : out TOML.TOML_Value) return Outcome
    is
-      Result : constant TOML.Read_Result := TOML.File_IO.Load_File (File);
+      Result : constant TOML.Read_Result := TOML_Load.Read_File (File);
    begin
       if Result.Success then
          Value := Result.Value;
@@ -580,7 +581,7 @@ package body Alire.Index_On_Disk.Loading is
 
       declare
          Load_Result : constant TOML.Read_Result :=
-                         TOML.File_IO.Load_File (Filename);
+                         TOML_Load.Read_File (Filename);
       begin
          if not Load_Result.Success then
             Trace.Warning ("Corrupted index providers file found at: "

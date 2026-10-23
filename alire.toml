@@ -15,6 +15,7 @@ executables = ["alr"]
 
 [[depends-on]]
 aaa = "~0.3.0"
+aaa_texts = "~0.4"
 ada_toml = "~0.5"
 ajunitgen = "^1.0.1"
 ansiada = "^1.1"
@@ -54,9 +55,12 @@ windows = { ALIRE_OS = "windows", GNATCOLL_OS = "windows", PRJ_TARGET = "Windows
 
 # Some dependencies require precise versions during the development cycle:
 [[pins]]
-[pins.aaa]
+# aaa_texts' own pins bring in aaa and aaa_ansi from the same checkout, so
+# those are not pinned here (separate pins might conflict with them).
+[pins.aaa_texts]
 url    = "https://github.com/mosteo/aaa"
-commit = "73d99ae1ff2f5210dc41c2ea7afebe600f9e9916"
+subdir = "aaa_texts"
+commit = "d47bfb2fba7b587509127c7671a67afcb0641c6b"
 
 [pins.ada_toml]
 url    = "https://github.com/pmderodat/ada-toml"
@@ -72,7 +76,7 @@ commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 
 [pins.clic]
 url    = "https://github.com/alire-project/clic"
-commit = "7f3af9f2d6bf0f3e41dc0ab61907364c6acc5b1c"
+commit = "f7cd77d2ba6c5dfe1fc782254c95ea7bca1dd453"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"
@@ -129,7 +133,7 @@ commit = "441acdc3769469e348680d4afd1928022a4da36b"
 
 [pins.toml_slicer]
 url    = "https://github.com/mosteo/toml_slicer"
-commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
+commit = "8c5988f91eb008298a2a0504be85b8692cafc9ad"
 
 [pins.yeison_12]
 url    = "https://github.com/mosteo/yeison"
