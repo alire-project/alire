@@ -3,7 +3,7 @@ with Alire.Utils.Regex;
 procedure Alr_Tests.Regexes is
    use Alire.Utils.Regex;
 
-   GH_Token_Regex : constant String := "(github_pat|gh[pours])_[a-f0-9]+";
+   GH_Token_Regex : constant String := "(github_pat|gh[pours])_[A-Za-z0-9._-]+";
 
 begin
    --  Partial matches with unanchored expressions
@@ -32,6 +32,10 @@ begin
                   "Failed regex match for GitHub fine-grained PAT format");
    pragma Assert (Fully_Matches (GH_Token_Regex, "ghp_1234567890abcdef"),
                   "Failed match for new GitHub PAT format");
+   pragma Assert
+     (Fully_Matches
+        (GH_Token_Regex, "ghs_abcdefghijklmnopqrstuvwxyz0123456789-._"),
+      "Failed match for GitHub App installation token with punctuation");
    pragma Assert (not Fully_Matches (GH_Token_Regex, "MY_PERSONAL_TOKEN"),
                   "Should not match invalid GitHub PAT format");
 end Alr_Tests.Regexes;
