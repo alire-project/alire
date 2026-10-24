@@ -23,6 +23,8 @@ may change.
   must be relative paths that stay within the deployed origin (they may go up
   from a `subdir` only as far as the repository root), with forward slashes
   except in actions (applies to any index version).
+- index: manifests larger than 64 KiB are rejected (configurable with the
+  `index.max_manifest_size` setting; applies to any index version).
 
 ### We are here
 

@@ -114,6 +114,14 @@ package Alire.Settings.Builtins is
       Def  => "alire-index",
       Help => "Name of the index repository.");
 
+   Index_Max_Manifest_Size : constant Builtin := New_Builtin
+     (Key  => "index.max_manifest_size",
+      Kind => Stn_Int,
+      Def  => "65536", -- bytes, ten times the largest in the community index
+      Help =>
+        "Maximum size in bytes of a manifest in an index. Larger manifests "
+        & "are skipped with a warning, or rejected by `alr index --check`.");
+
    --  INIT
 
    Init_Github_Files : constant Builtin := New_Builtin
