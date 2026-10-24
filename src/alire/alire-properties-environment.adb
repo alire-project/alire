@@ -1,11 +1,11 @@
 with Alire.TOML_Keys;
-with Alire.Utils.Did_You_Mean;
+with CLIC.Utils;
 
 package body Alire.Properties.Environment is
 
    function Actions_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Actions, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Actions, CLIC.Utils.Lower_Case);
 
    ------------
    -- Action --

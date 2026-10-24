@@ -155,7 +155,8 @@ private
       TTY_Version         => Alire.TTY.Version,
       TTY_Underline       => Alire.TTY.Underline,
       TTY_Emph            => Alire.TTY.Emph,
-      Global_Options_In_Subcommand_Help => False);
+      Global_Options_In_Subcommand_Help => False,
+      Misstyping_Correction_Distance    => 4);
 
    procedure Auto_Update_Index (This : Command);
 

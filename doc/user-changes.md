@@ -23,6 +23,13 @@ used by `alr index --check`, which is the way to validate an index, and by
 `alr publish`. Unexpected errors in a manifest are now also reported there as
 regular errors.
 
+### Suggest closest command when misstyping
+
+PR [#2176](https://github.com/alire-project/alire/pull/2176)
+
+When the user misstypes a command like `alr cleam` instead of `alr clean`, alire
+will suggest the closest possible command.
+
 ### Updated SPDX license expression support
 
 PR [#2096](https://github.com/alire-project/alire/pull/2096)

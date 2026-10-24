@@ -1,11 +1,12 @@
 with AAA.Enum_Tools;
-with Alire.Utils.Did_You_Mean;
+
+with CLIC.Utils;
 
 package body Alire.Properties.From_TOML is
 
    function Property_Keys_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Property_Keys, Utils.Did_You_Mean.Tomify);
+   is new CLIC.Utils.Enum_Suggestion
+     (Property_Keys, CLIC.Utils.Tomify);
 
    ------------
    -- Loader --

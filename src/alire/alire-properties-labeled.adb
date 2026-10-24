@@ -1,4 +1,4 @@
-with Alire.Utils.Did_You_Mean;
+with CLIC.Utils;
 
 package body Alire.Properties.Labeled is
 
@@ -58,7 +58,7 @@ package body Alire.Properties.Labeled is
             end loop;
 
             From.Checked_Error ("Key is not a valid property: " & K & "'" &
-                                  Utils.Did_You_Mean.Suggestion
+                                  CLIC.Utils.Suggestion
                                   (K, Possible_Values));
          end;
       end Key_To_Label;
