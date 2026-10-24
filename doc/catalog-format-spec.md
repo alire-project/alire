@@ -500,6 +500,7 @@ static, i.e. they cannot depend on the context.
       - `archive-name`: optional string. If `url` points to a source archive,
         this can specify the name of the file to download, which is needed in
         order to properly extract the sources, in case the URL does not identify it.
+        It must be a plain file name, without `/`, `\` or `:`.
 
       - `commit`: mandatory string for VCS origins that describes the
         VCS-specific revision to be checked out (a git/hg hash, a svn
@@ -509,7 +510,8 @@ static, i.e. they cannot depend on the context.
         that when provided indicates that the crate is not located at the
         repository root. This option enables the possibility of publishing
         several crates from the same repository (sometimes referred to as a
-        *monorepo*).
+        *monorepo*). It must use forward slashes, and cannot begin with `/` or
+        contain `:` or `..` segments, so that it stays within the repository.
 
       - `binary`: optional (defaults to false) boolean used to design the origin
         as binary. Binary origins are not compiled and can optionally use dynamic
