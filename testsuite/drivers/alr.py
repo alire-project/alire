@@ -57,8 +57,16 @@ def prepare_env(settings_dir, env):
     env["GIT_CONFIG_SYSTEM"] = "/dev/null"
 
     settings_dir = os.path.abspath(settings_dir)
-    mkdir(settings_dir)
     env['ALIRE_SETTINGS_DIR'] = settings_dir
+
+    # If the testsuite already prepared these settings once (see run.py), copy
+    # them instead of running alr again for every test, which is faster.
+    template_dir = os.environ.get('ALR_TESTSUITE_SETTINGS_TEMPLATE')
+    if template_dir:
+        copytree(template_dir, settings_dir, dirs_exist_ok=True)
+        return
+
+    mkdir(settings_dir)
     #  We pass settings location explicitly in the following calls since env is
     #  not yet applied (it's just a dict to be passed later to subprocess)
 
