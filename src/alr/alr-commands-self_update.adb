@@ -1,5 +1,4 @@
 with Ada.Exceptions;
-with Ada.Text_IO;
 
 with Alire.Features;
 with Alire.Spawn;
@@ -360,22 +359,13 @@ package body Alr.Commands.Self_Update is
    --------------------------------
 
    procedure Windows_Pause_On_Exception is
-      --  spawn an asynchronous pause after a delay to leave time for the
-      --  exception handlers to display error messages
-      task type Pause_Task;
-      task body Pause_Task is
-      begin
-         delay 1.0;
-         if not UI.Not_Interactive then
-            Trace.Info ("Press enter to continue...");
-            Trace.Never (Ada.Text_IO.Get_Line);
-         end if;
-      end Pause_Task;
-      type Pause_Task_Access is access all Pause_Task;
-      Detach : constant Pause_Task_Access := new Pause_Task;
-      pragma Unreferenced (Detach);
+      --  Pause once the error messages have been displayed, just before
+      --  exiting. This used to be done with a task, but any task in alr links
+      --  in the tasking runtime, whose finalization sleeps for 10 ms on every
+      --  program exit. That's noticeable in the test suite so if we can avoid
+      --  it for now...
    begin
-      null;
+      OS_Lib.Pause_Before_Exit := True;
    end Windows_Pause_On_Exception;
 
    -------------
@@ -494,7 +484,7 @@ package body Alr.Commands.Self_Update is
            and then not Args.Is_Empty
            and then Args.Last_Element = Magic_Arg_Windows
          then
-            --  pause (asynchronously) to give the user time to read error
+            --  pause before exiting to give the user time to read error
             --  messages
             Windows_Pause_On_Exception;
          end if;
