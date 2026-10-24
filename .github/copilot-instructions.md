@@ -92,6 +92,20 @@ git repository at GitHub, named the "community index".
 - Use the `Alire.Unimplemented` exception for temporary missing functionality.
   In general, use of this exception should not make into the master branch.
 
+- Avoid raising exceptions in code that runs on every invocation or once per
+  loaded file (start-up, settings, manifests, index loading). On macOS, each
+  raise unwinds the stack to record a traceback, costing 20-130 ms in a binary
+  the size of `alr`. For the same reason, load TOML files with
+  `Alire.TOML_Load.Read_File` rather than `TOML.File_IO.Load_File`, which
+  detects the end of the file by handling an exception.
+
+- For as long as it is feasible, do not use Ada tasks anywhere in `alr` (nor 
+  in its dependencies). A single task declaration links in the tasking runtime, 
+  whose finalization sleeps for 10 ms at every program exit, and the testsuite
+  runs `alr` thousands of times. Without the tasking runtime, `alr --version`
+  runs in about 12 ms instead of 30 ms. To check, 
+  `nm bin/alr | grep finalize_global_tasks` must find nothing.
+
 ## Pull-request Checklist
 
 Before submitting a PR, ensure you have met as many as applicable of the tasks

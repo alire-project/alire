@@ -1,4 +1,24 @@
+with Ada.Text_IO;
+
+with Alire.OS_Lib;
+
+with CLIC.User_Input;
+
 package body Alr.OS_Lib is
+
+   -------------
+   -- Bailout --
+   -------------
+
+   procedure Bailout (Code : Integer := 0) is
+   begin
+      if Pause_Before_Exit and then not CLIC.User_Input.Not_Interactive then
+         Trace.Info ("Press enter to continue...");
+         Trace.Never (Ada.Text_IO.Get_Line);
+      end if;
+
+      Alire.OS_Lib.Bailout (Code);
+   end Bailout;
 
    ------------
    -- Getenv --
