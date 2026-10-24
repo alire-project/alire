@@ -27,6 +27,16 @@ package Alire.VFS is
    --  For paths given in index manifests, which must not reach outside the
    --  folder of the release.
 
+   function Error_In_Rooted_Path (Path : String;
+                                  Base : String;
+                                  What : String := "path") return String;
+   --  As Error_In_Portable_Path, and Path, relative to the folder Base, must
+   --  stay within the root folder that Base is relative to: ".." segments may
+   --  go up from Base, but not above the root. Base must be a contained path.
+   --  For paths in index manifests relative to the crate, which may reach
+   --  other files of its origin (e.g., project files shared by the crates of
+   --  a monorepo), but nothing outside it.
+
    function Is_Portable (Path : Any_Path) return Boolean;
    --  Say if the path may be safely cast to a portable path. Equivalent to
    --  success with Error_In_Portable_Path.

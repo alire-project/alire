@@ -19,6 +19,10 @@ may change.
 - index: origin `subdir` must be a relative path with forward slashes and no
   `:` or `..` segments, and `archive-name` a plain file name without `/`, `\`
   or `:` (applies to any index version).
+- index: `project-files`, `executables`, and `directory` in actions and tests
+  must be relative paths that stay within the deployed origin (they may go up
+  from a `subdir` only as far as the repository root), with forward slashes
+  except in actions (applies to any index version).
 
 ### We are here
 

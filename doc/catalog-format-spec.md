@@ -275,7 +275,11 @@ static, i.e. they cannot depend on the context.
 
  - `project-files`: optional list of strings. Each is a path, relative to the
    root of the source directory, to a `.gpr` project file to be made available.
-   Expressions are accepted. For instance:
+   Expressions are accepted. In index manifests, paths must use forward
+   slashes and stay within the deployed origin: a crate in a `subdir` may refer
+   to files above it in the same repository, but not outside. The same
+   applies to `executables` and to `directory` in actions and tests. For
+   instance:
 
    ```toml
    project-files = ["my_project.gpr", "utils/utils_for_my_project.gpr"]

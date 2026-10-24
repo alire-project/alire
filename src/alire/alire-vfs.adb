@@ -62,6 +62,45 @@ package body Alire.VFS is
       end if;
    end Error_In_Contained_Path;
 
+   --------------------------
+   -- Error_In_Rooted_Path --
+   --------------------------
+
+   function Error_In_Rooted_Path (Path : String;
+                                  Base : String;
+                                  What : String := "path") return String
+   is
+      Error         : constant String := Error_In_Portable_Path (Path, What);
+      Base_Segments : constant AAA.Strings.Vector := Split (Base, '/');
+      Path_Segments : constant AAA.Strings.Vector := Split (Path, '/');
+      Depth         : Integer := 0;
+      --  Of the current folder below the root
+   begin
+      if Error /= "" then
+         return Error;
+      end if;
+
+      for Segment of Base_Segments loop
+         if Segment not in "" | "." then
+            Depth := Depth + 1;
+         end if;
+      end loop;
+
+      for Segment of Path_Segments loop
+         if Segment = ".." then
+            Depth := Depth - 1;
+            if Depth < 0 then
+               return "invalid " & What & " '" & Path
+                 & "': it must not go above the root of its origin";
+            end if;
+         elsif Segment not in "" | "." then
+            Depth := Depth + 1;
+         end if;
+      end loop;
+
+      return "";
+   end Error_In_Rooted_Path;
+
    --------------
    -- Read_Dir --
    --------------
