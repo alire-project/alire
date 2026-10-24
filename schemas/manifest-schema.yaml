@@ -486,13 +486,14 @@ properties:
           for VCS origins.
       subdir:
         type: string
-        # A portable path without '..' segments (see
-        # Alire.VFS.Error_In_Contained_Path)
-        pattern: '^(?!/)(?!(.*/)?\.\.(/|$))[^\\:]*$'
+        # A portable path (see Alire.VFS.Error_In_Portable_Path). That it does
+        # not go above the repository root is checked by alr, as a pattern
+        # cannot count '..' segments.
+        pattern: '^(?!/)[^\\:]*$'
         description: >-
           Relative path to the crate within the repository, when not at its
-          root (e.g., monorepos). It uses forward slashes, and cannot begin
-          with '/' or contain ':' or '..' segments.
+          root (e.g., monorepos). It uses forward slashes, cannot begin with
+          '/' or contain ':', and must stay within the repository.
       binary:
         type: boolean
         default: false

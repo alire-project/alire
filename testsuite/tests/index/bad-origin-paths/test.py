@@ -1,6 +1,6 @@
 """
 Test that origin paths in index manifests cannot point outside the folder they
-are relative to: `subdir` must be a portable relative path without '..', and
+are relative to: `subdir` must be a portable path not going above the repository root, and
 `archive-name` a plain file name.
 """
 
@@ -45,9 +45,11 @@ def write_manifest(origin: str, path: str):
 # Paths that would escape the deployment folder, or that are not valid on
 # every platform, are rejected
 
-for subdir, reason in [("..", "it must not contain '..'"),
-                       ("../other", "it must not contain '..'"),
-                       ("./sub/../../other/", "it must not contain '..'"),
+ESCAPES = "it must not go above the root of its origin"
+
+for subdir, reason in [("..", ESCAPES),
+                       ("../other", ESCAPES),
+                       ("./sub/../../other/", ESCAPES),
                        ("/abs/path", "it must be a relative path"),
                        ("C:/abs/path", "it must not contain ':'"),
                        ("sub\\dir", "it must use forward slashes"),
@@ -68,7 +70,8 @@ for name, reason in [("../hello_world.tar.gz", "plain file name"),
 
 # Valid paths, as used in the community index, still load
 
-for subdir in ["sub", "./sub/", "sub/dir", "./.alire/sub/", "a..b"]:
+for subdir in ["sub", "./sub/", "sub/dir", "./.alire/sub/", "a..b",
+               "sub/../other"]:
     write_manifest(GIT_ORIGIN, subdir)
     run_alr("index", "--check")
     run_alr("show", "hello_world")

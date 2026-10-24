@@ -46,20 +46,33 @@ package body Alire.VFS is
    -- Error_In_Contained_Path --
    -----------------------------
 
-   function Error_In_Contained_Path (Path : String;
-                                     What : String := "path") return String
+   function Error_In_Contained_Path (Path   : String;
+                                     What   : String := "path";
+                                     Within : String := "") return String
    is
       Error    : constant String := Error_In_Portable_Path (Path, What);
-      Segments : constant AAA.Strings.Vector := Split (Path, '/');
+      Segments : constant AAA.Strings.Vector :=
+                   Split (Within & "/" & Path, '/');
+      Depth    : Natural := 0;
+      --  Of the current folder below the one Within is relative to
    begin
       if Error /= "" then
          return Error;
-      elsif (for some Segment of Segments => Segment = "..") then
-         return "invalid " & What & " '" & Path
-           & "': it must not contain '..'";
-      else
-         return "";
       end if;
+
+      for Segment of Segments loop
+         if Segment = ".." then
+            if Depth = 0 then
+               return "invalid " & What & " '" & Path
+                 & "': it must not go above the root of its origin";
+            end if;
+            Depth := Depth - 1;
+         elsif Segment not in "" | "." then
+            Depth := Depth + 1;
+         end if;
+      end loop;
+
+      return "";
    end Error_In_Contained_Path;
 
    --------------

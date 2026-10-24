@@ -20,12 +20,15 @@ package Alire.VFS is
    --  What (e.g., "subdir") and saying why it is not. This does not depend on
    --  the current platform: backslashes, a leading '/' and ':' are rejected.
 
-   function Error_In_Contained_Path (Path : String;
-                                     What : String := "path") return String;
-   --  As Error_In_Portable_Path, and Path must also stay within the folder it
-   --  is relative to, so ".." segments are rejected. "." segments are allowed.
-   --  For paths given in index manifests, which must not reach outside the
-   --  folder of the release.
+   function Error_In_Contained_Path (Path   : String;
+                                     What   : String := "path";
+                                     Within : String := "") return String;
+   --  As Error_In_Portable_Path, and Path, taken from the folder Within, must
+   --  not go above the folder that Within is relative to. E.g., for a crate
+   --  at Within = "crates/foo" in its repository, Path = "../../gnat/x.gpr"
+   --  is fine, but "../../../x.gpr" leaves the repository. Within must be
+   --  contained itself. For paths in index manifests, which must not reach
+   --  outside the deployed origin.
 
    function Is_Portable (Path : Any_Path) return Boolean;
    --  Say if the path may be safely cast to a portable path. Equivalent to

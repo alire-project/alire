@@ -275,7 +275,11 @@ static, i.e. they cannot depend on the context.
 
  - `project-files`: optional list of strings. Each is a path, relative to the
    root of the source directory, to a `.gpr` project file to be made available.
-   Expressions are accepted. For instance:
+   Expressions are accepted. In index manifests, paths must use forward
+   slashes and stay within the deployed origin: a crate in a `subdir` may refer
+   to files above it in the same repository, but not outside. The same
+   applies to `executables` and to `directory` in actions and tests. For
+   instance:
 
    ```toml
    project-files = ["my_project.gpr", "utils/utils_for_my_project.gpr"]
@@ -510,8 +514,9 @@ static, i.e. they cannot depend on the context.
         that when provided indicates that the crate is not located at the
         repository root. This option enables the possibility of publishing
         several crates from the same repository (sometimes referred to as a
-        *monorepo*). It must use forward slashes, and cannot begin with `/` or
-        contain `:` or `..` segments, so that it stays within the repository.
+        *monorepo*). It must use forward slashes, cannot begin with `/` or
+        contain `:`, and must stay within the repository (`..` segments may not
+        go above its root).
 
       - `binary`: optional (defaults to false) boolean used to design the origin
         as binary. Binary origins are not compiled and can optionally use dynamic
