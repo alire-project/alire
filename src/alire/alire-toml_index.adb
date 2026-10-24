@@ -517,7 +517,24 @@ package body Alire.TOML_Index is
                    & Utils.TTY.Name (Name) & " " & TTY.Version (Version)
                    & " from " & File_Name);
 
-      --  Load the TOML file
+      --  Load the TOML file, unless too large to parse safely
+
+      declare
+         use type Dirs.File_Size;
+         Max_Size : constant Dirs.File_Size :=
+                      Dirs.File_Size
+                        (Settings.Setting_Int'Max
+                           (0, Settings.Builtins.Index_Max_Manifest_Size.Get));
+      begin
+         if Dirs.Size (File_Name) > Max_Size then
+            Raise_Checked_Error
+              (Error_In_File
+                 (File_Name,
+                  "manifest is larger than" & Max_Size'Image & " bytes (see "
+                  & "setting " & Settings.Builtins.Index_Max_Manifest_Size.Key
+                  & ")"));
+         end if;
+      end;
 
       Value := TOML_Load.Load_File (File_Name);
 
