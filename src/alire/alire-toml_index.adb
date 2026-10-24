@@ -595,8 +595,8 @@ package body Alire.TOML_Index is
       procedure Check (Path : String; What : String) is
       begin
          if +Error = "" then
-            Error := +Alire.VFS.Error_In_Rooted_Path
-              (Path, Base => Subdir, What => What);
+            Error := +Alire.VFS.Error_In_Contained_Path
+              (Path, What => What, Within => Subdir);
          end if;
       end Check;
 

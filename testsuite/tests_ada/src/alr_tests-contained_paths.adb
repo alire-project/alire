@@ -2,13 +2,14 @@ with AAA.Strings;
 
 with Alire.VFS;
 
-procedure Alr_Tests.Rooted_Paths is
+procedure Alr_Tests.Contained_Paths is
 
    --  Paths relative to a crate at Base within its origin may go up from
    --  Base, but not above the origin root.
 
    procedure Check (Path : String; Base : String; Reason : String := "") is
-      Error : constant String := VFS.Error_In_Rooted_Path (Path, Base);
+      Error : constant String :=
+                VFS.Error_In_Contained_Path (Path, Within => Base);
    begin
       if Reason = "" then
          pragma Assert (Error = "",
@@ -61,4 +62,4 @@ begin
    Check ("/x.gpr",   "a", "relative path");
    Check ("C:x.gpr",  "a", "':'");
    Check ("..\x.gpr", "a", "forward slashes");
-end Alr_Tests.Rooted_Paths;
+end Alr_Tests.Contained_Paths;

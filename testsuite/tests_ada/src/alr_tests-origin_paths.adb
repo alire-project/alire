@@ -6,8 +6,8 @@ with Alire.VFS;
 procedure Alr_Tests.Origin_Paths is
 
    --  Paths in index origins must stay below the folder they are relative to,
-   --  whatever the platform: subdirs are contained paths (portable, without
-   --  ".."), and archive names plain file names.
+   --  whatever the platform: subdirs are contained paths (portable, and not
+   --  going above the origin root), and archive names plain file names.
 
    procedure Check (Error : String; Path : String; Reason : String) is
    begin
@@ -40,13 +40,15 @@ begin
    Subdir ("./src/");
    Subdir ("./.alire/src/");
    Subdir ("a..b/..c/d..");
+   Subdir ("src/..");
+   Subdir ("a/../b");
 
    --  Invalid subdirs
 
-   Subdir ("..",                 "'..'");
-   Subdir ("../src",             "'..'");
-   Subdir ("src/..",             "'..'");
-   Subdir ("./src/../../other",  "'..'");
+   Subdir ("..",                 "above the root");
+   Subdir ("../src",             "above the root");
+   Subdir ("src/../..",          "above the root");
+   Subdir ("./src/../../other",  "above the root");
    Subdir ("/src",               "relative");
    Subdir ("//server/share",     "relative");
    Subdir ("C:/src",             "':'");

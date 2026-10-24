@@ -514,8 +514,9 @@ static, i.e. they cannot depend on the context.
         that when provided indicates that the crate is not located at the
         repository root. This option enables the possibility of publishing
         several crates from the same repository (sometimes referred to as a
-        *monorepo*). It must use forward slashes, and cannot begin with `/` or
-        contain `:` or `..` segments, so that it stays within the repository.
+        *monorepo*). It must use forward slashes, cannot begin with `/` or
+        contain `:`, and must stay within the repository (`..` segments may not
+        go above its root).
 
       - `binary`: optional (defaults to false) boolean used to design the origin
         as binary. Binary origins are not compiled and can optionally use dynamic

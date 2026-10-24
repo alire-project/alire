@@ -20,22 +20,15 @@ package Alire.VFS is
    --  What (e.g., "subdir") and saying why it is not. This does not depend on
    --  the current platform: backslashes, a leading '/' and ':' are rejected.
 
-   function Error_In_Contained_Path (Path : String;
-                                     What : String := "path") return String;
-   --  As Error_In_Portable_Path, and Path must also stay within the folder it
-   --  is relative to, so ".." segments are rejected. "." segments are allowed.
-   --  For paths given in index manifests, which must not reach outside the
-   --  folder of the release.
-
-   function Error_In_Rooted_Path (Path : String;
-                                  Base : String;
-                                  What : String := "path") return String;
-   --  As Error_In_Portable_Path, and Path, relative to the folder Base, must
-   --  stay within the root folder that Base is relative to: ".." segments may
-   --  go up from Base, but not above the root. Base must be a contained path.
-   --  For paths in index manifests relative to the crate, which may reach
-   --  other files of its origin (e.g., project files shared by the crates of
-   --  a monorepo), but nothing outside it.
+   function Error_In_Contained_Path (Path   : String;
+                                     What   : String := "path";
+                                     Within : String := "") return String;
+   --  As Error_In_Portable_Path, and Path, taken from the folder Within, must
+   --  not go above the folder that Within is relative to. E.g., for a crate
+   --  at Within = "crates/foo" in its repository, Path = "../../gnat/x.gpr"
+   --  is fine, but "../../../x.gpr" leaves the repository. Within must be
+   --  contained itself. For paths in index manifests, which must not reach
+   --  outside the deployed origin.
 
    function Is_Portable (Path : Any_Path) return Boolean;
    --  Say if the path may be safely cast to a portable path. Equivalent to
