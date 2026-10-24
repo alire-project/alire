@@ -4,8 +4,8 @@ Test that invalid filesystem origins are reported.
 
 import os
 
-from drivers.alr import prepare_env, prepare_indexes
-from drivers.asserts import assert_invalid_manifest
+from drivers.alr import prepare_env, prepare_indexes, run_alr
+from drivers.asserts import assert_invalid_manifest, assert_not_substring
 
 
 def run(i, error):
@@ -17,6 +17,9 @@ def run(i, error):
     # and it is rejected by `alr index --check`
     assert_invalid_manifest(error + '\n', "search", "--crates",
                             command_fails=False)
+    # as an expected error, not an internal one
+    p = run_alr("index", "--check", complain_on_error=False)
+    assert_not_substring("Unexpected error", p.out)
 
 
 run(1, '.*empty path given in local origin')
