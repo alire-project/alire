@@ -8,11 +8,28 @@ with AAA.Strings; use AAA.Strings;
 
 package Alire.VFS is
 
-   --  Portable paths are relative and use forward slashes. Absolute paths
-   --  cannot be portable.
+   --  Portable paths are relative and use forward slashes, so that they mean
+   --  the same on every platform. Absolute paths, and paths with ':' (Windows
+   --  drives), cannot be portable. Portable paths may contain ".." segments,
+   --  and so point outside the folder they are relative to (e.g., pins to
+   --  sibling folders). Error_In_Contained_Path checks paths that must not.
+
+   function Error_In_Portable_Path (Path : String;
+                                    What : String := "path") return String;
+   --  Returns "" if Path is portable, or else an error message naming it as
+   --  What (e.g., "subdir") and saying why it is not. This does not depend on
+   --  the current platform: backslashes, a leading '/' and ':' are rejected.
+
+   function Error_In_Contained_Path (Path : String;
+                                     What : String := "path") return String;
+   --  As Error_In_Portable_Path, and Path must also stay within the folder it
+   --  is relative to, so ".." segments are rejected. "." segments are allowed.
+   --  For paths given in index manifests, which must not reach outside the
+   --  folder of the release.
 
    function Is_Portable (Path : Any_Path) return Boolean;
-   --  Say if the path may be safely cast to a portable path
+   --  Say if the path may be safely cast to a portable path. Equivalent to
+   --  success with Error_In_Portable_Path.
 
    function Attempt_Portable (Path : Any_Path;
                               From : Any_Path := Directories.Current)
@@ -97,9 +114,7 @@ private
    -----------------
 
    function Is_Portable (Path : Any_Path) return Boolean
-   is ((for all Char of Path => Char /= '\')
-       and then
-         not Check_Absolute_Path (Path));
+   is (Error_In_Portable_Path (Path) = "");
 
    ------------
    -- Parent --

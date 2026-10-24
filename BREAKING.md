@@ -16,6 +16,9 @@ may change.
 - manifest: `licenses` now supports SPDX v3.0.0 syntax, with the exception that license and exception identifiers are still matched case-sensitively.
 - manifest: `licenses` now uses v3.24.0 of the SPDX License List.
 - manifest: new `mirror` property (array of alternative origins).
+- index: origin `subdir` must be a relative path with forward slashes and no
+  `:` or `..` segments, and `archive-name` a plain file name without `/`, `\`
+  or `:` (applies to any index version).
 
 ### We are here
 
