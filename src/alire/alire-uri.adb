@@ -92,7 +92,7 @@ package body Alire.URI is
    --------------
 
    function URI_Kind (This : String) return URI_Kinds is
-      Scheme       : constant String := L (U.Scheme (This));
+      Scheme       : constant String := URI.Scheme (This);
       Has_Userinfo : constant Boolean := (Userinfo (This) /= "");
    begin
       if Scheme = "external" then
@@ -167,7 +167,7 @@ package body Alire.URI is
    ------------------------
 
    function Strip_VCS_Prefixes (This : String) return String is
-      Scheme : constant String := L (U.Scheme (This));
+      Scheme : constant String := URI.Scheme (This);
    begin
       if (for some P of VCS_Prefixes => Has_Prefix (Scheme, P.all)) then
          return Tail (This, '+');

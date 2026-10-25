@@ -38,8 +38,9 @@ package body Alire.VCSs.SVN is
             Empty_Vector &
               "checkout" &
               Extra &
-              Repo_URL (From) &
               Commit_Arg &
+              "--" &
+              Repo_URL (From) &
               Into);
       return Outcome_Success;
    exception
