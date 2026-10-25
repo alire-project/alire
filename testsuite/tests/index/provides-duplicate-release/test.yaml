@@ -1,5 +1,5 @@
 driver: python-script
-build_mode: sandboxed  # Nothing is built, so running in shared mode adds nothing
+build_mode: shared
 indexes:
     high_index:
         in_fixtures: false

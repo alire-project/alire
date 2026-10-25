@@ -1,5 +1,4 @@
 with Ada.Directories;
-with Ada.Text_IO;
 
 with AAA.Strings;
 
@@ -33,6 +32,8 @@ with Alire.VCSs.Git;
 with Alire.VFS;
 
 with CLIC.User_Input;
+
+with GNAT.IO;
 
 with Semantic_Versioning;
 
@@ -198,7 +199,7 @@ package body Alire.Publish is
    is
       use CLIC.User_Input;
    begin
-      Ada.Text_IO.New_Line;
+      GNAT.IO.New_Line;
       if Query (Prompt,
                 Valid   => (Yes | No => True, others => False),
                 Default => (if Default_To_Yes then Yes else No))
@@ -253,15 +254,15 @@ package body Alire.Publish is
 
       --  Present release information to user
 
-      Ada.Text_IO.New_Line;
+      GNAT.IO.New_Line;
       Trace.Info ("The release to be published contains this information:");
-      Ada.Text_IO.New_Line;
+      GNAT.IO.New_Line;
       Release.Print;
 
       --  Warn if the release contains pins
 
       if not Release.Pins.Is_Empty then
-         Ada.Text_IO.New_Line;
+         GNAT.IO.New_Line;
          Trace.Warning ("The release manifest "
                       & TTY.Warn ("contains pins that will be removed")
                       & " in the published version.");
@@ -278,7 +279,7 @@ package body Alire.Publish is
       end loop;
 
       if not Recommend.Is_Empty then
-         Ada.Text_IO.New_Line;
+         GNAT.IO.New_Line;
          Trace.Warning ("Missing optional recommended properties: "
                         & TTY.Warn (Recommend.Flatten (", ")));
       end if;
@@ -312,14 +313,14 @@ package body Alire.Publish is
       Caret_Pre_1 := Release.Check_Caret_Warning;
 
       if not Missing.Is_Empty then
-         Ada.Text_IO.New_Line;
+         GNAT.IO.New_Line;
          Raise_Checked_Error ("Missing required properties: "
                               & TTY.Error (Missing.Flatten (", ")));
       end if;
 
       Dev_Version := AAA.Strings.Has_Suffix (Release.Version_Image, "-dev");
       if Dev_Version then
-         Ada.Text_IO.New_Line;
+         GNAT.IO.New_Line;
          Trace.Warning ("The release "
                         & TTY.Warn ("version ends with '-dev'") & "."
                         & Latin_1.LF
@@ -1027,7 +1028,7 @@ package body Alire.Publish is
       --  Manage publishing steps up to exhaustion or error
    begin
       for Current in Steps'Range loop
-         Ada.Text_IO.New_Line;
+         GNAT.IO.New_Line;
          Trace.Info ("Publishing assistant: step"
                      & TTY.Emph (Integer'Image (Current))
                      & " of"
@@ -1236,7 +1237,7 @@ package body Alire.Publish is
                if Commit_Remotes.Length in 0 then
                   --  Commit is not present on any remote, so can't be
                   --  published.
-                  Ada.Text_IO.New_Line;
+                  GNAT.IO.New_Line;
                   Git_Error
                     ("The specified commit is not present on any configured "
                      & "remote.",
@@ -1264,7 +1265,7 @@ package body Alire.Publish is
                else
                   --  Commit is present on multiple remotes, so the user will
                   --  need to specify explicitly.
-                  Ada.Text_IO.New_Line;
+                  GNAT.IO.New_Line;
                   Git_Error
                     ("The specified commit is present on multiple remotes"
                      & New_Line
@@ -1276,7 +1277,7 @@ package body Alire.Publish is
 
             when Ahead =>
                --  'git push' is required to publish the current head
-               Ada.Text_IO.New_Line;
+               GNAT.IO.New_Line;
                Git_Error
                  ("Your branch is ahead of remote"
                   & New_Line

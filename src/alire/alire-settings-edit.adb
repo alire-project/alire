@@ -1,5 +1,4 @@
 with Ada.Directories;
-with Ada.Text_IO;
 
 with Alire.Environment;
 with Alire.Features;
@@ -12,6 +11,7 @@ with Alire.Version;
 with Alire.Warnings;
 
 with CLIC.Config.Load;
+with GNAT.IO;
 
 package body Alire.Settings.Edit is
 
@@ -414,7 +414,7 @@ package body Alire.Settings.Edit is
    ------------------------
 
    procedure Print_Builtins_Doc is
-      use Ada.Text_IO;
+      use GNAT.IO;
    begin
       for Ent of All_Builtins loop
          if Ent.Public then

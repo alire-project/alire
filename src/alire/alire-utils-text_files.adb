@@ -1,3 +1,4 @@
+with Ada.Streams.Stream_IO;
 with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 
 with AAA.Strings; use AAA.Strings;
@@ -7,6 +8,8 @@ with Alire.Directories;
 with LML;
 
 package body Alire.Utils.Text_Files is
+
+   package SIO renames Ada.Streams.Stream_IO;
 
    ------------------
    -- Append_Lines --
@@ -22,6 +25,43 @@ package body Alire.Utils.Text_Files is
       F.Lines.Append (Lines);
    end Append_Lines;
 
+   ----------------
+   -- Read_Lines --
+   ----------------
+
+   function Read_Lines (File_Name : Any_Path) return AAA.Strings.Vector is
+      File : SIO.File_Type;
+   begin
+      SIO.Open (File, SIO.In_File, File_Name);
+      declare
+         Text : String (1 .. Natural (SIO.Size (File)));
+      begin
+         String'Read (SIO.Stream (File), Text);
+         SIO.Close (File);
+
+         return Lines : AAA.Strings.Vector :=
+           (if Text = "" then Empty_Vector else Split (Text, Latin_1.LF))
+         do
+            --  A final line break does not start another line
+            if not Lines.Is_Empty and then Lines.Last_Element = "" then
+               Lines.Delete_Last;
+            end if;
+
+            for Line of Lines loop
+               if Has_Suffix (Line, (1 => Latin_1.CR)) then
+                  Line := Line (Line'First .. Line'Last - 1);
+               end if;
+            end loop;
+         end return;
+      end;
+   exception
+      when others =>
+         if SIO.Is_Open (File) then
+            SIO.Close (File);
+         end if;
+         raise;
+   end Read_Lines;
+
    -------------------
    -- Replace_Lines --
    -------------------
@@ -35,6 +75,28 @@ package body Alire.Utils.Text_Files is
    begin
       F.Lines := Lines;
    end Replace_Lines;
+
+   -----------------
+   -- Write_Lines --
+   -----------------
+
+   procedure Write_Lines (File_Name : Any_Path;
+                          Lines     : AAA.Strings.Vector)
+   is
+      File : SIO.File_Type;
+   begin
+      SIO.Create (File, SIO.Out_File, File_Name);
+      for Line of Lines loop
+         String'Write (SIO.Stream (File), Line & Alire.New_Line);
+      end loop;
+      SIO.Close (File);
+   exception
+      when others =>
+         if SIO.Is_Open (File) then
+            SIO.Close (File);
+         end if;
+         raise;
+   end Write_Lines;
 
    --------------
    -- Finalize --
