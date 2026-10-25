@@ -351,6 +351,24 @@ package body Alire.Origins is
       end if;
    end Archive_Format;
 
+   ---------------------------
+   -- Error_In_Archive_Name --
+   ---------------------------
+
+   function Error_In_Archive_Name (Name : String) return String is
+      function Invalid (Reason : String) return String
+      is ("invalid archive name '" & Name & "': " & Reason);
+   begin
+      if Name = "" or else Name = "." or else Name = ".." then
+         return Invalid ("it must be a file name");
+      elsif (for some C of Name => C in '/' | '\' | ':') then
+         return Invalid ("it must be a plain file name, without '/', '\' "
+                         & "or ':'");
+      else
+         return "";
+      end if;
+   end Error_In_Archive_Name;
+
    ------------------------
    -- New_Source_Archive --
    ------------------------
@@ -458,6 +476,15 @@ package body Alire.Origins is
          if Archive.Kind /= TOML.TOML_String then
             Table.Checked_Error ("archive name must be a string");
          end if;
+
+         declare
+            Error : constant String :=
+                      Error_In_Archive_Name (Archive.As_String);
+         begin
+            if Error /= "" then
+               Table.Checked_Error (Error);
+            end if;
+         end;
       end if;
 
       declare
@@ -695,7 +722,14 @@ package body Alire.Origins is
                               then Table.Checked_Pop
                               (Keys.Subdir, TOML_String).As_String
                               else "");
+                  Error  : constant String :=
+                             VFS.Error_In_Contained_Path
+                               (Subdir, What => Keys.Subdir);
                begin
+                  if Error /= "" then
+                     Table.Checked_Error (Error);
+                  end if;
+
                   This := New_VCS
                   (URL,
                      Commit => Commit,

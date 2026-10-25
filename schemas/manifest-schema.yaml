@@ -473,19 +473,27 @@ properties:
           Array of `kind:digest` hashes for source archives (e.g. sha512:...).
       archive-name:
         type: string
+        # A plain file name (see Alire.Origins.Error_In_Archive_Name)
+        pattern: '^(?!\.\.?$)[^/\\:]+$'
         description: >-
           Name of the file to download when the URL does not identify the
-          source archive, needed for proper extraction.
+          source archive, needed for proper extraction. A plain file name,
+          without '/', '\' or ':'.
       commit:
         type: string  # TODO: length is known
         description: >-
           VCS revision (git/hg hash or svn revision) to check out. Mandatory
           for VCS origins.
       subdir:
-        type: string  # TODO: a portable path, more precisely (forward slashes)
+        type: string
+        # A portable path (see Alire.VFS.Error_In_Portable_Path). That it does
+        # not go above the repository root is checked by alr, as a pattern
+        # cannot count '..' segments.
+        pattern: '^(?!/)[^\\:]*$'
         description: >-
           Relative path to the crate within the repository, when not at its
-          root (e.g., monorepos).
+          root (e.g., monorepos). It uses forward slashes, cannot begin with
+          '/' or contain ':', and must stay within the repository.
       binary:
         type: boolean
         default: false

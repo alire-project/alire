@@ -3,6 +3,7 @@ with Ada.Exceptions;
 
 with Alire.Errors;
 with Alire.Settings.Builtins;
+with Alire.Conditional;
 with Alire.Crates;
 with Alire.Directories;
 with Alire.Loading;
@@ -19,11 +20,15 @@ with Alire.Index;
 with Alire.Manifest;
 with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Tweaks;
+with Alire.Properties.Actions.Runners;
+with Alire.Properties.Labeled;
+with Alire.Properties.Tests;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.VCSs.Git;
 with Alire.Utils;
 with Alire.Utils.TTY;
+with Alire.VFS;
 with Alire.Warnings;
 
 with GNATCOLL.VFS;
@@ -512,7 +517,24 @@ package body Alire.TOML_Index is
                    & Utils.TTY.Name (Name) & " " & TTY.Version (Version)
                    & " from " & File_Name);
 
-      --  Load the TOML file
+      --  Load the TOML file, unless too large to parse safely
+
+      declare
+         use type Dirs.File_Size;
+         Max_Size : constant Dirs.File_Size :=
+                      Dirs.File_Size
+                        (Settings.Setting_Int'Max
+                           (0, Settings.Builtins.Index_Max_Manifest_Size.Get));
+      begin
+         if Dirs.Size (File_Name) > Max_Size then
+            Raise_Checked_Error
+              (Error_In_File
+                 (File_Name,
+                  "manifest is larger than" & Max_Size'Image & " bytes (see "
+                  & "setting " & Settings.Builtins.Index_Max_Manifest_Size.Key
+                  & ")"));
+         end if;
+      end;
 
       Value := TOML_Load.Load_File (File_Name);
 
@@ -571,6 +593,62 @@ package body Alire.TOML_Index is
       end if;
    end Load_From_Index_Internal;
 
+   ----------------------------
+   -- Error_In_Release_Paths --
+   ----------------------------
+
+   function Error_In_Release_Paths (Rel : Releases.Release) return String is
+      --  Paths relative to the crate folder must stay within the deployed
+      --  origin, where the crate is at its subdir. Every case is checked, as
+      --  any of them may apply on some platform.
+
+      Subdir : constant String :=
+                 (if Rel.Origin.Is_Monorepo
+                  then String (Alire.VFS.To_Portable (Rel.Origin.Subdir))
+                  else "");
+      Props  : Conditional.Properties := Rel.Properties;
+      Error  : UString;
+
+      procedure Check (Path : String; What : String) is
+      begin
+         if +Error = "" then
+            Error := +Alire.VFS.Error_In_Contained_Path
+              (Path, What => What, Within => Subdir);
+         end if;
+      end Check;
+
+      ------------
+      --  Check --
+      ------------
+
+      procedure Check (Prop : in out Properties.Property'Class) is
+         use all type Properties.Labeled.Labels;
+      begin
+         if Prop in Properties.Labeled.Label'Class then
+            declare
+               Label : Properties.Labeled.Label renames
+                         Properties.Labeled.Label (Prop);
+            begin
+               if Label.Name in Project_File | Executable then
+                  Check (Label.Value, Label.Key);
+               end if;
+            end;
+         elsif Prop in Properties.Actions.Runners.Run'Class then
+            --  Stored in native form, from either separator
+            Check (String (Alire.VFS.To_Portable
+                   (Properties.Actions.Runners.Run (Prop).Working_Folder)),
+                   "action directory");
+         elsif Prop in Properties.Tests.Settings'Class then
+            Check (Properties.Tests.Settings (Prop).Directory,
+                   "test directory");
+         end if;
+      end Check;
+
+   begin
+      Props.Visit_All (Check'Access);
+      return +Error;
+   end Error_In_Release_Paths;
+
    -------------------
    -- Index_Release --
    -------------------
@@ -579,8 +657,7 @@ package body Alire.TOML_Index is
                             Rel  : Releases.Release)
    is
       use all type Origins.Kinds;
-      use GNATCOLL;
-      use all type VFS.Filesystem_String;
+      use all type GNATCOLL.VFS.Filesystem_String;
       Fixed : Releases.Release := Rel;
    begin
       --  Adjust and check a valid path for a local origin.
@@ -594,9 +671,9 @@ package body Alire.TOML_Index is
       begin
          if Origin.Kind = Filesystem then
             if not Origins.Deployers.Filesystem.Is_Valid_Local_Crate
-              (VFS.Create (+Origin.Path))
+              (GNATCOLL.VFS.Create (+Origin.Path))
             then
-               raise Constraint_Error with -- not an expected error in an index
+               Raise_Checked_Error
                  ("Local origin path is not a valid directory: "
                   & Origin.Path);
             end if;
@@ -604,6 +681,16 @@ package body Alire.TOML_Index is
 
          if Origin /= Fixed.Origin then
             Fixed := Fixed.Replacing (Origin);
+         end if;
+      end;
+
+      --  Check paths are contained to the origin
+
+      declare
+         Error : constant String := Error_In_Release_Paths (Fixed);
+      begin
+         if Error /= "" then
+            Raise_Checked_Error (Error);
          end if;
       end;
 

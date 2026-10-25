@@ -192,6 +192,11 @@ package Alire.Origins is
 
    Unknown_Source_Archive_Name_Error : exception;
 
+   function Error_In_Archive_Name (Name : String) return String;
+   --  Returns "" for a valid archive name, or else an error message naming it
+   --  and saying why it is invalid. The archive is downloaded to a file with
+   --  this name, so it must be a plain file name, without any path.
+
    function New_Source_Archive
      (URL    : Alire.URL;
       Name   : String := "") return Origin;
