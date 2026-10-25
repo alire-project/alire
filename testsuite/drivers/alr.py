@@ -2,6 +2,7 @@
 Helpers to run alr in the testsuite.
 """
 
+import hashlib
 import json
 import os
 import os.path
@@ -373,6 +374,67 @@ def index_version():
     Identify the expected index version from `alr version`
     """
     return index_branch().split('-')[1]
+
+
+def use_single_manifest_index(manifest: str, file_name: str) -> str:
+    """
+    Create a new index containing only one manifest, given its contents and
+    file name (e.g. "crate-1.0.0.toml" or "crate-external.toml"), and make alr
+    use that index alone, with fresh settings. This lets a test check
+    manifests that would otherwise interfere with each other (e.g. invalid
+    ones, as `alr index --check` stops at the first invalid manifest).
+
+    The index and settings directories are created under the current
+    directory, named after a hash of the manifest file name and contents (the
+    index directory name is also the index name, which is restricted in
+    length and characters). Using the same manifest again reuses them, as
+    they would be identical.
+
+    Preparing settings takes several alr runs, so they are prepared once in a
+    template directory, which is then copied for each new index.
+
+    Returns the index directory.
+    """
+    template_dir = os.path.abspath("alr-config-single-manifest-template")
+    version_file = template_dir + ".index_version"
+
+    if not os.path.isdir(template_dir):
+        prepare_env(template_dir, os.environ)
+        with open(version_file, "w") as f:
+            f.write(index_version())
+
+    crate = file_name.split("-")[0]
+    digest = hashlib.sha256((file_name + "\n" + manifest).encode())
+    index_dir = f"index_{digest.hexdigest()[:16]}"
+    config_dir = os.path.abspath(f"alr-config-{index_dir}")
+
+    if not os.path.isdir(index_dir):
+        crate_dir = os.path.join(index_dir, crate[:2], crate)
+        os.makedirs(crate_dir)
+        with open(version_file) as f:
+            version = f.read()
+        with open(os.path.join(index_dir, "index.toml"), "w") as f:
+            f.write(f'version = "{version}"\n')
+        with open(os.path.join(crate_dir, file_name), "w") as f:
+            f.write(manifest)
+
+        copytree(template_dir, config_dir)
+        prepare_indexes(config_dir, ".", {index_dir: {"in_fixtures": False}})
+
+    os.environ["ALIRE_SETTINGS_DIR"] = config_dir
+    return index_dir
+
+    crate_dir = os.path.join(index_dir, crate[:2], crate)
+    os.makedirs(crate_dir)
+    with open(os.path.join(index_dir, "index.toml"), "w") as f:
+        f.write(f'version = "{index_version()}"\n')
+    with open(os.path.join(crate_dir, file_name), "w") as f:
+        f.write(manifest)
+
+    prepare_env(config_dir, os.environ)
+    prepare_indexes(config_dir, ".", {index_dir: {"in_fixtures": False}})
+
+    return index_dir
 
 
 def init_local_crate(name=DEFAULT_CRATE_NAME, binary=True, enter=True, update=True,
