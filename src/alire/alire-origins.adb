@@ -369,6 +369,39 @@ package body Alire.Origins is
       end if;
    end Error_In_Archive_Name;
 
+   ----------------------
+   -- Error_In_VCS_URL --
+   ----------------------
+
+   function Error_In_VCS_URL (URL : Alire.URL) return String is
+      use all type URI.URI_Kinds;
+
+      function Invalid (Reason : String) return String
+      is ("invalid VCS URL '" & URL & "': " & Reason);
+
+      Kind   : constant URI.URI_Kinds := URI.URI_Kind (URL);
+      Remote : constant String := VCSs.Repo_URL (URL);
+      --  As given to the VCS tool
+   begin
+      if (for some C of URL => C <= ' ' or else C = Character'Val (127)) then
+         return Invalid ("it must not contain whitespace or control "
+                         & "characters");
+      elsif Remote = "" or else Remote (Remote'First) = '-' then
+         return Invalid ("it must not be empty or begin with '-'");
+      elsif Kind not in URI.Local_URIs | SCP_Style_Git
+        and then URI.Scheme (Remote) not in "http" | "https" | "ssh" | "git"
+      then
+         return Invalid ("transport '" & URI.Scheme (Remote)
+                         & "' is not supported");
+      elsif AAA.Strings.Has_Prefix (URI.Authority (Remote), "-")
+        or else AAA.Strings.Has_Prefix (URI.Host (Remote), "-")
+      then
+         return Invalid ("its user or host must not begin with '-'");
+      else
+         return "";
+      end if;
+   end Error_In_VCS_URL;
+
    ------------------------
    -- New_Source_Archive --
    ------------------------
@@ -418,8 +451,13 @@ package body Alire.Origins is
                      Is_Mirror : Boolean := False) return Origin is
       URL_Kind : constant URI.URI_Kinds := URI.URI_Kind (URL);
       VCS_URL : constant String := VCSs.Repo_URL (URL);
+      Error   : constant String := Error_In_VCS_URL (URL);
 
    begin
+      if Error /= "" then
+         Raise_Checked_Error (Error);
+      end if;
+
       case URL_Kind is
          when URI.Git_URIs =>
             --  A mirror has no commit of its own (it's taken from the origin)

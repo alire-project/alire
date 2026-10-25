@@ -197,6 +197,14 @@ package Alire.Origins is
    --  and saying why it is invalid. The archive is downloaded to a file with
    --  this name, so it must be a plain file name, without any path.
 
+   function Error_In_VCS_URL (URL : Alire.URL) return String;
+   --  Returns "" for a VCS URL that is safe to pass to its VCS tool, or else
+   --  an error message naming it and saying why not: the tool could take it,
+   --  or its host, as an option (e.g. "ssh://-oProxyCommand=..."), or as a
+   --  command to run (e.g. git's "ext::" transport). Only the http, https,
+   --  ssh and git transports, local paths and git@host:path remotes are
+   --  accepted, without whitespace or control characters.
+
    function New_Source_Archive
      (URL    : Alire.URL;
       Name   : String := "") return Origin;
