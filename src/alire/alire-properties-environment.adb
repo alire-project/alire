@@ -1,3 +1,4 @@
+with Alire.Loading;
 with Alire.TOML_Keys;
 with CLIC.Utils;
 
@@ -61,6 +62,25 @@ package body Alire.Properties.Environment is
       return TOML_Keys.Environment;
    end Key;
 
+   ----------------------------
+   -- Error_In_Variable_Name --
+   ----------------------------
+
+   function Error_In_Variable_Name (Name : String) return String is
+      function Invalid (Reason : String) return String
+      is ("invalid environment variable name '" & Name & "': " & Reason);
+   begin
+      if Name = "" or else Name (Name'First) in '0' .. '9' then
+         return Invalid ("it must begin with a letter or '_'");
+      elsif (for some C of Name =>
+               C not in 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')
+      then
+         return Invalid ("it must contain only letters, digits and '_'");
+      else
+         return "";
+      end if;
+   end Error_In_Variable_Name;
+
    ---------------
    -- From_TOML --
    ---------------
@@ -108,6 +128,20 @@ package body Alire.Properties.Environment is
                Val  : TOML_Value; -- The env. var. action. value
             begin
                Var.Name := Name;
+
+               --  Names are restricted in indexes, as they reach the shell
+               --  via `alr printenv`. Users may name their own variables.
+
+               if From.Metadata.Kind in Loading.Index then
+                  declare
+                     Error : constant String :=
+                               Error_In_Variable_Name (+Name);
+                  begin
+                     if Error /= "" then
+                        From.Checked_Error (Error);
+                     end if;
+                  end;
+               end if;
 
                --  Action
 

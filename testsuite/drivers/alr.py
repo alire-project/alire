@@ -633,6 +633,21 @@ def add_action(type: str, command: [str], name="", directory=""):
             manifest.write(f"directory = '{directory}'\n")
 
 
+def set_environ_in_manifest(values: dict[str, str]):
+    """
+    Replace the [environment] of the manifest in the current directory, which
+    must be its last table, with `set` actions for the given variables.
+    """
+    with open(alr_manifest(), encoding="utf-8") as f:
+        manifest = f.read().split("[environment]")[0]
+    with open(alr_manifest(), "w", encoding="utf-8") as f:
+        f.write(manifest + "[environment]\n")
+        for name, value in values.items():
+            escaped = value.replace("\\", "\\\\").replace('"', '\\"') \
+                           .replace("\n", "\\n")
+            f.write(f'{name}.set = "{escaped}"\n')
+
+
 def alr_copy_to_index(manifest, index_path):
     """
     Move a manifest with origin into its proper location in an index

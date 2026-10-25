@@ -25,6 +25,10 @@ may change.
   except in actions (applies to any index version).
 - index: manifests larger than 64 KiB are rejected (configurable with the
   `index.max_manifest_size` setting; applies to any index version).
+- alr: `alr printenv` quotes values so that shells take them literally: single
+  quotes for sh; for PowerShell, an ASCII-only expression with other
+  characters given as codes (`'a' + [char]0x0151`); `set "NAME=value"` for
+  cmd.exe, which fails on values containing `"`, `%`, `!` or line breaks.
 
 ### We are here
 

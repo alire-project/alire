@@ -316,7 +316,8 @@ static, i.e. they cannot depend on the context.
  - `environment`: optional dynamic table used to modify environment variables
    that will apply at build time. Variables and values are specified with the
    form `VARIABLE.<action> = "value"`, where `<action>` is one of `append`,
-   `prepend`, or `set`. For instance:
+   `prepend`, or `set`. In index manifests, variable names must be made of
+   ASCII letters, digits and `_`, and not begin with a digit. For instance:
 
    ```toml
    [environment]
