@@ -161,7 +161,11 @@ static, i.e. they cannot depend on the context.
    ```
 
  - `long-description`: optional free-form string to provide information about
-   this package, in addition to `description`, without length restrictions.
+   this package, in addition to `description`, of up to 16384 characters.
+
+   Text fields (`description`, `long-description`, `authors`, `notes`,
+   `website`, ...) must not contain control characters, except line breaks
+   and tabs in `long-description` and `notes`.
 
  - `authors`: optional array of strings. Flat list of human-readable names for
    the authors, i.e. the people that wrote the software that is packaged. For
@@ -215,8 +219,8 @@ static, i.e. they cannot depend on the context.
    licenses = "LicenseRef-my-license-1.2"
    ```
 
- - `website`: optional string. URL to the original project's website. For
-   instance:
+ - `website`: optional string, of up to 512 characters. URL to the original
+   project's website. For instance:
 
    ```toml
    website = "https://myproject.example.org/"
@@ -560,8 +564,8 @@ static, i.e. they cannot depend on the context.
  - `available`: optional dynamic boolean expression.  If it evaluates to
    `false`, the package is not available for the current platform.
 
- - `notes`: optional string. Provides miscellaneous information about this
-   release. For instance:
+ - `notes`: optional string, of up to 2048 characters. Provides miscellaneous
+   information about this release. For instance:
 
    ```json
    notes = "Experimental version"

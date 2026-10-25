@@ -36,6 +36,21 @@ package body Alire is
    function Absolute_Path_Image (Path : Alire.Absolute_Path) return String
    is (String (Path));
 
+   ------------------
+   -- UTF_8_Length --
+   ------------------
+
+   function UTF_8_Length (Text : String) return Natural is
+      Result : Natural := 0;
+   begin
+      for C of Text loop
+         if C not in Character'Val (16#80#) .. Character'Val (16#BF#) then
+            Result := Result + 1;
+         end if;
+      end loop;
+      return Result;
+   end UTF_8_Length;
+
    -------------------------
    -- Check_Absolute_Path --
    -------------------------
