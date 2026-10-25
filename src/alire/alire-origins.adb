@@ -96,6 +96,39 @@ package body Alire.Origins is
                Hashes   => <>,
                Subdir   => +Subdir));
 
+   ----------------------------------
+   -- Error_In_System_Package_Name --
+   ----------------------------------
+
+   function Error_In_System_Package_Name (Name : String) return String is
+      Max_Length : constant := 256;
+
+      function Is_Blank (C : Character) return Boolean
+      is (C <= ' ' or else C = Character'Val (127));
+      --  ASCII whitespace and control characters
+
+      function Invalid (Reason : String) return String
+      is ("invalid system package name '" & Name & "': " & Reason);
+   begin
+      if Name = "" then
+         return Invalid ("it is empty");
+      elsif Name'Length > Max_Length then
+         return Invalid ("it is longer than" & Max_Length'Image
+                         & " characters");
+      elsif Name (Name'First) not in 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' then
+         --  Excludes options ('-'), MacPorts variants ('+'), local paths
+         --  ('.', '/'), apt patterns ('~', '?') and emerge sets ('@').
+         return Invalid ("it must begin with a letter or digit");
+      elsif (for some C of Name => Is_Blank (C)) then
+         return Invalid ("it must not contain whitespace or control "
+                         & "characters");
+      elsif AAA.Strings.Contains (Name, "://") then
+         return Invalid ("it must not be a URL");
+      else
+         return "";
+      end if;
+   end Error_In_System_Package_Name;
+
    ----------------
    -- New_System --
    ----------------
@@ -784,7 +817,16 @@ package body Alire.Origins is
                                 & " instead.");
 
          when System                       =>
-            This := New_System (URI.Path (URL));
+            declare
+               Name  : constant String := URI.Path (URL);
+               Error : constant String := Error_In_System_Package_Name (Name);
+            begin
+               if Error /= "" then
+                  From.Checked_Error (Error);
+               end if;
+
+               This := New_System (Name);
+            end;
 
          when Unknown                      =>
             From.Checked_Error ("unsupported scheme in URL: " & URL);

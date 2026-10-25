@@ -219,7 +219,21 @@ package Alire.Origins is
    --  If Name is omitted, it is tentatively inferred from URL. If it cannot be
    --  inferred, this raises a Unknown_Source_Archive_Name_Error exception.
 
-   function New_System (System_Package_Name : String) return Origin;
+   function Error_In_System_Package_Name (Name : String) return String;
+   --  Returns "" for a valid system package name, or else an error message
+   --  naming it and saying why it is invalid. Package managers receive these
+   --  names from index manifests, so names that a package manager would not
+   --  take as a package from its repositories are rejected: options (a
+   --  leading '-'), local paths, URLs, patterns, and names with whitespace or
+   --  control characters. Any other name is allowed, as it can only select a
+   --  package from the system repositories, which an index manifest may name
+   --  anyway.
+
+   function Is_Valid_System_Package_Name (Name : String) return Boolean
+   is (Error_In_System_Package_Name (Name) = "");
+
+   function New_System (System_Package_Name : String) return Origin
+     with Pre => Is_Valid_System_Package_Name (System_Package_Name);
    --  A system origin points to a single system package known to exist,
    --  already detected by some External.
 
