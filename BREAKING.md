@@ -29,6 +29,8 @@ may change.
   quotes for sh; for PowerShell, an ASCII-only expression with other
   characters given as codes (`'a' + [char]0x0151`); `set "NAME=value"` for
   cmd.exe, which fails on values containing `"`, `%`, `!` or line breaks.
+- index: symbolic links in indexes are rejected, unless enabled with the
+  `index.allow_symlinks` setting (links to folders are never entered).
 
 ### We are here
 

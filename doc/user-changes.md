@@ -6,6 +6,16 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Symbolic links in indexes
+
+PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
+
+Symbolic links in an index (to manifests, or to crate or shelf folders) are
+skipped with a warning, or rejected by `alr index --check`, unless the new
+`index.allow_symlinks` setting is enabled. With it, links to manifests are
+followed, with a warning, which is convenient in private indexes, e.g. to test
+a manifest kept elsewhere. Links to folders are never entered.
+
 ### Invalid index manifests are skipped with a warning
 
 PR [#2194](https://github.com/alire-project/alire/pull/2194)
