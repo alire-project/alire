@@ -1,5 +1,6 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
+with Ada.Exceptions;
 
 with Alire.Containers;
 with Alire.Index_On_Disk.Loading;
@@ -32,6 +33,48 @@ package body Alire.Index is
    --  Release_Aliases, but as this simpler information is the one that's
    --  read/written to disk on index update, we better keep a separate copy
    --  for simplicity.
+
+   ------------------------------
+   -- Error_In_Release_Version --
+   ------------------------------
+
+   function Error_In_Release_Version (Text : String) return String is
+
+      function Invalid (Reason : String) return String
+      is ("version '" & Text & "' is not valid in an index: " & Reason);
+
+      function Part_Length (Part : String) return Natural
+      is (if Part = "" then 0 else Part'Length + 1);
+      --  Including the '-' or '+' separator
+
+   begin
+      if Text not in Semantic_Versioning.Version_String then
+         return Invalid ("it contains spaces");
+      elsif not Semantic_Versioning.Has_All_Points (Text) then
+         return Invalid ("it must give all three numbers, X.Y.Z");
+      end if;
+
+      declare
+         V : constant Semantic_Versioning.Version :=
+               Semantic_Versioning.Parse (Text);
+         --  Strict parsing rejects anything else semantic versioning forbids
+
+         Suffix_Length : constant Natural :=
+                           Part_Length (Semantic_Versioning.Pre_Release (V))
+                           + Part_Length (Semantic_Versioning.Build (V));
+      begin
+         if Suffix_Length > Max_Version_Suffix_Length then
+            return Invalid ("pre-release and build metadata are longer than"
+                            & Max_Version_Suffix_Length'Image
+                            & " characters in total");
+         end if;
+      end;
+
+      return "";
+   exception
+      when E : Semantic_Versioning.Malformed_Input =>
+         return Invalid (Ada.Exceptions.Exception_Message (E));
+   end Error_In_Release_Version;
 
    ---------
    -- Add --
@@ -108,11 +151,21 @@ package body Alire.Index is
       end Add_Aliases;
 
       Crate : Crates.Crate := Crates.New_Crate (Release.Name);
+
+      Is_New : constant Boolean :=
+                 not Contents.Contains (Release.Name)
+                 or else
+                   not Contents (Release.Name).Contains (Release.Version);
+      --  An already indexed version is not replaced (see Add for crates), so
+      --  neither must be its aliases, or a duplicate release could replace
+      --  the indexed one through crates that provide it.
    begin
       Crate.Add (Release);
       Add (Crate, Policy);
 
-      Add_Aliases;
+      if Is_New then
+         Add_Aliases;
+      end if;
    end Add;
 
    package Name_Sets is
