@@ -1,5 +1,4 @@
 with Ada.Directories;
-with Ada.Text_IO;
 
 with Alire.Settings.Builtins;
 with Alire.Settings.Edit;
@@ -16,7 +15,6 @@ with Alire.Warnings;
 with GNAT.OS_Lib;
 
 with TOML;
-with TOML.File_IO;
 
 package body Alire.Index_On_Disk.Loading is
 
@@ -624,8 +622,6 @@ package body Alire.Index_On_Disk.Loading is
 
    procedure Save_Providers (Indexes_Dir : Any_Path) is
       use Ada.Directories;
-      use Ada.Text_IO;
-      File : File_Type;
       Filename : constant Any_Path := Providers_File (Indexes_Dir);
    begin
       if not GNAT.OS_Lib.Is_Directory (Containing_Directory (Filename)) then
@@ -634,16 +630,11 @@ package body Alire.Index_On_Disk.Loading is
          return;
       end if;
 
-      Create (File, Out_File, Filename);
-      TOML.File_IO.Dump_To_File (Alire.Index.All_Crate_Aliases.To_TOML, File);
-      Close (File);
+      TOML_Load.Write_File (Alire.Index.All_Crate_Aliases.To_TOML, Filename);
    exception
       when E : others =>
          --  E.g., on disk full
          Log_Exception (E);
-         if Is_Open (File) then
-            Close (File);
-         end if;
          if GNAT.OS_Lib.Is_Regular_File (Filename) then
             Ada.Directories.Delete_File (Filename);
          end if;

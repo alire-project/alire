@@ -1,11 +1,8 @@
 with Ada.Directories;
-with Ada.Text_IO;
 
 with Alire.Directories;
 with Alire.Paths;
 with Alire.TOML_Load;
-
-with TOML.File_IO;
 
 package body Alire.Lockfiles is
 
@@ -125,25 +122,16 @@ package body Alire.Lockfiles is
    procedure Write (Contents : Lockfiles.Contents;
                     Filename : Absolute_Path)
    is
-      use Ada.Text_IO;
-      File  : File_Type;
    begin
       Trace.Debug ("Dumping lockfile contents to " & Filename);
 
       Directories.Create_Tree (Directories.Parent (Filename));
-      Create (File, Out_File, Filename);
-      Put_Line (File,
-                "# THIS FILE IS GENERATED. DO NOT EDIT.");
-      New_Line (File);
-
-      TOML.File_IO.Dump_To_File (Contents.To_TOML, File);
-      Close (File);
+      TOML_Load.Write_File
+        (Contents.To_TOML, Filename,
+         Header => AAA.Strings.To_Vector
+                     ("# THIS FILE IS GENERATED. DO NOT EDIT.").Append (""));
    exception
       when others =>
-         if Is_Open (File) then
-            Close (File);
-         end if;
-
          --  Clean up
 
          if Ada.Directories.Exists (Filename) then

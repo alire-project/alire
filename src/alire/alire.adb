@@ -51,6 +51,13 @@ package body Alire is
       return Result;
    end UTF_8_Length;
 
+   --------------------------
+   -- Is_Valid_Description --
+   --------------------------
+
+   function Is_Valid_Description (Text : String) return Boolean
+   is (UTF_8_Length (Text) <= Max_Description_Length);
+
    -------------------------
    -- Check_Absolute_Path --
    -------------------------
