@@ -137,8 +137,12 @@ package Alire with Preelaborate is
    --  UTF-8. Text lengths in manifests are measured this way, as JSON Schema
    --  does for its maxLength.
 
+   function Is_Valid_Description (Text : String) return Boolean;
+   --  Whether Text has at most Max_Description_Length characters. Not an
+   --  expression in the predicate below, as GNAT 10 and 11 crash on it.
+
    subtype Description_String is String with Dynamic_Predicate =>
-     UTF_8_Length (Description_String) <= Max_Description_Length;
+     Is_Valid_Description (Description_String);
 
    subtype Folder_String is String
      with

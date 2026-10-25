@@ -257,4 +257,46 @@ package body Alire.TOML_Load is
       end if;
    end Load_File;
 
+   ----------------
+   -- Dump_Lines --
+   ----------------
+
+   function Dump_Lines (Value : TOML.TOML_Value) return AAA.Strings.Vector is
+   begin
+      return Lines : AAA.Strings.Vector :=
+        Split (TOML.Dump_As_String (Value), Latin_1.LF)
+      do
+         --  The dump ends in a line break, which leaves an empty last line
+         if not Lines.Is_Empty and then Lines.Last_Element = "" then
+            Lines.Delete_Last;
+         end if;
+      end return;
+   end Dump_Lines;
+
+   ----------------
+   -- Write_File --
+   ----------------
+
+   procedure Write_File (Value     : TOML.TOML_Value;
+                         File_Name : Any_Path;
+                         Header    : AAA.Strings.Vector :=
+                                       AAA.Strings.Empty_Vector)
+   is
+      use Ada.Streams.Stream_IO;
+      File : File_Type;
+   begin
+      --  The UTF-8 bytes are written as they are
+      Create (File, Out_File, File_Name);
+      for Line of Header.Append (Dump_Lines (Value)) loop
+         String'Write (Stream (File), Line & Alire.New_Line);
+      end loop;
+      Close (File);
+   exception
+      when others =>
+         if Is_Open (File) then
+            Close (File);
+         end if;
+         raise;
+   end Write_File;
+
 end Alire.TOML_Load;

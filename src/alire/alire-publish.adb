@@ -25,6 +25,7 @@ with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.User_Pins.Maps;
+with Alire.Utils.Text_Files;
 with Alire.Utils.Tools;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
@@ -35,8 +36,7 @@ with CLIC.User_Input;
 
 with Semantic_Versioning;
 
-with TOML.File_IO;
-
+with TOML;
 with TOML_Slicer;
 
 package body Alire.Publish is
@@ -533,7 +533,6 @@ package body Alire.Publish is
       end if;
 
       declare
-         use Ada.Text_IO;
          use all type CLIC.User_Input.Answer_Kind;
          use TOML;
          TOML_Manifest  : constant TOML_Value :=
@@ -551,7 +550,6 @@ package body Alire.Publish is
                              else "." / Paths.Working_Folder_Inside_Root)
                             / Paths.Release_Folder_Inside_Working_Folder
                             / TOML_Index.Manifest_File (Name, Version);
-         Index_File     : File_Type;
       begin
          if Workspace.Is_Valid and then
            (not Context.Options.Nonstandard_Manifest) and then
@@ -576,10 +574,11 @@ package body Alire.Publish is
          --  Take the user manifest and bundle it under the proper index
          --  manifest name with the origin we are being provided with:
 
-         Open (Index_File, Append_File, Index_Manifest);
-         New_Line (Index_File);
-         TOML.File_IO.Dump_To_File (TOML_Origin, Index_File);
-         Close (Index_File);
+         Utils.Text_Files.Append_Lines
+           (Index_Manifest,
+            AAA.Strings.To_Vector ("").Append
+              (TOML_Load.Dump_Lines (TOML_Origin)),
+            Backup => False);
 
          Put_Success
            ("Your index manifest file has been generated at "
@@ -643,13 +642,6 @@ package body Alire.Publish is
                & TTY.URL
                  (String (TOML_Index.Community_Manifest_Path (Name)) & "/"));
          end if;
-
-      exception
-         when others =>
-            if Is_Open (Index_File) then
-               Close (Index_File);
-            end if;
-            raise;
       end;
    end Generate_Index_Manifest;
 
