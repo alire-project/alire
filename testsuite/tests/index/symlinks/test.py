@@ -10,7 +10,6 @@ import shutil
 
 from drivers.alr import alr_settings_set, run_alr
 from drivers.asserts import assert_invalid_manifest, assert_match
-from drivers.helpers import on_windows
 
 MANIFEST = """\
 description = "\\"Hello, world!\\" demonstration project"
@@ -49,48 +48,45 @@ def link(target: str, path: str):
     os.symlink(os.path.join(OUTSIDE, target), os.path.join(INDEX, path))
 
 
-if on_windows():
-    print("SKIP: creating symbolic links needs privileges on Windows")
-else:
-    # A link to a manifest, a crate folder or a shelf folder is rejected, both
-    # in full loads (assert_invalid_manifest) and single-crate loads (second
-    # `show`, now that the providers cache exists)
+# A link to a manifest, a crate folder or a shelf folder is rejected, both
+# in full loads (assert_invalid_manifest) and single-crate loads (second
+# `show`, now that the providers cache exists)
 
-    for target, path in [
-            ("he/hello_world/hello_world-0.1.0.toml",
-             "he/hello_world/hello_world-0.1.0.toml"),
-            ("he/hello_world", "he/hello_world"),
-            ("he", "he")]:
-        reset()
-        link(target, path)
-        assert_invalid_manifest(re.escape(LINK + os.path.join(INDEX, path))
-                                + SETTING)
-        p = run_alr("show", "hello_world", complain_on_error=False,
-                    quiet=False)
-        assert_match(".*" + re.escape(LINK), p.out)
-
-    # When allowed, a link to a manifest is followed, with a warning
-
-    alr_settings_set("index.allow_symlinks", "true")
+for target, path in [
+        ("he/hello_world/hello_world-0.1.0.toml",
+         "he/hello_world/hello_world-0.1.0.toml"),
+        ("he/hello_world", "he/hello_world"),
+        ("he", "he")]:
     reset()
-    path = "he/hello_world/hello_world-0.1.0.toml"
-    link(path, path)
-    following = ("Warning: Following symbolic link in index: "
-                 + re.escape(os.path.join(INDEX, path)))
-    assert_match(".*" + following, run_alr("index", "--check", quiet=False).out)
-    p = run_alr("show", "hello_world", quiet=False)
-    assert_match(".*" + following + ".*hello_world=0.1.0", p.out)
+    link(target, path)
+    assert_invalid_manifest(re.escape(LINK + os.path.join(INDEX, path))
+                            + SETTING)
+    p = run_alr("show", "hello_world", complain_on_error=False,
+                quiet=False)
+    assert_match(".*" + re.escape(LINK), p.out)
 
-    # Links to folders are never entered, in full or single-crate loads, also
-    # with a warning
+# When allowed, a link to a manifest is followed, with a warning
 
-    reset()
-    link("he/hello_world", "he/hello_world")
-    for _ in range(2):  # Without and with providers cache
-        p = run_alr("show", "hello_world", complain_on_error=False,
-                    quiet=False)
-        assert_match(".*Warning: Not entering symbolic link to folder in index: "
-                     + re.escape(os.path.join(INDEX, "he/hello_world"))
-                     + ".*hello_world.* does not exist in the index", p.out)
+alr_settings_set("index.allow_symlinks", "true")
+reset()
+path = "he/hello_world/hello_world-0.1.0.toml"
+link(path, path)
+following = ("Warning: Following symbolic link in index: "
+             + re.escape(os.path.join(INDEX, path)))
+assert_match(".*" + following, run_alr("index", "--check", quiet=False).out)
+p = run_alr("show", "hello_world", quiet=False)
+assert_match(".*" + following + ".*hello_world=0.1.0", p.out)
 
-    print("SUCCESS")
+# Links to folders are never entered, in full or single-crate loads, also
+# with a warning
+
+reset()
+link("he/hello_world", "he/hello_world")
+for _ in range(2):  # Without and with providers cache
+    p = run_alr("show", "hello_world", complain_on_error=False,
+                quiet=False)
+    assert_match(".*Warning: Not entering symbolic link to folder in index: "
+                 + re.escape(os.path.join(INDEX, "he/hello_world"))
+                 + ".*hello_world.* does not exist in the index", p.out)
+
+print("SUCCESS")
