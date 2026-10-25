@@ -31,6 +31,8 @@ with Alire.Utils.TTY;
 with Alire.VFS;
 with Alire.Warnings;
 
+with Den;
+
 with GNATCOLL.VFS;
 
 with TOML;
@@ -344,7 +346,9 @@ package body Alire.TOML_Index is
       Root   : constant Any_Path := Locate_Root (Index, Result);
       --  Locate a dir containing a 'index.toml' metadata file inside the repo.
       --  This is the directory containing the actual crates.
-      Crate_Root : constant Any_Path := Root / Crate.Index_Prefix / (+Crate);
+      Shelf      : constant Any_Path := Root / Crate.Index_Prefix;
+      Crate_Root : constant Any_Path := Shelf / (+Crate);
+      use type Den.Kinds;
    begin
       Result.Assert;
 
@@ -353,7 +357,20 @@ package body Alire.TOML_Index is
       Trace.Debug ("Loading single crate " & Utils.TTY.Name (Crate)
                    & " from " & Crate_Root);
 
-      if GNAT.OS_Lib.Is_Directory (Crate_Root) then
+      if Den.Kind (Crate_Root) = Den.Softlink
+        or else Den.Kind (Shelf) = Den.Softlink
+      then
+         --  As when loading the whole index, linked folders are not entered,
+         --  but reported unless links are allowed
+         declare
+            Stop : Boolean := False;
+         begin
+            Load_Manifest ((if Den.Kind (Shelf) = Den.Softlink
+                            then Shelf
+                            else Crate_Root),
+                           Stop);
+         end;
+      elsif GNAT.OS_Lib.Is_Directory (Crate_Root) then
          Alire.Directories.Traverse_Tree
            (Start   => Crate_Root,
             Doing   => Load_Manifest'Access,
@@ -390,7 +407,40 @@ package body Alire.TOML_Index is
             Id => Warnings.Warning_Id (Id));
       end Skip;
 
+      Allow_Links : constant Boolean :=
+                      Settings.Builtins.Index_Allow_Symlinks.Get;
+
+      ---------------------
+      -- Check_Not_Linked --
+      ---------------------
+
+      procedure Check_Not_Linked (Path : Any_Path) is
+         use type Den.Kinds;
+      begin
+         --  Links may point anywhere outside the index, so they are only
+         --  followed when allowed (the community index cannot have them), and
+         --  even then reported, as they are unusual in an index.
+
+         if Den.Kind (Path) /= Den.Softlink then
+            return;
+         elsif not Allow_Links then
+            Raise_Checked_Error
+              ("symbolic link in index: " & Path & " (see setting "
+               & Settings.Builtins.Index_Allow_Symlinks.Key & ")");
+         elsif Den.Target_Kind (Path) = Den.Directory then
+            Warnings.Warn_Once
+              ("Not entering symbolic link to folder in index: " & Path,
+               Id => Warnings.Warning_Id (String'("index link " & Path)));
+         else
+            Warnings.Warn_Once
+              ("Following symbolic link in index: " & Path,
+               Id => Warnings.Warning_Id (String'("index link " & Path)));
+         end if;
+      end Check_Not_Linked;
+
    begin
+      Check_Not_Linked (Item);
+
       if Kind (Item) /= Ordinary_File then
          return;
       end if;

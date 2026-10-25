@@ -80,7 +80,7 @@ commit = "f7cd77d2ba6c5dfe1fc782254c95ea7bca1dd453"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"
-commit = "32225955994267799495262f7cac479b6cd22fd3"
+commit = "1464686bdc249b553139b47b43ff82afa8a014c3"
 
 [pins.dirty_booleans]
 url    = "https://github.com/mosteo/dirty_booleans"
