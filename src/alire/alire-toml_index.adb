@@ -666,15 +666,36 @@ package body Alire.TOML_Index is
             use type Semver.Version;
             Internal : constant String :=
                          Value.Get (TOML_Keys.Version).As_String;
+
+            ------------
+            -- Parsed --
+            ------------
+            --  Ensure version is parseable and promote error if not
+            function Parsed (Text, Where : String) return Semver.Version is
+            begin
+               return Semver.Parse (Text);
+            exception
+               when E : Semver.Malformed_Input =>
+                  Raise_Checked_Error
+                    (Error_In_File
+                       (File_Name,
+                        "invalid version " & Text & " in " & Where & ": "
+                        & Ada.Exceptions.Exception_Message (E)));
+            end Parsed;
+
+            File_Version     : constant Semver.Version :=
+                                 Parsed (Version, "file name");
+            Contents_Version : constant Semver.Version :=
+                                 Parsed (Internal, "contents");
          begin
             --  Versions must be the same in both places, including the build
             --  metadata that version equality ignores, so the file name cannot
             --  misrepresent the release. Short forms like "1.0" for "1.0.0"
             --  are the same version.
 
-            Assert (Semver.Parse (Version) = Semver.Parse (Internal)
-                    and then Semver.Build (Semver.Parse (Version))
-                             = Semver.Build (Semver.Parse (Internal)),
+            Assert (File_Version = Contents_Version
+                    and then Semver.Build (File_Version)
+                             = Semver.Build (Contents_Version),
                     Error_In_File (File_Name,
                       "Mismatched versions: file name says " & Version
                       & " but contents say " & Internal));
