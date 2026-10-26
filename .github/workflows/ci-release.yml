@@ -33,7 +33,7 @@ env:
   # Otherwise: test with particular commit/branch
   # e.g.: index: "git+https://github.com/alire-project/alire-index@deadbeef"
   MSYS64_ROOT:  C:\Users\runneradmin\AppData\Local\alire\cache\msys64
-  MINGW64_PATH: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\mingw64\bin
+  MINGW64_PATH: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\ucrt64\bin
   MSYS2_PATH:   C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin
   MSYS2_PACMAN: C:\Users\runneradmin\AppData\Local\alire\cache\msys64\usr\bin\pacman --noconfirm
 
@@ -307,10 +307,11 @@ jobs:
       run: bin/alr version
       shell: bash
 
+    # Only in ucrt64 and clang64 since MSYS2 dropped it from mingw64 (2026-10)
     - name: Install qt-installer-framework in msys2
-      run: ${{env.MSYS2_PACMAN}} -S mingw64/mingw-w64-x86_64-qt-installer-framework
+      run: ${{env.MSYS2_PACMAN}} -S ucrt64/mingw-w64-ucrt-x86_64-qt-installer-framework
 
-    - name: Add msys2 /mingw64/bin to the path (for qt-installer-framework)
+    - name: Add msys2 /ucrt64/bin to the path (for qt-installer-framework)
       run: echo '${{env.MINGW64_PATH}}' >> $GITHUB_PATH
       shell: bash
 
