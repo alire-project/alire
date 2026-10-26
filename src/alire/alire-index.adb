@@ -178,19 +178,39 @@ package body Alire.Index is
 
    procedure Check_Contents is
       OK : Boolean := True;
+
+      procedure Check_Host (Rel    : Releases.Release;
+                            Origin : Origins.Origin;
+                            What   : String;
+                            Fatal  : Boolean) is
+      begin
+         --  VCS sources are pinned by commit, i.e., by SHA-1, which is open to
+         --  collisions, so they must come from trusted hosts. Archives are
+         --  pinned by stronger hashes, so they may come from anywhere.
+         if Origin.Kind in Origins.VCS_Kinds
+           and then not Publish.Is_Trusted (Origin.URL,
+                                            For_Community => False)
+         then
+            if Fatal then
+               OK := False;
+            end if;
+            Put_Warning ("Release " & Rel.Milestone.TTY_Image
+                         & " has " & What & " not in known hosts: "
+                         & TTY.URL (Origin.URL));
+         end if;
+      end Check_Host;
+
    begin
       for Crate of All_Crates.all loop
          for Rel of Crate.Releases loop
-            if Rel.Origin.Kind in Origins.VCS_Kinds then
-               if not Publish.Is_Trusted
-                 (Rel.Origin.URL, For_Community => False)
-               then
-                  OK := False;
-                  Put_Warning ("Release " & Rel.Milestone.TTY_Image
-                               & " has URL not in known hosts: "
-                                 & TTY.URL (Rel.Origin.URL));
-               end if;
-            end if;
+            Check_Host (Rel, Rel.Origin, "URL", Fatal => True);
+
+            --  Mirrors are fallbacks for availability, often on less common
+            --  hosts, so they are only reported; whether to deploy from an
+            --  untrusted one is up to the user when it is used.
+            for Mirror of Rel.Mirrors loop
+               Check_Host (Rel, Mirror, "mirror URL", Fatal => False);
+            end loop;
          end loop;
       end loop;
 

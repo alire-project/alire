@@ -166,6 +166,17 @@ package Alire.Settings.Builtins is
       & " index (which only permits the default list, due to vulnerabilities"
       & " identified in Git's use of SHA1).");
 
+   Origins_Mirrors_Untrusted : constant Builtin := New_Builtin
+     (Key         => "origins.mirrors.untrusted",
+      Kind        => Stn_String,
+      Def         => "warn",
+      Global_Only => True,
+      Help        =>
+        "What to do when deploying from a VCS mirror whose host is not in"
+      & " origins.git.trusted_sites: 'warn', 'reject' or 'allow'. Mirrors"
+      & " are only tried when the origin itself is unavailable. Not used"
+      & " yet, as alr does not deploy from mirrors yet.");
+
    --  SOLVER
 
    Solver_Autonarrow : constant Builtin := New_Builtin
