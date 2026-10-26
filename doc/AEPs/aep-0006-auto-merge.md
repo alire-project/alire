@@ -465,18 +465,23 @@ Dropped from the original plan:
 Phase 3: ownership model
 ------------------------
 
+Ownership is already enforced since Phase 0 (authority of the latest base
+release); this phase documents it, and the governance around it.
+
 1. Document that ownership authority is the `maintainers-logins` list of the
    latest release in the base branch. Optionally, introduce later a
    crate-level ownership file in the index, editable only via manual review.
+   *Documented in `doc/policies.md` (branch `docs/ownership-policy`).*
 1. Any change to `maintainers-logins` requires manual review. Adding
    maintainers could later be auto-merged if an existing maintainer approves
    the PR. *Part of the eligibility computed in Phase 4: until then every PR
    is reviewed by hand, so a separate signal would have no consumer.*
 1. Document the ownership transfer procedure (abandoned crates, disputes) in
-   `doc/policies.md`.
-1. Consider requiring two-factor authentication for maintainers of
-   auto-merged crates. GitHub does not expose this for arbitrary users, so it
-   would be policy rather than a check.
+   `doc/policies.md`. *Same branch.*
+
+Requiring two-factor authentication for maintainers was considered and
+dropped: GitHub does not expose it for arbitrary users, so it could only be an
+unenforceable policy.
 
 Phase 4: auto-merge bot
 -----------------------
@@ -1098,9 +1103,18 @@ Phase 2: community policy checks
 Phase 3: ownership
 ------------------
 
-- [ ] **Document ownership in `doc/policies.md`.** Cover the authority of the
-  latest base-branch release, ownership transfer, and withdrawal via
-  `available = false`.
+- [ ] **Document ownership in `doc/policies.md`.** (branch
+  `docs/ownership-policy`, no PR yet)
+  - "Maintainers": authority is the `maintainers-logins` of the latest
+    release in the index (the external manifest for crates without
+    releases), compared without regard to case; a submission's own list
+    grants nothing to that submission, and changes take effect once merged.
+  - "Transferring ownership": through a release with the updated list, or,
+    for unreachable maintainers, abandoned crates or disputes, through an
+    issue in the index repository, decided by the index maintainers.
+  - Withdrawal through `available = false`, the only accepted modification
+    of a published manifest, under "Release immutability".
+  - `doc/publishing.md` no longer mentions "metadata modifications".
 - Gating changes to `maintainers-logins` is part of the Phase 4
   eligibility script.
 
