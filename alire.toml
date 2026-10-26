@@ -88,7 +88,7 @@ commit = "05c40d88ecfe109e575ec8b21dd6ffa2e61df1dc"
 
 [pins.diskflags]
 url    = "https://github.com/mosteo/diskflags"
-commit = "60729edf31816aca0036b13b2794c39a9bd0172e"
+commit = "af119105e677e64aa79e53e22a824cc0a510476e"
 
 [pins.gnatcoll]
 url    = "https://github.com/alire-project/gnatcoll-core.git"

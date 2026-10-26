@@ -5,11 +5,12 @@ crate must not cause trouble.
 """
 
 import os
+from glob import glob
 from subprocess import run
 
 from drivers import builds
 from drivers.alr import alr_publish, alr_with, init_local_crate, run_alr
-from drivers.helpers import commit_all, init_git_repo, on_windows
+from drivers.helpers import commit_all, init_git_repo, on_windows, URL_HASH_GLOB
 
 # We create a repository with two nested crates that will act as the upstream
 # remote repository:
@@ -52,10 +53,10 @@ run_alr("build")
 
 def release_base(commit: str) -> str:
     if builds.are_shared():
-        return builds.find_dir(f"monoproject_{commit[:8]}")
+        return builds.find_dir(f"monoproject_{URL_HASH_GLOB}_{commit[:8]}")
     else:
-        return os.path.join("alire", "cache", "dependencies",
-                            f"monoproject_{commit[:8]}")
+        return glob(os.path.join("alire", "cache", "dependencies",
+                                 f"monoproject_{URL_HASH_GLOB}_{commit[:8]}"))[0]
 
 
 assert os.path.isfile(os.path.join(
@@ -73,13 +74,13 @@ if builds.are_shared():
 else:
     deps_dir = os.path.join("alire", "cache", "dependencies")
 
-assert os.path.isfile(os.path.join(
+assert glob(os.path.join(
     deps_dir,
-    f"crate1_0.1.0_in_monoproject_{commit1[:8]}")), \
+    f"crate1_0.1.0_in_monoproject_{URL_HASH_GLOB}_{commit1[:8]}")), \
     f"Expected info file does not exist"
-assert os.path.isfile(os.path.join(
+assert glob(os.path.join(
     deps_dir,
-    f"crate2_0.1.0_in_monoproject_{commit2[:8]}")), \
+    f"crate2_0.1.0_in_monoproject_{URL_HASH_GLOB}_{commit2[:8]}")), \
     "Expected info file does not exist"
 
 print('SUCCESS')

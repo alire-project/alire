@@ -4,10 +4,11 @@ use it as a dependency
 """
 
 import os
+from glob import glob
 
 from drivers import builds
 from drivers.alr import run_alr, init_local_crate, alr_with, alr_publish
-from drivers.helpers import init_git_repo, on_windows
+from drivers.helpers import init_git_repo, on_windows, URL_HASH_GLOB
 # from drivers.asserts import assert_eq, assert_match
 from subprocess import run
 
@@ -42,7 +43,10 @@ alr_publish("mycrate", "0.1.0-dev", index_path=os.path.join(start_dir, "my_index
 # Verify that the crate can be got and compiled, and expected location
 os.chdir(start_dir)
 run_alr("get", "--build", "mycrate")
-assert os.path.isdir(os.path.join(f"monoproject_{commit[:8]}", "mycrate")), \
+# Monorepo folders are named after the repository, a hash of its URL, and the
+# commit
+checkout = glob(f"monoproject_{URL_HASH_GLOB}_{commit[:8]}")[0]
+assert os.path.isdir(os.path.join(checkout, "mycrate")), \
     "Expected directory does not exist"
 
 # Verify that the crate is usable as a dependency, and expected binary location
@@ -50,7 +54,8 @@ init_local_crate("top")
 alr_with("mycrate")
 run_alr("build")
 base = (builds.find_dir("monoproject") if builds.are_shared()
-        else os.path.join("alire", "cache", "dependencies", f"monoproject_{commit[:8]}"))
+        else glob(os.path.join("alire", "cache", "dependencies",
+                               f"monoproject_{URL_HASH_GLOB}_{commit[:8]}"))[0])
 assert os.path.isfile(os.path.join(
     base, "mycrate", "bin",
     f"mycrate{'.exe' if on_windows() else ''}")), \
@@ -59,8 +64,9 @@ assert os.path.isfile(os.path.join(
 # Also that the info file is there
 deps_dir = (builds.vault_path() if builds.are_shared()
             else os.path.dirname(base))
-infofile = f"mycrate_0.1.0_in_monoproject_{commit[:8]}"
-assert os.path.isfile(os.path.join(deps_dir, infofile)), \
+infofiles = glob(os.path.join(deps_dir,
+                             f"mycrate_0.1.0_in_monoproject_{URL_HASH_GLOB}_{commit[:8]}"))
+assert len(infofiles) == 1 and os.path.isfile(infofiles[0]), \
     "Expected info file does not exist"
 
 print('SUCCESS')
