@@ -25,12 +25,42 @@ are not willing to comply with this policy.
 As the Alire project matures, we expect to do less moderating and potentially
 remove this policy in favor of a "first come, first served" policy.
 
+### Maintainers
+
+The maintainers of a crate are the GitHub users listed in the
+`maintainers-logins` property of its latest release in the community index
+(by semantic version precedence; for a crate with no releases, its
+`-external.toml` manifest). Only they may automatically submit new releases
+of the crate, or withdraw existing ones. Logins are compared without regard
+to case. Changes to `maintainers-logins are always reviewed by the index
+maintainers.
+
+### Transferring ownership
+
+To add or remove maintainers, a current maintainer submits a new release with
+the updated `maintainers-logins`, which is reviewed as noted above.
+
+When the maintainers of a crate cannot be reached, have abandoned it, or
+there is a dispute over it, open an issue in the
+[community index repository](https://github.com/alire-project/alire-index)
+explaining the situation. The index maintainers will try to contact the
+current maintainers, and decide on the transfer after a reasonable time,
+following the goals stated above.
+
 ## Release immutability
 
 A release (identified by a unique semantic version) is protected against
 changes by its integrity hashes. If errors are identified post-publication, a
 release could be withdrawn, or superseded by a new one (using the appropriate
 major/minor/patch/build version changes), but not modified.
+
+To withdraw a release, a current maintainer submits a change to its manifest
+that only adds (or sets) `available = false` at the top level. This is the
+only modification of a published manifest that the community index accepts
+automatically.
+
+Minor (without impact in the code or its build) metadata changes can be
+proposed in a regular PR, that will be manually reviewed by index maintainers.
 
 ## Best practices
 
