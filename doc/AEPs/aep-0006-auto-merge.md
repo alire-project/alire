@@ -207,6 +207,12 @@ to ASCII `[a-z0-9_]`, which rules out Unicode homoglyphs. However:
 
    `alr index --check` only checks VCS hosts, and against the user's setting
    rather than the community list (`src/alire/alire-index.adb:126-147`).
+
+   *Addressed in Phase 2: local, `ssh` and `svn` origins are rejected by the
+   index CI ([alire-index-checks#32](https://github.com/alire-project/alire-index-checks/pull/32)), and `alr index --check` warns about VCS mirrors on
+   untrusted hosts ([#2213](https://github.com/alire-project/alire/pull/2213)). The setting is the community list by
+   default, which is what CI uses, so a separate built-in check adds nothing.
+   Archive origins and mirrors need no trusted host, as SHA-512 pins them.*
 1. **Minor issues.**
    - `alr printenv` output is not escaped
      (`src/alire/alire-environment.adb:81`), and environment variable names
@@ -267,11 +273,10 @@ it gets a `needs-review` label and follows the manual process.
 
    Version, commit, hashes, dependencies, description and similar fields may
    change freely.
-1. Origins and mirrors are on a trusted host. There are no `file:`, `ssh`,
-   `svn` or system origins.
-1. The manifest is within the size and field limits (Phase 1).
-1. The strict community check (Phase 2) passes, run with both the oldest and
-   the newest `alr` supported on the target branch.
+1. VCS origins are on a trusted host (their commits are SHA-1). There are no
+   `file:`, `ssh`, `svn` or system origins.
+1. The manifest is within the size and field limits (Phases 1 and 2).
+1. All the index CI checks pass.
 1. The release builds or tests successfully on at least one platform.
    "Unavailable everywhere" or "missing dependencies everywhere" does not count
    as success.
@@ -426,27 +431,36 @@ These changes protect users regardless of how a manifest was merged.
    manifests, and may make sense in private ones, so the index CI rejects
    them in new manifests instead ([alire-index-checks#31](https://github.com/alire-project/alire-index-checks/pull/31)).*
 
-Phase 2: strict community checks in `alr`
------------------------------------------
+Phase 2: community policy checks
+--------------------------------
 
-1. Add a community-strict mode, for example `alr index --check --community
-   [files...]`. It enforces at load time the rules that today exist only in
-   `alr publish`:
-   - origin and mirror hosts in `Community_Trusted_Sites` (the built-in list,
-     not the user's setting);
-   - no `file:`, `ssh` or `svn` origins;
-   - valid GitHub logins;
-   - no pins;
-   - the text-field limits from Phase 1.
-1. Add a release diff command, for example `alr index --diff-release <old>
-   <new>`, that emits a machine-readable list of risk-relevant changes:
-   - maintainers, `provides`/`forbids`, actions and environment;
-   - origin kind or repository, and new external kinds.
+The rules of the community index that are not about loading manifests safely
+are policy, and are checked in alire-index-checks rather than in `alr`: they
+take effect without an `alr` release, and do not add to `alr` options that only
+CI would use.
 
-   CI uses it to decide eligibility, instead of the current `grep`-based
-   `diff-release.sh`.
-1. Make `alr publish` run the same checks locally, so contributors learn early
-   whether their submission will be auto-merged.
+1. Reject `file:` and local origins (meaningless in a shared index), `ssh`
+   ones (they need the user's keys) and `svn` ones (their revisions do not pin
+   content) in new manifests. *Done in [alire-index-checks#32](https://github.com/alire-project/alire-index-checks/pull/32). Mirrors are not
+   concerned, as their content must match the origin's commit or hashes.*
+1. Require trusted hosts where content is pinned by SHA-1 commits, which are
+   open to collisions: VCS origins (already checked by `alr index --check`)
+   and VCS mirrors. *Mirrors are fallbacks for availability, often on less
+   common hosts, so `alr index --check` only warns about untrusted ones
+   ([#2213](https://github.com/alire-project/alire/pull/2213)), and the new `origins.mirrors.untrusted` setting (warn,
+   reject or allow) is to decide when `alr` deploys from a mirror, once it
+   does. Archives, pinned by SHA-512, need no trusted host.*
+
+Dropped from the original plan:
+
+- `alr index --check --community`: CI already runs with the default trusted
+  hosts, which are the community list, and the remaining rules are policy
+  (above).
+- Checking selected files only: an index must be correct as a whole
+  (duplicates, `provides`, dependencies), and a full check takes seconds.
+- `alr index --diff-release`, and an `alr publish` pre-check using it: the
+  release diff has a single consumer, the auto-merge eligibility, so it is
+  part of Phase 4, in Python like the other CI checks.
 
 Phase 3: ownership model
 ------------------------
@@ -456,7 +470,8 @@ Phase 3: ownership model
    crate-level ownership file in the index, editable only via manual review.
 1. Any change to `maintainers-logins` requires manual review. Adding
    maintainers could later be auto-merged if an existing maintainer approves
-   the PR.
+   the PR. *Part of the eligibility computed in Phase 4: until then every PR
+   is reviewed by hand, so a separate signal would have no consumer.*
 1. Document the ownership transfer procedure (abandoned crates, disputes) in
    `doc/policies.md`.
 1. Consider requiring two-factor authentication for maintainers of
@@ -474,7 +489,9 @@ Phase 4: auto-merge bot
    - pin every action it uses to a commit SHA, as it holds a write token.
 1. The bot recomputes eligibility itself, using the trusted `alr` and the base
    branch, rather than trusting labels or results produced by PR-controlled
-   jobs.
+   jobs. Eligibility is a Python script in alire-index-checks, which includes
+   the release diff against the latest base release (risk-relevant fields, as
+   listed in the eligibility policy) and the `maintainers-logins` gate.
 1. Rate limits. Exceeding a limit falls back to manual review, never to
    rejection.
    - per crate (for example, a few releases per day);
@@ -1057,38 +1074,26 @@ Phase 1: `alr` loader hardening
   - Fixed in Den: walking from a symlinked folder failed with a predicate
     error, as `Ls` of a link returns the link itself.
   - Test: `index/symlinks` (Unix only).
-- [ ] **[alire-index-checks] No pins in new manifests.** ([alire-index-checks#31](https://github.com/alire-project/alire-index-checks/pull/31), in
-  review) Pins are ignored in index manifests and may make sense in private
+- [x] **[alire-index-checks] No pins in new manifests.**
+  ([alire-index-checks#31](https://github.com/alire-project/alire-index-checks/pull/31)) Pins are ignored in index manifests and may make sense in private
   indexes, so `alr` keeps accepting them. `check-changes.py` rejects any
   `pins` key in added manifests, even an empty `[[pins]]` table; the four
   existing `septum` releases with empty tables stay as they are.
 
-Phase 2: community checks in `alr`
-----------------------------------
+Phase 2: community policy checks
+--------------------------------
 
-- [ ] **Extract publish checks into a shared package.**
-  - Move the trusted-host, local-origin and GitHub-login checks out of
-    `alire-publish.adb` into a reusable package, for example
-    `Alire.Index.Checks`.
-  - No behavior change. Existing `testsuite/tests/publish/` tests must pass.
-- [ ] **`alr index --check --community`.**
-  - Apply the shared checks to every origin and mirror, using the built-in
-    `Community_Trusted_Sites` list.
-  - Add the rules for no `file:`, `ssh` or `svn` origins.
-  - Test one fixture per rule.
-- [ ] **Check selected files only.** Allow `alr index --check` to be limited
-  to the given manifest files, for speed in CI. Test.
-- [ ] **`alr index --diff-release <old> <new>`.**
-  - Emit a machine-readable (TOML or JSON) list of the risk-relevant changes
-    defined in the eligibility policy.
-  - Test one fixture pair per category, plus a "no risky change" pair.
-- [ ] **`alr publish` pre-check.** Run the community check and the release
-  diff against the latest indexed release, and tell the user whether the
-  submission will need manual review. Extend the publish tests.
-- [ ] **[alire-index-checks] Use the new `alr` commands.**
-  - Replace `diff-release.sh` with `alr index --diff-release`.
-  - Add `--community` to the index check.
-  - Apply an informational `eligible` / `needs-review` label.
+- [ ] **[alire-index-checks] Origin kinds.** ([alire-index-checks#32](https://github.com/alire-project/alire-index-checks/pull/32), in review)
+  `check-changes.py` requires every origin URL of a new manifest, including
+  those in `case(...)` tables, to be `http(s)` or `git`, optionally with a
+  `git+`/`hg+` prefix (an allowlist, so local paths, `file:`, `ssh://`,
+  `git@host:path` and `svn+` are all rejected). The whole community index
+  complies. Mirrors are not concerned.
+- [ ] **VCS mirror hosts.** ([#2213](https://github.com/alire-project/alire/pull/2213), in review) `alr index --check`
+  warns, without failing, about VCS mirrors on untrusted hosts (it only
+  checked origins). New setting `origins.mirrors.untrusted` (`warn` by
+  default, `reject`, `allow`), not used until `alr` deploys from mirrors.
+  Test: `index/mirror-hosts`.
 
 Phase 3: ownership
 ------------------
@@ -1096,13 +1101,18 @@ Phase 3: ownership
 - [ ] **Document ownership in `doc/policies.md`.** Cover the authority of the
   latest base-branch release, ownership transfer, and withdrawal via
   `available = false`.
-- [ ] **[alire-index-checks] Gate maintainer changes.** Any change to
-  `maintainers-logins` relative to the latest base-branch release sets
-  `needs-review`. Add fixtures.
+- Gating changes to `maintainers-logins` is part of the Phase 4
+  eligibility script.
 
 Phase 4: auto-merge bot
 -----------------------
 
+- [ ] **[alire-index-checks] Eligibility script.** A Python script that
+  decides whether a PR is eligible for auto-merge, per the eligibility policy,
+  from the PR diff and the base branch: a single new release of an existing
+  crate, by a current maintainer, with no change to the risk-relevant fields
+  (including `maintainers-logins`) compared with the latest base release.
+  Self-tests with one fixture pair per field, plus a "no risky change" pair.
 - [ ] **[alire-index] Bot in dry-run mode.**
   - A `workflow_run` workflow with minimal permissions that recomputes
     eligibility from the API diff and the base branch.
