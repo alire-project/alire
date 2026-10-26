@@ -29,6 +29,22 @@ may change.
   quotes for sh; for PowerShell, an ASCII-only expression with other
   characters given as codes (`'a' + [char]0x0151`); `set "NAME=value"` for
   cmd.exe, which fails on values containing `"`, `%`, `!` or line breaks.
+- index: symbolic links in indexes are rejected, unless enabled with the
+  `index.allow_symlinks` setting (links to folders are never entered).
+- manifest: dependency version sets accept word operators (`and`, `or`, `not`)
+  and `¬`.
+- manifest: versions with leading zeros, in X.Y.Z or in numeric pre-release
+  identifiers (e.g. `01.0.0`, `2025.04.18`, `1.0.0-01`), are rejected, as
+  semantic versioning forbids them. This applies to all manifests, index or
+  local, and to versions in dependencies and pins.
+- index: release versions must be strict semantic versions (X.Y.Z, valid
+  pre-release and build identifiers), with at most 32 characters after X.Y.Z
+  (pre-release and build metadata, separators included).
+- index: releases of a crate whose versions differ only in build metadata are
+  duplicates, and all of them are rejected (applies to any index version).
+- index: the version in a manifest file name and in its contents must also
+  have the same build metadata (applies to any index version; short forms
+  like `1.0` for `1.0.0` remain valid).
 
 ### We are here
 

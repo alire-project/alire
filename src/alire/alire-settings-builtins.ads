@@ -122,6 +122,15 @@ package Alire.Settings.Builtins is
         "Maximum size in bytes of a manifest in an index. Larger manifests "
         & "are skipped with a warning, or rejected by `alr index --check`.");
 
+   Index_Allow_Symlinks : constant Builtin := New_Builtin
+     (Key  => "index.allow_symlinks",
+      Def  => False,
+      Help =>
+        "When true, symbolic links to manifests in indexes are followed, "
+        & "with a warning (links to folders are never entered). When false, "
+        & "they are skipped with a warning, or rejected by "
+        & "`alr index --check`. The community index cannot contain them.");
+
    --  INIT
 
    Init_Github_Files : constant Builtin := New_Builtin

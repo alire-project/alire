@@ -63,6 +63,17 @@ package Alire.Index is
 
    Branch_Kind : constant String := AAA.Strings.Head (Community_Branch, "-");
 
+   function Error_In_Release_Version (Text : String) return String;
+   --  Returns "" if Text is valid as a release version in an index manifest,
+   --  or else an error message saying why it is not. It must be a strict
+   --  semantic version, with all three numbers X.Y.Z given, and everything
+   --  after X.Y.Z (pre-release and build metadata, with their '-' and '+') is
+   --  limited to Max_Version_Suffix_Length characters.
+
+   Max_Version_Suffix_Length : constant := 32;
+   --  Semantic versioning sets no limit, but long versions end up in file and
+   --  folder names. X.Y.Z itself is only limited by Semantic_Versioning.
+
    subtype Release is Alire.Releases.Release;
 
    ------------------------

@@ -80,7 +80,7 @@ commit = "f7cd77d2ba6c5dfe1fc782254c95ea7bca1dd453"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"
-commit = "32225955994267799495262f7cac479b6cd22fd3"
+commit = "1464686bdc249b553139b47b43ff82afa8a014c3"
 
 [pins.dirty_booleans]
 url    = "https://github.com/mosteo/dirty_booleans"
@@ -112,7 +112,7 @@ commit = "d3a83f35d7c0b586119fc19a568289cf21c87aa0"
 
 [pins.semantic_versioning]
 url    = "https://github.com/alire-project/semantic_versioning"
-commit = "4861e32bd8a2f0df038d3ecc9a72b6381e7a34cc"
+commit = "b52f0c0f5547b86a9c996b9b84ac633288395e50"
 
 [pins.simple_logging]
 url    = "https://github.com/alire-project/simple_logging"

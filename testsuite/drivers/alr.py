@@ -376,19 +376,19 @@ def index_version():
     return index_branch().split('-')[1]
 
 
-def use_single_manifest_index(manifest: str, file_name: str) -> str:
+def use_index_with_manifests(manifests: dict[str, str]) -> str:
     """
-    Create a new index containing only one manifest, given its contents and
-    file name (e.g. "crate-1.0.0.toml" or "crate-external.toml"), and make alr
-    use that index alone, with fresh settings. This lets a test check
-    manifests that would otherwise interfere with each other (e.g. invalid
-    ones, as `alr index --check` stops at the first invalid manifest).
+    Create a new index containing only the given manifests, as a dictionary
+    from file name (e.g. "crate-1.0.0.toml" or "crate-external.toml") to
+    contents, and make alr use that index alone, with fresh settings. This
+    lets a test check manifests that would otherwise interfere with each other
+    (e.g. invalid ones, as `alr index --check` stops at the first invalid
+    manifest).
 
     The index and settings directories are created under the current
-    directory, named after a hash of the manifest file name and contents (the
-    index directory name is also the index name, which is restricted in
-    length and characters). Using the same manifest again reuses them, as
-    they would be identical.
+    directory, named after a hash of the manifests (the index directory name
+    is also the index name, which is restricted in length and characters).
+    Using the same manifests again reuses them, as they would be identical.
 
     Preparing settings takes several alr runs, so they are prepared once in a
     template directory, which is then copied for each new index.
@@ -403,26 +403,38 @@ def use_single_manifest_index(manifest: str, file_name: str) -> str:
         with open(version_file, "w") as f:
             f.write(index_version())
 
-    crate = file_name.split("-")[0]
-    digest = hashlib.sha256((file_name + "\n" + manifest).encode())
+    digest = hashlib.sha256()
+    for file_name, manifest in sorted(manifests.items()):
+        digest.update((file_name + "\n" + manifest + "\n").encode())
     index_dir = f"index_{digest.hexdigest()[:16]}"
     config_dir = os.path.abspath(f"alr-config-{index_dir}")
 
     if not os.path.isdir(index_dir):
-        crate_dir = os.path.join(index_dir, crate[:2], crate)
-        os.makedirs(crate_dir)
+        os.makedirs(index_dir)
         with open(version_file) as f:
             version = f.read()
         with open(os.path.join(index_dir, "index.toml"), "w") as f:
             f.write(f'version = "{version}"\n')
-        with open(os.path.join(crate_dir, file_name), "w") as f:
-            f.write(manifest)
+
+        for file_name, manifest in manifests.items():
+            crate = file_name.split("-")[0]
+            crate_dir = os.path.join(index_dir, crate[:2], crate)
+            os.makedirs(crate_dir, exist_ok=True)
+            with open(os.path.join(crate_dir, file_name), "w") as f:
+                f.write(manifest)
 
         copytree(template_dir, config_dir)
         prepare_indexes(config_dir, ".", {index_dir: {"in_fixtures": False}})
 
     os.environ["ALIRE_SETTINGS_DIR"] = config_dir
     return index_dir
+
+
+def use_single_manifest_index(manifest: str, file_name: str) -> str:
+    """
+    Like use_index_with_manifests, for an index with a single manifest
+    """
+    return use_index_with_manifests({file_name: manifest})
 
     crate_dir = os.path.join(index_dir, crate[:2], crate)
     os.makedirs(crate_dir)
