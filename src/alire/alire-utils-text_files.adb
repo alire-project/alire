@@ -34,25 +34,34 @@ package body Alire.Utils.Text_Files is
    begin
       SIO.Open (File, SIO.In_File, File_Name);
       declare
-         Text : String (1 .. Natural (SIO.Size (File)));
+         Text  : String (1 .. Natural (SIO.Size (File)));
+         Lines : AAA.Strings.Vector;
+         First : Positive := Text'First; -- Of the current line
+         Last  : Natural;
       begin
          String'Read (SIO.Stream (File), Text);
          SIO.Close (File);
 
-         return Lines : AAA.Strings.Vector :=
-           (if Text = "" then Empty_Vector else Split (Text, Latin_1.LF))
-         do
-            --  A final line break does not start another line
-            if not Lines.Is_Empty and then Lines.Last_Element = "" then
-               Lines.Delete_Last;
-            end if;
+         --  We do a manual scan to avoid copies with Split and deal
+         --  with Windows CRLF that nags our immutable vector elems.
 
-            for Line of Lines loop
-               if Has_Suffix (Line, (1 => Latin_1.CR)) then
-                  Line := Line (Line'First .. Line'Last - 1);
+         for I in Text'Range loop
+            if Text (I) = Latin_1.LF then
+               Last := I - 1;
+               if Last >= First and then Text (Last) = Latin_1.CR then
+                  Last := Last - 1;
                end if;
-            end loop;
-         end return;
+               Lines.Append (Text (First .. Last));
+               First := I + 1;
+            end if;
+         end loop;
+
+         --  A last line without line break
+         if First <= Text'Last then
+            Lines.Append (Text (First .. Text'Last));
+         end if;
+
+         return Lines;
       end;
    exception
       when others =>
