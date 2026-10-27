@@ -1,5 +1,4 @@
 with Ada.Directories;
-with Ada.Text_IO;
 
 with Alire.Settings.Builtins;
 with Alire.Crates;
@@ -23,7 +22,6 @@ with GNAT.IO; -- To keep preelaborable
 with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
 
-with TOML.File_IO;
 with Ada.Strings.Fixed;
 
 package body Alire.Releases is
@@ -1189,18 +1187,8 @@ package body Alire.Releases is
    procedure To_File (R        : Release;
                       Filename : String;
                       Format   : Manifest.Sources) is
-      use Ada.Text_IO;
-      File : File_Type;
    begin
-      Create (File, Out_File, Filename);
-      TOML.File_IO.Dump_To_File (R.To_TOML (Format), File);
-      Close (File);
-   exception
-      when others =>
-         if Is_Open (File) then
-            Close (File);
-         end if;
-         raise;
+      TOML_Load.Write_File (R.To_TOML (Format), Filename);
    end To_File;
 
    -------------

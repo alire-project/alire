@@ -45,6 +45,10 @@ may change.
 - index: the version in a manifest file name and in its contents must also
   have the same build metadata (applies to any index version; short forms
   like `1.0` for `1.0.0` remain valid).
+- manifest: text fields must not contain control characters, except line
+  breaks and tabs in `long-description`, `notes` and external hints, and
+  `long-description`, `notes` and `website` are limited to 16384, 2048 and 512
+  characters.
 
 ### We are here
 
