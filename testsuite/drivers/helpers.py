@@ -501,10 +501,6 @@ begin
 end Main;
 """
 
-URL_HASH_GLOB = "[0-9a-f]" * 8
-"""Glob for the hash of the repository URL in the name of a monorepo folder"""
-
-
 class MockCommand:
     """
     Replace a command with a Python script.

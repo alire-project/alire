@@ -3,11 +3,10 @@ Publish a doubly-nested crate: ./gitrepo/parent/child and test using it
 """
 
 import os
-from glob import glob
 
 from drivers import builds
 from drivers.alr import run_alr, init_local_crate, alr_with, alr_publish
-from drivers.helpers import init_git_repo, URL_HASH_GLOB
+from drivers.helpers import init_git_repo
 from subprocess import run
 
 # We create a repository with the nested crate that will act as the upstream
@@ -39,7 +38,7 @@ alr_publish("myparent", "0.1.0-dev", index_path=index_dir)
 # Verify that the crate can be got and compiled, and expected location
 os.chdir(start_dir)
 run_alr("get", "--build", "mychild")
-assert os.path.isdir(os.path.join(glob(f"monoproject_{URL_HASH_GLOB}_{commit[:8]}")[0],
+assert os.path.isdir(os.path.join(f"monoproject_{commit[:8]}",
                                   "myparent", "mychild")), \
     "Expected directory does not exist"
 
@@ -50,8 +49,8 @@ run_alr("build")
 if builds.are_shared():
     path = builds.find_dir("monoproject")
 else:
-    path = glob(os.path.join("alire", "cache", "dependencies",
-                             f"monoproject_{URL_HASH_GLOB}_{commit[:8]}"))[0]
+    path = os.path.join("alire", "cache", "dependencies",
+                        f"monoproject_{commit[:8]}")
 assert os.path.isdir(os.path.join(path, "myparent", "mychild")), \
     "Expected directory does not exist"
 
