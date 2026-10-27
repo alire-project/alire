@@ -18,6 +18,7 @@ with Alire.Utils.YAML;
 with Alire.Warnings;
 
 with GNAT.IO; -- To keep preelaborable
+with GNAT.SHA256;
 
 with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
@@ -196,8 +197,12 @@ package body Alire.Releases is
          end Simple_Name;
 
       begin
+         --  The URL hash keeps apart repositories with the same name on
+         --  different hosts or owners, which would otherwise share a folder
          return
            Sanitize (Ada.Directories.Base_Name (Simple_Name (R.Origin.URL)))
+           & "_"
+           & GNAT.SHA256.Digest (R.Origin.URL) (1 .. 8)
            & "_"
            & (case R.Origin.Kind is
                  when Git | Hg => R.Origin.Short_Unique_Id,

@@ -10,7 +10,7 @@ from glob import glob
 from drivers import builds
 from drivers.alr import run_alr, init_local_crate, alr_with, alr_publish
 from drivers.asserts import assert_match, assert_substring
-from drivers.helpers import init_git_repo
+from drivers.helpers import init_git_repo, URL_HASH_GLOB
 from subprocess import run
 
 # A crate nested in a repository, published to the test index
@@ -37,7 +37,7 @@ run_alr("build")
 
 deps_dir = (builds.vault_path() if builds.are_shared()
             else os.path.join("alire", "cache", "dependencies"))
-origin_flag = glob(os.path.join(deps_dir, f"monoproject_{commit[:8]}",
+origin_flag = glob(os.path.join(deps_dir, f"monoproject_{URL_HASH_GLOB}_{commit[:8]}",
                                 "alire", "flags", "monorepo_data.toml"))[0]
 with open(origin_flag) as f:
     recorded = f.read()
@@ -54,7 +54,7 @@ with open(origin_flag, "w") as f:
 # building
 output = (run_alr("update", quiet=False).out
           + run_alr("build", quiet=False).out)
-assert_match(".*Warning: The checkout at .*monoproject_"
+assert_match(".*Warning: The checkout at .*monoproject_[0-9a-f]{8}_"
              + commit[:8] + " does not match the origin of mycrate=0.1.0-dev,"
              " deploying it again", output)
 
