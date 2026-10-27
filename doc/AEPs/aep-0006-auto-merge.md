@@ -369,6 +369,8 @@ Phase 0: fix existing CI holes (alire-index, alire-index-checks)
 Phase 1: harden the `alr` index loader
 --------------------------------------
 
+*Completed 2026-10-27. See the implementation checklist for the PRs.*
+
 These changes protect users regardless of how a manifest was merged.
 
 1. Add limits, configurable through settings with conservative built-in
@@ -434,6 +436,8 @@ These changes protect users regardless of how a manifest was merged.
 Phase 2: community policy checks
 --------------------------------
 
+*Completed 2026-10-26.*
+
 The rules of the community index that are not about loading manifests safely
 are policy, and are checked in alire-index-checks rather than in `alr`: they
 take effect without an `alr` release, and do not add to `alr` options that only
@@ -465,19 +469,21 @@ Dropped from the original plan:
 Phase 3: ownership model
 ------------------------
 
+*Completed 2026-10-26.*
+
 Ownership is already enforced since Phase 0 (authority of the latest base
 release); this phase documents it, and the governance around it.
 
 1. Document that ownership authority is the `maintainers-logins` list of the
    latest release in the base branch. Optionally, introduce later a
    crate-level ownership file in the index, editable only via manual review.
-   *Documented in `doc/policies.md` (branch `docs/ownership-policy`).*
+   *Documented in `doc/policies.md` ([#2214](https://github.com/alire-project/alire/pull/2214)).*
 1. Any change to `maintainers-logins` requires manual review. Adding
    maintainers could later be auto-merged if an existing maintainer approves
    the PR. *Part of the eligibility computed in Phase 4: until then every PR
    is reviewed by hand, so a separate signal would have no consumer.*
 1. Document the ownership transfer procedure (abandoned crates, disputes) in
-   `doc/policies.md`. *Same branch.*
+   `doc/policies.md`. *Same PR.*
 
 Requiring two-factor authentication for maintainers was considered and
 dropped: GitHub does not expose it for arbitrary users, so it could only be an
@@ -517,20 +523,43 @@ Phase 5: defense in depth and incident response
    - a crate may only provide names it owns, or names on a reviewed
      allowlist (for example, toolchain variants);
    - any new `provides` requires manual review.
+
+   *Dropped: a change to `provides` makes a release ineligible for
+   auto-merge, and first releases are always reviewed by hand, so no
+   `provides` escapes manual review.*
 1. Consider requiring an opt-in for `version-output` externals before their
    commands run, or limit such externals to an allowlist of commands.
+   *`alr` only runs the commands in the `externals.version_output.allowlist`
+   setting, by default those of the community index, where `*` matches one
+   restricted argument (`pkg-config --modversion *`). The
+   `externals.version_output.policy` setting (`allowlist`, `all` or `none`)
+   changes this ([#2218](https://github.com/alire-project/alire/pull/2218), in review).*
 1. Name monorepo vault folders after a hash of the full origin URL, not just
    its basename, and verify the vault folder against the origin before reuse.
+   *Done in [#2215](https://github.com/alire-project/alire/pull/2215). The full origin (URL and commit) is stored
+   in the checkout, and a checkout that does not match it is deployed again
+   with a warning. Both parts are needed: the folder name only has 8
+   characters of each hash, so a checkout could be planted under it, and
+   without the URL hash, different URLs for the same commit (forks, case
+   variants) would share a folder and evict each other's checkout on every
+   deploy.*
 1. Index distribution:
    - let clients lag behind the branch tip, by following a tag that is moved
      forward only after the cooling-off period;
    - longer term, sign the index or publish it to a transparency log (see
      TUF and Go's checksum database).
+
+   *No change: clients keep following the branch tip, and users can disable
+   automatic index updates (`index.auto_update`). Signing and transparency
+   logs are out of scope for this AEP.*
 1. Write down an incident runbook:
    - revert or withdraw a release (`available = false`);
    - disable auto-merge;
    - block an account;
    - notify users.
+
+   *`INCIDENTS.md` in the index repository
+   ([alire-index#2295](https://github.com/alire-project/alire-index/pull/2295), in review).*
 
 Comparison with other ecosystems
 ================================
@@ -1044,7 +1073,7 @@ Phase 1: `alr` loader hardening
   - Tests: `printenv/quoting` (real `sh`), `printenv/quoting-powershell`
     (real `pwsh`, reading as UTF-8, cp1252 and cp850; skipped without it),
     `index/bad-env-var-name`, Ada unit tests.
-- [ ] **Text fields.** ([#2210](https://github.com/alire-project/alire/pull/2210), in review)
+- [x] **Text fields.** ([#2210](https://github.com/alire-project/alire/pull/2210))
   - Length limits per label, counted in characters (code points), as JSON
     Schema's `maxLength` does: `description` 72, `long-description` 16384,
     `notes` and `hint` 2048, `website` 512. The schema gets the same bounds.
@@ -1056,8 +1085,8 @@ Phase 1: `alr` loader hardening
   - The check uncovered that alr wrote non-ASCII text mangled into its own
     lockfiles (next item); a mangled lockfile is regenerated.
   - Tests: `index/bad-text-fields`, `schema-fail` cases, Ada unit tests.
-- [ ] **No mojibake: no input or output through `Ada.Text_IO`.**
-  ([#2210](https://github.com/alire-project/alire/pull/2210), [#2211](https://github.com/alire-project/alire/pull/2211), in review)
+- [x] **No mojibake: no input or output through `Ada.Text_IO`.**
+  ([#2210](https://github.com/alire-project/alire/pull/2210), [#2211](https://github.com/alire-project/alire/pull/2211))
   - alr is compiled with `-gnatW8`, so `Ada.Text_IO` encodes again each
     byte of its UTF-8 strings, as if Latin-1 ("César" became "CÃ©sar", one
     more layer per lockfile rewrite, until C1 controls appeared).
@@ -1088,13 +1117,13 @@ Phase 1: `alr` loader hardening
 Phase 2: community policy checks
 --------------------------------
 
-- [ ] **[alire-index-checks] Origin kinds.** ([alire-index-checks#32](https://github.com/alire-project/alire-index-checks/pull/32), in review)
+- [x] **[alire-index-checks] Origin kinds.** ([alire-index-checks#32](https://github.com/alire-project/alire-index-checks/pull/32))
   `check-changes.py` requires every origin URL of a new manifest, including
   those in `case(...)` tables, to be `http(s)` or `git`, optionally with a
   `git+`/`hg+` prefix (an allowlist, so local paths, `file:`, `ssh://`,
   `git@host:path` and `svn+` are all rejected). The whole community index
   complies. Mirrors are not concerned.
-- [ ] **VCS mirror hosts.** ([#2213](https://github.com/alire-project/alire/pull/2213), in review) `alr index --check`
+- [x] **VCS mirror hosts.** ([#2213](https://github.com/alire-project/alire/pull/2213)) `alr index --check`
   warns, without failing, about VCS mirrors on untrusted hosts (it only
   checked origins). New setting `origins.mirrors.untrusted` (`warn` by
   default, `reject`, `allow`), not used until `alr` deploys from mirrors.
@@ -1103,8 +1132,7 @@ Phase 2: community policy checks
 Phase 3: ownership
 ------------------
 
-- [ ] **Document ownership in `doc/policies.md`.** (branch
-  `docs/ownership-policy`, no PR yet)
+- [x] **Document ownership in `doc/policies.md`.** ([#2214](https://github.com/alire-project/alire/pull/2214))
   - "Maintainers": authority is the `maintainers-logins` of the latest
     release in the index (the external manifest for crates without
     releases), compared without regard to case; a submission's own list
@@ -1143,21 +1171,40 @@ Phase 4: auto-merge bot
 Phase 5: defense in depth
 -------------------------
 
-- [ ] **Monorepo vault naming.** Derive monorepo vault folder names from a
-  hash of the full origin URL. Test two monorepos with the same basename.
-- [ ] **Restrict `provides`.** In the community check, a crate may provide
-  only names it owns or names on an allowlist. Any new `provides` sets
-  `needs-review`. Add one test per case.
-- [ ] **`version-output` externals.** Require user opt-in, or an allowlist of
-  commands, before running `version-output` detectors. Test.
-- [ ] **Incident runbook.** Document how to withdraw a release, disable
-  auto-merge, block an account and notify users.
-- [ ] **TOML nesting depth in `ada-toml`.** Limit the depth of the parsed
-  tree (header and dotted key parts, plus inline nesting) in the parser, so
-  `alr` is safe from deep manifests from any source, not only those the
-  index CI rejects. Needs a PR to upstream `ada-toml` or a fork.
-- [ ] **Delayed or signed index distribution.** Write a follow-up AEP for
-  clients following a lagging tag, and later for index signing.
+- [x] **Monorepo vault naming.** ([#2215](https://github.com/alire-project/alire/pull/2215), [diskflags#1](https://github.com/mosteo/diskflags/pull/1))
+  - Monorepo folders are named `<repository>_<URL hash>_<commit>`, with
+    8 characters of each hash.
+  - The full origin (URL and commit) is stored in the checkout as
+    `alire/flags/monorepo_data.toml`. Diskflags gained flags with TOML data
+    for this. A checkout whose stored origin is missing or different is
+    deployed again, with a warning.
+  - Tests: `monorepo/foreign-checkout` (a planted checkout),
+    `monorepo/fork-same-commit` (two URLs, same commit, no eviction).
+- [x] **Restrict `provides`.** *Dropped (see the roadmap).*
+- [ ] **`version-output` externals.** ([#2218](https://github.com/alire-project/alire/pull/2218), in review)
+  - New settings `externals.version_output.policy` (`allowlist` by default,
+    `all`, `none`) and `externals.version_output.allowlist` (commands
+    separated by `;`, where `*` matches one argument made of letters, digits
+    and `._+-`, not starting with `-`).
+  - The default allowlist has the commands of the community index:
+    `curl`, `gnat`, `gprbuild`, `m4`, `make` and `odbc_config` with
+    `--version`, and `pkg-config` with `--version` or `--modversion *`.
+  - A command not allowed is not run, with a warning once per command, and
+    its external is not detected.
+  - Tests: `externals/version-output-policy`, Ada unit tests for the
+    matching. The testsuite runs every command by default, as many fixtures
+    use `echo`.
+- [ ] **[alire-index] Incident runbook.** ([alire-index#2295](https://github.com/alire-project/alire-index/pull/2295), in review)
+  `INCIDENTS.md`, linked from `REVIEWING.md`: disable auto-merge and block
+  the account; withdraw a broken release, or delete a malicious one (its
+  manifest disappears, and authority over the crate returns to the previous
+  release); notify users of the steps they must take (refresh the index,
+  `alr update`, delete deployed copies, and treat the machine as compromised
+  if a malicious release was built).
+- [x] **TOML nesting depth in `ada-toml`.** *Dropped: the community index CI
+  already limits the depth
+  ([alire-index-checks#30](https://github.com/alire-project/alire-index-checks/pull/30)).*
+- [x] **Delayed or signed index distribution.** *Dropped (see the roadmap).*
 
 References
 ==========
