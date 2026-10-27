@@ -23,7 +23,7 @@ package Alire.Settings.Checks is
      (Key   : CLIC.Config.Config_Key;
       Value : TOML.TOML_Value)
       return Boolean;
-   --  Accepts only the strings "all", "allowlist" or "reject". These cannot be
-   --  checked with Is_Valid, as "all" is an Ada reserved word.
+   --  Accepts only the images of Version_Output.Policies. These cannot
+   --  be checked with Is_Valid, as "all" is an Ada reserved word.
 
 end Alire.Settings.Checks;

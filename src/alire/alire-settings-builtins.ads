@@ -78,7 +78,7 @@ package Alire.Settings.Builtins is
       Help        =>
         "Which version commands of external crates detected from their output"
       & " may be run: 'all', 'allowlist' (only those in"
-      & " externals.version_output.allowlist) or 'reject' (none).");
+      & " externals.version_output.allowlist) or 'none'.");
 
    Externals_Version_Output_Allowlist : constant Builtin := New_Builtin
      (Key         => "externals.version_output.allowlist",

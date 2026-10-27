@@ -1,3 +1,4 @@
+with AAA.Enum_Tools;
 with AAA.Strings; use AAA.Strings;
 
 with Alire.Directories;
@@ -7,6 +8,7 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Releases;
 with Alire.Settings.Builtins;
+with Alire.Settings.Version_Output;
 with Alire.TOML_Keys;
 with Alire.Utils.Regex;
 with Alire.Utils.TTY;
@@ -18,6 +20,29 @@ with TOML;
 
 package body Alire.Externals.From_Output is
 
+   ------------
+   -- Policy --
+   ------------
+
+   function Policy return Settings.Version_Output.Policies is
+      use Settings.Version_Output;
+      function Is_Valid is new AAA.Enum_Tools.Is_Valid (Policies);
+      Text : constant String :=
+               Settings.Builtins.Externals_Version_Output_Policy.Get;
+   begin
+      if Is_Valid (Prefix & Text) then
+         return Policies'Value (Prefix & Text);
+      end if;
+
+      Warnings.Warn_Once
+        ("Unknown value '" & Text & "' for setting "
+         & "externals.version_output.policy, using '"
+         & Image (Run_Allowlist) & "' instead");
+      return Run_Allowlist;
+   end Policy;
+   --  The configured policy. Unknown values, which can only come from editing
+   --  the settings file by hand, are taken as Run_Allowlist with a warning.
+
    -------------
    -- May_Run --
    -------------
@@ -26,29 +51,34 @@ package body Alire.Externals.From_Output is
                      Name    : Crate_Name)
                      return Boolean
    is
-      Policy : constant String :=
-                 To_Lower_Case
-                   (Settings.Builtins.Externals_Version_Output_Policy.Get);
+      use Settings.Version_Output;
    begin
-      if Policy = "all" then
-         return True;
-      elsif Policy = "reject" then
-         Trace.Debug ("Not running version command [" & Command.Flatten
-                      & "] of external " & Utils.TTY.Name (Name)
-                      & " as externals.version_output.policy is 'reject'");
-         return False;
-      elsif Is_Allowed
-        (Command, Settings.Builtins.Externals_Version_Output_Allowlist.Get)
-      then
-         return True;
-      else
-         Warnings.Warn_Once
-           ("Not running version command [" & Command.Flatten
-            & "] of external " & Utils.TTY.Name (Name)
-            & " as it is not in externals.version_output.allowlist"
-            & " (see 'alr help settings')");
-         return False;
-      end if;
+      case Policy is
+         when Run_All =>
+            return True;
+
+         when Run_None =>
+            Trace.Debug ("Not running version command [" & Command.Flatten
+                         & "] of external " & Utils.TTY.Name (Name)
+                         & " as externals.version_output.policy is '"
+                         & Image (Run_None) & "'");
+            return False;
+
+         when Run_Allowlist =>
+            if Is_Allowed
+              (Command,
+               Settings.Builtins.Externals_Version_Output_Allowlist.Get)
+            then
+               return True;
+            else
+               Warnings.Warn_Once
+                 ("Not running version command [" & Command.Flatten
+                  & "] of external " & Utils.TTY.Name (Name)
+                  & " as it is not in externals.version_output.allowlist"
+                  & " (see 'alr help settings')");
+               return False;
+            end if;
+      end case;
    end May_Run;
 
    ------------

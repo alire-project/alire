@@ -1,4 +1,5 @@
 with Alire.Platforms;
+with Alire.Settings.Version_Output;
 with Alire.Test;
 with Alire.Utils.Did_You_Mean;
 
@@ -89,10 +90,13 @@ package body Alire.Settings.Checks is
       return Boolean
    is
       pragma Unreferenced (Key);
+      Valid : AAA.Strings.Vector;
    begin
-      return Is_Valid_Value
-        (Value, AAA.Strings.To_Vector ("all").Append ("allowlist")
-                                              .Append ("reject"));
+      for Policy in Version_Output.Policies loop
+         Valid.Append (Version_Output.Image (Policy));
+      end loop;
+
+      return Is_Valid_Value (Value, Valid);
    end Valid_Version_Output_Policy;
 
 end Alire.Settings.Checks;

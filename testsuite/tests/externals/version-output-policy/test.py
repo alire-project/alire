@@ -2,7 +2,10 @@
 Test the policy and allowlist for running version commands of externals
 """
 
-from drivers.alr import alr_settings_set, run_alr, use_index_with_manifests
+import os
+
+from drivers.alr import (alr_settings_dir, alr_settings_set, run_alr,
+                         use_index_with_manifests)
 from drivers.asserts import assert_match, assert_substring, assert_not_substring
 
 
@@ -62,8 +65,8 @@ alr_settings_set("externals.version_output.allowlist", "echo *")
 assert_detected("make", wanted=False)
 assert_detected("echoer")
 
-# Reject runs nothing, silently
-alr_settings_set("externals.version_output.policy", "reject")
+# None runs nothing, silently
+alr_settings_set("externals.version_output.policy", "none")
 for crate in ["make", "echoer"]:
     assert_not_substring("Not running", assert_detected(crate, wanted=False))
 
@@ -78,5 +81,19 @@ p = run_alr("settings", "--global", "--set",
             "externals.version_output.policy", "some", complain_on_error=False)
 assert p.status != 0, "unexpected success"
 assert_substring("invalid value: 'some'", p.out)
+
+# An invalid policy edited into the settings file is reported and ignored, so
+# the default policy applies (the allowlist matches nothing at this point)
+settings_file = os.path.join(alr_settings_dir(), "settings.toml")
+with open(settings_file) as f:
+    contents = f.read()
+assert_substring('policy = "all"', contents)
+with open(settings_file, "w") as f:
+    f.write(contents.replace('policy = "all"', 'policy = "some"'))
+
+output = assert_detected("make", wanted=False)
+assert_substring("Invalid value 'some' for builtin configuration "
+                 "'externals.version_output.policy'", output)
+assert_substring("Not running version command [make --version]", output)
 
 print('SUCCESS')
