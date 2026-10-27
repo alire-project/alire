@@ -80,9 +80,7 @@ p = run_alr("run")
 assert_eq("1.0.0\n1.0.0\n", p.out)
 
 # Each fork has its own checkout
-deps_dir = (builds.vault_path() if builds.are_shared()
-            else os.path.join("alire", "cache", "dependencies"))
-checkouts = glob(os.path.join(deps_dir,
+checkouts = glob(os.path.join(builds.deps_dir(),
                               f"monorepo_{URL_HASH_GLOB}_{commit[:8]}"))
 assert len(checkouts) == 2, f"Unexpected checkouts: {checkouts}"
 

@@ -69,10 +69,7 @@ assert os.path.isfile(os.path.join(
     "Expected binary does not exist"
 
 # Also that the info files are there
-if builds.are_shared():
-    deps_dir = builds.vault_path()
-else:
-    deps_dir = os.path.join("alire", "cache", "dependencies")
+deps_dir = builds.deps_dir()
 
 assert glob(os.path.join(
     deps_dir,

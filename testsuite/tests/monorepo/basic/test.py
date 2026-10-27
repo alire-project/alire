@@ -62,8 +62,7 @@ assert os.path.isfile(os.path.join(
     "Expected binary does not exist"
 
 # Also that the info file is there
-deps_dir = (builds.vault_path() if builds.are_shared()
-            else os.path.dirname(base))
+deps_dir = builds.deps_dir()
 infofiles = glob(os.path.join(deps_dir,
                              f"mycrate_0.1.0_in_monoproject_{URL_HASH_GLOB}_{commit[:8]}"))
 assert len(infofiles) == 1 and os.path.isfile(infofiles[0]), \

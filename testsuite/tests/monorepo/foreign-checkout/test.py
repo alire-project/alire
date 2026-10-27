@@ -35,9 +35,8 @@ init_local_crate("top")
 alr_with("mycrate")
 run_alr("build")
 
-deps_dir = (builds.vault_path() if builds.are_shared()
-            else os.path.join("alire", "cache", "dependencies"))
-origin_flag = glob(os.path.join(deps_dir, f"monoproject_{URL_HASH_GLOB}_{commit[:8]}",
+origin_flag = glob(os.path.join(builds.deps_dir(),
+                                f"monoproject_{URL_HASH_GLOB}_{commit[:8]}",
                                 "alire", "flags", "monorepo_data.toml"))[0]
 with open(origin_flag) as f:
     recorded = f.read()
