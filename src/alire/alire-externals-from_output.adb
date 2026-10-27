@@ -6,15 +6,50 @@ with Alire.Origins;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Releases;
+with Alire.Settings.Builtins;
 with Alire.TOML_Keys;
 with Alire.Utils.Regex;
 with Alire.Utils.TTY;
+with Alire.Warnings;
 
 with Semantic_Versioning;
 
 with TOML;
 
 package body Alire.Externals.From_Output is
+
+   -------------
+   -- May_Run --
+   -------------
+
+   function May_Run (Command : AAA.Strings.Vector;
+                     Name    : Crate_Name)
+                     return Boolean
+   is
+      Policy : constant String :=
+                 To_Lower_Case
+                   (Settings.Builtins.Externals_Version_Output_Policy.Get);
+   begin
+      if Policy = "all" then
+         return True;
+      elsif Policy = "reject" then
+         Trace.Debug ("Not running version command [" & Command.Flatten
+                      & "] of external " & Utils.TTY.Name (Name)
+                      & " as externals.version_output.policy is 'reject'");
+         return False;
+      elsif Is_Allowed
+        (Command, Settings.Builtins.Externals_Version_Output_Allowlist.Get)
+      then
+         return True;
+      else
+         Warnings.Warn_Once
+           ("Not running version command [" & Command.Flatten
+            & "] of external " & Utils.TTY.Name (Name)
+            & " as it is not in externals.version_output.allowlist"
+            & " (see 'alr help settings')");
+         return False;
+      end if;
+   end May_Run;
 
    ------------
    -- Detect --
@@ -30,7 +65,10 @@ package body Alire.Externals.From_Output is
                      (This.Command.First_Element);
       Result : Alire.Releases.Containers.Release_Set;
    begin
-      if Location in null then
+      if not May_Run (This.Command, Name) then
+         GNAT.OS_Lib.Free (Location);
+         return (Releases.Containers.Release_Sets.Empty_Set with null record);
+      elsif Location in null then
          Trace.Debug
            ("External not detected because executable is not in PATH: "
             & This.Command.First_Element);
@@ -139,6 +177,46 @@ package body Alire.Externals.From_Output is
             From.Checked_Error ("invalid regular expression: " & Regexp);
       end return;
    end From_TOML;
+
+   ----------------
+   -- Is_Allowed --
+   ----------------
+
+   function Is_Allowed (Command   : AAA.Strings.Vector;
+                        Allowlist : String)
+                        return Boolean
+   is
+      function Words (Text : String) return AAA.Strings.Vector is
+      begin
+         return Result : AAA.Strings.Vector do
+            for Word of Split (Text, ' ', Trim => True) loop
+               if Word /= "" then
+                  Result.Append (Word);
+               end if;
+            end loop;
+         end return;
+      end Words;
+
+      function Is_Wildcard_Argument (Arg : String) return Boolean is
+        (Arg /= "" and then Arg (Arg'First) /= '-' and then
+           (for all C of Arg =>
+              C in 'A' .. 'Z' | 'a' .. 'z' | '0' .. '9'
+                 | '.' | '_' | '+' | '-'));
+
+      function Matches (Allowed : AAA.Strings.Vector) return Boolean is
+        (Natural (Allowed.Length) = Natural (Command.Length)
+         and then
+           (for all I in Allowed.First_Index .. Allowed.Last_Index =>
+              Allowed (I) = Command (I)
+              or else (I > Allowed.First_Index
+                       and then Allowed (I) = "*"
+                       and then Is_Wildcard_Argument (Command (I)))));
+
+      Entries : constant AAA.Strings.Vector := Split (Allowlist, ';');
+   begin
+      return (for some Entry_Text of Entries =>
+                Matches (Words (Entry_Text)));
+   end Is_Allowed;
 
    -----------
    -- Image --

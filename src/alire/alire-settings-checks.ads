@@ -19,4 +19,11 @@ package Alire.Settings.Checks is
       return Boolean;
    --  Accepts only the strings "ignore", "fail" or "skip".
 
+   function Valid_Version_Output_Policy
+     (Key   : CLIC.Config.Config_Key;
+      Value : TOML.TOML_Value)
+      return Boolean;
+   --  Accepts only the strings "all", "allowlist" or "reject". These cannot be
+   --  checked with Is_Valid, as "all" is an Ada reserved word.
+
 end Alire.Settings.Checks;

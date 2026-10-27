@@ -1,19 +1,17 @@
-with AAA.Enum_Tools;
-
 with Alire.Platforms;
 with Alire.Test;
 with Alire.Utils.Did_You_Mean;
 
 package body Alire.Settings.Checks is
 
-   --------------
-   -- Is_Valid --
-   --------------
+   --------------------
+   -- Is_Valid_Value --
+   --------------------
 
-   function Is_Valid (Value : TOML.TOML_Value) return Boolean is
-      function Enum_Valid is new AAA.Enum_Tools.Is_Valid (Values);
-      function Suggestion is new Utils.Did_You_Mean.Enum_Suggestion
-        (Values, Utils.Did_You_Mean.Lower_Case);
+   function Is_Valid_Value (Value : TOML.TOML_Value;
+                            Valid : AAA.Strings.Vector)
+                            return Boolean
+   is
    begin
       if Value.Kind not in TOML.TOML_String then
          Trace.Error
@@ -27,14 +25,29 @@ package body Alire.Settings.Checks is
          Raw   : constant String := Value.As_String;
          Lower : constant String := AAA.Strings.To_Lower_Case (Raw);
       begin
-         if Enum_Valid (Lower) then
+         if Valid.Contains (Lower) then
             return True;
          else
             Trace.Error
-              ("invalid value: '" & Raw & "'." & Suggestion (Raw));
+              ("invalid value: '" & Raw & "'."
+               & Utils.Did_You_Mean.Suggestion (Raw, Valid));
             return False;
          end if;
       end;
+   end Is_Valid_Value;
+
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (Value : TOML.TOML_Value) return Boolean is
+      Valid : AAA.Strings.Vector;
+   begin
+      for V in Values loop
+         Valid.Append (AAA.Strings.To_Lower_Case (V'Image));
+      end loop;
+
+      return Is_Valid_Value (Value, Valid);
    end Is_Valid;
 
    ------------------
@@ -65,5 +78,21 @@ package body Alire.Settings.Checks is
    begin
       return Check (Value);
    end Valid_Tests_On_Unknown_Parameter;
+
+   ---------------------------------
+   -- Valid_Version_Output_Policy --
+   ---------------------------------
+
+   function Valid_Version_Output_Policy
+     (Key   : CLIC.Config.Config_Key;
+      Value : TOML.TOML_Value)
+      return Boolean
+   is
+      pragma Unreferenced (Key);
+   begin
+      return Is_Valid_Value
+        (Value, AAA.Strings.To_Vector ("all").Append ("allowlist")
+                                              .Append ("reject"));
+   end Valid_Version_Output_Policy;
 
 end Alire.Settings.Checks;

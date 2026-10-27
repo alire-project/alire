@@ -902,7 +902,9 @@ Their specific fields are (all mandatory):
 kind = "version-output" # Identifies this external kind
 
 version-command = ["gnat", "--version"]
-# Invocation that will provide the version when the tool is available
+# Invocation that will provide the version when the tool is available. By
+# default, `alr` only runs commands listed in the setting
+# `externals.version_output.allowlist` (see `alr help settings`).
 
 version-regexp  = "^GNAT ([\\d\\.]+).*|^GNAT Community ([\\d]{4}).*"
 # TOML-escaped GNAT.Regpat-compatible regular expression. Parenthesized
