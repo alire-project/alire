@@ -1,1 +1,6 @@
 pragma Restrictions (No_Obsolescent_Features);
+pragma Restrictions (No_Dependence => Ada.Text_IO);
+--  alr is compiled with -gnatW8, so Ada.Text_IO takes each byte of the UTF-8
+--  strings in alr for a Latin-1 character and encodes it again, mangling any
+--  non-ASCII text. Use GNAT.IO or Trace for the console, and Wide_Wide_Text_IO
+--  or Alire.Utils.Text_Files (also Read_Lines/Write_Lines, raw) for files.

@@ -1,8 +1,8 @@
 with Ada.Strings.Maps;
-with Ada.Text_IO;
 
 with Alire.Directories;
 with Alire.Platforms.Current;
+with Alire.Utils.Text_Files;
 
 with AnsiAda; use AnsiAda;
 
@@ -411,7 +411,7 @@ package body Alire.OS_Lib.Subprocess is
             --  finalization if this is the last output, creating an extra
             --  empty line in e.g. `alr exec echo whatever`. GNAT.IO is
             --  uncooked so it works as expected.
-            Ada.Text_IO.Flush; -- So we don't mix bufferings
+            OS_Lib.Flush_Output; -- So we don't mix bufferings
             GNAT.IO.Put (Style (Dim, State));
          end if;
       end Dim;
@@ -472,8 +472,6 @@ package body Alire.OS_Lib.Subprocess is
       Full_Args : constant AAA.Strings.Vector := Extra & Arguments;
       Arg_List : Argument_List_Access := To_Argument_List (Full_Args);
 
-      use Ada.Text_IO;
-
       Outfile : Directories.Temp_File;
 
       Exit_Code : Integer;
@@ -492,13 +490,9 @@ package body Alire.OS_Lib.Subprocess is
       -----------------
 
       procedure Read_Output is
-         File : File_Type;
       begin
-         Open (File, In_File, Outfile.Filename);
-         while not End_Of_File (File) loop
-            Output.Append (Get_Line (File));
-         end loop;
-         Close (File);
+         --  Raw, as output need not be UTF-8
+         Output.Append (Utils.Text_Files.Read_Lines (Outfile.Filename));
       end Read_Output;
 
    begin

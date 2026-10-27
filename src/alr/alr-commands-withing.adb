@@ -1,7 +1,6 @@
 with Ada.Strings;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
-with Ada.Text_IO;
 
 with Alire.Dependencies;
 with Alire.Optional;
@@ -10,6 +9,7 @@ with Alire.Releases;
 with Alire.Roots.Editable;
 with Alire.Solutions;
 with Alire.URI;
+with Alire.Utils.Text_Files;
 with Alire.Utils.User_Input;
 
 with Alr.OS_Lib;
@@ -54,7 +54,6 @@ package body Alr.Commands.Withing is
    procedure From (Root : in out Alire.Roots.Editable.Root;
                    Args :        AAA.Strings.Vector)
    is
-      use Ada.Text_IO;
       use AAA.Strings;
 
       -------------
@@ -107,18 +106,14 @@ package body Alr.Commands.Withing is
       ----------------
 
       procedure Check_File (Name : String) is
-         File : File_Type;
       begin
          if not OS_Lib.Is_Regular_File (Name) then
             Reportaise_Command_Failed ("Given file not found: " & Name);
          end if;
 
-         Open (File, In_File, Name);
-
-         while not End_Of_File (File) loop
+         for Raw_Line of Alire.Utils.Text_Files.Read_Lines (Name) loop
             declare
-               Line : constant String :=
-                 Crunch (To_Lower_Case (Get_Line (File)));
+               Line : constant String := Crunch (To_Lower_Case (Raw_Line));
             begin
                exit when Contains (Line, "project");
 
@@ -127,8 +122,6 @@ package body Alr.Commands.Withing is
                end if;
             end;
          end loop;
-
-         Close (File);
       end Check_File;
    begin
       for I in Args.First_Index .. Args.Last_Index loop

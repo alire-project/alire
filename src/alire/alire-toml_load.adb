@@ -4,6 +4,7 @@ with Alire.Errors;
 with Alire.Platforms;
 with Alire.Properties.From_TOML;
 with Alire.TOML_Keys;
+with Alire.Utils.Text_Files;
 
 with Ada.Exceptions;
 with Ada.Streams.Stream_IO;
@@ -282,21 +283,9 @@ package body Alire.TOML_Load is
                          Header    : AAA.Strings.Vector :=
                                        AAA.Strings.Empty_Vector)
    is
-      use Ada.Streams.Stream_IO;
-      File : File_Type;
    begin
-      --  The UTF-8 bytes are written as they are
-      Create (File, Out_File, File_Name);
-      for Line of Header.Append (Dump_Lines (Value)) loop
-         String'Write (Stream (File), Line & Alire.New_Line);
-      end loop;
-      Close (File);
-   exception
-      when others =>
-         if Is_Open (File) then
-            Close (File);
-         end if;
-         raise;
+      Utils.Text_Files.Write_Lines (File_Name,
+                                    Header.Append (Dump_Lines (Value)));
    end Write_File;
 
 end Alire.TOML_Load;

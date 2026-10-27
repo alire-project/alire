@@ -57,6 +57,10 @@ package Alire.OS_Lib with Preelaborate is
 
    function To_Native (Path : Portable_Path_Like) return Native_Path_Like;
 
+   procedure Flush_Output;
+   --  Flush the standard output and error of the C library, which GNAT.IO
+   --  (and so Trace) writes to; e.g., after output without a line break.
+
 private
 
    use AAA.Strings;
