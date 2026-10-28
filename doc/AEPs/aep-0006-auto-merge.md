@@ -247,40 +247,56 @@ Eligibility policy for auto-merge
 =================================
 
 A PR is merged automatically only if **all** of the following hold. Otherwise
-it gets a `needs-review` label and follows the manual process.
+it gets an `auto-merge: manual` label, with a comment giving the reasons, and
+follows the manual process.
 
-1. It adds exactly one file, `index/xx/crate/crate-X.Y.Z.toml`, and modifies or
-   deletes nothing.
+1. It only adds release manifests, `index/xx/crate/crate-X.Y.Z.toml`, and
+   modifies or deletes nothing. It may add several releases, of one or more
+   crates (e.g. from a monorepo), provided each of them meets the rules below.
+   The `name` and `version` in each manifest are those in its file name.
 1. The crate already has at least one release in the **base branch**.
 1. The version:
    - is a strict semantic version: `X.Y.Z` with no leading zeros, and valid
      pre-release and build identifiers;
    - has at most 32 characters after `X.Y.Z` (pre-release and build metadata,
      separators included);
-   - does not match any existing release, comparing with build metadata
-     ignored.
+   - does not match any existing release, nor another release in the PR,
+     comparing with build metadata ignored.
 
    Build metadata itself is allowed: 17 community releases use it, and once
    duplicates are rejected it can no longer shadow a release.
-1. The PR author is listed in `maintainers-logins` of the latest release of the
-   crate **in the base branch**. The PR's own files are never used to decide
-   authorship.
+1. The PR author is listed in `maintainers-logins` of the latest release of
+   each crate **in the base branch**. The PR's own files are never used to
+   decide authorship.
 1. Compared with the latest release in the base branch, these properties are
    unchanged:
    - `maintainers-logins`, `provides`, `forbids`;
-   - `[[actions]]`, `[environment]`, `[gpr-set-externals]`;
-   - origin kind, and origin host, owner and repository.
+   - `[[actions]]`, `[environment]`, `[gpr-set-externals]`, `mirror`;
+   - origin kind (VCS or archive), and origin host, owner and repository: the
+     host and first two path segments of each origin URL, compared without
+     regard to case, `git+`/`hg+` or `.git` (for archives, without the file
+     name, which usually contains the version).
 
    Version, commit, hashes, dependencies, description and similar fields may
-   change freely.
+   change freely. So may `[build-switches]`, even though some compiler
+   switches (e.g. GCC's `-wrapper`) run programs during the build: the
+   crate's project files, which change freely with its sources, can do the
+   same, and code run by the build is out of scope (see the threat model).
 1. VCS origins are on a trusted host (their commits are SHA-1). There are no
    `file:`, `ssh`, `svn` or system origins.
 1. The manifest is within the size and field limits (Phases 1 and 2).
-1. All the index CI checks pass.
-1. The release builds or tests successfully on at least one platform.
-   "Unavailable everywhere" or "missing dependencies everywhere" does not count
-   as success.
-1. Rate limits are not exceeded, and auto-merge has not been disabled (Phase 4).
+1. All the index CI checks pass, and none is still running.
+1. The release builds or tests successfully on at least one platform, or is
+   fetched for binary and system crates. "Unavailable everywhere" or "missing
+   dependencies everywhere" does not count as success.
+1. No index maintainer vetoed it, with the `auto-merge: veto` label or a
+   review requesting changes.
+1. It has cooled off for one hour since it last changed: since its checks
+   first ran on its head, or it was opened, left draft (`alr publish` opens
+   drafts), was reopened, retargeted or force-pushed.
+1. Its author has had at most 10 releases merged automatically in the last
+   24 hours, counting this PR (see Phase 4), and auto-merge has not been
+   disabled.
 
 Always manual:
 
@@ -294,10 +310,12 @@ Always manual:
 `available = false`. This becomes the only modification allowed to an existing
 file. A PR is eligible for auto-merge when:
 
-- its diff is exactly that change;
-- its author is a current maintainer.
+- its diff is exactly that change, for one or more releases;
+- its author is a current maintainer;
+- its checks passed, and no maintainer vetoed it.
 
-Withdrawals only reduce risk, so it is desirable for them to be fast.
+Withdrawals only reduce risk, so it is desirable for them to be fast: they
+skip the cooling-off period, the build requirement and the rate limit.
 
 Roadmap
 =======
@@ -498,23 +516,64 @@ Phase 4: auto-merge bot
      GitHub API only;
    - run with the minimum token scopes, ideally as a GitHub App;
    - pin every action it uses to a commit SHA, as it holds a write token.
+
+   *`auto-merge.yml` in alire-index runs `automerge-bot.py` from
+   alire-index-checks hourly instead: `workflow_run` events carry no PR for
+   fork PRs, which most submissions are, and a schedule also handles the
+   cooling-off period. The bot fetches each PR's head without file contents
+   into a bare repository and merges it there with the base branch (`git
+   merge-tree`), as GitHub's own merge commits can be hours out of date; only
+   manifests are parsed. In dry-run the workflow token can only write issues;
+   merging uses a GitHub App token minted in `on` mode, and every action is
+   pinned ([alire-index-checks#35](https://github.com/alire-project/alire-index-checks/pull/35)).*
 1. The bot recomputes eligibility itself, using the trusted `alr` and the base
    branch, rather than trusting labels or results produced by PR-controlled
    jobs. Eligibility is a Python script in alire-index-checks, which includes
    the release diff against the latest base release (risk-relevant fields, as
    listed in the eligibility policy) and the `maintainers-logins` gate.
+
+   *`automerge.py` ([alire-index-checks#33](https://github.com/alire-project/alire-index-checks/pull/33)) parses manifests with
+   Python's `tomllib` rather than `alr`; a manifest crafted so that `tomllib`
+   and `alr`'s parser disagree is a known residual risk. Check results are
+   trusted because an eligible PR only changes manifests, so it runs the base
+   workflows; the bot requires every check (not only the required ones) to
+   pass. Builds report their outcome in an `alire-build` notice
+   ([alire-index-checks#34](https://github.com/alire-project/alire-index-checks/pull/34)); a crate could fake it from its own build
+   output or manifest text, which only defeats a quality gate. Replayed on
+   the last 3 months, 115 of 204 merged PRs (56%) would have been eligible;
+   most others were first releases.*
 1. Rate limits. Exceeding a limit falls back to manual review, never to
    rejection.
    - per crate (for example, a few releases per day);
    - per author;
    - global (per hour).
+
+   *Only a per-author limit is kept: 10 releases merged automatically per 24
+   hours, counting each release of a multi-crate PR. Registries limit new
+   names rather than new versions: crates.io allows per user a burst of 30
+   new versions (then 1 per minute) and of 5 new crates (then 1 per 10
+   minutes); PyPI limits only new projects (20 per hour per user); Go has no
+   publishing step; opam reviews every PR by hand. First releases here always
+   go to manual review, which is stricter than all of them.*
 1. A cooling-off period (for example 24–48 hours) during which the PR is
    public and labeled as pending auto-merge, and any index maintainer can veto
    it. Withdrawals skip this period.
+
+   *One hour since the PR last changed (see the eligibility policy), long
+   enough for maintainers to notice a submission. A veto is the
+   `auto-merge: veto` label or a request for changes by an owner, member or
+   collaborator; either sends the PR to manual review.*
 1. A global kill switch (a repository variable) that disables auto-merge
    immediately.
+
+   *The `AUTO_MERGE` variable: `off` or unset, `dry-run` or `on`.*
 1. Audit trail: a label and a comment stating which checks passed, and a log
    of auto-merged PRs.
+
+   *In dry-run, each change of decision is logged in a tracking issue
+   (alire-index#2299). In `on` mode the bot labels PRs (`auto-merge: pending`,
+   `auto-merge: manual`, `auto-merged`) and keeps one comment on each with the
+   decision and its reasons. Each run also writes a table of decisions.*
 
 Phase 5: defense in depth and incident response
 -----------------------------------------------
@@ -1149,24 +1208,39 @@ Phase 3: ownership
 Phase 4: auto-merge bot
 -----------------------
 
-- [ ] **[alire-index-checks] Eligibility script.** A Python script that
-  decides whether a PR is eligible for auto-merge, per the eligibility policy,
-  from the PR diff and the base branch: a single new release of an existing
-  crate, by a current maintainer, with no change to the risk-relevant fields
-  (including `maintainers-logins`) compared with the latest base release.
-  Self-tests with one fixture pair per field, plus a "no risky change" pair.
-- [ ] **[alire-index] Bot in dry-run mode.**
-  - A `workflow_run` workflow with minimal permissions that recomputes
-    eligibility from the API diff and the base branch.
-  - It only comments and labels; it does not merge.
-  - Run it for a few weeks and compare its decisions with manual reviews.
-- [ ] **[alire-index] Rate limits.** Enforce per-crate, per-author and global
-  limits, falling back to `needs-review`.
-- [ ] **[alire-index] Cooling-off period, veto label and kill switch.** The
-  kill switch is a repository variable.
-- [ ] **[alire-index] Enable merging.** Merge through a dedicated GitHub App
-  with a narrowly scoped token, and post an audit comment on each merged PR.
-  Announce the change to the community.
+- [x] **[alire-index-checks] Eligibility script.**
+  ([alire-index-checks#33](https://github.com/alire-project/alire-index-checks/pull/33))
+  - `scripts/automerge.py` with `evaluate(author)`, used by the bot, and
+    `check-automerge.py` for the command line. With `ALL_CRATES` it replays
+    an index's history instead (75% of past releases would have been
+    eligible compared with their predecessor).
+  - Shared helpers moved to `common.py` (`latest`, `authority`,
+    `is_withdrawal`, ...).
+  - Tests: `tests/test-check-automerge.sh`, one case per rule.
+- [x] **[alire-index-checks] Build outcome notice.**
+  ([alire-index-checks#34](https://github.com/alire-project/alire-index-checks/pull/34)) `gh-build-crate.sh` reports `built`,
+  `fetched` or `skipped (<reason>)` for each crate in one `alire-build`
+  notice.
+- [x] **[alire-index-checks] Bot.** ([alire-index-checks#35](https://github.com/alire-project/alire-index-checks/pull/35))
+  - `scripts/automerge-bot.py`: decisions (skip, manual, pending, merge) in
+    a pure `decide()`, from data fetched on demand; `dry-run` and `on`
+    modes.
+  - Robust to partial failures: the base branch is fetched again after each
+    merge (or the run stops), merges count at once towards the rate limit,
+    each PR's errors are isolated, and text from PRs is escaped in comments.
+  - Tests: `tests/test_automerge_bot.py`, offline, with fake PR data and a
+    fake GitHub client.
+- [ ] **[alire-index] Workflow.** `.github/workflows/auto-merge.yml` and an
+  "Auto-merge bot" section in `.github/WORKFLOWS.md`. Tested in dry-run on a
+  fork.
+- [ ] **[alire-index] Dry run.** Create the labels, set
+  `AUTO_MERGE_ISSUE=2299` and `AUTO_MERGE=dry-run`, and compare the log with
+  the manual merges for a few weeks.
+- [ ] **[alire-index settings] Enable merging.** Create the GitHub App
+  (contents, issues and pull requests write, checks read), allow it to bypass
+  required pull requests and to push in the `stable-*` rule, set
+  `AUTO_MERGE_APP_ID` and the `AUTO_MERGE_APP_KEY` secret, then
+  `AUTO_MERGE=on`. Announce the change to the community.
 
 Phase 5: defense in depth
 -------------------------
