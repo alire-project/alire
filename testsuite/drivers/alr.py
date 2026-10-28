@@ -424,7 +424,9 @@ def use_index_with_manifests(manifests: dict[str, str]) -> str:
                 f.write(manifest)
 
         copytree(template_dir, config_dir)
-        prepare_indexes(config_dir, ".", {index_dir: {"in_fixtures": False}})
+        # With an absolute path, tests may enter a workspace afterwards
+        prepare_indexes(config_dir, os.getcwd(),
+                        {index_dir: {"in_fixtures": False}})
 
     os.environ["ALIRE_SETTINGS_DIR"] = config_dir
     return index_dir

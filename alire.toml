@@ -29,7 +29,7 @@ lml = "~0.2"
 minirest = "~0.3"
 optional = "~0.1.1"
 resources = "~0.1"
-semantic_versioning = "^3.0"
+semantic_versioning = "^4.0"
 simple_logging = "^2.0"
 si_units = "~0.2.2"
 spdx = "^26"
@@ -112,7 +112,7 @@ commit = "d3a83f35d7c0b586119fc19a568289cf21c87aa0"
 
 [pins.semantic_versioning]
 url    = "https://github.com/alire-project/semantic_versioning"
-commit = "b52f0c0f5547b86a9c996b9b84ac633288395e50"
+commit = "1f0ffc41f3d42f6e600293b34b4a5eb52481a789"
 
 [pins.simple_logging]
 url    = "https://github.com/alire-project/simple_logging"
