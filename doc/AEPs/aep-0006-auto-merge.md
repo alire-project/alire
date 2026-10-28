@@ -211,7 +211,7 @@ to ASCII `[a-z0-9_]`, which rules out Unicode homoglyphs. However:
      [#2197](https://github.com/alire-project/alire/pull/2197).*
    - Git URLs are passed to `git clone` without a `--` separator
      (`src/alire/alire-vcss-git.adb`). URLs starting with `-` after the
-     `vcs+` prefix are in fact not recognised as VCS URLs and are rejected,
+     `vcs+` prefix are in fact not recognized as VCS URLs and are rejected,
      but `ssh://-oProxyCommand=...` and git's `ext::` transport load, and are
      only stopped by `git` and `hg` themselves (recent versions) or by the
      trusted-host check of `alr index --check`.
