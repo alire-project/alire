@@ -7,7 +7,8 @@ repository.
 
 ## Dependencies
 
-- Do not edit files under `/deps`. Each directory there is a git submodule of
+- Do not edit files under `/deps` unless to patch a dependency, using a new
+  branch. Each directory there is a git submodule of
   another repository; changes go to that repository first, and then both the
   submodule and its pin in `/alire.toml` are moved to the new commit (they must
   match, see `scripts/verify-pins.sh`).
