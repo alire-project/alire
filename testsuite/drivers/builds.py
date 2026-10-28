@@ -6,7 +6,7 @@ from glob import glob
 import os
 from shutil import rmtree
 import subprocess
-from drivers.alr import alr_builds_dir, run_alr
+from drivers.alr import alr_builds_dir, alr_workspace_cache, run_alr
 from drivers.helpers import content_of
 
 
@@ -77,6 +77,15 @@ def vault_path() -> str:
     Return the path to the read-only release vault.
     """
     return os.path.join(path(), "..", "releases")
+
+
+def deps_dir() -> str:
+    """
+    Return the path where dependencies are deployed: the release vault with
+    shared builds, or the current workspace's cache otherwise.
+    """
+    return (vault_path() if are_shared()
+            else os.path.join(alr_workspace_cache(), "dependencies"))
 
 
 def sync() -> None:

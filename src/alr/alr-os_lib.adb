@@ -1,8 +1,8 @@
-with Ada.Text_IO;
-
 with Alire.OS_Lib;
 
 with CLIC.User_Input;
+
+with GNAT.IO;
 
 package body Alr.OS_Lib is
 
@@ -14,7 +14,12 @@ package body Alr.OS_Lib is
    begin
       if Pause_Before_Exit and then not CLIC.User_Input.Not_Interactive then
          Trace.Info ("Press enter to continue...");
-         Trace.Never (Ada.Text_IO.Get_Line);
+         declare
+            Line : String (1 .. 1024);
+            Last : Natural;
+         begin
+            GNAT.IO.Get_Line (Line, Last);
+         end;
       end if;
 
       Alire.OS_Lib.Bailout (Code);

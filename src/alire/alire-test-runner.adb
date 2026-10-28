@@ -4,8 +4,8 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
-with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
+with GNAT.IO;
 with GNAT.OS_Lib;
 with System.Multiprocessors;
 
@@ -320,9 +320,9 @@ package body Alire.Test.Runner is
             then
                --  clear line to avoid messing up
                --  progress display (on stderr)
-               Ada.Text_IO.Put
-                 (Ada.Text_IO.Standard_Error, (1 .. 8 => ' ', 9 => CR));
-               Ada.Text_IO.Flush (Ada.Text_IO.Standard_Error);
+               GNAT.IO.Put
+                 (GNAT.IO.Standard_Error, (1 .. 8 => ' ', 9 => CR));
+               OS_Lib.Flush_Output;
             end if;
             Trace.Always (LML.Encode (Builder.To_Text));
 
@@ -330,7 +330,7 @@ package body Alire.Test.Runner is
          else
             --  put a summary of test runs
             Trace.Always ("Total:" & Driver.Total_Count'Image & " tests");
-            Ada.Text_IO.Flush;
+            OS_Lib.Flush_Output;
             if Driver.Skip_Count /= 0 then
                Trace.Warning
                  ("skipped" & Driver.Skip_Count'Image & " tests");
@@ -773,8 +773,8 @@ package body Alire.Test.Runner is
          Percentage : constant Long_Integer :=
            (if Len = 0 then 0 else (Completed * 100 + Len / 2) / Len);
       begin
-         Ada.Text_IO.Put ("[" & Tail (Percentage'Image, 4) & "% ]" & CR);
-         Ada.Text_IO.Flush;
+         GNAT.IO.Put ("[" & Tail (Percentage'Image, 4) & "% ]" & CR);
+         OS_Lib.Flush_Output;
          Completed := Completed + 1;
       end Put_Progress;
 

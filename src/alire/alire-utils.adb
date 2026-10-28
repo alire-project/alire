@@ -144,6 +144,37 @@ package body Alire.Utils is
       and then User (User'Last) /= '-'
       and then not AAA.Strings.Contains (User, "--"));
 
+   -------------------
+   -- Error_In_Text --
+   -------------------
+
+   function Error_In_Text (Text : String; Multiline : Boolean) return String
+   is
+      function Is_C1 (I : Positive) return Boolean
+      is (Text (I) = Character'Val (16#C2#)
+          and then I < Text'Last
+          and then Text (I + 1) in Character'Val (16#80#)
+                                .. Character'Val (16#9F#));
+      --  C1 controls are encoded in UTF-8 as C2 80 .. C2 9F
+   begin
+      for I in Text'Range loop
+         if (Text (I) < ' '
+             and then not (Multiline and then Text (I) in Latin_1.LF
+                                                        | Latin_1.HT))
+           or else Text (I) = Latin_1.DEL
+           or else Is_C1 (I)
+         then
+            return "control character at position"
+              & Natural'Image (I - Text'First + 1)
+              & (if Multiline
+                 then " (only line breaks and tabs are allowed)"
+                 else "");
+         end if;
+      end loop;
+
+      return "";
+   end Error_In_Text;
+
    ------------------
    -- Error_In_Tag --
    ------------------
