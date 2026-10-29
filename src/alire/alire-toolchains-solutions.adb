@@ -8,6 +8,29 @@ with Alire.Solver;
 
 package body Alire.Toolchains.Solutions is
 
+   subtype Decided_Sources is Tool_Sources range Dependencies .. Environment;
+   --  Where tools can come from, when not missing
+
+   ---------------
+   -- Source_Of --
+   ---------------
+
+   function Source_Of (Solution : Alire.Solutions.Solution;
+                       Tool     : Crate_Name)
+                       return Decided_Sources
+   --  The single decision on where a tool comes from. Environment here means
+   --  that Alire does not provide the tool, without detecting whether it is
+   --  actually available in PATH.
+   is (if Solution.Depends_On (Tool) then
+          Dependencies
+       elsif Tool_Is_Configured (Tool) then
+         (if Settings.DB.Origin (Tool_Key (Tool))
+             = Settings.Level'Image (Settings.Local)
+          then Local
+          else Global)
+       else
+          Environment);
+
    -------------------
    -- Add_Toolchain --
    -------------------
@@ -52,29 +75,32 @@ package body Alire.Toolchains.Solutions is
       --  we will insert the user-configured tool, if any.
 
       for Tool of Toolchains.Tools loop
-         if Solution.Depends_On (Tool) then
-            Trace.Debug
-              ("Toolchain environment: solution already depends on "
-               & Solution.State (Tool).TTY_Image);
-         elsif Toolchains.Tool_Is_Configured (Tool) then
+         case Source_Of (Solution, Tool) is
+            when Dependencies =>
+               Trace.Debug
+                 ("Toolchain environment: solution already depends on "
+                  & Solution.State (Tool).TTY_Image);
 
-            --  This shouldn't happen normally, but it can happen if the user
-            --  has just changed the cache location.
-            if Deploy and then not Tool_Is_External (Tool) then
-               Redeploy_If_Needed (Tool_Milestone (Tool));
-            end if;
+            when Global | Local =>
 
-            --  Add the configured tool release to the solution
-            Result := Result.Including
-              (Release        => Toolchains.Release
-                 (Target           => Tool_Milestone (Tool),
-                  Detect_Externals => Tool_Is_External (Tool)),
-               Env            => Root.Platform_Properties,
-               Add_Dependency => True);
-         else
-            Trace.Debug ("Toolchain environment: tool not in solution nor "
-                         & "defined by the user: " & Tool.TTY_Image);
-         end if;
+               --  This shouldn't happen normally, but it can happen if the
+               --  user has just changed the cache location.
+               if Deploy and then not Tool_Is_External (Tool) then
+                  Redeploy_If_Needed (Tool_Milestone (Tool));
+               end if;
+
+               --  Add the configured tool release to the solution
+               Result := Result.Including
+                 (Release        => Toolchains.Release
+                    (Target           => Tool_Milestone (Tool),
+                     Detect_Externals => Tool_Is_External (Tool)),
+                  Env            => Root.Platform_Properties,
+                  Add_Dependency => True);
+
+            when Environment =>
+               Trace.Debug ("Toolchain environment: tool not in solution nor "
+                            & "defined by the user: " & Tool.TTY_Image);
+         end case;
       end loop;
 
       return Result;
@@ -205,57 +231,60 @@ package body Alire.Toolchains.Solutions is
           Crate    => Tool,
           Provides => Provides);
 
+      Decided : constant Decided_Sources := Source_Of (Solution, Tool);
+      --  Where Alire decides the tool is going to come from
+
    begin
-      if Solution.Depends_On (Tool) then
+      case Decided is
+         when Dependencies =>
 
-         --  All dependencies fulfilled by the tool release, possibly on
-         --  different crates (e.g., gnat and gnat_cross_1) that the solver
-         --  keeps separately.
+            --  All dependencies fulfilled by the tool release, possibly on
+            --  different crates (e.g., gnat and gnat_cross_1) that the solver
+            --  keeps separately.
 
-         declare
-            Providers : constant Alire.Solutions.State_Map :=
-                          Solution.Dependencies_Providing (Tool);
-            Provides : Alire.Dependencies.Containers.List;
-         begin
-            if Providers.Is_Empty then
-               --  Unsolved dependency on the tool itself
-               Provides.Append (Solution.Dependency (Tool));
-               return Missing_Tool (Provides);
-            end if;
+            declare
+               Providers : constant Alire.Solutions.State_Map :=
+                             Solution.Dependencies_Providing (Tool);
+               Provides  : Alire.Dependencies.Containers.List;
+            begin
+               if Providers.Is_Empty then
+                  --  Unsolved dependency on the tool itself
+                  Provides.Append (Solution.Dependency (Tool));
+                  return Missing_Tool (Provides);
+               end if;
 
-            for State of Providers loop
-               Provides.Append (State.As_Dependency);
-            end loop;
+               for State of Providers loop
+                  Provides.Append (State.As_Dependency);
+               end loop;
 
-            return Found_Tool (Dependencies,
-                               Providers.First_Element.Release.Name,
-                               Providers.First_Element.Release.Version,
-                               Provides);
-         end;
+               return Found_Tool (Dependencies,
+                                  Providers.First_Element.Release.Name,
+                                  Providers.First_Element.Release.Version,
+                                  Provides);
+            end;
 
-      elsif Tool_Is_Configured (Tool) then
-         return Found_Tool
-           ((if Settings.DB.Origin (Tool_Key (Tool))
-               = Settings.Level'Image (Settings.Local)
-            then Local
-            else Global),
-            Tool_Milestone (Tool).Crate,
-            Tool_Milestone (Tool).Version);
+         when Global | Local =>
+            return Found_Tool (Decided,
+                               Tool_Milestone (Tool).Crate,
+                               Tool_Milestone (Tool).Version);
 
-      else
-         declare
-            Env_Tool : constant Releases.Containers.Optional :=
-                         Environment_Tool (Tool);
-         begin
-            if Env_Tool.Has_Element then
-               return Found_Tool (Environment,
-                                  Env_Tool.Value.Name,
-                                  Env_Tool.Value.Version);
-            else
-               return Missing_Tool;
-            end if;
-         end;
-      end if;
+         when Environment =>
+
+            --  Alire does not provide the tool, so detect what is there
+
+            declare
+               Env_Tool : constant Releases.Containers.Optional :=
+                            Environment_Tool (Tool);
+            begin
+               if Env_Tool.Has_Element then
+                  return Found_Tool (Environment,
+                                     Env_Tool.Value.Name,
+                                     Env_Tool.Value.Version);
+               else
+                  return Missing_Tool;
+               end if;
+            end;
+      end case;
    end Effective;
 
    ---------------------
