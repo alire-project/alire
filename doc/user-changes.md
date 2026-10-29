@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### `alr build --toolchain` reports the tools a build will use
 
-PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
+PR [#2222](https://github.com/alire-project/alire/pull/2222)
 
 The tools selected with `alr toolchain` may be overridden by dependencies on
 specific compilers, and unselected tools are taken from the environment. The
