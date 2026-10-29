@@ -327,7 +327,9 @@ package body Alr.Commands.Build is
                  & ": selected with " & TTY.Terminal ("alr toolchain")
                  & " in global/workspace settings")
         .Append ("* " & TTY.Emph ("environment") & ": unselected, detected "
-                 & "in the environment")
+                 & "in the current environment; the build uses whatever is "
+                 & "first in PATH, which crate environment settings may "
+                 & "alter")
         .Append ("* " & TTY.Emph ("missing") & ": no release available, the "
                  & "build will likely fail")
       ;
