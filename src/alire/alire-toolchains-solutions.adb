@@ -240,7 +240,11 @@ package body Alire.Toolchains.Solutions is
 
             --  All dependencies fulfilled by the tool release, possibly on
             --  different crates (e.g., gnat and gnat_cross_1) that the solver
-            --  keeps separately.
+            --  keeps separately. We group them all for reporting in the row of
+            --  the crate that concretely provides all these dependencies (that
+            --  usually will be one if some crate has a dependency, but also
+            --  can be more if there are compatible abstract and cross-compiler
+            --  dependencies).
 
             declare
                Providers : constant Alire.Solutions.State_Map :=
