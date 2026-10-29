@@ -17,9 +17,9 @@ build will actually use and where they come from:
 
 ```
 $ alr build --toolchain
-CRATE        VERSION  DEPENDENCY     SOURCE
-gnat_native  16.2.1   gnat*          dependencies
-gprbuild     24.0.1                  global
+CRATE        VERSION  DEPENDENCIES  SOURCE
+gnat_native  16.2.1   gnat*         dependencies
+gprbuild     24.0.1                 global
 ```
 
 See `alr help build` for details on the sources.

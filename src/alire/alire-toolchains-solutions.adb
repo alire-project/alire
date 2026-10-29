@@ -169,25 +169,27 @@ package body Alire.Toolchains.Solutions is
                        Tool     : Crate_Name)
                        return Effective_Tool
    is
-      package Optional_Deps renames Alire.Dependencies.Containers.Optionals;
+      No_Deps : constant Alire.Dependencies.Containers.List :=
+                  (Alire.Dependencies.Containers.Lists.Empty_List
+                   with null record);
 
       ----------------
       -- Found_Tool --
       ----------------
 
-      function Found_Tool (Source  : Tool_Sources;
-                           Crate   : Crate_Name;
-                           Version : Semantic_Versioning.Version;
-                           Dep     : Alire.Dependencies.Containers.Optional :=
-                                       Optional_Deps.Empty)
+      function Found_Tool (Source    : Tool_Sources;
+                           Crate     : Crate_Name;
+                           Version   : Semantic_Versioning.Version;
+                           Impacting : Alire.Dependencies.Containers.List :=
+                                         No_Deps)
                            return Effective_Tool
         with Pre => Source /= Missing
       is
       begin
          return Result : Effective_Tool (Source, Crate.Len) do
-            Result.Crate      := Crate;
-            Result.Dependency := Dep;
-            Result.Version    := Version;
+            Result.Crate     := Crate;
+            Result.Impacting := Impacting;
+            Result.Version   := Version;
          end return;
       end Found_Tool;
 
@@ -195,34 +197,40 @@ package body Alire.Toolchains.Solutions is
       -- Missing_Tool --
       ------------------
 
-      function Missing_Tool (Dep : Alire.Dependencies.Containers.Optional :=
-                                     Optional_Deps.Empty)
+      function Missing_Tool (Impacting : Alire.Dependencies.Containers.List :=
+                                           No_Deps)
                              return Effective_Tool
-      is (Source     => Missing,
-          Name_Len   => Tool.Len,
-          Crate      => Tool,
-          Dependency => Dep);
+      is (Source    => Missing,
+          Name_Len  => Tool.Len,
+          Crate     => Tool,
+          Impacting => Impacting);
 
    begin
       if Solution.Depends_On (Tool) then
+
+         --  All dependencies fulfilled by the tool release, possibly on
+         --  different crates (e.g., gnat and gnat_cross_1) that the solver
+         --  keeps separately.
+
          declare
             Providers : constant Alire.Solutions.State_Map :=
                           Solution.Dependencies_Providing (Tool);
-            Dep       : constant Alire.Dependencies.Containers.Optional :=
-                          Optional_Deps.Unit
-                            (Solution.Dependency
-                               (if Solution.Depends_Directly_On (Tool)
-                                then Tool
-                                else Providers.First_Element.Crate));
+            Impacting : Alire.Dependencies.Containers.List;
          begin
             if Providers.Is_Empty then
-               return Missing_Tool (Dep); -- Unsolved dependency
-            else
-               return Found_Tool (Dependencies,
-                                  Providers.First_Element.Release.Name,
-                                  Providers.First_Element.Release.Version,
-                                  Dep);
+               --  Unsolved dependency on the tool itself
+               Impacting.Append (Solution.Dependency (Tool));
+               return Missing_Tool (Impacting);
             end if;
+
+            for State of Providers loop
+               Impacting.Append (State.As_Dependency);
+            end loop;
+
+            return Found_Tool (Dependencies,
+                               Providers.First_Element.Release.Name,
+                               Providers.First_Element.Release.Version,
+                               Impacting);
          end;
 
       elsif Tool_Is_Configured (Tool) then

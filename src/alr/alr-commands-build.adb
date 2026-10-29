@@ -56,11 +56,26 @@ package body Alr.Commands.Build is
    procedure Report_Toolchain (Cmd : in out Command) is
       use Alire.Toolchains.Solutions;
       Table : Alire.Utils.Tables.Table;
+
+      ---------------------
+      -- Impacting_Image --
+      ---------------------
+
+      function Impacting_Image (Tool : Effective_Tool) return String is
+         Result : AAA.Strings.Vector;
+      begin
+         for Dep of Tool.Impacting loop
+            Result.Append (Dep.Image);
+         end loop;
+
+         return Result.Flatten (", ");
+      end Impacting_Image;
+
    begin
       Table
         .Header ("Crate")
         .Header ("Version")
-        .Header ("Dependency")
+        .Header ("Dependencies")
         .Header ("Source")
         .New_Row;
 
@@ -74,9 +89,7 @@ package body Alr.Commands.Build is
               .Append (if Tool.Source = Missing
                        then ""
                        else Tool.Version.Image)
-              .Append (if Tool.Dependency.Has_Element
-                       then Tool.Dependency.Value.Image
-                       else "")
+              .Append (Impacting_Image (Tool))
               .Append (AAA.Strings.To_Lower_Case (Tool.Source'Image))
               .New_Row;
          end;
@@ -308,7 +321,8 @@ package body Alr.Commands.Build is
                  & ". The source of each tool is one of:")
         .New_Line
         .Append ("* " & TTY.Emph ("dependencies") & ": required by the "
-                 & "solution, the final dependency on the tool is also shown")
+                 & "solution, all dependencies fulfilled by the tool are "
+                 & "also shown")
         .Append ("* " & TTY.Emph ("global") & "/" & TTY.Emph ("local")
                  & ": selected with " & TTY.Terminal ("alr toolchain")
                  & " in global/workspace settings")

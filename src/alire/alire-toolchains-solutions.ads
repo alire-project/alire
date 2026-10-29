@@ -33,6 +33,8 @@ package Alire.Toolchains.Solutions is
       Missing);     -- No release available, the build will likely fail
 
    type Effective_Tool (<>) is tagged private;
+   --  Stores the info about the actual tool in the solution that will be
+   --  be used for the build.
 
    function Source (This : Effective_Tool) return Tool_Sources;
 
@@ -42,9 +44,9 @@ package Alire.Toolchains.Solutions is
    function Version (This : Effective_Tool) return Semantic_Versioning.Version
      with Pre => Source (This) /= Missing;
 
-   function Dependency (This : Effective_Tool)
-                        return Alire.Dependencies.Containers.Optional;
-   --  Final dependency in the solution, if any
+   function Impacting (This : Effective_Tool)
+                       return Alire.Dependencies.Containers.List;
+   --  Final dependencies in the solution fulfilled by the tool, if any
 
    function Effective (Solution : Alire.Solutions.Solution;
                        Tool     : Crate_Name)
@@ -58,7 +60,7 @@ private
                         Name_Len : Positive)
    is tagged record
       Crate      : Crate_Name (Name_Len);
-      Dependency : Alire.Dependencies.Containers.Optional;
+      Impacting  : Alire.Dependencies.Containers.List;
       case Source is
          when Missing =>
             null;
@@ -88,12 +90,12 @@ private
    function Version (This : Effective_Tool) return Semantic_Versioning.Version
    is (This.Version);
 
-   ----------------
-   -- Dependency --
-   ----------------
+   ---------------
+   -- Impacting --
+   ---------------
 
-   function Dependency (This : Effective_Tool)
-                        return Alire.Dependencies.Containers.Optional
-   is (This.Dependency);
+   function Impacting (This : Effective_Tool)
+                       return Alire.Dependencies.Containers.List
+   is (This.Impacting);
 
 end Alire.Toolchains.Solutions;
