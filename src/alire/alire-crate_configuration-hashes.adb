@@ -30,6 +30,15 @@ package body Alire.Crate_Configuration.Hashes is
                                   & Def.Image);
             end if;
 
+            --  The generated configuration files declare the bounds of the
+            --  variable (first/last) alongside its value, so the type
+            --  definition must be part of the inputs. Otherwise changing
+            --  only first/last of a numeric variable leaves the hash
+            --  untouched and the configuration files are never regenerated.
+            Add (Kind  => "config_type",
+                 Key   => Key,
+                 Value => Def.Image);
+
             Add (Kind  => "config",
                  Key   => Key,
                  Value =>
