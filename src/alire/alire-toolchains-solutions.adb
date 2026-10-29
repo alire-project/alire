@@ -1,6 +1,8 @@
 with AAA.Strings;
 
 with Alire.Index;
+with Alire.Origins;
+with Alire.Releases.Containers;
 with Alire.Root;
 with Alire.Solver;
 
@@ -78,6 +80,33 @@ package body Alire.Toolchains.Solutions is
       return Result;
    end Add_Toolchain;
 
+   ----------------------
+   -- Environment_Tool --
+   ----------------------
+
+   function Environment_Tool (Tool : Crate_Name)
+                              return Releases.Containers.Optional
+   --  Return the external release of Tool detected in the environment, if any
+   is
+   begin
+      Index.Detect_Externals (Tool, Root.Platform_Properties);
+
+      if Tool = GNAT_Crate then
+         return Releases.Containers.Unit
+           (Solver.Find (GNAT_External_Crate,
+                         Policy => Solver.Default_Options.Age));
+      else
+         return Releases.Containers.Unit
+           (Solver.Find (Tool,
+                         Policy  => Solver.Default_Options.Age,
+                         Origins => (Alire.Origins.External => True,
+                                     others                 => False)));
+      end if;
+   exception
+      when Query_Unsuccessful =>
+         return Releases.Containers.Optional_Releases.Empty;
+   end Environment_Tool;
+
    --------------
    -- Compiler --
    --------------
@@ -91,18 +120,19 @@ package body Alire.Toolchains.Solutions is
       --------------------------
 
       function Environment_Compiler return Releases.Release is
+         Found : constant Releases.Containers.Optional :=
+                   Environment_Tool (GNAT_Crate);
       begin
-         Index.Detect_Externals (GNAT_Crate, Root.Platform_Properties);
-         return Solver.Find (GNAT_External_Crate,
-                             Policy => Solver.Default_Options.Age);
-      exception
-         when Query_Unsuccessful =>
+         if Found.Is_Empty then
             Raise_Checked_Error
               (Errors.New_Wrapper
                .Wrap ("Unable to determine compiler version.")
                .Wrap ("Check that the workspace solution is complete "
                  & "and a compiler is available.")
                .Get);
+         end if;
+
+         return Found.Value;
       end Environment_Compiler;
 
    begin
@@ -131,13 +161,102 @@ package body Alire.Toolchains.Solutions is
       return Solution.Releases_Providing (GNAT_Crate).First_Element;
    end Compiler;
 
+   ---------------
+   -- Effective --
+   ---------------
+
+   function Effective (Solution : Alire.Solutions.Solution;
+                       Tool     : Crate_Name)
+                       return Effective_Tool
+   is
+      package Optional_Deps renames Alire.Dependencies.Containers.Optionals;
+
+      ----------------
+      -- Found_Tool --
+      ----------------
+
+      function Found_Tool (Source  : Tool_Sources;
+                           Crate   : Crate_Name;
+                           Version : Semantic_Versioning.Version;
+                           Dep     : Alire.Dependencies.Containers.Optional :=
+                                       Optional_Deps.Empty)
+                           return Effective_Tool
+        with Pre => Source /= Missing
+      is
+      begin
+         return Result : Effective_Tool (Source, Crate.Len) do
+            Result.Crate      := Crate;
+            Result.Dependency := Dep;
+            Result.Version    := Version;
+         end return;
+      end Found_Tool;
+
+      ------------------
+      -- Missing_Tool --
+      ------------------
+
+      function Missing_Tool (Dep : Alire.Dependencies.Containers.Optional :=
+                                     Optional_Deps.Empty)
+                             return Effective_Tool
+      is (Source     => Missing,
+          Name_Len   => Tool.Len,
+          Crate      => Tool,
+          Dependency => Dep);
+
+   begin
+      if Solution.Depends_On (Tool) then
+         declare
+            Providers : constant Alire.Solutions.State_Map :=
+                          Solution.Dependencies_Providing (Tool);
+            Dep       : constant Alire.Dependencies.Containers.Optional :=
+                          Optional_Deps.Unit
+                            (Solution.Dependency
+                               (if Solution.Depends_Directly_On (Tool)
+                                then Tool
+                                else Providers.First_Element.Crate));
+         begin
+            if Providers.Is_Empty then
+               return Missing_Tool (Dep); -- Unsolved dependency
+            else
+               return Found_Tool (Dependencies,
+                                  Providers.First_Element.Release.Name,
+                                  Providers.First_Element.Release.Version,
+                                  Dep);
+            end if;
+         end;
+
+      elsif Tool_Is_Configured (Tool) then
+         return Found_Tool
+           ((if Settings.DB.Origin (Tool_Key (Tool))
+               = Settings.Level'Image (Settings.Local)
+            then Local
+            else Global),
+            Tool_Milestone (Tool).Crate,
+            Tool_Milestone (Tool).Version);
+
+      else
+         declare
+            Env_Tool : constant Releases.Containers.Optional :=
+                         Environment_Tool (Tool);
+         begin
+            if Env_Tool.Has_Element then
+               return Found_Tool (Environment,
+                                  Env_Tool.Value.Name,
+                                  Env_Tool.Value.Version);
+            else
+               return Missing_Tool;
+            end if;
+         end;
+      end if;
+   end Effective;
+
    ---------------------
    -- Is_In_Toolchain --
    ---------------------
 
    function Is_In_Toolchain (Release : Releases.Release) return Boolean
    is
-      use type Dependencies.Dependency;
+      use type Alire.Dependencies.Dependency;
    begin
       return Tool_Is_Configured (Release.Name) and then
         Tool_Dependency (Release.Name) = Release.To_Dependency.Value;

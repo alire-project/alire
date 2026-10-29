@@ -6,6 +6,24 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### `alr build --toolchain` reports the tools a build will use
+
+PR [#2222](https://github.com/alire-project/alire/pull/2222)
+
+The tools selected with `alr toolchain` may be overridden by dependencies on
+specific compilers, and unselected tools are taken from the environment. The
+new `alr build --toolchain` switch reports, without building, which tools a
+build will actually use and where they come from:
+
+```
+$ alr build --toolchain
+CRATE        VERSION  DEPENDENCY     SOURCE
+gnat_native  16.2.1   gnat*          dependencies
+gprbuild     24.0.1                  global
+```
+
+See `alr help build` for details on the sources.
+
 ### Support for Git from Cygwin and MSYS2
 
 PR [#2186](https://github.com/alire-project/alire/pull/2186)
@@ -146,7 +164,6 @@ warning is printed suggesting the use of `--builtin`.
 ### New test command
 
 PR [#1874](https://github.com/alire-project/alire/pull/1874)
-PR [#2157](https://github.com/alire-project/alire/pull/2157)
 
 The `alr test` command can now be configured with a new `[test]` section in the
 Alire manifest, with the option to use a built-in test runner or an external
@@ -160,20 +177,9 @@ command = ["my", "custom", "runner"]
 ```
 
 The built-in test runner allows crate authors to compile and run tests from
-simple `.adb` files in the test crate's `src/` folder. A source is run as a
-separate test only if it is a parameterless main procedure that declares itself
-with a pragma in its context clause:
-
-```ada
-pragma Alire_Test;          --  run this source as a test
-```
-
-Sources that can never be a runnable main (package bodies, functions, generics,
-`separate` subunits, ...) are ignored silently. See the new testsuite documentation 
-for more test configuration pragmas.
-
-A skeleton test subcrate, including a declared test, is now generated with
-`alr init` (this can be prevented with the `--no-test` flag).
+simple `.adb` files. It compiles and runs every `.adb` file of the subcrate's
+`/src` folder as a separate test. A skeleton test subcrate is now generated
+with `alr init` (this can be prevented with the `--no-test` flag).
 
 For backwards compatibility, running `alr test` without a `[test]` section in
 the manifest will still run local test actions, but they should be considered

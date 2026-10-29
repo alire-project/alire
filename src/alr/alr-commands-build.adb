@@ -2,14 +2,17 @@ with AAA.Enum_Tools;
 
 with Alire.Crate_Configuration;
 with Alire.TOML_Adapters;
+with Alire.Toolchains.Solutions;
 with Alire.Utils.Switches;
+with Alire.Utils.Tables;
 
 with Stopwatch;
 
 package body Alr.Commands.Build is
 
-   Switch_Profiles : constant String := "--profiles";
-   Switch_Stop     : constant String := "--stop-after";
+   Switch_Profiles  : constant String := "--profiles";
+   Switch_Stop      : constant String := "--stop-after";
+   Switch_Toolchain : constant String := "--toolchain";
 
    --------------------
    -- Apply_Profiles --
@@ -46,6 +49,42 @@ package body Alr.Commands.Build is
       end;
    end Apply_Profiles;
 
+   ----------------------
+   -- Report_Toolchain --
+   ----------------------
+
+   procedure Report_Toolchain (Cmd : in out Command) is
+      use Alire.Toolchains.Solutions;
+      Table : Alire.Utils.Tables.Table;
+   begin
+      Table
+        .Header ("Crate")
+        .Header ("Version")
+        .Header ("Dependency")
+        .Header ("Source")
+        .New_Row;
+
+      for Crate of Alire.Toolchains.Tools loop
+         declare
+            Tool : constant Effective_Tool :=
+                     Effective (Cmd.Root.Solution, Crate);
+         begin
+            Table
+              .Append (Tool.Crate.As_String)
+              .Append (if Tool.Source = Missing
+                       then ""
+                       else Tool.Version.Image)
+              .Append (if Tool.Dependency.Has_Element
+                       then Tool.Dependency.Value.Image
+                       else "")
+              .Append (AAA.Strings.To_Lower_Case (Tool.Source'Image))
+              .New_Row;
+         end;
+      end loop;
+
+      Table.Print (Always);
+   end Report_Toolchain;
+
    -------------
    -- Execute --
    -------------
@@ -66,6 +105,22 @@ package body Alr.Commands.Build is
       Stop_After : Alire.Builds.Stop_Points := Alire.Builds.Stop_Points'Last;
    begin
       --  Validation
+
+      if Cmd.Toolchain then
+         if not Args.Is_Empty
+           or else Profiles_Selected > 0
+           or else Cmd.Profiles.all /= ""
+           or else Cmd.Stop_After.all /= ""
+         then
+            Reportaise_Wrong_Arguments
+              (Switch_Toolchain & " cannot be combined with other build "
+               & "switches or arguments");
+         end if;
+
+         Cmd.Requires_Workspace;
+         Cmd.Report_Toolchain;
+         return;
+      end if;
 
       if Profiles_Selected > 1 then
          Reportaise_Wrong_Arguments ("Only one build profile can be selected");
@@ -244,6 +299,23 @@ package body Alr.Commands.Build is
                  & " performed, just run a regular "
                  & TTY.Terminal ("alr build") &  " without "
                  & Switch_Stop & ".")
+        .New_Line
+        .Append (TTY.Bold ("Toolchain report"))
+        .New_Line
+        .Append (TTY.Terminal (Switch_Toolchain) & " lists, without building,"
+                 & " the tools that a build would use, which may differ from"
+                 & " those selected with " & TTY.Terminal ("alr toolchain")
+                 & ". The source of each tool is one of:")
+        .New_Line
+        .Append ("* " & TTY.Emph ("dependencies") & ": required by the "
+                 & "solution, the final dependency on the tool is also shown")
+        .Append ("* " & TTY.Emph ("global") & "/" & TTY.Emph ("local")
+                 & ": selected with " & TTY.Terminal ("alr toolchain")
+                 & " in global/workspace settings")
+        .Append ("* " & TTY.Emph ("environment") & ": unselected, detected "
+                 & "in the environment")
+        .Append ("* " & TTY.Emph ("missing") & ": no release available, the "
+                 & "build will likely fail")
       ;
    end Long_Description;
 
@@ -284,6 +356,12 @@ package body Alr.Commands.Build is
          "", Switch_Stop & "=",
          "Build stage after which to stop (see description)",
          Argument => "STAGE");
+
+      Define_Switch
+        (Config,
+         Cmd.Toolchain'Access,
+         "", Switch_Toolchain,
+         "Show the tools a build would use, without building");
 
    end Setup_Switches;
 
