@@ -44,8 +44,8 @@ package Alire.Toolchains.Solutions is
    function Version (This : Effective_Tool) return Semantic_Versioning.Version
      with Pre => Source (This) /= Missing;
 
-   function Impacting (This : Effective_Tool)
-                       return Alire.Dependencies.Containers.List;
+   function Provides (This : Effective_Tool)
+                      return Alire.Dependencies.Containers.List;
    --  Final dependencies in the solution fulfilled by the tool, if any
 
    function Effective (Solution : Alire.Solutions.Solution;
@@ -59,8 +59,8 @@ private
    type Effective_Tool (Source   : Tool_Sources;
                         Name_Len : Positive)
    is tagged record
-      Crate      : Crate_Name (Name_Len);
-      Impacting  : Alire.Dependencies.Containers.List;
+      Crate    : Crate_Name (Name_Len);
+      Provides : Alire.Dependencies.Containers.List;
       case Source is
          when Missing =>
             null;
@@ -90,12 +90,12 @@ private
    function Version (This : Effective_Tool) return Semantic_Versioning.Version
    is (This.Version);
 
-   ---------------
-   -- Impacting --
-   ---------------
+   --------------
+   -- Provides --
+   --------------
 
-   function Impacting (This : Effective_Tool)
-                       return Alire.Dependencies.Containers.List
-   is (This.Impacting);
+   function Provides (This : Effective_Tool)
+                      return Alire.Dependencies.Containers.List
+   is (This.Provides);
 
 end Alire.Toolchains.Solutions;

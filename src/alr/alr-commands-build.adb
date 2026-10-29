@@ -57,19 +57,19 @@ package body Alr.Commands.Build is
       use Alire.Toolchains.Solutions;
       Table : Alire.Utils.Tables.Table;
 
-      ---------------------
-      -- Impacting_Image --
-      ---------------------
+      --------------------
+      -- Provides_Image --
+      --------------------
 
-      function Impacting_Image (Tool : Effective_Tool) return String is
+      function Provides_Image (Tool : Effective_Tool) return String is
          Result : AAA.Strings.Vector;
       begin
-         for Dep of Tool.Impacting loop
+         for Dep of Tool.Provides loop
             Result.Append (Dep.Image);
          end loop;
 
          return Result.Flatten (", ");
-      end Impacting_Image;
+      end Provides_Image;
 
    begin
       Table
@@ -89,7 +89,7 @@ package body Alr.Commands.Build is
               .Append (if Tool.Source = Missing
                        then ""
                        else Tool.Version.Image)
-              .Append (Impacting_Image (Tool))
+              .Append (Provides_Image (Tool))
               .Append (AAA.Strings.To_Lower_Case (Tool.Source'Image))
               .New_Row;
          end;
