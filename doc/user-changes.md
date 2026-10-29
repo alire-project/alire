@@ -157,7 +157,8 @@ pragma Alire_Test;          --  run this source as a test
 ```
 
 Sources that can never be a runnable main (package bodies, functions, generics,
-`separate` subunits, ...) are ignored silently. See the new testsuite documentation for more test configuration pragmas.
+`separate` subunits, ...) are ignored silently. See the new testsuite documentation 
+for more test configuration pragmas.
 
 A skeleton test subcrate, including a declared test, is now generated with
 `alr init` (this can be prevented with the `--no-test` flag).
