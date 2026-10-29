@@ -1,6 +1,20 @@
 with GNAT.OS_Lib;
 
+with Interfaces.C_Streams;
+
 package body Alire.OS_Lib is
+
+   ------------------
+   -- Flush_Output --
+   ------------------
+
+   procedure Flush_Output is
+      use Interfaces.C_Streams;
+      Unused_Out : constant int := fflush (stdout);
+      Unused_Err : constant int := fflush (stderr);
+   begin
+      null;
+   end Flush_Output;
 
    ---------
    -- "/" --

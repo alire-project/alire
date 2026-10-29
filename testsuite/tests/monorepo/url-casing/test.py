@@ -55,9 +55,9 @@ if not fs_folds_case(START_DIR):
 add_manifest("crate_a", START_DIR / "MonoRepo", commit)
 add_manifest("crate_b", START_DIR / "monorepo", commit)
 
-# Check that a workspace depending on both crates works. On case-insensitive
-# filesystems, crate_b reuses crate_a's checkout, which deployment must not
-# mistake for an error condition.
+# Check that a workspace depending on both crates works. The hash of the URL in
+# the folder names keeps the two checkouts apart, even on case-insensitive
+# filesystems.
 init_local_crate()
 run_alr("with", "crate_a")
 run_alr("with", "crate_b")

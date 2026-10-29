@@ -21,6 +21,60 @@ package body Alire.VFS is
       end if;
    end Attempt_Portable;
 
+   ----------------------------
+   -- Error_In_Portable_Path --
+   ----------------------------
+
+   function Error_In_Portable_Path (Path : String;
+                                    What : String := "path") return String
+   is
+      function Invalid (Reason : String) return String
+      is ("invalid " & What & " '" & Path & "': " & Reason);
+   begin
+      if (for some C of Path => C = '\') then
+         return Invalid ("it must use forward slashes");
+      elsif Path /= "" and then Path (Path'First) = '/' then
+         return Invalid ("it must be a relative path");
+      elsif (for some C of Path => C = ':') then
+         return Invalid ("it must not contain ':'");
+      else
+         return "";
+      end if;
+   end Error_In_Portable_Path;
+
+   -----------------------------
+   -- Error_In_Contained_Path --
+   -----------------------------
+
+   function Error_In_Contained_Path (Path   : String;
+                                     What   : String := "path";
+                                     Within : String := "") return String
+   is
+      Error    : constant String := Error_In_Portable_Path (Path, What);
+      Segments : constant AAA.Strings.Vector :=
+                   Split (Within & "/" & Path, '/');
+      Depth    : Natural := 0;
+      --  Of the current folder below the one Within is relative to
+   begin
+      if Error /= "" then
+         return Error;
+      end if;
+
+      for Segment of Segments loop
+         if Segment = ".." then
+            if Depth = 0 then
+               return "invalid " & What & " '" & Path
+                 & "': it must not go above the root of its origin";
+            end if;
+            Depth := Depth - 1;
+         elsif Segment not in "" | "." then
+            Depth := Depth + 1;
+         end if;
+      end loop;
+
+      return "";
+   end Error_In_Contained_Path;
+
    --------------
    -- Read_Dir --
    --------------

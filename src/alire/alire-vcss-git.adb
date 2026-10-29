@@ -71,7 +71,7 @@ package body Alire.VCSs.Git is
    is
       Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
    begin
-      Run_Git (To_Vector ("remote") & "add" & Name & URL);
+      Run_Git (To_Vector ("remote") & "add" & "--" & Name & URL);
    end Add_Remote;
 
    ------------
@@ -230,7 +230,8 @@ package body Alire.VCSs.Git is
       Trace.Detail ("Checking out [git]: " & From);
 
       Run_Git (Empty_Vector & "clone" & "--recursive" &
-                 Extra & Branch_Opts & Depth_Opts & Repo_URL (From) & Into);
+                 Extra & Branch_Opts & Depth_Opts &
+                 "--" & Repo_URL (From) & Into);
 
       if Commit /= "" then
          declare
@@ -353,7 +354,7 @@ package body Alire.VCSs.Git is
                                   & ":" & Token & "@");
          begin
             Run_Git (Empty_Vector
-                     & "remote" & "add" & Writname & Writurl);
+                     & "remote" & "add" & "--" & Writname & Writurl);
             Run_Git (Empty_Vector
                      & "push"
                      & Force_Flags
@@ -587,7 +588,8 @@ package body Alire.VCSs.Git is
                            Ref  : String := "HEAD") return String
    is
       Output : constant AAA.Strings.Vector :=
-        Run_Git_And_Capture (Empty_Vector & "ls-remote" & Repo_URL (From));
+        Run_Git_And_Capture
+          (Empty_Vector & "ls-remote" & "--" & Repo_URL (From));
    begin
       --  Sample output from git (space is tab):
       --  95818710c1a2bea0cbfa617a67972fe984761227        HEAD

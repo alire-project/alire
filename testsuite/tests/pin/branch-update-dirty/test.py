@@ -39,7 +39,7 @@ for subdir in ("", "subdir", os.path.join("subdir", "subsubdir")):
     init_local_crate()
     xxx_path = os.getcwd()
     alr_pin("yyy", url=f"git+file:{yyy_path}", subdir=subdir)
-    run_alr("build")
+    run_alr("build", "--stop-after=generation")
 
     # Verify that the cached copy of yyy has a dirty repo (due to Alire's
     # changes to the 'config/*' files during the build)
@@ -88,7 +88,7 @@ for subdir in ("", "subdir", os.path.join("subdir", "subsubdir")):
     run(["git", "reset", "--hard", "HEAD~"])
     shutil.rmtree(rel_config_dir_path)  # So 'alr build' re-generates the files.
     os.chdir(xxx_path)
-    run_alr("build")
+    run_alr("build", "--stop-after=generation")
     os.chdir(cached_yyy_path)
     p = run(["git", "status", "--porcelain"])
     assert_match(rf".* M {gpr_rel_path_pattern}", p.stdout.decode())
@@ -110,7 +110,7 @@ for subdir in ("", "subdir", os.path.join("subdir", "subsubdir")):
     run(["git", "reset", "--hard", "HEAD~"])
     shutil.rmtree(rel_config_dir_path)
     os.chdir(xxx_path)
-    run_alr("build")
+    run_alr("build", "--stop-after=generation")
     os.chdir(cached_yyy_path)
     with open("test_file", "w") as f:
         f.write("This file is now dirty.\n")

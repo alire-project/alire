@@ -16,6 +16,39 @@ may change.
 - manifest: `licenses` now supports SPDX v3.0.0 syntax, with the exception that license and exception identifiers are still matched case-sensitively.
 - manifest: `licenses` now uses v3.24.0 of the SPDX License List.
 - manifest: new `mirror` property (array of alternative origins).
+- index: origin `subdir` must be a relative path with forward slashes, without
+  `:`, that stays within the repository, and `archive-name` a plain file name
+  without `/`, `\` or `:` (applies to any index version).
+- index: `project-files`, `executables`, and `directory` in actions and tests
+  must be relative paths that stay within the deployed origin (they may go up
+  from a `subdir` only as far as the repository root), with forward slashes
+  except in actions (applies to any index version).
+- index: manifests larger than 64 KiB are rejected (configurable with the
+  `index.max_manifest_size` setting; applies to any index version).
+- alr: `alr printenv` quotes values so that shells take them literally: single
+  quotes for sh; for PowerShell, an ASCII-only expression with other
+  characters given as codes (`'a' + [char]0x0151`); `set "NAME=value"` for
+  cmd.exe, which fails on values containing `"`, `%`, `!` or line breaks.
+- index: symbolic links in indexes are rejected, unless enabled with the
+  `index.allow_symlinks` setting (links to folders are never entered).
+- manifest: dependency version sets accept word operators (`and`, `or`, `not`)
+  and `¬`.
+- manifest: versions with leading zeros, in X.Y.Z or in numeric pre-release
+  identifiers (e.g. `01.0.0`, `2025.04.18`, `1.0.0-01`), are rejected, as
+  semantic versioning forbids them. This applies to all manifests, index or
+  local, and to versions in dependencies and pins.
+- index: release versions must be strict semantic versions (X.Y.Z, valid
+  pre-release and build identifiers), with at most 32 characters after X.Y.Z
+  (pre-release and build metadata, separators included).
+- index: releases of a crate whose versions differ only in build metadata are
+  duplicates, and all of them are rejected (applies to any index version).
+- index: the version in a manifest file name and in its contents must also
+  have the same build metadata (applies to any index version; short forms
+  like `1.0` for `1.0.0` remain valid).
+- manifest: text fields must not contain control characters, except line
+  breaks and tabs in `long-description`, `notes` and external hints, and
+  `long-description`, `notes` and `website` are limited to 16384, 2048 and 512
+  characters.
 
 ### We are here
 

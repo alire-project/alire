@@ -1,7 +1,8 @@
 driver: python-script
+build_mode: shared
 indexes:
     my_index:
         in_fixtures: false
-        # Load crates on demand, so each invalid manifest is validated only
-        # when its crate is shown (an eager load would abort on the first one)
+        # Load crates on demand, so each invalid manifest is reported only
+        # when its crate is shown
         lazy_loading: true

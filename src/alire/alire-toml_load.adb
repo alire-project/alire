@@ -4,8 +4,11 @@ with Alire.Errors;
 with Alire.Platforms;
 with Alire.Properties.From_TOML;
 with Alire.TOML_Keys;
+with Alire.Utils.Text_Files;
 
-with TOML.File_IO;
+with Ada.Exceptions;
+with Ada.Streams.Stream_IO;
+with Ada.Strings.Unbounded;
 
 package body Alire.TOML_Load is
 
@@ -212,12 +215,39 @@ package body Alire.TOML_Load is
    end Load_Crate_Section;
 
    ---------------
+   -- Read_File --
+   ---------------
+
+   function Read_File (File_Name : Any_Path) return TOML.Read_Result is
+      use Ada.Streams.Stream_IO;
+      File : File_Type;
+   begin
+      begin
+         Open (File, In_File, File_Name);
+      exception
+         when E : Name_Error | Use_Error =>
+            return (Success  => False,
+                    Message  => Ada.Strings.Unbounded.To_Unbounded_String
+                                  (Ada.Exceptions.Exception_Message (E)),
+                    Location => TOML.No_Location);
+      end;
+
+      declare
+         Contents : String (1 .. Natural (Size (File)));
+      begin
+         --  Reading exactly the file size never hits the end of the file
+         String'Read (Stream (File), Contents);
+         Close (File);
+         return TOML.Load_String (Contents);
+      end;
+   end Read_File;
+
+   ---------------
    -- Load_File --
    ---------------
 
    function Load_File (File_Name : Any_Path) return TOML.TOML_Value is
-      TOML_Result : constant TOML.Read_Result :=
-                      TOML.File_IO.Load_File (File_Name);
+      TOML_Result : constant TOML.Read_Result := Read_File (File_Name);
    begin
       if TOML_Result.Success then
          return TOML_Result.Value;
@@ -227,5 +257,35 @@ package body Alire.TOML_Load is
                          Format_Error (File_Name, TOML_Result)));
       end if;
    end Load_File;
+
+   ----------------
+   -- Dump_Lines --
+   ----------------
+
+   function Dump_Lines (Value : TOML.TOML_Value) return AAA.Strings.Vector is
+   begin
+      return Lines : AAA.Strings.Vector :=
+        Split (TOML.Dump_As_String (Value), Latin_1.LF)
+      do
+         --  The dump ends in a line break, which leaves an empty last line
+         if not Lines.Is_Empty and then Lines.Last_Element = "" then
+            Lines.Delete_Last;
+         end if;
+      end return;
+   end Dump_Lines;
+
+   ----------------
+   -- Write_File --
+   ----------------
+
+   procedure Write_File (Value     : TOML.TOML_Value;
+                         File_Name : Any_Path;
+                         Header    : AAA.Strings.Vector :=
+                                       AAA.Strings.Empty_Vector)
+   is
+   begin
+      Utils.Text_Files.Write_Lines (File_Name,
+                                    Header.Append (Dump_Lines (Value)));
+   end Write_File;
 
 end Alire.TOML_Load;

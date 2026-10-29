@@ -2,6 +2,7 @@
 Helpers to run alr in the testsuite.
 """
 
+import hashlib
 import json
 import os
 import os.path
@@ -57,8 +58,16 @@ def prepare_env(settings_dir, env):
     env["GIT_CONFIG_SYSTEM"] = "/dev/null"
 
     settings_dir = os.path.abspath(settings_dir)
-    mkdir(settings_dir)
     env['ALIRE_SETTINGS_DIR'] = settings_dir
+
+    # If the testsuite already prepared these settings once (see run.py), copy
+    # them instead of running alr again for every test, which is faster.
+    template_dir = os.environ.get('ALR_TESTSUITE_SETTINGS_TEMPLATE')
+    if template_dir:
+        copytree(template_dir, settings_dir, dirs_exist_ok=True)
+        return
+
+    mkdir(settings_dir)
     #  We pass settings location explicitly in the following calls since env is
     #  not yet applied (it's just a dict to be passed later to subprocess)
 
@@ -367,6 +376,81 @@ def index_version():
     return index_branch().split('-')[1]
 
 
+def use_index_with_manifests(manifests: dict[str, str]) -> str:
+    """
+    Create a new index containing only the given manifests, as a dictionary
+    from file name (e.g. "crate-1.0.0.toml" or "crate-external.toml") to
+    contents, and make alr use that index alone, with fresh settings. This
+    lets a test check manifests that would otherwise interfere with each other
+    (e.g. invalid ones, as `alr index --check` stops at the first invalid
+    manifest).
+
+    The index and settings directories are created under the current
+    directory, named after a hash of the manifests (the index directory name
+    is also the index name, which is restricted in length and characters).
+    Using the same manifests again reuses them, as they would be identical.
+
+    Preparing settings takes several alr runs, so they are prepared once in a
+    template directory, which is then copied for each new index.
+
+    Returns the index directory.
+    """
+    template_dir = os.path.abspath("alr-config-single-manifest-template")
+    version_file = template_dir + ".index_version"
+
+    if not os.path.isdir(template_dir):
+        prepare_env(template_dir, os.environ)
+        with open(version_file, "w") as f:
+            f.write(index_version())
+
+    digest = hashlib.sha256()
+    for file_name, manifest in sorted(manifests.items()):
+        digest.update((file_name + "\n" + manifest + "\n").encode())
+    index_dir = f"index_{digest.hexdigest()[:16]}"
+    config_dir = os.path.abspath(f"alr-config-{index_dir}")
+
+    if not os.path.isdir(index_dir):
+        os.makedirs(index_dir)
+        with open(version_file) as f:
+            version = f.read()
+        with open(os.path.join(index_dir, "index.toml"), "w") as f:
+            f.write(f'version = "{version}"\n')
+
+        for file_name, manifest in manifests.items():
+            crate = file_name.split("-")[0]
+            crate_dir = os.path.join(index_dir, crate[:2], crate)
+            os.makedirs(crate_dir, exist_ok=True)
+            with open(os.path.join(crate_dir, file_name), "w") as f:
+                f.write(manifest)
+
+        copytree(template_dir, config_dir)
+        # With an absolute path, tests may enter a workspace afterwards
+        prepare_indexes(config_dir, os.getcwd(),
+                        {index_dir: {"in_fixtures": False}})
+
+    os.environ["ALIRE_SETTINGS_DIR"] = config_dir
+    return index_dir
+
+
+def use_single_manifest_index(manifest: str, file_name: str) -> str:
+    """
+    Like use_index_with_manifests, for an index with a single manifest
+    """
+    return use_index_with_manifests({file_name: manifest})
+
+    crate_dir = os.path.join(index_dir, crate[:2], crate)
+    os.makedirs(crate_dir)
+    with open(os.path.join(index_dir, "index.toml"), "w") as f:
+        f.write(f'version = "{index_version()}"\n')
+    with open(os.path.join(crate_dir, file_name), "w") as f:
+        f.write(manifest)
+
+    prepare_env(config_dir, os.environ)
+    prepare_indexes(config_dir, ".", {index_dir: {"in_fixtures": False}})
+
+    return index_dir
+
+
 def init_local_crate(name=DEFAULT_CRATE_NAME, binary=True, enter=True, update=True,
                      with_maintainer_login=False, with_test=False):
     """
@@ -623,6 +707,21 @@ def add_action(type: str, command: [str], name="", directory=""):
             manifest.write(f"name = '{name}'\n")
         if directory != "":
             manifest.write(f"directory = '{directory}'\n")
+
+
+def set_environ_in_manifest(values: dict[str, str]):
+    """
+    Replace the [environment] of the manifest in the current directory, which
+    must be its last table, with `set` actions for the given variables.
+    """
+    with open(alr_manifest(), encoding="utf-8") as f:
+        manifest = f.read().split("[environment]")[0]
+    with open(alr_manifest(), "w", encoding="utf-8") as f:
+        f.write(manifest + "[environment]\n")
+        for name, value in values.items():
+            escaped = value.replace("\\", "\\\\").replace('"', '\\"') \
+                           .replace("\n", "\\n")
+            f.write(f'{name}.set = "{escaped}"\n')
 
 
 def alr_copy_to_index(manifest, index_path):

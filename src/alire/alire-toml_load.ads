@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 with Alire.Conditional;
 with Alire.Crates;
 with Alire.Provides;
@@ -15,8 +17,28 @@ package Alire.TOML_Load is
                           Result : TOML.Read_Result) return String with
      Pre => not Result.Success;
 
+   function Read_File (File_Name : Any_Path) return TOML.Read_Result;
+   --  Same as TOML.File_IO.Load_File, but parses the file contents from
+   --  memory. TOML.File_IO detects the end of the file by handling an
+   --  exception, and raising one is very slow on macOS for a binary the size
+   --  of alr (it unwinds the stack to record a traceback).
+
    function Load_File (File_Name : Any_Path) return TOML.TOML_Value;
    --  Will raise Checked_Error if file contents aren't valid TOML
+
+   function Dump_Lines (Value : TOML.TOML_Value) return AAA.Strings.Vector;
+   --  Convert TOML Value to UTF-8 lines
+
+   procedure Write_File (Value     : TOML.TOML_Value;
+                         File_Name : Any_Path;
+                         Header    : AAA.Strings.Vector :=
+                                       AAA.Strings.Empty_Vector);
+   --  Write Value as TOML to File_Name, after the Header lines, as raw UTF-8
+   --  with native line endings.
+   --  Unlike TOML.File_IO.Dump_To_File, which goes through Ada.Text_IO, this
+   --  keeps non-ASCII text intact (all Unicode must be output raw through
+   --  GNAT.IO or via Wide_Wide_Text_IO, as Text_IO takes latin-1 causing
+   --  mojibake).
 
    procedure Load_Crate_Section
      (Strict  : Boolean;

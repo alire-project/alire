@@ -1,0 +1,9 @@
+name = "ccc"
+version = "1.0.0"
+description = "ccc from high index"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+provides = ["xxx=1.0.0"]
+
+[origin]
+url = "file:."

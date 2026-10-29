@@ -36,6 +36,28 @@ package body Alire is
    function Absolute_Path_Image (Path : Alire.Absolute_Path) return String
    is (String (Path));
 
+   ------------------
+   -- UTF_8_Length --
+   ------------------
+
+   function UTF_8_Length (Text : String) return Natural is
+      Result : Natural := 0;
+   begin
+      for C of Text loop
+         if C not in Character'Val (16#80#) .. Character'Val (16#BF#) then
+            Result := Result + 1;
+         end if;
+      end loop;
+      return Result;
+   end UTF_8_Length;
+
+   --------------------------
+   -- Is_Valid_Description --
+   --------------------------
+
+   function Is_Valid_Description (Text : String) return Boolean
+   is (UTF_8_Length (Text) <= Max_Description_Length);
+
    -------------------------
    -- Check_Absolute_Path --
    -------------------------
@@ -233,20 +255,25 @@ package body Alire is
    function Outcome_Failure (Message : String;
                              Report  : Boolean := True)
                              return Outcome is
-      Stack : constant String := AAA.Debug.Stack_Trace;
    begin
       if Report then
-         if Log_Debug then
-            Err_Log ("Generating Outcome_Failure with message: "
-                     & Errors.Stack (Message));
-            Err_Log ("Generating Outcome_Failure with call stack:");
-            Err_Log (Stack);
-         end if;
+         declare
+            --  Only computed when reported, as it is expensive on some
+            --  platforms (on macOS it unwinds the stack via an exception).
+            Stack : constant String := AAA.Debug.Stack_Trace;
+         begin
+            if Log_Debug then
+               Err_Log ("Generating Outcome_Failure with message: "
+                        & Errors.Stack (Message));
+               Err_Log ("Generating Outcome_Failure with call stack:");
+               Err_Log (Stack);
+            end if;
 
-         Trace.Debug ("Generating Outcome_Failure with message: "
-                      & Errors.Stack (Message));
-         Trace.Debug ("Generating Outcome_Failure with call stack:");
-         Trace.Debug (Stack);
+            Trace.Debug ("Generating Outcome_Failure with message: "
+                         & Errors.Stack (Message));
+            Trace.Debug ("Generating Outcome_Failure with call stack:");
+            Trace.Debug (Stack);
+         end;
       end if;
 
       return (Success => False,

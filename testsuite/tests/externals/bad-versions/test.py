@@ -13,6 +13,8 @@ def check_version(crate_name, version: str):
 
 
 check_version("crate1", "1.1.0+abc")
-check_version("crate2", "1.1.0+.abc")
+# "1.1abc" would give an empty first identifier (".abc"), which is dropped to
+# make the version compliant
+check_version("crate2", "1.1.0+abc")
 
 print("SUCCESS")

@@ -1,5 +1,4 @@
 with Ada.Directories;
-with Ada.Text_IO;
 
 with Alire.Errors;
 with Alire.Directories;
@@ -8,13 +7,12 @@ with Alire.Index_On_Disk.Git;
 with Alire.Index_On_Disk.Loading;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
+with Alire.TOML_Load;
 with Alire.URI;
 
 with GNAT.OS_Lib;
 
 with GNATCOLL.VFS;
-
-with TOML.File_IO;
 
 package body Alire.Index_On_Disk is
 
@@ -358,23 +356,14 @@ package body Alire.Index_On_Disk is
 
    function Write_Metadata (This     : Index'Class;
                             Filename : String) return Outcome is
-      use Ada.Text_IO;
-      File : File_Type;
    begin
-      Create (File, Out_File, Filename);
-      TOML.File_IO.Dump_To_File (This.To_TOML, File);
-      Close (File);
+      TOML_Load.Write_File (This.To_TOML, Filename);
 
       return Outcome_Success;
    exception
       when E : others =>
          Trace.Debug ("Exception saving index to " & Filename);
          Log_Exception (E);
-
-         if Is_Open (File) then
-            Close (File);
-         end if;
-
          return Outcome_From_Exception (E);
    end Write_Metadata;
 

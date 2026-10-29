@@ -47,7 +47,8 @@ assert not os.path.isfile(alr_manifest()), \
     "Unexpected manifest at the root of the repository"
 
 assert_contents(".",
-                ['./crate1/alire.toml',
+                ['./alire/flags/monorepo_data.toml',  # Origin of the checkout
+                 './crate1/alire.toml',
                  './crate1/alire/alire.toml.upstream'],
                 regex=".*alire.*toml")
 

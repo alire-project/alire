@@ -1,5 +1,6 @@
 """
-Check that invalid mirrors are rejected at load time with a checked error.
+Check that invalid mirrors are rejected at load time: the manifest is skipped
+with a warning carrying the error, so its crate is not found.
 """
 
 from drivers.alr import run_alr
@@ -9,7 +10,9 @@ from drivers.asserts import assert_match
 def show_fails(crate, error):
     p = run_alr("show", crate,
                 complain_on_error=False, debug=False, quiet=False)
-    assert_match(".*ERROR:.*" + error + ".*", p.out)
+    assert_match(".*Warning: Skipping invalid index manifest .*" + error,
+                 p.out)
+    assert_match(".*ERROR: Crate .* does not exist in the index", p.out)
 
 
 # A mirror cannot carry identity fields; they are taken from the origin

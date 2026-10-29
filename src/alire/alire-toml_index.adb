@@ -1,6 +1,10 @@
 with Ada.Directories;
+with Ada.Exceptions;
 
+with Alire.Errors;
+with Alire.Features;
 with Alire.Settings.Builtins;
+with Alire.Conditional;
 with Alire.Crates;
 with Alire.Directories;
 with Alire.Loading;
@@ -17,11 +21,18 @@ with Alire.Index;
 with Alire.Manifest;
 with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Tweaks;
+with Alire.Properties.Actions.Runners;
+with Alire.Properties.Labeled;
+with Alire.Properties.Tests;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.VCSs.Git;
 with Alire.Utils;
 with Alire.Utils.TTY;
+with Alire.VFS;
+with Alire.Warnings;
+
+with Den.Walk;
 
 with GNATCOLL.VFS;
 
@@ -61,7 +72,8 @@ package body Alire.TOML_Index is
    procedure Load_Manifest (Item   : Any_Path;
                             Stop   : in out Boolean);
    --  Check if entry is a candidate to manifest file, and in that case load
-   --  its contents. May raise Checked_Error.
+   --  its contents. An invalid manifest raises Checked_Error when loading in
+   --  strict mode, and is otherwise skipped with a warning.
 
    procedure Load_From_Index_Internal
      (File_Name : Absolute_Path;
@@ -71,6 +83,13 @@ package body Alire.TOML_Index is
    --  Do the actual loading of a file that pass tests based on name/location.
    --  Name and version have been deduced from the file name and will be used
    --  for double-checks.
+
+   procedure Check_No_Duplicate_Version (File_Name : Absolute_Path;
+                                         Version   : String);
+   --  Raise Checked_Error if another release manifest of the same crate in
+   --  the index has the same version, ignoring build metadata as semantic
+   --  versioning does. Every manifest of such a group finds the others, so
+   --  all of them are rejected regardless of the order in which they load.
 
    Package_File_Suffix : constant String := "toml";
    --  Suffix for the name of package description files
@@ -335,7 +354,9 @@ package body Alire.TOML_Index is
       Root   : constant Any_Path := Locate_Root (Index, Result);
       --  Locate a dir containing a 'index.toml' metadata file inside the repo.
       --  This is the directory containing the actual crates.
-      Crate_Root : constant Any_Path := Root / Crate.Index_Prefix / (+Crate);
+      Shelf      : constant Any_Path := Root / Crate.Index_Prefix;
+      Crate_Root : constant Any_Path := Shelf / (+Crate);
+      use type Den.Kinds;
    begin
       Result.Assert;
 
@@ -344,7 +365,20 @@ package body Alire.TOML_Index is
       Trace.Debug ("Loading single crate " & Utils.TTY.Name (Crate)
                    & " from " & Crate_Root);
 
-      if GNAT.OS_Lib.Is_Directory (Crate_Root) then
+      if Den.Kind (Crate_Root) = Den.Softlink
+        or else Den.Kind (Shelf) = Den.Softlink
+      then
+         --  As when loading the whole index, linked folders are not entered,
+         --  but reported unless links are allowed
+         declare
+            Stop : Boolean := False;
+         begin
+            Load_Manifest ((if Den.Kind (Shelf) = Den.Softlink
+                            then Shelf
+                            else Crate_Root),
+                           Stop);
+         end;
+      elsif GNAT.OS_Lib.Is_Directory (Crate_Root) then
          Alire.Directories.Traverse_Tree
            (Start   => Crate_Root,
             Doing   => Load_Manifest'Access,
@@ -364,7 +398,57 @@ package body Alire.TOML_Index is
       pragma Unreferenced (Stop);
       use Ada.Directories;
       use AAA.Strings;
+
+      ----------
+      -- Skip --
+      ----------
+
+      procedure Skip (E : Ada.Exceptions.Exception_Occurrence) is
+         Id : constant String := "invalid index manifest " & Item;
+      begin
+         Log_Exception (E);
+
+         --  Stored errors put each context level on its own line
+         Warnings.Warn_Once
+           ("Skipping invalid index manifest " & Item & ": "
+            & Split (Errors.Get (E), Latin_1.LF).Flatten (": "),
+            Id => Warnings.Warning_Id (Id));
+      end Skip;
+
+      Allow_Links : constant Boolean :=
+                      Settings.Builtins.Index_Allow_Symlinks.Get;
+
+      ---------------------
+      -- Check_Not_Linked --
+      ---------------------
+
+      procedure Check_Not_Linked (Path : Any_Path) is
+         use type Den.Kinds;
+      begin
+         --  Links may point anywhere outside the index, so they are only
+         --  followed when allowed (the community index cannot have them), and
+         --  even then reported, as they are unusual in an index.
+
+         if Den.Kind (Path) /= Den.Softlink then
+            return;
+         elsif not Allow_Links then
+            Raise_Checked_Error
+              ("symbolic link in index: " & Path & " (see setting "
+               & Settings.Builtins.Index_Allow_Symlinks.Key & ")");
+         elsif Den.Target_Kind (Path) = Den.Directory then
+            Warnings.Warn_Once
+              ("Not entering symbolic link to folder in index: " & Path,
+               Id => Warnings.Warning_Id (String'("index link " & Path)));
+         else
+            Warnings.Warn_Once
+              ("Following symbolic link in index: " & Path,
+               Id => Warnings.Warning_Id (String'("index link " & Path)));
+         end if;
+      end Check_Not_Linked;
+
    begin
+      Check_Not_Linked (Item);
+
       if Kind (Item) /= Ordinary_File then
          return;
       end if;
@@ -434,7 +518,78 @@ package body Alire.TOML_Index is
                                         Strict    => Strict);
          end;
       end;
+   exception
+      --  A single bad manifest must not break the whole index for everyone,
+      --  so it is skipped. Releases are only added to the index once fully
+      --  loaded, so skipping leaves no partial state behind. Strict loading
+      --  (`alr index --check`, `alr publish`) must still fail, with a proper
+      --  error message even for unexpected exceptions.
+
+      when E : Checked_Error =>
+         if Strict then
+            raise;
+         end if;
+
+         Skip (E);
+
+      when E : others =>
+         if Strict then
+            Log_Exception (E);
+            Raise_Checked_Error
+              (Errors.Wrap
+                 ("Unexpected error loading index manifest: " & Item,
+                  Ada.Exceptions.Exception_Name (E) & ": "
+                  & Ada.Exceptions.Exception_Message (E)));
+         end if;
+
+         Skip (E);
    end Load_Manifest;
+
+   --------------------------------
+   -- Check_No_Duplicate_Version --
+   --------------------------------
+
+   procedure Check_No_Duplicate_Version (File_Name : Absolute_Path;
+                                         Version   : String)
+   is
+      use type Semver.Version;
+
+      This       : constant Semver.Version := Semver.Parse (Version);
+      Suffix     : constant String := "." & Package_File_Suffix;
+      Duplicates : AAA.Strings.Vector;
+   begin
+      for Sibling of Den.Walk.Ls (Den.Parent (File_Name)) loop
+         if Sibling /= Den.Name (File_Name)
+           and then AAA.Strings.Has_Suffix (Sibling, Suffix)
+           and then AAA.Strings.Contains (Sibling, "-")
+         then
+            declare
+               Base            : constant String :=
+                                   Sibling (Sibling'First
+                                            .. Sibling'Last - Suffix'Length);
+               Sibling_Version : constant String :=
+                                   AAA.Strings.Tail (Base, '-');
+            begin
+               if Sibling_Version /= External_File_Marker
+                 and then Semver.Parse (Sibling_Version) = This
+               then
+                  Duplicates.Append (Sibling);
+               end if;
+            exception
+               when Semver.Malformed_Input =>
+                  null; --  Reported when that manifest is loaded
+            end;
+         end if;
+      end loop;
+
+      if not Duplicates.Is_Empty then
+         Raise_Checked_Error
+           ("Duplicate version " & Version & " of manifest "
+            & Den.Name (File_Name) & ", also in: "
+            & Duplicates.Flatten (", ")
+            & " (versions differing only in build metadata are the same)");
+      end if;
+   end Check_No_Duplicate_Version;
 
    ------------------------------
    -- Load_From_Index_Internal --
@@ -466,7 +621,24 @@ package body Alire.TOML_Index is
                    & Utils.TTY.Name (Name) & " " & TTY.Version (Version)
                    & " from " & File_Name);
 
-      --  Load the TOML file
+      --  Load the TOML file, unless too large to parse safely
+
+      declare
+         use type Dirs.File_Size;
+         Max_Size : constant Dirs.File_Size :=
+                      Dirs.File_Size
+                        (Settings.Setting_Int'Max
+                           (0, Settings.Builtins.Index_Max_Manifest_Size.Get));
+      begin
+         if Dirs.Size (File_Name) > Max_Size then
+            Raise_Checked_Error
+              (Error_In_File
+                 (File_Name,
+                  "manifest is larger than" & Max_Size'Image & " bytes (see "
+                  & "setting " & Settings.Builtins.Index_Max_Manifest_Size.Key
+                  & ")"));
+         end if;
+      end;
 
       Value := TOML_Load.Load_File (File_Name);
 
@@ -494,12 +666,55 @@ package body Alire.TOML_Index is
             use type Semver.Version;
             Internal : constant String :=
                          Value.Get (TOML_Keys.Version).As_String;
+
+            ------------
+            -- Parsed --
+            ------------
+            --  Ensure version is parseable and promote error if not
+            function Parsed (Text, Where : String) return Semver.Version is
+            begin
+               return Semver.Parse (Text);
+            exception
+               when E : Semver.Malformed_Input =>
+                  Raise_Checked_Error
+                    (Error_In_File
+                       (File_Name,
+                        "invalid version " & Text & " in " & Where & ": "
+                        & Ada.Exceptions.Exception_Message (E)));
+            end Parsed;
+
+            File_Version     : constant Semver.Version :=
+                                 Parsed (Version, "file name");
+            Contents_Version : constant Semver.Version :=
+                                 Parsed (Internal, "contents");
          begin
-            Assert (Semver.Parse (Version) = Semver.Parse (Internal),
+            --  Versions must be the same in both places, including the build
+            --  metadata that version equality ignores, so the file name cannot
+            --  misrepresent the release. Short forms like "1.0" for "1.0.0"
+            --  are the same version.
+
+            Assert (File_Version = Contents_Version
+                    and then Semver.Build (File_Version)
+                             = Semver.Build (Contents_Version),
                     Error_In_File (File_Name,
                       "Mismatched versions: file name says " & Version
                       & " but contents say " & Internal));
+
+            --  From the index version that requires it, versions in file
+            --  names must be strict semantic versions.
+
+            if Loading_Index_Version >= Features.Index.Strict_Release_Versions
+            then
+               declare
+                  Error : constant String :=
+                            Alire.Index.Error_In_Release_Version (Version);
+               begin
+                  Assert (Error = "", Error_In_File (File_Name, Error));
+               end;
+            end if;
          end;
+
+         Check_No_Duplicate_Version (File_Name, Version);
       end if;
 
       --  Decode as release/externals
@@ -525,6 +740,62 @@ package body Alire.TOML_Index is
       end if;
    end Load_From_Index_Internal;
 
+   ----------------------------
+   -- Error_In_Release_Paths --
+   ----------------------------
+
+   function Error_In_Release_Paths (Rel : Releases.Release) return String is
+      --  Paths relative to the crate folder must stay within the deployed
+      --  origin, where the crate is at its subdir. Every case is checked, as
+      --  any of them may apply on some platform.
+
+      Subdir : constant String :=
+                 (if Rel.Origin.Is_Monorepo
+                  then String (Alire.VFS.To_Portable (Rel.Origin.Subdir))
+                  else "");
+      Props  : Conditional.Properties := Rel.Properties;
+      Error  : UString;
+
+      procedure Check (Path : String; What : String) is
+      begin
+         if +Error = "" then
+            Error := +Alire.VFS.Error_In_Contained_Path
+              (Path, What => What, Within => Subdir);
+         end if;
+      end Check;
+
+      ------------
+      --  Check --
+      ------------
+
+      procedure Check (Prop : in out Properties.Property'Class) is
+         use all type Properties.Labeled.Labels;
+      begin
+         if Prop in Properties.Labeled.Label'Class then
+            declare
+               Label : Properties.Labeled.Label renames
+                         Properties.Labeled.Label (Prop);
+            begin
+               if Label.Name in Project_File | Executable then
+                  Check (Label.Value, Label.Key);
+               end if;
+            end;
+         elsif Prop in Properties.Actions.Runners.Run'Class then
+            --  Stored in native form, from either separator
+            Check (String (Alire.VFS.To_Portable
+                   (Properties.Actions.Runners.Run (Prop).Working_Folder)),
+                   "action directory");
+         elsif Prop in Properties.Tests.Settings'Class then
+            Check (Properties.Tests.Settings (Prop).Directory,
+                   "test directory");
+         end if;
+      end Check;
+
+   begin
+      Props.Visit_All (Check'Access);
+      return +Error;
+   end Error_In_Release_Paths;
+
    -------------------
    -- Index_Release --
    -------------------
@@ -533,8 +804,7 @@ package body Alire.TOML_Index is
                             Rel  : Releases.Release)
    is
       use all type Origins.Kinds;
-      use GNATCOLL;
-      use all type VFS.Filesystem_String;
+      use all type GNATCOLL.VFS.Filesystem_String;
       Fixed : Releases.Release := Rel;
    begin
       --  Adjust and check a valid path for a local origin.
@@ -548,9 +818,9 @@ package body Alire.TOML_Index is
       begin
          if Origin.Kind = Filesystem then
             if not Origins.Deployers.Filesystem.Is_Valid_Local_Crate
-              (VFS.Create (+Origin.Path))
+              (GNATCOLL.VFS.Create (+Origin.Path))
             then
-               raise Constraint_Error with -- not an expected error in an index
+               Raise_Checked_Error
                  ("Local origin path is not a valid directory: "
                   & Origin.Path);
             end if;
@@ -558,6 +828,16 @@ package body Alire.TOML_Index is
 
          if Origin /= Fixed.Origin then
             Fixed := Fixed.Replacing (Origin);
+         end if;
+      end;
+
+      --  Check paths are contained to the origin
+
+      declare
+         Error : constant String := Error_In_Release_Paths (Fixed);
+      begin
+         if Error /= "" then
+            Raise_Checked_Error (Error);
          end if;
       end;
 

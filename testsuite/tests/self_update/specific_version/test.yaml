@@ -1,4 +1,5 @@
 driver: python-script
+build_mode: shared
 indexes:
     compiler_only_index: {}
 control:

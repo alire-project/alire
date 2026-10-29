@@ -53,6 +53,15 @@ package Alire.Environment with Preelaborate is
    --  Print the shell commands that can be used to export the environment
    --  variables.
 
+   function Shell_Command (Kind  : Platforms.Shells;
+                           Name  : String;
+                           Value : String) return String;
+   --  The command that sets the variable Name to Value in the given shell,
+   --  with Value quoted so that the shell takes it literally, as alr sets it
+   --  for its own subprocesses. Raises Checked_Error for an invalid Name (see
+   --  Properties.Environment.Error_In_Variable_Name), or for a Value that
+   --  cmd.exe cannot take literally (with '"', '%', '!' or a line break).
+
    procedure Print_Details (This : Context);
    --  Print details about the environment context. What are the variables
    --  definitions and their origin.
