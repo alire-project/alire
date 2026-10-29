@@ -32,14 +32,14 @@ init_local_crate()
 
 t = tools()
 assert_eq({"crate": "gnat_external", "version": "3.3.3",
-           "dependency": "", "source": "environment"},
+           "dependencies": "", "source": "environment"},
           t["gnat"])
 assert_eq("gprbuild", t["gprbuild"]["crate"])
 assert_eq("environment", t["gprbuild"]["source"])
 
 # Plain output is the same table
 
-assert_match(r"CRATE\s+VERSION\s+DEPENDENCY\s+SOURCE\n"
+assert_match(r"CRATE\s+VERSION\s+DEPENDENCIES\s+SOURCE\n"
              r"gnat_external\s+3\.3\.3\s+environment\n"
              r"gprbuild\s+.*environment\n",
              run_alr("build", "--toolchain").out)
@@ -49,10 +49,10 @@ assert_match(r"CRATE\s+VERSION\s+DEPENDENCY\s+SOURCE\n"
 run_alr("toolchain", "--select", "gnat_native=8888", "gprbuild=8888")
 t = tools()
 assert_eq({"crate": "gnat_native", "version": "8888.0.0",
-           "dependency": "", "source": "global"},
+           "dependencies": "", "source": "global"},
           t["gnat"])
 assert_eq({"crate": "gprbuild", "version": "8888.0.0",
-           "dependency": "", "source": "global"},
+           "dependencies": "", "source": "global"},
           t["gprbuild"])
 
 # A tool selected locally
@@ -60,7 +60,7 @@ assert_eq({"crate": "gprbuild", "version": "8888.0.0",
 run_alr("toolchain", "--select", "--local", "gnat_native=7777")
 t = tools()
 assert_eq({"crate": "gnat_native", "version": "7777.0.0",
-           "dependency": "", "source": "local"},
+           "dependencies": "", "source": "local"},
           t["gnat"])
 assert_eq("global", t["gprbuild"]["source"])
 
@@ -70,7 +70,7 @@ assert_eq("global", t["gprbuild"]["source"])
 alr_with("gnat")
 t = tools()
 assert_eq({"crate": "gnat_native", "version": "7777.0.0",
-           "dependency": "gnat*", "source": "dependencies"},
+           "dependencies": "gnat*", "source": "dependencies"},
           t["gnat"])
 assert_eq("global", t["gprbuild"]["source"])
 alr_with("gnat", delete=True, manual=False)
@@ -80,9 +80,22 @@ alr_with("gnat", delete=True, manual=False)
 alr_with("gnat_cross_1")
 t = tools()
 assert_eq({"crate": "gnat_cross_1", "version": "9999.0.0",
-           "dependency": "gnat_cross_1*", "source": "dependencies"},
+           "dependencies": "gnat_cross_1*", "source": "dependencies"},
           t["gnat"])
 assert_eq("global", t["gprbuild"]["source"])
+
+# With both an abstract and a concrete dependency, the solver keeps them
+# separately as they are on different crates, but both are fulfilled by the
+# same compiler and must be reported.
+
+alr_with("gnat")
+t = tools()
+assert_eq({"crate": "gnat_cross_1", "version": "9999.0.0",
+           "dependencies": "gnat*, gnat_cross_1*", "source": "dependencies"},
+          t["gnat"])
+assert_match(r".*gnat_cross_1\s+9999\.0\.0\s+gnat\*, gnat_cross_1\*\s+"
+             r"dependencies\n",
+             run_alr("build", "--toolchain").out)
 
 # Other build switches or arguments are rejected
 
