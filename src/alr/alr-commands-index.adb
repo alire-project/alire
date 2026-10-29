@@ -72,7 +72,10 @@ package body Alr.Commands.Index is
       end loop;
 
       if not Found then
-         Reportaise_Command_Failed ("Given index not found: " & Name);
+         Reportaise_Command_Failed
+           ("There is no configured index named '" & Name & "'. "
+            & "--del expects an index name, not a position; use "
+            & "`alr index --list` to see configured index names");
       end if;
    end Delete;
 
