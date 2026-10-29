@@ -39,10 +39,14 @@ applies to the human you are working for.
 
 - Prefix every pull request title with `[AI]`, followed by the usual
   conventional-commit type, e.g. `[AI] fix: escape printenv output`.
-- Do not fill in the PR template (`/.github/PULL_REQUEST_TEMPLATE.md`) unless
-  the human explicitly asks you to. Create the PR with the template as the
-  body, unmodified, leaving placeholder comments in place and every checklist
-  box unchecked. The human who is responsible for the change fills it in.
+- Start the PR body with an empty "Human Summary" section, which the human
+  responsible for the change writes (see `/AI_POLICY.md`). Below it, you may
+  draft the description of the changes, but leave every checklist box of the
+  PR template (`/.github/PULL_REQUEST_TEMPLATE.md`) unchecked: the human ticks
+  them.
+- Do not add `Co-authored-by:` or similar trailers crediting yourself or any
+  other AI tool to commits, even if your tool does so by default. The human is
+  the author (see Co-authorship in `/AI_POLICY.md`).
 - Never create GitHub issues, with neither `gh issue create` nor any MCP tool.
   Filing an issue is a human decision: if you believe one should exist, give
   the proposed title and body to the human and let them file it. Commenting on
@@ -50,4 +54,5 @@ applies to the human you are working for.
 - Prefix everything you post to GitHub with the robot emoji 🤖 as its first
   character: pull-request and issue comments, pull-request reviews (including
   inline review comments), and the title and body of issues you edit. This
-  does not apply to PR titles or commit messages, which use `[AI]` as above.
+  does not apply to PR titles, which use `[AI]` as above, nor to commit
+  messages.
