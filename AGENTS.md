@@ -31,3 +31,23 @@ repository.
   `ALIRE_TESTSUITE_DISABLE_DOCKER` skips tests that need Docker.
 - Tests run twice by default, once with sandboxed and once with shared builds
   (see the `build_mode` key in `test.yaml` and `/testsuite/README.md`).
+
+## Pull requests, commits and GitHub
+
+These rules complement the contributor policy in `/AI_POLICY.md`, which also
+applies to the human you are working for.
+
+- Prefix every pull request title with `[AI]`, followed by the usual
+  conventional-commit type, e.g. `[AI] fix: escape printenv output`.
+- Do not fill in the PR template (`/.github/PULL_REQUEST_TEMPLATE.md`) unless
+  the human explicitly asks you to. Create the PR with the template as the
+  body, unmodified, leaving placeholder comments in place and every checklist
+  box unchecked. The human who is responsible for the change fills it in.
+- Never create GitHub issues, with neither `gh issue create` nor any MCP tool.
+  Filing an issue is a human decision: if you believe one should exist, give
+  the proposed title and body to the human and let them file it. Commenting on
+  and updating existing issues remains allowed.
+- Prefix everything you post to GitHub with the robot emoji 🤖 as its first
+  character: pull-request and issue comments, pull-request reviews (including
+  inline review comments), and the title and body of issues you edit. This
+  does not apply to PR titles or commit messages, which use `[AI]` as above.
