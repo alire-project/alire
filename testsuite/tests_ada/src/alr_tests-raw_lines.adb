@@ -1,3 +1,4 @@
+pragma Alire_Test;
 with AAA.Strings;
 
 with Alire.Utils.Text_Files;

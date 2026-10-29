@@ -60,7 +60,7 @@ windows = { ALIRE_OS = "windows", GNATCOLL_OS = "windows", PRJ_TARGET = "Windows
 [pins.aaa_texts]
 url    = "https://github.com/mosteo/aaa"
 subdir = "aaa_texts"
-commit = "d47bfb2fba7b587509127c7671a67afcb0641c6b"
+commit = "b9b87aa5cb7a9146cb0a6ff8472970eb1f2412e8"
 
 [pins.ada_toml]
 url    = "https://github.com/pmderodat/ada-toml"
