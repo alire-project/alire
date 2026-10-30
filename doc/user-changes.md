@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### New `alr sync` command
 
-PR [#2224](https://github.com/alire-project/alire/pull/2224)
+PR [#2225](https://github.com/alire-project/alire/pull/2225)
 
 `alr sync` applies the changes made by hand to the manifest, keeping the
 versions of dependencies already in the solution. A dependency only changes
