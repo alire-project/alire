@@ -57,8 +57,14 @@ run_alr('update')
 p = run_alr('show', '--solve')
 check_child('0.1.0', p.out, pinned=True)
 
-# Unpin and check upgraded solution
+# Unpin and check the version is kept, as it exists in the index
+# Unpinning uses a sync that doesn't update unless necessary
 alr_unpin('libchild')
+p = run_alr('show', '--solve')
+check_child('0.1.0', p.out, pinned=False)
+
+# Update and check upgraded solution
+run_alr('update')
 p = run_alr('show', '--solve')
 check_child('0.2.0', p.out, pinned=False)
 

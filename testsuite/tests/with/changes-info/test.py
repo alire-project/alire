@@ -56,7 +56,7 @@ alr_with("unobtanium", update=False, manual=True)
 p = run_alr('with', quiet=False)
 assert_match(".*" +
              re.escape("""\
-Dependencies automatically updated as follows:
+Dependencies synchronized as follows:
 
    New solution is incomplete.
    Missing:

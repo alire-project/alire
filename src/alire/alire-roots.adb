@@ -1781,8 +1781,7 @@ package body Alire.Roots is
    procedure Sync_From_Manifest (This     : in out Root;
                                  Silent   : Boolean;
                                  Interact : Boolean;
-                                 Force    : Boolean    := False;
-                                 Kind     : Sync_Kinds := From_Scratch)
+                                 Force    : Boolean := False)
    is
    begin
       if Force
@@ -1799,7 +1798,7 @@ package body Alire.Roots is
 
          This.Update_Dependencies (Silent    => Silent,
                                    Interact  => Interact,
-                                   Sync_Only => Kind = Incremental);
+                                   Sync_Only => True);
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
          --  to match the manifest. As any change in dependencies will be

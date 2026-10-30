@@ -11,12 +11,12 @@ package body Alr.Commands.Sync is
       pragma Unreferenced (Args);
    begin
       Cmd.Requires_Workspace (Sync => False);
-      --  We don't want the automatic sync, which would update dependencies
+      --  The sync below is forced, and happens even under the setting
+      --  update.manually_only, which skips the automatic one.
 
       Cmd.Root.Sync_From_Manifest (Silent   => False,
                                    Interact => False,
-                                   Force    => True,
-                                   Kind     => Alire.Roots.Incremental);
+                                   Force    => True);
 
       --  Regenerate configuration files from authoritative manifest
       Cmd.Root.Build_Prepare (Saved_Profiles => False,
