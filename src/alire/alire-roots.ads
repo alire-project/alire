@@ -448,16 +448,13 @@ private
    --  directly useful to clients, so better kept them under wraps.
 
    function Compute_Update
-     (This        : in out Root;
-      Allowed     : Containers.Crate_Name_Sets.Set :=
-        Containers.Crate_Name_Sets.Empty_Set;
-      Options     : Solver.Query_Options := Solver.Default_Options;
-      Previous    : Solutions.Solution := Solutions.Empty_Valid_Solution)
+     (This     : in out Root;
+      Options  : Solver.Query_Options := Solver.Default_Options;
+      Previous : Solutions.Solution := Solutions.Empty_Valid_Solution)
       return Solver.Result;
-   --  Compute a new solution for the workspace. If Allowed is not empty,
-   --  crates not appearing in Allowed are held back at their current version.
-   --  Releases in Previous are preferred over others, so they only change
-   --  when the manifest requires it.
+   --  Compute a new solution for the workspace. Releases in Previous are
+   --  preferred over others, so they only change when the manifest requires
+   --  it.
    --  This function loads configured indexes from disk. No changes are applied
    --  to This root. NOTE: pins have to be added to This.Solution beforehand,
    --  or they will not be applied.
