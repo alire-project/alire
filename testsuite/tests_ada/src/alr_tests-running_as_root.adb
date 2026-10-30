@@ -1,3 +1,4 @@
+pragma Alire_Test;
 with AAA.Strings;
 with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;

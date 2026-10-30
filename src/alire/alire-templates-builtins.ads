@@ -12,8 +12,8 @@ with R.Crate_Lib_Name_Gpr;
 with R.Crate_Lib_Src_Name_Ads;
 
 with R.Crate_Test_Tests_Alire_Toml;
-with R.Crate_Test_Tests_Common_Name_Tests_Ads;
 with R.Crate_Test_Tests_Crate_Test_Tests_Gpr;
+with R.Crate_Test_Tests_Src_Name_Tests_Ads;
 with R.Crate_Test_Tests_Src_Name_Testsxassertions_Enabled_Adb;
 
 with R.Github_Publish_Yml;
@@ -80,7 +80,7 @@ package Alire.Templates.Builtins is
      .Append (".gitignore",                                +R.Crate_Common_Gitignore_Hidden.Content)
      .Append ("alire.toml",                                +R.Crate_Test_Tests_Alire_Toml.Content)
      .Append ("@_NAME_@_tests.gpr",                        +R.Crate_Test_Tests_Crate_Test_Tests_Gpr.Content)
-     .Append ("common/@_NAME_@_tests.ads",                 +R.Crate_Test_Tests_Common_Name_Tests_Ads.Content)
+     .Append ("src/@_NAME_@_tests.ads",                    +R.Crate_Test_Tests_Src_Name_Tests_Ads.Content)
      .Append ("src/@_NAME_@_tests-assertions_enabled.adb", +R.Crate_Test_Tests_Src_Name_Testsxassertions_Enabled_Adb.Content)
    ;
 

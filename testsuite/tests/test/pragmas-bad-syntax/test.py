@@ -8,7 +8,7 @@ import shutil
 
 from drivers.alr import init_local_crate, run_alr
 from drivers.asserts import assert_substring, assert_match
-from drivers.helpers import testing_write_test
+from drivers.testing import write_test
 
 
 def fresh_crate():
@@ -35,7 +35,7 @@ for stem, prelude, diagnostic in (
      "Alire_Test pragma key 'timeout' has an unexpected value type"),
 ):
     fresh_crate()
-    testing_write_test(stem, "null;", prelude=prelude)
+    write_test(stem, "null;", prelude=prelude)
 
     p = run_alr("test", quiet=False, complain_on_error=False)
     assert_substring(diagnostic, p.out)
