@@ -1,3 +1,4 @@
+pragma Alire_Test;
 with Alire.GitHub;
 
 procedure Alr_Tests.Github_Tokens is

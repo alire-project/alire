@@ -56,7 +56,7 @@ generated=$base/src/templates
 
 # Build awsres from AWS only if awsres is not yet available here or in path
 
-if [ ! -f awsres ]; then
+if [ ! -f awsres ] && ! command -v awsres >/dev/null; then
 
     echo "Building awsres from AWS..."
 

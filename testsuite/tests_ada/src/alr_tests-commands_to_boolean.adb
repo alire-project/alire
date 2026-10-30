@@ -1,3 +1,4 @@
+pragma Alire_Test;
 
 with Alr.Commands.Testing;
 

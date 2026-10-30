@@ -1,3 +1,4 @@
+pragma Alire_Test;
 with Alire.Environment;
 with Alire.Platforms;
 
