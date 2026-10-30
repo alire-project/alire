@@ -6,6 +6,16 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Manual edits to the manifest keep dependency versions
+
+PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
+
+After the manifest is edited by hand, the next `alr` command in the workspace
+applies the changes as `alr sync` does, keeping the versions of dependencies
+already in the solution. Previously, any manual edit caused a full update, so
+unrelated dependencies could silently move to their newest releases. Use
+`alr update` explicitly to bring in newer releases.
+
 ### New `alr sync` command
 
 PR [#2225](https://github.com/alire-project/alire/pull/2225)
