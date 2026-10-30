@@ -49,6 +49,10 @@ may change.
   breaks and tabs in `long-description`, `notes` and external hints, and
   `long-description`, `notes` and `website` are limited to 16384, 2048 and 512
   characters.
+- alr: version commands of externals detected from their output are only run
+  when listed in the `externals.version_output.allowlist` setting (by default,
+  those used in the community index), unless the
+  `externals.version_output.policy` setting is changed to `all`.
 
 ### We are here
 

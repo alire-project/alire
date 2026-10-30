@@ -25,6 +25,14 @@ package Alire.Externals.From_Output is
 
    function From_TOML (From : TOML_Adapters.Key_Queue) return External;
 
+   function Is_Allowed (Command   : AAA.Strings.Vector;
+                        Allowlist : String)
+                        return Boolean;
+   --  Says if Command matches some entry in Allowlist, which contains commands
+   --  separated by ';'. The words of an entry, separated by spaces, must match
+   --  those of Command exactly, except that a '*' argument matches one
+   --  argument made of [A-Za-z0-9._+-] characters not starting with '-'.
+
 private
 
    use type GNAT.Regpat.Program_Size;
