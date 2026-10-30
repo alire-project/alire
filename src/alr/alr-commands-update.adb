@@ -1,6 +1,5 @@
 with Alire.Containers;
 with Alire.Errors;
-with Alire.Solutions.Diffs;
 
 with Alr.Commands.Index;
 
@@ -14,7 +13,6 @@ package body Alr.Commands.Update is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      use Alire;
 
       -------------------
       -- Parse_Allowed --
@@ -36,8 +34,6 @@ package body Alr.Commands.Update is
             return Alire.Containers.Crate_Name_Sets.Empty_Set;
       end Parse_Allowed;
 
-      Result : Alire.Roots.Update_Result;
-
    begin
       Cmd.Forbids_Structured_Output;
       Cmd.Requires_Workspace (Sync => False);
@@ -50,19 +46,9 @@ package body Alr.Commands.Update is
          Cmd.Auto_Update_Index;
       end if;
 
-      Result := Cmd.Root.Update (Parse_Allowed,
-                                 Silent   => False,
-                                 Interact => True);
-      if Result.Success then
-         Alire.Put_Success ("Update completed successfully.");
-      elsif not Result.Rejected then
-         Put_Warning ("Partial update could not find an incremental solution.",
-                      Info);
-         Trace.Info ("Attempted changes are:");
-         Result.Old_Sol.Changes (Result.New_Sol).Print (Level => Info);
-         New_Line;
-         Reportaise_Command_Failed ("Update not applied.");
-      end if;
+      Cmd.Root.Update (Parse_Allowed,
+                       Silent   => False,
+                       Interact => True);
    end Execute;
 
    ----------------------
@@ -81,7 +67,10 @@ package body Alr.Commands.Update is
       .New_Line
       .Append ("One or more crates can be given as argument, in which case"
                & " only these crates will be candidates for updating."
-               & " Requesting the update of a pinned crate is not allowed."));
+               & " Requesting the update of a pinned crate is not allowed.")
+      .New_Line
+      .Append ("To apply changes in the manifest without updating other"
+               & " dependencies, use `alr sync` instead."));
 
    --------------------
    -- Setup_Switches --

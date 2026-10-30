@@ -288,10 +288,11 @@ package body Alire.Solver is
    -- Resolve --
    -------------
 
-   function Resolve (Deps    : Alire.Types.Abstract_Dependencies;
-                     Props   : Properties.Vector;
-                     Pins    : Solution;
-                     Options : Query_Options := Default_Options)
+   function Resolve (Deps     : Alire.Types.Abstract_Dependencies;
+                     Props    : Properties.Vector;
+                     Pins     : Solution;
+                     Options  : Query_Options := Default_Options;
+                     Previous : Solution := Solutions.Empty_Valid_Solution)
                      return Result
    is
       Tmp_Pool : System.Pool_Local.Unbounded_Reclaim_Pool;
@@ -318,6 +319,25 @@ package body Alire.Solver is
       Index_Query_Options : constant Index.Query_Options :=
                               (Load_From_Disk   => True,
                                Detect_Externals => Options.Detecting = Detect);
+
+      Previous_Releases : constant Alire.Solutions.Release_Map :=
+                            Previous.Releases;
+
+      -----------------
+      -- Is_Previous --
+      -----------------
+
+      function Is_Previous (Crate : Crate_Name;
+                            Rel   : Alire.Releases.Release)
+                            return Boolean
+      is
+         --  Say if Rel was fulfilling Crate in the Previous solution
+         use type Semver.Version;
+      begin
+         return Previous_Releases.Contains (Crate)
+           and then Previous_Releases (Crate).Name = Rel.Name
+           and then Previous_Releases (Crate).Version = Rel.Version;
+      end Is_Previous;
 
       Progress : Trace.Ongoing := Trace.Activity ("Solving dependencies");
 
@@ -715,6 +735,10 @@ package body Alire.Solver is
             All_Crates : constant Containers.Crate_Name_Sets.Set
               := LFS.Crates.Union (RFS.Crates);
 
+            Kept_Releases : Integer := 0;
+            --  Count which one keeps more releases from the Previous solution,
+            --  which takes precedence over versions.
+
             Better_Versions : Integer := 0;
             --  Count which crate has more downgraded versions and use to
             --  discriminate as a last resort.
@@ -764,6 +788,19 @@ package body Alire.Solver is
                      when Right => return Right;
                      when None  => null;
                      when Both  =>
+                        --  Count releases kept from the previous solution
+                        case Comparisons.Which_One
+                          (Is_Previous (Crate, LD (Crate).Release),
+                           Is_Previous (Crate, RD (Crate).Release))
+                        is
+                           when Left        =>
+                              Kept_Releases := Kept_Releases + 1;
+                           when Right       =>
+                              Kept_Releases := Kept_Releases - 1;
+                           when None | Both =>
+                              null;
+                        end case;
+
                         --  Compare versions according to policy
                         if LD (Crate).Release.Version /=
                           RD (Crate).Release.Version
@@ -798,6 +835,12 @@ package body Alire.Solver is
 
                <<Continue>>
             end loop;
+
+            if Kept_Releases > 0 then
+               return Left;
+            elsif Kept_Releases < 0 then
+               return Right;
+            end if;
 
             if Better_Versions > 0 then
                return Left;

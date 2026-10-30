@@ -60,12 +60,7 @@ package body Alire.Roots.Editable is
 
          --  Compute the new solution
 
-         --  TODO: if the update doesn't succeed with Sync_Only, ask to fall
-         --  back with updating any dependency. Otherwise, editing by hand
-         --  works differently to using `alr with`, and if we don't allow
-         --  to update, suddenly adding a dependency with `alr with` may
-         --  be impossible.
-         Solver_Result := Edited.Compute_Update (Sync_Only => False);
+         Solver_Result := Edited.Compute_Update;
          Edited.Set (Solution => Solver_Result.Solution);
 
          --  Then show the effects on the solution
@@ -377,11 +372,9 @@ package body Alire.Roots.Editable is
       --  Since link pins can bring in more dependencies, we must also Update.
       --  Changes will be shown afterwards on the call to Confirm_And_Commit.
 
-      Assert (This.Edit.Update (Allow_All_Crates,
-                                Silent   => True,
-                                Interact => False).Success,
-              "Cannot fail for a full update",
-              Unchecked => True);
+      This.Edit.Update (Allow_All_Crates,
+                        Silent   => True,
+                        Interact => False);
    end Add_Path_Pin;
 
    --------------------
@@ -509,11 +502,9 @@ package body Alire.Roots.Editable is
          --  also Update. Changes will be shown afterwards on the call
          --  to Confirm_And_Commit.
 
-         Assert (This.Edit.Update (Allow_All_Crates,
-                                   Silent   => True,
-                                   Interact => False).Success,
-                 "Cannot fail for a full update",
-                 Unchecked => True);
+         This.Edit.Update (Allow_All_Crates,
+                           Silent   => True,
+                           Interact => False);
       end;
    end Add_Remote_Pin;
 

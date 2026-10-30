@@ -6,7 +6,10 @@ with Ada.Environment_Variables;
 with CLIC.TTY;
 with CLIC.User_Input;
 
+with Alire.Platforms;
 with Alire_Early_Elaboration;
+with Alire.Settings.Builtins;
+with Alire.Settings.Edit;
 with Alire.Errors;
 with Alire.Features;
 with Alire.Formatting;
@@ -15,12 +18,9 @@ with Alire.Index_On_Disk.Updates;
 with Alire.Lockfiles;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
-with Alire.Platforms;
 with Alire.Platforms.Current;
 with Alire.Root;
-with Alire.Settings.Builtins;
-with Alire.Settings.Edit;
-with Alire.Solutions.Diffs;
+with Alire.Solutions;
 with Alire.Toolchains;
 with Alire.Utils.Did_You_Mean;
 with Alire.Utils.Tables;
@@ -113,7 +113,7 @@ package body Alr.Commands is
    -- Put_Error --
    ---------------
 
-   procedure Put_Error (Str : String := "") is
+   procedure Put_Error (Str : String) is
    begin
       Trace.Error (Str);
    end Put_Error;
@@ -386,19 +386,15 @@ package body Alr.Commands is
    -- Requires_Workspace --
    ------------------------
 
-   procedure Requires_Workspace (Cmd     : in out Command'Class;
-                                 Sync    : Boolean := True;
-                                 Minimal : Boolean := False;
-                                 Error   : String  := "") is
+   procedure Requires_Workspace (Cmd   : in out Command'Class;
+                                 Sync  : Boolean := True;
+                                 Error : String  := "") is
       use Alire;
 
       Unchecked : Alire.Roots.Optional.Root renames Cmd.Optional_Root;
 
       Manual_Only : constant Boolean :=
-                      Alire.Settings.Builtins.Update_Manually_Only.Get and then
-                          Cmd not in Commands.Sync.Command'Class;
-      --  Sync command is intrinsically manual already, so in that case we must
-      --  perform the sync.
+                      Alire.Settings.Builtins.Update_Manually_Only.Get;
 
       package Conf renames Alire.Settings;
    begin
@@ -415,15 +411,14 @@ package body Alr.Commands is
       --  user for its preference at this time. We also don't ask during `alr
       --  printenv`, whose output is likely being redirected.
 
-      if not Minimal and then
-        Cmd not in Commands.Toolchain.Command'Class and then
+      if Cmd not in Commands.Toolchain.Command'Class and then
         Cmd not in Commands.Printenv.Command'Class and then
         Alire.Toolchains.Assistant_Enabled
       then
          Alire.Toolchains.Assistant (Conf.Global, First_Run => True);
       end if;
 
-      Trace.Debug ("Workspace is being loaded and synced for the first time");
+      Trace.Debug ("Workspace is being checked and loaded for the first time");
 
       Unchecked := Alire.Root.Current;
 
@@ -455,7 +450,7 @@ package body Alr.Commands is
 
                if Manual_Only then
                   Trace.Detail
-                    ("Skipping automatic dependency sync"
+                    ("Skipping automatic dependency update"
                      & " per configuration setting.");
                   return;
                end if;
@@ -467,26 +462,9 @@ package body Alr.Commands is
 
                   if Checked.Solution.Is_Attempted then
                      --  Check deps on disk match those in lockfile
-                     declare
-                        Result : constant Roots.Update_Result
-                          := Checked.Sync_From_Manifest
-                            (Kind     => Roots.Incremental,
-                             Silent   => False,
-                             Interact => False);
-                     begin
-                        if not Result.Success then
-                           --  Could not find an incremental complete solution,
-                           --  so a sync isn't enough. The user must manually
-                           --  fix dependencies in alire.toml or run `alr
-                           --  update`.
-                           Print_Failed_Sync (Result);
-                        end if;
-                        return;
-                     end;
-                  else
-                     null;
-                     --  We have never solved this workspace, so a fresh
-                     --  solution is needed. This solution is computed below.
+                     Checked.Sync_From_Manifest (Silent   => False,
+                                                 Interact => False);
+                     return;
                   end if;
 
                else
@@ -512,9 +490,6 @@ package body Alr.Commands is
                  ("Workspace has no lockfile at " & Checked.Lock_File);
          end case;
 
-         --  At this point, there is not a valid lockfile in place; it was
-         --  either missing or broken, so keep that in mind for the following.
-
          Trace.Debug ("Generating lockfile on the fly...");
 
          --  Update current root dependencies to create a complete lock file.
@@ -536,19 +511,13 @@ package body Alr.Commands is
          end if;
 
          --  If Syncing has not been requested (because a manual sync is
-         --  upcoming) we are done. Otherwise, do a silent sync.
+         --  upcoming) we are done. Otherwise, do a silent update.
 
          if Sync then
-            Assert
-              (Checked.Sync_From_Manifest
-                 (Kind     => Roots.From_Scratch,
-                  Silent   => False,
-                  Interact => False,
-                  Force    => True).Success,
-               "Cannot fail for a full sync",
-               Unchecked => True);
-            --  As we just created the empty lockfile, we force the sync, which
-            --  must provide a solution no matter how good/complete it is.
+            Checked.Sync_From_Manifest (Silent   => False,
+                                        Interact => False,
+                                        Force    => True);
+            --  As we just created the empty lockfile, we force the update
          end if;
       end;
    end Requires_Workspace;
@@ -904,26 +873,6 @@ package body Alr.Commands is
             & Image.all);
       end if;
    end To_Boolean;
-
-   -----------------------
-   -- Print_Failed_Sync --
-   -----------------------
-
-   procedure Print_Failed_Sync (Result : Alire.Roots.Update_Result) is
-      use Alire;
-   begin
-      Put_Warning ("Synchronization failed due to conflicting changes.", Info);
-      Put_Warning ("Adjust your dependencies in `"
-                   & TTY.Terminal ("alire.toml") & "` and try again or", Info);
-      Put_Warning ("run `" & TTY.Terminal ("alr update") & "`"
-                   & " to compute a new solution from scratch.", Info);
-      New_Line;
-      Trace.Info ("Attempted changes are:");
-      Result.Old_Sol.Changes (Result.New_Sol).Print (Level => Info);
-      New_Line;
-
-      Reportaise_Command_Failed ("Synchronization not applied.");
-   end Print_Failed_Sync;
 
 begin
 

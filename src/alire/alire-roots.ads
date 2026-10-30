@@ -203,30 +203,15 @@ package Alire.Roots is
                              return Boolean;
    --  Say if the root release matches the given name
 
-   type Update_Result is record
-      Success  : Boolean := False;
-      Rejected : Boolean := False; -- True when rejected by the user
-      Old_Sol,
-      New_Sol : Solutions.Solution;
-   end record;
-   --  We use this result during syncs/updates to ascertain what happened.
-   --  When not Success, the lockfile remains unchanged and New_Sol will be
-   --  incomplete. When success, the lockfile will have been updated to match.
-
    type Sync_Kinds is (Incremental, From_Scratch);
-   --  Whether we want the new solution to preserve previous solved releases or
-   --  entirely discard any previous solution.
+   --  Whether a sync keeps the releases of the previous solution, unless the
+   --  manifest requires otherwise, or discards it and solves anew.
 
-   function Sync_From_Manifest (This     : in out Root;
-                                Kind     : Sync_Kinds;
-                                Silent   : Boolean;
-                                Interact : Boolean;
-                                Force    : Boolean := False)
-                                return Update_Result with Post =>
-     (not Sync_From_Manifest'Result.Success
-      or else not This.Is_Lockfile_Outdated)
-     and then
-       (if Kind = From_Scratch then Sync_From_Manifest'Result.Success);
+   procedure Sync_From_Manifest (This     : in out Root;
+                                 Silent   : Boolean;
+                                 Interact : Boolean;
+                                 Force    : Boolean    := False;
+                                 Kind     : Sync_Kinds := From_Scratch);
    --  If the lockfile timestamp is outdated w.r.t the manifest, or Force, do
    --  as follows: 1) Pre-deploy any remote pins in the manifest so they are
    --  usable when solving, and apply any local/version pins. 2) Ensure that
@@ -235,12 +220,8 @@ package Alire.Roots is
    --  may have been edited by hand. 3) Ensure that releases in the lockfile
    --  are actually on disk (may be missing if cache was deleted, or the crate
    --  was just cloned). When Silent, downgrade log level of some output. When
-   --  not Interact, run as if --non-interactive were in effect.
-   --
-   --  NOTE: this will preserve existing dependencies. If a complete solution
-   --  is not possible without updating dependencies, it will return false and
-   --  leave the lockfile as it was (outdated). Otherwise it will return True.
-   --  A sync from scratch cannot fail (but the solution might be incomplete).
+   --  not Interact, run as if --non-interactive were in effect. Kind
+   --  determines whether the existing solution is kept when resolving again.
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;
@@ -252,40 +233,30 @@ package Alire.Roots is
    Allow_All_Crates : Containers.Crate_Name_Sets.Set renames
                         Containers.Crate_Name_Sets.Empty_Set;
 
-   function Update (This     : in out Root;
-                    Allowed  : Containers.Crate_Name_Sets.Set;
-                    Silent   : Boolean;
-                    Interact : Boolean)
-                    return Update_Result
-     with Post => (if Allowed.Is_Empty and then not Interact
-                   then Update'Result.Success);
+   procedure Update (This     : in out Root;
+                     Allowed  : Containers.Crate_Name_Sets.Set;
+                     Silent   : Boolean;
+                     Interact : Boolean);
    --  Full update, explicitly requested. Will fetch/prune pins, update any
    --  updatable crates. Equivalent to `alr update`. Allowed is an optionally
-   --  empty set of crates to which the update will be limited. Everything
-   --  is updatable if Allowed.Is_Empty. Will return False if no complete
-   --  incremental solution exists.
+   --  empty set of crates to which the update will be limited. Everything is
+   --  updatable if Allowed.Is_Empty.
 
    procedure Deploy_Dependencies (This : in out Root);
    --  Download all dependencies not already on disk from This.Solution
 
-   function Update_Dependencies
+   procedure Update_Dependencies
      (This      : in out Root;
       Silent    : Boolean; -- Do not output anything
       Interact  : Boolean; -- Request confirmation from the user
       Options   : Solver.Query_Options := Solver.Default_Options;
       Allowed   : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set;
-      Sync_Only : Boolean := False)
-      return Update_Result with Post =>
-     (if not Sync_Only and then Allowed.Is_Empty and then not Interact
-      then Update_Dependencies'Result.Success);
+      Sync_Only : Boolean := False);
    --  Resolve and update all or given crates in a root, and regenerate
-   --  configuration. When Silent, run as in non-interactive mode as this is
-   --  an automatically-triggered update. When Sync_Only, keep releases in
-   --  the existing solution at their current versions. Returns False when
-   --  Sync_Only and the old solution was complete but the new one isn't. Will
-   --  always return True when not Sync_Only and Allowed is empty (i.e., and
-   --  update from scratch).
+   --  configuration. When Silent, run as in non-interactive mode as this is an
+   --  automatically-triggered update. When Sync_Only, releases in the current
+   --  solution are kept unless the manifest requires otherwise.
 
    procedure Sync_Pins_From_Manifest
      (This       : in out Root;
@@ -484,14 +455,16 @@ private
      (This        : in out Root;
       Allowed     : Containers.Crate_Name_Sets.Set :=
         Containers.Crate_Name_Sets.Empty_Set;
-      Sync_Only   : Boolean := False;
-      Options     : Solver.Query_Options := Solver.Default_Options)
+      Options     : Solver.Query_Options := Solver.Default_Options;
+      Sync_Only   : Boolean := False)
       return Solver.Result;
-   --  Compute a new solution for the workspace. If Sync_Only or Allowed is not
-   --  empty, crates not appearing in Allowed are held back at their current
-   --  version. This function loads configured indexes from disk. No changes
-   --  are applied to This root. NOTE: pins have to be added to This.Solution
-   --  beforehand, or they will not be applied.
+   --  Compute a new solution for the workspace. If Allowed is not empty,
+   --  crates not appearing in Allowed are held back at their current version.
+   --  When Sync_Only, releases in the current solution are preferred over
+   --  others, so they only change when the manifest requires it.
+   --  This function loads configured indexes from disk. No changes are applied
+   --  to This root. NOTE: pins have to be added to This.Solution beforehand,
+   --  or they will not be applied.
 
    function Temporary_Copy (This : in out Root) return Root'Class;
    --  Obtain a temporary copy of This root, in the sense that it uses temp

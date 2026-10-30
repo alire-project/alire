@@ -1084,12 +1084,10 @@ package body Alire.Test.Runner is
 
       --  Ensure a void solution on first test run
       if not Root.Has_Lockfile then
-         Assert (Root.Update
-                 (Silent   => True,
-                  Interact => False,
-                  Allowed  => Roots.Allow_All_Crates).Success,
-                 "Cannot fail for a full update",
-                 Unchecked => True);
+         Root.Update
+           (Silent   => True,
+            Interact => False,
+            Allowed  => Roots.Allow_All_Crates);
       end if;
 
       if Tables.Structured_Output then
