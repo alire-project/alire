@@ -422,6 +422,11 @@ private
       Properties   : Conditional.Properties;
       Available    : Conditional.Availability;
 
+      Source       : Manifest.Sources := Manifest.Local;
+      --  The kind of manifest this release was loaded from. It cannot be
+      --  inferred from the origin, as an index release may legitimately point
+      --  to a folder in the local filesystem.
+
       Imported     : TOML_Value_Ptr := No_TOML_Value;
       --  For releases loaded from a manifest, this is the original structured
       --  data that generated it, in which case Imported.Is_Present.
