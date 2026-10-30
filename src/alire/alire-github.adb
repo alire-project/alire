@@ -532,7 +532,7 @@ package body Alire.GitHub is
       --  Newer PATs that start with gh?_ or github_pat_. This is only a
       --  plausibility check, so allow the punctuation used in current formats.
       return Utils.Regex.Fully_Matches
-        (Regex => "(github_pat|gh[pours])_[A-Za-z0-9._-]+",
+        (Regex => "(github_pat|gh[pours])_[A-Za-z0-9\.\-_]+",
          Text  => S);
    end Is_Possibly_A_Token;
 

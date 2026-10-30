@@ -4,7 +4,7 @@ with Alire.Utils.Regex;
 procedure Alr_Tests.Regexes is
    use Alire.Utils.Regex;
 
-   GH_Token_Regex : constant String := "(github_pat|gh[pours])_[A-Za-z0-9._-]+";
+   GH_Token_Regex : constant String := "(github_pat|gh[pours])_[A-Za-z0-9\.\-_]+";
 
 begin
    --  Partial matches with unanchored expressions
