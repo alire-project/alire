@@ -1845,7 +1845,10 @@ package body Alire.Roots is
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root) is
       package OS renames GNAT.OS_Lib;
    begin
-      if This.Is_Lockfile_Outdated then
+      --  Without lockfile (e.g., a test crate on its first run) there is
+      --  nothing to sync, it will be written afresh.
+
+      if This.Has_Lockfile and then This.Is_Lockfile_Outdated then
          Trace.Debug ("Touching lock file time after manifest manual edition");
          OS.Set_File_Last_Modify_Time_Stamp
            (This.Lock_File,

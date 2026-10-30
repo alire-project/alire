@@ -1,0 +1,4 @@
+driver: python-script
+build_mode: shared  # The probe uses only the object dir of the test crate
+indexes:
+    basic_index: {}
