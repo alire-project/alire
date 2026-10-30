@@ -8,6 +8,10 @@ stay on top of `alr` new features.
 
 ### `alr test --toolchain` reports the tools tests will be built with
 
+PR [#2223](https://github.com/alire-project/alire/pull/2223)
+
+Equivalent to `alr build --toolchain` but for the built-in testsuites.
+
 Built-in test runners build their tests as a separate crate, which may depend
 on other compilers than the tested crate. The new `alr test --toolchain`
 switch reports, without building, the tools of each selected test runner
