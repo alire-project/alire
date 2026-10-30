@@ -2,9 +2,7 @@ with AAA.Enum_Tools;
 
 with Alire.Crate_Configuration;
 with Alire.TOML_Adapters;
-with Alire.Toolchains.Solutions;
 with Alire.Utils.Switches;
-with Alire.Utils.Tables;
 
 with Stopwatch;
 
@@ -49,19 +47,35 @@ package body Alr.Commands.Build is
       end;
    end Apply_Profiles;
 
-   ----------------------
-   -- Report_Toolchain --
-   ----------------------
+   ------------------------------
+   -- Append_Toolchain_Headers --
+   ------------------------------
 
-   procedure Report_Toolchain (Cmd : in out Command) is
+   procedure Append_Toolchain_Headers
+     (Table : in out Alire.Utils.Tables.Table) is
+   begin
+      Table
+        .Header ("Crate")
+        .Header ("Version")
+        .Header ("Dependencies")
+        .Header ("Source");
+   end Append_Toolchain_Headers;
+
+   -----------------------
+   -- Append_Tool_Cells --
+   -----------------------
+
+   procedure Append_Tool_Cells
+     (Table : in out Alire.Utils.Tables.Table;
+      Tool  : Alire.Toolchains.Solutions.Effective_Tool)
+   is
       use Alire.Toolchains.Solutions;
-      Table : Alire.Utils.Tables.Table;
 
       --------------------
       -- Provides_Image --
       --------------------
 
-      function Provides_Image (Tool : Effective_Tool) return String is
+      function Provides_Image return String is
          Result : AAA.Strings.Vector;
       begin
          for Dep of Tool.Provides loop
@@ -73,26 +87,29 @@ package body Alr.Commands.Build is
 
    begin
       Table
-        .Header ("Crate")
-        .Header ("Version")
-        .Header ("Dependencies")
-        .Header ("Source")
-        .New_Row;
+        .Append (Tool.Crate.As_String)
+        .Append (if Tool.Source = Missing
+                 then ""
+                 else Tool.Version.Image)
+        .Append (Provides_Image)
+        .Append (AAA.Strings.To_Lower_Case (Tool.Source'Image));
+   end Append_Tool_Cells;
+
+   ----------------------
+   -- Report_Toolchain --
+   ----------------------
+
+   procedure Report_Toolchain (Cmd : in out Command) is
+      Table : Alire.Utils.Tables.Table;
+   begin
+      Append_Toolchain_Headers (Table);
+      Table.New_Row;
 
       for Crate of Alire.Toolchains.Tools loop
-         declare
-            Tool : constant Effective_Tool :=
-                     Effective (Cmd.Root.Solution, Crate);
-         begin
-            Table
-              .Append (Tool.Crate.As_String)
-              .Append (if Tool.Source = Missing
-                       then ""
-                       else Tool.Version.Image)
-              .Append (Provides_Image (Tool))
-              .Append (AAA.Strings.To_Lower_Case (Tool.Source'Image))
-              .New_Row;
-         end;
+         Append_Tool_Cells
+           (Table, Alire.Toolchains.Solutions.Effective (Cmd.Root.Solution,
+                                                         Crate));
+         Table.New_Row;
       end loop;
 
       Table.Print (Always);

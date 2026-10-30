@@ -1,6 +1,8 @@
 with AAA.Strings;
 
 with Alire.Builds;
+with Alire.Toolchains.Solutions;
+with Alire.Utils.Tables;
 
 private with GNAT.OS_Lib;
 
@@ -30,6 +32,19 @@ package Alr.Commands.Build is
    --  Returns True if compilation succeeded. For invocations after some other
    --  command that already has set up the build environment we need to avoid
    --  redoing it, or it results in "variable already set" errors.
+
+   --  The following toolchain-related subprograms are exposed to allow reuse
+   --  of the toolchain report from both `build` and `test` commands.
+
+   procedure Append_Toolchain_Headers
+     (Table : in out Alire.Utils.Tables.Table);
+   --  Headers for the cells added by Append_Tool_Cells
+
+   procedure Append_Tool_Cells
+     (Table : in out Alire.Utils.Tables.Table;
+      Tool  : Alire.Toolchains.Solutions.Effective_Tool);
+   --  Append the cells describing Tool in a toolchain report, without ending
+   --  the row, so callers may add cells of their own first.
 
    overriding
    function Long_Description (Cmd : Command)

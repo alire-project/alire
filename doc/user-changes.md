@@ -6,6 +6,27 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### `alr test --toolchain` reports the tools tests will be built with
+
+Built-in test runners build their tests as a separate crate, which may depend
+on other compilers than the tested crate. The new `alr test --toolchain`
+switch reports, without building, the tools of each selected test runner
+(labeled by its id, or its directory when it has no id):
+
+```
+$ alr test --toolchain
+RUNNER   CRATE         VERSION   DEPENDENCIES   SOURCE
+unit     gnat_cross_1  14.2.1    gnat_cross_1*  dependencies
+unit     gprbuild      24.0.1                   global
+tests    gnat_native   16.2.1                   global
+tests    gprbuild      24.0.1                   global
+ext                                             unknown
+```
+
+Sources are as in `alr build --toolchain`; external command runners are
+reported with an `unknown` source, as what they run cannot be ascertained.
+Legacy test actions are not reported.
+
 ### `alr build --toolchain` reports the tools a build will use
 
 PR [#2222](https://github.com/alire-project/alire/pull/2222)

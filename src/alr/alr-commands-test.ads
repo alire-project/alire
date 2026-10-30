@@ -41,6 +41,7 @@ private
       Legacy     : aliased Boolean := False;
       List       : aliased Boolean := False;
       Build_Only : aliased Boolean := False;
+      Toolchain  : aliased Boolean := False;
 
       Build_Args : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
    end record;
