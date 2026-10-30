@@ -1916,7 +1916,7 @@ package body Alire.Roots is
         Containers.Crate_Name_Sets.Empty_Set;
       Options     : Solver.Query_Options :=
         Solver.Default_Options;
-      Sync_Only   : Boolean := False)
+      Previous    : Solutions.Solution := Solutions.Empty_Valid_Solution)
       return Solver.Result
    is
       use type Conditional.Dependencies;
@@ -1948,9 +1948,7 @@ package body Alire.Roots is
          Props    => This.Environment,
          Pins     => This.Pins,
          Options  => Options,
-         Previous => (if Sync_Only and then This.Has_Lockfile
-                      then This.Solution
-                      else Solutions.Empty_Valid_Solution));
+         Previous => Previous);
    end Compute_Update;
 
    -------------------------
@@ -1995,7 +1993,11 @@ package body Alire.Roots is
 
       declare
          Computed_Update : constant Solver.Result        := This.Compute_Update
-           (Allowed, Options, Sync_Only);
+           (Allowed,
+            Options,
+            Previous => (if Sync_Only
+                         then Old
+                         else Solutions.Empty_Valid_Solution));
          Diff            : constant Solutions.Diffs.Diff := Old.Changes
            (Computed_Update.Solution);
       begin

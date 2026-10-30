@@ -60,7 +60,10 @@ package body Alire.Roots.Editable is
 
          --  Compute the new solution
 
-         Solver_Result := Edited.Compute_Update;
+         Solver_Result :=
+           Edited.Compute_Update (Previous => Original.Solution);
+         --  The edited solution has the edited crates reset, so we prefer the
+         --  releases in the original one.
          Edited.Set (Solution => Solver_Result.Solution);
 
          --  Then show the effects on the solution
@@ -107,12 +110,13 @@ package body Alire.Roots.Editable is
             use type Conditional.For_Dependencies.Tree;
             Sol : constant Solutions.Solution :=
                     Solver.Resolve
-                      (Deps    => Release (This.Edit)
+                      (Deps     => Release (This.Edit)
                                   .Dependencies (This.Edit.Environment)
                                   and Dep,
-                       Props   => This.Edit.Environment,
-                       Pins    => This.Edit.Pins,
-                       Options => Solver.Predefined_Options.Best_Effort)
+                       Props    => This.Edit.Environment,
+                       Pins     => This.Edit.Pins,
+                       Options  => Solver.Predefined_Options.Best_Effort,
+                       Previous => This.Orig.Solution)
                     .Solution;
             --  Here we are internally looking for a solution, but we do
             --  not want to nag the user in case of trouble, as it would be
@@ -368,13 +372,8 @@ package body Alire.Roots.Editable is
       This.Reload_Manifest;
 
       This.Edit.Set (This.Solution.Linking (Added, New_Pin));
-
-      --  Since link pins can bring in more dependencies, we must also Update.
-      --  Changes will be shown afterwards on the call to Confirm_And_Commit.
-
-      This.Edit.Update (Allow_All_Crates,
-                        Silent   => True,
-                        Interact => False);
+      --  Dependencies brought in by the link are solved, and shown, by
+      --  Confirm_And_Commit later on.
    end Add_Path_Pin;
 
    --------------------
@@ -497,14 +496,8 @@ package body Alire.Roots.Editable is
 
          New_Pin.Deploy (Crate, This.Edit.Pins_Dir, Online => False);
          This.Edit.Set (This.Solution.Linking (Crate, New_Pin));
-
-         --  Since link pins can bring in more dependencies, we must
-         --  also Update. Changes will be shown afterwards on the call
-         --  to Confirm_And_Commit.
-
-         This.Edit.Update (Allow_All_Crates,
-                           Silent   => True,
-                           Interact => False);
+         --  Dependencies brought in by the link are solved, and shown, by
+         --  Confirm_And_Commit later on.
       end;
    end Add_Remote_Pin;
 

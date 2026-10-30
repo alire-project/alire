@@ -14,6 +14,7 @@ import random
 import time
 import tomllib
 
+from contextlib import chdir
 from e3.fs import mkdir
 from e3.os.process import Run, quote_arg
 from e3.testsuite.driver.classic import ProcessResult
@@ -673,10 +674,18 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="", subdir="",
 
 
 def alr_with(dep="", path="", url="", commit="", branch="",
-             delete=False, manual=True, update=True, force=False):
+             delete=False, manual=True, update=True, force=False, in_crate=""):
     """
-    Add/remove dependencies either through command-line or manifest edition
+    Add/remove dependencies either through command-line or manifest edition.
+    If in_crate is given, do so in the crate at that directory instead of the
+    current one.
     """
+    if in_crate != "":
+        with chdir(in_crate):
+            return alr_with(dep=dep, path=path, url=url, commit=commit,
+                            branch=branch, delete=delete, manual=manual,
+                            update=update, force=force)
+
     if commit != "" and branch != "":
         raise RuntimeError("Do not specify both commit and branch")
     if path != "" and url != "":
