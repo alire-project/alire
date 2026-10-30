@@ -8,6 +8,7 @@ with Alire.Errors;
 with Alire.Flags;
 with Alire.Install;
 with Alire.Manifest;
+with Alire.Milestones;
 with Alire.Origins;
 with Alire.OS_Lib;
 with Alire.Paths.Vault;
@@ -1911,31 +1912,14 @@ package body Alire.Roots is
    --------------------
 
    function Compute_Update
-     (This        : in out Root;
-      Allowed     : Containers.Crate_Name_Sets.Set :=
-        Containers.Crate_Name_Sets.Empty_Set;
-      Options     : Solver.Query_Options :=
-        Solver.Default_Options;
-      Previous    : Solutions.Solution := Solutions.Empty_Valid_Solution)
+     (This     : in out Root;
+      Options  : Solver.Query_Options := Solver.Default_Options;
+      Previous : Solutions.Solution := Solutions.Empty_Valid_Solution)
       return Solver.Result
    is
-      use type Conditional.Dependencies;
-
-      Deps : Conditional.Dependencies    :=
+      Deps : constant Conditional.Dependencies :=
                Release (This).Dependencies (This.Environment);
    begin
-
-      --  Identify crates that must be held back
-
-      if not Allowed.Is_Empty then
-         for Release of This.Solution.Releases loop
-            if not Allowed.Contains (Release.Name) then
-               Trace.Debug ("Forcing release in solution: "
-                            & Release.Version.Image);
-               Deps := Release.To_Dependency and Deps;
-            end if;
-         end loop;
-      end if;
 
       --  Ensure we have complete pin information
 
@@ -1973,6 +1957,74 @@ package body Alire.Roots is
               (if This.Has_Lockfile
                then This.Solution
                else Solutions.Empty_Valid_Solution);
+
+      ----------
+      -- Kept --
+      ----------
+
+      function Kept return Solutions.Solution;
+      --  Releases to keep: none in a full update; otherwise those in the old
+      --  solution, except for the crates allowed to update.
+
+      function Kept return Solutions.Solution is
+      begin
+         if not Sync_Only and then Allowed.Is_Empty then
+            return Solutions.Empty_Valid_Solution;
+         end if;
+
+         return Result : Solutions.Solution := Old do
+            for Crate of Allowed loop
+               Result := Result.Excluding (Crate);
+            end loop;
+         end return;
+      end Kept;
+
+      -----------------------------
+      -- Check_Only_Allowed_Move --
+      -----------------------------
+
+      procedure Check_Only_Allowed_Move (New_Sol : Solutions.Solution);
+      --  In a selective update, only the allowed crates may change their
+      --  releases. When the solution requires changing others, we fail
+      --  without applying anything. Pinned crates are exempt, as they follow
+      --  the manifest and not the solver.
+
+      procedure Check_Only_Allowed_Move (New_Sol : Solutions.Solution) is
+         use type Milestones.Milestone;
+         Moved : AAA.Strings.Vector;
+      begin
+         if Allowed.Is_Empty then
+            return;
+         end if;
+
+         for Crate of Old.Crates loop
+            if not Allowed.Contains (Crate)
+              and then Old.State (Crate).Has_Release
+              and then not Old.State (Crate).Is_User_Pinned
+              and then New_Sol.Depends_On (Crate)
+              and then not New_Sol.State (Crate).Is_User_Pinned
+              and then not
+                (New_Sol.State (Crate).Has_Release
+                 and then New_Sol.State (Crate).Release.Milestone
+                          = Old.State (Crate).Release.Milestone)
+            then
+               Moved.Append (Utils.TTY.Name (Crate));
+            end if;
+         end loop;
+
+         if not Moved.Is_Empty then
+            Raise_Checked_Error
+              (Errors.New_Wrapper
+               .Wrap ("Cannot update only the requested crates")
+               .Wrap ("The solution would also change "
+                      & Moved.Flatten (", ")
+                      & ". Add these crates to the command, or run `"
+                      & TTY.Terminal ("alr update")
+                      & "` without arguments to update all dependencies.")
+               .Get);
+         end if;
+      end Check_Only_Allowed_Move;
+
    begin
       --  Ensure requested crates are in solution first.
 
@@ -1993,14 +2045,12 @@ package body Alire.Roots is
 
       declare
          Computed_Update : constant Solver.Result        := This.Compute_Update
-           (Allowed,
-            Options,
-            Previous => (if Sync_Only
-                         then Old
-                         else Solutions.Empty_Valid_Solution));
+           (Options, Previous => Kept);
          Diff            : constant Solutions.Diffs.Diff := Old.Changes
            (Computed_Update.Solution);
       begin
+         Check_Only_Allowed_Move (Computed_Update.Solution);
+
          --  Early exit when there are no changes
 
          if not Alire.Force and then not Diff.Contains_Changes then

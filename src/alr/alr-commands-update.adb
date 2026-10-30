@@ -66,7 +66,8 @@ package body Alr.Commands.Update is
                & " for updating.")
       .New_Line
       .Append ("One or more crates can be given as argument, in which case"
-               & " only these crates will be candidates for updating."
+               & " only these crates will be candidates for updating, and the"
+               & " update fails if other crates would have to change."
                & " Requesting the update of a pinned crate is not allowed.")
       .New_Line
       .Append ("To apply changes in the manifest without updating other"
