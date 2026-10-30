@@ -1,6 +1,7 @@
 """
-After removing a version pin from the manifest, `alr sync` keeps the pinned
-version, as it is in the index, rather than moving to the newest one.
+After removing a version pin, by editing the manifest and running `alr sync`
+or with `alr pin --unpin`, the pinned version is kept, as it is in the index,
+rather than moving to the newest one.
 """
 
 from drivers.alr import (add_release_to_index, alr_lockfile_states,
@@ -22,6 +23,13 @@ assert alr_lockfile_states()["libfoo"]["pinned"]
 
 alr_unpin("libfoo", update=False)
 run_alr("sync")
+assert_eq({"libfoo": "1.0.0"}, alr_lockfile_versions())
+assert not alr_lockfile_states()["libfoo"]["pinned"]
+
+# Same through the command line
+run_alr("pin", "libfoo=1.0.0")
+assert alr_lockfile_states()["libfoo"]["pinned"]
+run_alr("pin", "--unpin", "libfoo")
 assert_eq({"libfoo": "1.0.0"}, alr_lockfile_versions())
 assert not alr_lockfile_states()["libfoo"]["pinned"]
 

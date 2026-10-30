@@ -181,7 +181,7 @@ Changes to dependency solution:
              p.out, flags=re.S)
 
 ###############################################################################
-# Display of upgrades. By removing libhello=1, it can be upgraded.
+# Removing libhello=1 keeps its version, as it is still valid for 'hello'
 p = run_alr('with', '--del', 'libhello', quiet=False)
 assert_match(".*" +
              re.escape("""Requested changes:
@@ -190,7 +190,16 @@ assert_match(".*" +
 
 Changes to dependency solution:
 
-   ^ libhello 1.1.0 (indirect,upgraded from 1.0.0)""") + ".*",
+   = libhello 1.0.0 (indirect)""") + ".*",
+             p.out, flags=re.S)
+
+###############################################################################
+# Display of upgrades. Without libhello=1, an update can upgrade it.
+p = run_alr('update', quiet=False)
+assert_match(".*" +
+             re.escape("""Dependencies automatically updated as follows:
+
+   ^ libhello 1.1.0 (upgraded from 1.0.0)""") + ".*",
              p.out, flags=re.S)
 
 

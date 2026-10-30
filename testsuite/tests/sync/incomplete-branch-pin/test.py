@@ -19,8 +19,7 @@ use_index_with_manifests({})
 
 # A remote crate depending on a crate that is not in the index
 init_local_crate(name="remote", enter=False)
-with open(os.path.join("remote", "alire.toml"), "a") as f:
-    f.write('\n[[depends-on]]\nlibnope = "*"\n')
+alr_with("libnope", update=False, in_crate="remote")
 url = os.path.join(os.getcwd(), "remote")
 head = init_git_repo("remote")
 

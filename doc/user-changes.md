@@ -6,6 +6,21 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### `alr with` and `alr pin` keep dependency versions
+
+PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
+
+Adding or removing dependencies with `alr with`, and pinning or unpinning
+crates with `alr pin` or `alr with --use`, keep the versions of the other
+dependencies already in the solution, changing only what the edit requires.
+Previously, these commands also updated unrelated dependencies to their
+newest releases. In particular:
+
+- `alr with` on a crate that is already an indirect dependency adds it with
+  the version in use (e.g. `^1.0.0`) instead of the newest one.
+- After unpinning a crate, its pinned version is kept if the index has it.
+- Pinning no longer refreshes other remote pins; `alr update` does that.
+
 ### Manual edits to the manifest keep dependency versions
 
 PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
