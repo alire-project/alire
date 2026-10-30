@@ -4,7 +4,7 @@ version = "0.1.0"
 licenses = "GPL-3.0-only"
 maintainers = ["example@example.com"]
 maintainers-logins = ["mylogin"]
-tags = ["very-very-long-tag"]
+tags = ["an-extremely-long-tag-name-for-testing"]
 
 [origin]
 url = "file:."

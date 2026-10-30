@@ -53,8 +53,10 @@ package Alire with Preelaborate is
    Max_Website_Length     : constant := 512;
 
    Min_Tag_Length         : constant := 1;
-   Max_Tag_Length         : constant := 15;
-   --  Maximum length of a single element of the tags field
+   Max_Tag_Length         : constant := 30;
+   --  Maximum length of a single element of the tags field. The previous
+   --  value of 15 rejected legitimate descriptive topics such as
+   --  "internationalization" (20 characters).
 
    --  package BStrings is new Ada.Strings.Bounded.Generic_Bounded_Length
    --       (Integer'Max (Max_Name_Length, Max_Description_Length));
