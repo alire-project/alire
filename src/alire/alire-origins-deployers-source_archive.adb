@@ -6,6 +6,7 @@ with Alire.Errors;
 with Alire.Directories;
 with Alire.Formatting;
 with Alire.OS_Lib.Subprocess;
+with Alire.Platforms.Current;
 with Alire.Settings.Builtins;
 with Alire.Spawn;
 with Alire.VFS;
@@ -13,7 +14,6 @@ with Alire.URI;
 with Alire.Utils;             use Alire.Utils;
 with Alire.Utils.Tools;
 
-with GNATCOLL.OS.Constants;
 with GNATCOLL.VFS;
 
 package body Alire.Origins.Deployers.Source_Archive is
@@ -31,10 +31,7 @@ package body Alire.Origins.Deployers.Source_Archive is
 
       package Subprocess renames Alire.OS_Lib.Subprocess;
 
-      use type GNATCOLL.OS.OS_Type;
-
-      On_Windows : constant Boolean :=
-                     GNATCOLL.OS.Constants.OS = GNATCOLL.OS.Windows;
+      On_Windows : constant Boolean := Platforms.Current.On_Windows;
 
       ---------------------
       -- Use_Force_Local --

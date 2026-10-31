@@ -8,8 +8,6 @@ with Alire.Utils.TTY;
 
 with GNAT.IO;
 
-with GNATCOLL.OS.Constants;
-
 package body Alire is
 
    package OS renames GNAT.OS_Lib;
@@ -361,13 +359,12 @@ package body Alire is
 
    function New_Line return String
    is
-      use all type GNATCOLL.OS.OS_Type;
    begin
-      case GNATCOLL.OS.Constants.OS is
-         when Unix | MacOS => return (1 .. 1 => Character'Val (16#0A#));
-         when Windows      => return (Character'Val (16#0D#),
-                                      Character'Val (16#0A#));
-      end case;
+      if OS.Directory_Separator = '\' then -- On Windows
+         return (Character'Val (16#0D#), Character'Val (16#0A#));
+      else
+         return (1 .. 1 => Character'Val (16#0A#));
+      end if;
    end New_Line;
 
 end Alire;
