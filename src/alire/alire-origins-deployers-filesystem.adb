@@ -1,5 +1,3 @@
-with GNATCOLL.VFS;
-
 with Alire.Directories;
 with Alire.Errors;
 with Alire.Origins.Deployers.Source_Archive;
@@ -16,15 +14,14 @@ package body Alire.Origins.Deployers.Filesystem is
                           Kind   : Hashes.Kinds) return Hashes.Any_Digest
    is
       pragma Unreferenced (Folder);
-      use GNATCOLL.VFS;
-      Src : constant Virtual_File := Create (+This.Base.Path);
    begin
-      if not Src.Is_Regular_File then
+      if not Directories.Is_File (This.Base.Path) then
          raise Checked_Error with Errors.Set
            ("Hashing of non-tarball local crate is unsupported.");
       end if;
 
-      return Hashes.Digest (Hashes.Hash_File (Kind, +Src.Full_Name));
+      return Hashes.Digest
+        (Hashes.Hash_File (Kind, Directories.Full_Name (This.Base.Path)));
    end Compute_Hash;
 
    ------------
@@ -33,11 +30,9 @@ package body Alire.Origins.Deployers.Filesystem is
 
    overriding
    function Deploy (This : Deployer; Folder : String) return Outcome is
-      use GNATCOLL.VFS;
 
-      Dst       : constant Virtual_File := Create (+Folder);
       Dst_Guard : Directories.Temp_File :=
-                    Directories.With_Name (+Dst.Full_Name);
+                    Directories.With_Name (Directories.Full_Name (Folder));
       --  The guard ensures deletion in case of error.
 
       ---------------------
@@ -73,17 +68,14 @@ package body Alire.Origins.Deployers.Filesystem is
          return Outcome_Success;
       end Deploy_From_Archive;
 
-      Src : constant Virtual_File := Create (+This.Base.Path);
    begin
       --  Create destination
-      if not Dst.Is_Directory then
-         Dst.Make_Dir;
-      end if;
+      Directories.Create_Tree (Folder);
 
       --  Check source crate existence
-      if Src.Is_Directory then
+      if Directories.Is_Directory (This.Base.Path) then
          return Deploy_From_Dir;
-      elsif Src.Is_Regular_File then
+      elsif Directories.Is_File (This.Base.Path) then
          return Deploy_From_Archive;
       else
          return Outcome_Failure
@@ -104,9 +96,9 @@ package body Alire.Origins.Deployers.Filesystem is
    -- Is_Valid_Local_Crate --
    --------------------------
 
-   function Is_Valid_Local_Crate (Path : VFS.Virtual_File) return Boolean is
-     (Path.Is_Directory or else
-      Archive_Format (Path.Display_Base_Name) in Known_Source_Archive_Format);
+   function Is_Valid_Local_Crate (Path : Any_Path) return Boolean is
+     (Directories.Is_Directory (Path) or else
+      Archive_Format (Path) in Known_Source_Archive_Format);
 
    ----------------------
    -- Supports_Hashing --
@@ -114,9 +106,6 @@ package body Alire.Origins.Deployers.Filesystem is
 
    overriding
    function Supports_Hashing (This : Deployer) return Boolean is
-      use GNATCOLL.VFS;
-   begin
-      return Create (+This.Base.Path).Is_Regular_File;
-   end Supports_Hashing;
+     (Directories.Is_File (This.Base.Path));
 
 end Alire.Origins.Deployers.Filesystem;

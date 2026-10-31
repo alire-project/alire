@@ -15,8 +15,6 @@ with Den.Walk;
 
 with GNAT.String_Hash;
 
-with GNATCOLL.VFS;
-
 with Interfaces;
 
 with SI_Units.Binary;
@@ -146,9 +144,10 @@ package body Alire.Directories is
    -----------------
 
    procedure Create_Tree (Path : Any_Path) is
-      use GNATCOLL.VFS;
    begin
-      Make_Dir (Create (+Path));
+      Den.Filesystem.Create_Directory
+        (Den.Scrub (Path),
+         Options => (Create_Intermediate => True, others => <>));
       Trace.Debug ("Created tree: " & Path);
    end Create_Tree;
 

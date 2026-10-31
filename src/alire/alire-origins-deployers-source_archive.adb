@@ -9,12 +9,13 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
 with Alire.Settings.Builtins;
 with Alire.Spawn;
-with Alire.VFS;
 with Alire.URI;
 with Alire.Utils;             use Alire.Utils;
 with Alire.Utils.Tools;
 
-with GNATCOLL.VFS;
+with Den.Walk;
+
+with GNAT.OS_Lib;
 
 package body Alire.Origins.Deployers.Source_Archive is
 
@@ -167,7 +168,6 @@ package body Alire.Origins.Deployers.Source_Archive is
                       Folder   : Directory_Path)
                       return Outcome
    is
-      use GNATCOLL.VFS;
       use Alire.Directories;
       Archive_File : constant File_Path :=
         Folder / Ada.Directories.Simple_Name (Filename);
@@ -191,7 +191,7 @@ package body Alire.Origins.Deployers.Source_Archive is
       end Exec_Check;
    begin
       Trace.Debug ("Creating folder: " & Folder);
-      Create (+Folder).Make_Dir;
+      Create_Tree (Folder);
 
       Trace.Detail ("Downloading file: " & URL);
       Alire.Spawn.Settings_Command
@@ -249,18 +249,21 @@ package body Alire.Origins.Deployers.Source_Archive is
       -----------------------
 
       procedure Check_And_Move_Up is
-         Contents : constant VFS.Virtual_File_Vector :=
-                      VFS.Read_Dir
-                        (VFS.New_Virtual_File (VFS.From_FS (Dst_Dir)));
+         use Alire.Directories.Operators;
+
+         Base     : constant Any_Path := Den.Scrub (Dst_Dir);
+         Contents : constant Den.Sorted_Paths := Den.Walk.Ls (Base);
          Success  : Boolean;
       begin
-         if Natural (Contents.Length) = 0 then
+         if Contents.Is_Empty then
             raise Checked_Error with Errors.Set
               ("No content where a single directory was expected: " & Dst_Dir);
          end if;
 
+         --  The kind of a softlink is not directory, so these are rejected
+
          if Natural (Contents.Length) /= 1 or else
-           not Contents.First_Element.Is_Directory
+           Den."/=" (Den.Kind (Base / Contents.First_Element), Den.Directory)
          then
             raise Checked_Error with Errors.Set
               ("Unexpected contents where a single directory was expected: "
@@ -268,43 +271,42 @@ package body Alire.Origins.Deployers.Source_Archive is
          end if;
 
          Trace.Debug ("Unpacked crate root detected as: "
-                      & Contents.First_Element.Display_Base_Dir_Name);
+                      & Contents.First_Element);
 
-         --  Move everything up one level:
+         declare
+            Root : constant Any_Path := Base / Contents.First_Element;
+         begin
 
-         for File of VFS.Read_Dir (Contents.First_Element) loop
-            declare
-               use type VFS.Virtual_File;
-               New_Name : constant VFS.Virtual_File :=
-                            Contents.First_Element.Get_Parent /
-                              VFS.Simple_Name (File);
-            begin
-               GNATCOLL.VFS.Rename
-                 (File      => File,
-                  Full_Name => New_Name,
-                  Success   => Success);
+            --  Move everything up one level. We are not leaving the folder so
+            --  a plain rename suffices. This must also work with dangling
+            --  softlinks, which Ada.Directories.Rename considers missing.
+
+            for File of Den.Walk.Ls (Root) loop
+               GNAT.OS_Lib.Rename_File
+                 (Old_Name => Root / File,
+                  New_Name => Base / File,
+                  Success  => Success);
 
                if not Success then
                   raise Checked_Error with Errors.Set
-                    ("Could not rename " & File.Display_Full_Name
-                     & " to " & New_Name.Display_Full_Name);
+                    ("Could not rename " & (Root / File)
+                     & " to " & (Base / File));
                end if;
-            end;
-         end loop;
+            end loop;
 
-         --  Delete the folder, that must be empty:
+            --  Delete the folder, that must be empty:
 
-         Contents.First_Element.Remove_Dir (Success => Success);
-         if not Success then
-            raise Checked_Error with Errors.Set
-              ("Could not remove supposedly empty directory: "
-               & Contents.First_Element.Display_Full_Name);
-         end if;
+            Dirs.Delete_Directory (Root);
+         exception
+            when E : Dirs.Name_Error | Dirs.Use_Error =>
+               Log_Exception (E);
+               raise Checked_Error with Errors.Set
+                 ("Could not remove supposedly empty directory: " & Root);
+         end;
 
       end Check_And_Move_Up;
 
       package Subprocess renames Alire.OS_Lib.Subprocess;
-      use GNATCOLL.VFS;
 
    begin
 
@@ -321,13 +323,11 @@ package body Alire.Origins.Deployers.Source_Archive is
                --  the source file, in case the given name is
                --  relative.
                Src_File_Full_Name : constant Absolute_Path
-                 := +GNATCOLL.VFS.Full_Name
-                   (GNATCOLL.VFS.Create_From_Base (+Src_File));
+                 := Dirs.Full_Name (Src_File);
 
-               --  Create the destination directory
-               Dst       : constant Virtual_File := Create (+Dst_Dir);
+               --  This guard ensures deletion of the destination on error
                Dst_Guard : Directories.Temp_File :=
-                 Directories.With_Name (+Dst.Full_Name);
+                 Directories.With_Name (Dirs.Full_Name (Dst_Dir));
 
                --  Enter the destination directory, and automatically restore
                --  the current dir at the end of the scope.
