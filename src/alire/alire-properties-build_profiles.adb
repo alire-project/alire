@@ -1,13 +1,14 @@
 with Alire.TOML_Keys;
 
 with Alire.Utils.Switches; use Alire.Utils.Switches;
-with Alire.Utils.Did_You_Mean;
+
+with CLIC.Utils;
 
 package body Alire.Properties.Build_Profiles is
 
    function Profile_Kind_Suggestion
-   is new Utils.Did_You_Mean.Enum_Suggestion
-     (Profile_Kind, Utils.Did_You_Mean.Lower_Case);
+   is new CLIC.Utils.Enum_Suggestion
+     (Profile_Kind, CLIC.Utils.Lower_Case);
 
    -----------------------
    -- Check_Profile_Str --

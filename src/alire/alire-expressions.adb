@@ -3,7 +3,8 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Alire.Errors;
 with Alire.TOML_Adapters;
 with Alire.Utils;
-with Alire.Utils.Did_You_Mean;
+
+with CLIC.Utils;
 
 package body Alire.Expressions is
 
@@ -50,7 +51,7 @@ package body Alire.Expressions is
 
    function Suggestion (This : Variable; Value : String) return String is
    begin
-      return Utils.Did_You_Mean.Suggestion
+      return CLIC.Utils.Suggestion
         (Value, Variable_Values (Key (This)).Possible_Values);
    end Suggestion;
 
