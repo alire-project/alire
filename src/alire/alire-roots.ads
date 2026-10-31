@@ -203,15 +203,10 @@ package Alire.Roots is
                              return Boolean;
    --  Say if the root release matches the given name
 
-   type Sync_Kinds is (Incremental, From_Scratch);
-   --  Whether a sync keeps the releases of the previous solution, unless the
-   --  manifest requires otherwise, or discards it and solves anew.
-
    procedure Sync_From_Manifest (This     : in out Root;
                                  Silent   : Boolean;
                                  Interact : Boolean;
-                                 Force    : Boolean    := False;
-                                 Kind     : Sync_Kinds := From_Scratch);
+                                 Force    : Boolean := False);
    --  If the lockfile timestamp is outdated w.r.t the manifest, or Force, do
    --  as follows: 1) Pre-deploy any remote pins in the manifest so they are
    --  usable when solving, and apply any local/version pins. 2) Ensure that
@@ -220,8 +215,9 @@ package Alire.Roots is
    --  may have been edited by hand. 3) Ensure that releases in the lockfile
    --  are actually on disk (may be missing if cache was deleted, or the crate
    --  was just cloned). When Silent, downgrade log level of some output. When
-   --  not Interact, run as if --non-interactive were in effect. Kind
-   --  determines whether the existing solution is kept when resolving again.
+   --  not Interact, run as if --non-interactive were in effect. When
+   --  resolving again, releases in the existing solution are kept unless the
+   --  manifest requires otherwise.
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;

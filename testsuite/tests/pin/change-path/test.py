@@ -36,7 +36,7 @@ alr_pin("yyy", path="../nest2/yyy", update=False)
 # Now detect changes and show output
 p = run_alr("pin", quiet=False)
 assert_eq("""Note: Synchronizing workspace...
-Dependencies automatically updated as follows:
+Dependencies synchronized as follows:
 
    . yyy 0.1.0-dev (path=../nest2/yyy)
 
