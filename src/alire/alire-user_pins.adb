@@ -4,6 +4,7 @@ with Alire.Directories;
 with Alire.Errors;
 with Alire.Origins;
 with Alire.Roots.Optional;
+with Alire.URI;
 with Alire.Utils.User_Input;
 with Alire.Utils.TTY;
 with Alire.VFS;
@@ -222,21 +223,35 @@ package body Alire.User_Pins is
                        & TTY.URL (Destination));
 
          --  If the fetch URL has been changed, do a fresh 'git clone'.
-         --
-         --  Note that VCSs.Git.Clone converts the URL to a git-friendly form
-         --  with VCSs.Repo, so this is what the output of 'git config' should
-         --  be compared against.
 
-         if VCSs.Git.Handler.Fetch_URL
-           (Repo   => Destination,
-            Public => False) /= VCSs.Repo_URL (URL (This))
-         then
-            Put_Info ("Switching pin " & Utils.TTY.Name (Crate) &
-                        " to origin at " & TTY.URL (+This.URL));
-            Directories.Delete_Tree (Destination);
-            Checkout; -- Pending branch tracking implementation
-            return;
-         end if;
+         declare
+            Fetch_URL : constant String :=
+              VCSs.Git.Handler.Fetch_URL
+                (Repo => Destination, Public => False);
+            Pin_URL   : constant String :=
+              VCSs.Git.To_Native_URL (VCSs.Repo_URL (URL (This)));
+            --  Note that VCSs.Git.Clone converts the URL to a git-friendly
+            --  form with VCSs.Repo_URL, and VCSs.Git.Fetch_URL converts with
+            --  VCSs.Git.To_Native_URL, so this is what the output of
+            --  'git config' should be compared against.
+
+            Same_Origin : constant Boolean :=
+              Fetch_URL = Pin_URL
+              or else
+                (URI.URI_Kind (Fetch_URL) in URI.Bare_Path
+                 and then URI.URI_Kind (Pin_URL) in URI.Bare_Path
+                 and then VFS.Is_Same_Dir (Fetch_URL, Pin_URL));
+            --  Use 'VFS.Is_Same_Dir' for local paths so equivalents (absolute
+            --  vs relative, back- vs forward-slash, etc.) are recognised.
+         begin
+            if not Same_Origin then
+               Put_Info ("Switching pin " & Utils.TTY.Name (Crate)
+                         & " to origin at " & TTY.URL (+This.URL));
+               Directories.Delete_Tree (Destination);
+               Checkout; -- Pending branch tracking implementation
+               return;
+            end if;
+         end;
 
          --  Finally update. In case the branch has just been changed by the
          --  user in the manifest, the following call will also take care of
