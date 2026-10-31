@@ -203,10 +203,15 @@ package Alire.Roots is
                              return Boolean;
    --  Say if the root release matches the given name
 
+   type Sync_Kinds is (Incremental, From_Scratch);
+   --  Whether a sync keeps the releases of the previous solution, unless the
+   --  manifest requires otherwise, or discards it and solves anew.
+
    procedure Sync_From_Manifest (This     : in out Root;
                                  Silent   : Boolean;
                                  Interact : Boolean;
-                                 Force    : Boolean := False);
+                                 Force    : Boolean    := False;
+                                 Kind     : Sync_Kinds := From_Scratch);
    --  If the lockfile timestamp is outdated w.r.t the manifest, or Force, do
    --  as follows: 1) Pre-deploy any remote pins in the manifest so they are
    --  usable when solving, and apply any local/version pins. 2) Ensure that
@@ -215,7 +220,8 @@ package Alire.Roots is
    --  may have been edited by hand. 3) Ensure that releases in the lockfile
    --  are actually on disk (may be missing if cache was deleted, or the crate
    --  was just cloned). When Silent, downgrade log level of some output. When
-   --  not Interact, run as if --non-interactive were in effect.
+   --  not Interact, run as if --non-interactive were in effect. Kind
+   --  determines whether the existing solution is kept when resolving again.
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;
@@ -240,15 +246,17 @@ package Alire.Roots is
    --  Download all dependencies not already on disk from This.Solution
 
    procedure Update_Dependencies
-     (This     : in out Root;
-      Silent   : Boolean; -- Do not output anything
-      Interact : Boolean; -- Request confirmation from the user
-      Options  : Solver.Query_Options := Solver.Default_Options;
-      Allowed  : Containers.Crate_Name_Sets.Set :=
-        Alire.Containers.Crate_Name_Sets.Empty_Set);
+     (This      : in out Root;
+      Silent    : Boolean; -- Do not output anything
+      Interact  : Boolean; -- Request confirmation from the user
+      Options   : Solver.Query_Options := Solver.Default_Options;
+      Allowed   : Containers.Crate_Name_Sets.Set :=
+        Alire.Containers.Crate_Name_Sets.Empty_Set;
+      Sync_Only : Boolean := False);
    --  Resolve and update all or given crates in a root, and regenerate
    --  configuration. When Silent, run as in non-interactive mode as this is an
-   --  automatically-triggered update.
+   --  automatically-triggered update. When Sync_Only, releases in the current
+   --  solution are kept unless the manifest requires otherwise.
 
    procedure Sync_Pins_From_Manifest
      (This       : in out Root;
@@ -447,10 +455,13 @@ private
      (This        : in out Root;
       Allowed     : Containers.Crate_Name_Sets.Set :=
         Containers.Crate_Name_Sets.Empty_Set;
-      Options     : Solver.Query_Options := Solver.Default_Options)
+      Options     : Solver.Query_Options := Solver.Default_Options;
+      Sync_Only   : Boolean := False)
       return Solver.Result;
    --  Compute a new solution for the workspace. If Allowed is not empty,
    --  crates not appearing in Allowed are held back at their current version.
+   --  When Sync_Only, releases in the current solution are preferred over
+   --  others, so they only change when the manifest requires it.
    --  This function loads configured indexes from disk. No changes are applied
    --  to This root. NOTE: pins have to be added to This.Solution beforehand,
    --  or they will not be applied.

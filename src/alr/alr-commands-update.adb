@@ -67,7 +67,10 @@ package body Alr.Commands.Update is
       .New_Line
       .Append ("One or more crates can be given as argument, in which case"
                & " only these crates will be candidates for updating."
-               & " Requesting the update of a pinned crate is not allowed."));
+               & " Requesting the update of a pinned crate is not allowed.")
+      .New_Line
+      .Append ("To apply changes in the manifest without updating other"
+               & " dependencies, use `alr sync` instead."));
 
    --------------------
    -- Setup_Switches --

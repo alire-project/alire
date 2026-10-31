@@ -183,7 +183,10 @@ Adding dependencies can be done with the `alr with` command:
 
 Alternatively you can edit the file to add dependencies and then issue:
 
-* `alr update`, which will fetch any modified dependencies in your project.
+* `alr sync`, which will apply your changes while keeping the versions of
+  other dependencies.
+* `alr update`, which will also update other dependencies to their newest
+  versions.
 
 Using `alr with` without arguments will show the current dependencies of your
 project. Using one of `--solve`, `--tree`, `--versions`, `--graph` will show

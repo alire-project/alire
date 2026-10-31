@@ -6,6 +6,26 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### New `alr sync` command
+
+PR [#2225](https://github.com/alire-project/alire/pull/2225)
+
+`alr sync` applies the changes made by hand to the manifest, keeping the
+versions of dependencies already in the solution. A dependency only changes
+when the manifest requires it: a new or removed dependency, or a constraint
+that no longer admits the version in use. Newer releases in the index are
+not brought in; that requires an `alr update`.
+
+```
+$ alr sync
+Note: Synchronizing workspace...
+Dependencies synchronized as follows:
+
+   + libbar 1.0.0 (new)
+
+Success: Workspace synchronized successfully.
+```
+
 ### Invalid index manifests are skipped with a warning
 
 PR [#2194](https://github.com/alire-project/alire/pull/2194)

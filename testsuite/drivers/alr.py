@@ -12,6 +12,7 @@ import re
 import sys
 import random
 import time
+import tomllib
 
 from e3.fs import mkdir
 from e3.os.process import Run, quote_arg
@@ -393,7 +394,7 @@ def use_index_with_manifests(manifests: dict[str, str]) -> str:
     Preparing settings takes several alr runs, so they are prepared once in a
     template directory, which is then copied for each new index.
 
-    Returns the index directory.
+    Returns the absolute path of the index directory.
     """
     template_dir = os.path.abspath("alr-config-single-manifest-template")
     version_file = template_dir + ".index_version"
@@ -429,7 +430,35 @@ def use_index_with_manifests(manifests: dict[str, str]) -> str:
                         {index_dir: {"in_fixtures": False}})
 
     os.environ["ALIRE_SETTINGS_DIR"] = config_dir
-    return index_dir
+    return os.path.abspath(index_dir)
+
+
+def add_release_to_index(index_dir: str, crate: str, version: str,
+                         depends_on: dict[str, str] | None = None) -> None:
+    """
+    Add a release to an index created by use_index_with_manifests, with the
+    given dependencies (crate -> version set) and trivial sources next to the
+    index, so it can be deployed. This can be done at any time, to simulate
+    new releases appearing in the index.
+    """
+    sources = os.path.join(os.path.dirname(index_dir), "crates",
+                           f"{crate}_{version}")
+    os.makedirs(sources, exist_ok=True)
+    with open(os.path.join(sources, "README"), "w") as f:
+        f.write(f"{crate} {version}\n")
+
+    crate_dir = os.path.join(index_dir, crate[:2], crate)
+    os.makedirs(crate_dir, exist_ok=True)
+    with open(os.path.join(crate_dir, f"{crate}-{version}.toml"), "w") as f:
+        f.write(f'name = "{crate}"\n'
+                f'version = "{version}"\n'
+                f'description = "Release added by the test"\n'
+                f'maintainers = ["example@example.com"]\n'
+                f'maintainers-logins = ["mylogin"]\n')
+        for dep, versions in (depends_on or {}).items():
+            f.write(f'[[depends-on]]\n{dep} = "{versions}"\n')
+        # Relative to the manifest, as in the fixture indexes
+        f.write(f'[origin]\nurl = "file:../../../crates/{crate}_{version}"\n')
 
 
 def use_single_manifest_index(manifest: str, file_name: str) -> str:
@@ -489,6 +518,27 @@ def alr_workspace_cache():
 
 def alr_lockfile():
     return os.path.join("alire", "alire.lock")
+
+
+def alr_lockfile_states() -> dict[str, dict]:
+    """
+    Return the dependency states in the lockfile of the current workspace, as
+    a dictionary from crate name to its table (with "fulfilment",
+    "transitivity", "versions", and "release" when there is one).
+    """
+    with open(alr_lockfile(), "rb") as f:
+        return {state["crate"]: state
+                for state in tomllib.load(f)["solution"].get("state", [])}
+
+
+def alr_lockfile_versions() -> dict[str, str]:
+    """
+    Return the versions of the releases in the lockfile of the current
+    workspace, as a dictionary from crate name to version.
+    """
+    return {crate: state["release"]["version"]
+            for crate, state in alr_lockfile_states().items()
+            if "release" in state}
 
 
 def alr_manifest():
@@ -651,7 +701,8 @@ def alr_with(dep="", path="", url="", commit="", branch="",
 
     if manual:
         if delete:
-            delete_array_entry_from_manifest("depends-on", dep, update=update)
+            delete_array_entry_from_manifest("depends-on", dep[:pos],
+                                             update=update)
         else:
             with open(alr_manifest(), "at") as manifest:
                 lines = ["\n[[depends-on]]\n",

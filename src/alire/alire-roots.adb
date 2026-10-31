@@ -1781,7 +1781,8 @@ package body Alire.Roots is
    procedure Sync_From_Manifest (This     : in out Root;
                                  Silent   : Boolean;
                                  Interact : Boolean;
-                                 Force    : Boolean := False)
+                                 Force    : Boolean    := False;
+                                 Kind     : Sync_Kinds := From_Scratch)
    is
    begin
       if Force
@@ -1796,8 +1797,9 @@ package body Alire.Roots is
          --  a non-exhaustive sync of pins, that will anyway detect evident
          --  changes (new/removed pins, changed explicit commits).
 
-         This.Update_Dependencies (Silent   => Silent,
-                                   Interact => Interact);
+         This.Update_Dependencies (Silent    => Silent,
+                                   Interact  => Interact,
+                                   Sync_Only => Kind = Incremental);
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
          --  to match the manifest. As any change in dependencies will be
@@ -1914,7 +1916,8 @@ package body Alire.Roots is
       Allowed     : Containers.Crate_Name_Sets.Set :=
         Containers.Crate_Name_Sets.Empty_Set;
       Options     : Solver.Query_Options :=
-        Solver.Default_Options)
+        Solver.Default_Options;
+      Sync_Only   : Boolean := False)
       return Solver.Result
    is
       use type Conditional.Dependencies;
@@ -1942,10 +1945,13 @@ package body Alire.Roots is
       --  And solve
 
       return Solver.Resolve
-        (Deps    => Deps,
-         Props   => This.Environment,
-         Pins    => This.Pins,
-         Options => Options);
+        (Deps     => Deps,
+         Props    => This.Environment,
+         Pins     => This.Pins,
+         Options  => Options,
+         Previous => (if Sync_Only and then This.Has_Lockfile
+                      then This.Solution
+                      else Solutions.Empty_Valid_Solution));
    end Compute_Update;
 
    -------------------------
@@ -1953,12 +1959,13 @@ package body Alire.Roots is
    -------------------------
 
    procedure Update_Dependencies
-     (This     : in out Root;
-      Silent   : Boolean; -- Do not output anything
-      Interact : Boolean; -- Request confirmation from the user
-      Options  : Solver.Query_Options := Solver.Default_Options;
-      Allowed  : Containers.Crate_Name_Sets.Set :=
-        Alire.Containers.Crate_Name_Sets.Empty_Set)
+     (This      : in out Root;
+      Silent    : Boolean; -- Do not output anything
+      Interact  : Boolean; -- Request confirmation from the user
+      Options   : Solver.Query_Options := Solver.Default_Options;
+      Allowed   : Containers.Crate_Name_Sets.Set :=
+        Alire.Containers.Crate_Name_Sets.Empty_Set;
+      Sync_Only : Boolean := False)
    is
       --  Pins may be stored with relative paths so we need to ensure being at
       --  the root of the workspace:
@@ -1989,7 +1996,7 @@ package body Alire.Roots is
 
       declare
          Computed_Update : constant Solver.Result        := This.Compute_Update
-           (Allowed, Options);
+           (Allowed, Options, Sync_Only);
          Diff            : constant Solutions.Diffs.Diff := Old.Changes
            (Computed_Update.Solution);
       begin
@@ -2026,7 +2033,11 @@ package body Alire.Roots is
                                (if Silent then Debug else Info);
                   begin
                      Trace.Log
-                       ("Dependencies automatically updated as follows:",
+                       ("Dependencies "
+                        & (if Sync_Only
+                           then "synchronized"
+                           else "automatically updated")
+                        & " as follows:",
                         Level);
                      Diff.Print
                        (Level     => Level,
