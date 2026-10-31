@@ -15,7 +15,8 @@ for lib_name in ["libfoo", "libbar", "libbaz"]:
     assert_match(
         (
             r'.*Command \["git", "clone", "--recursive", "-q", '
-            r'("--no-hardlinks", )?"ssh://host\.invalid/path/to/repo\.git", ".*"\] '
+            r'("--no-hardlinks", )?"--", '
+            r'"ssh://host\.invalid/path/to/repo\.git", ".*"\] '
             r'exited with code 128'
         ),
         p.out

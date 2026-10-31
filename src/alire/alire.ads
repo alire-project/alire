@@ -45,6 +45,13 @@ package Alire with Preelaborate is
    Max_Description_Length : constant := 72;
    --  Git line recommendation (although it's 50 for subject line)
 
+   Max_Long_Description_Length : constant := 16_384;
+   Max_Notes_Length            : constant := 2_048;
+   --  For notes and hints. The largest ones in the community index are of
+   --  about 6000 characters (long description) and 550 (notes).
+
+   Max_Website_Length     : constant := 512;
+
    Min_Tag_Length         : constant := 1;
    Max_Tag_Length         : constant := 15;
    --  Maximum length of a single element of the tags field
@@ -124,8 +131,18 @@ package Alire with Preelaborate is
    function "+" (P : String)  return Crate_Name;
    function To_Name (S : String) return Crate_Name renames "+";
 
+   function UTF_8_Length (Text : String) return Natural;
+   --  Number of characters (code points) of a UTF-8 Text, counted as its bytes
+   --  that are not continuation bytes, so it never raises, even for invalid
+   --  UTF-8. Text lengths in manifests are measured this way, as JSON Schema
+   --  does for its maxLength.
+
+   function Is_Valid_Description (Text : String) return Boolean;
+   --  Whether Text has at most Max_Description_Length characters. Not an
+   --  expression in the predicate below, as GNAT 10 and 11 crash on it.
+
    subtype Description_String is String with Dynamic_Predicate =>
-     Description_String'Length <= Max_Description_Length;
+     Is_Valid_Description (Description_String);
 
    subtype Folder_String is String
      with

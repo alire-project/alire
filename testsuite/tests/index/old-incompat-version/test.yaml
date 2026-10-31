@@ -1,4 +1,5 @@
 driver: python-script
+build_mode: shared
 indexes:
     community:
         in_fixtures: false

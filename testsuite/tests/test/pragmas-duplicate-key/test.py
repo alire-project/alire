@@ -10,14 +10,14 @@ import os
 
 from drivers.alr import init_local_crate, run_alr
 from drivers.asserts import assert_match, assert_substring
-from drivers.helpers import testing_write_test
+from drivers.testing import write_test
 
 
 init_local_crate(with_test=True)
 # Drop the default failing test to avoid confusion with its output
 os.remove("./tests/src/xxx_tests-assertions_enabled.adb")
 
-testing_write_test(
+write_test(
     "dup_key",
     "null;",
     prelude=(

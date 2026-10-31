@@ -1,0 +1,13 @@
+name = "archive_mirror"
+description = "d"
+version = "1.0.0"
+licenses = "MIT"
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin]
+url = "https://github.com/someone/crate/archive/v1.0.0.tar.gz"
+hashes = ["sha512:deadbeef"]
+
+[[mirror]]
+url = "https://example.com/crate-1.0.0.tar.gz"

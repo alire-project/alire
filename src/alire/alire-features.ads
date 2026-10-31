@@ -30,6 +30,10 @@ package Alire.Features is
       --  Require that binary origins are explicitly marked as such instead of
       --  relying on dynamic expressions.
 
+      Strict_Release_Versions : constant Min_Version := +"1.5.0";
+      --  Require that release versions in index manifest file names are strict
+      --  semantic versions (see Alire.Index.Error_In_Release_Version).
+
    end Index;
 
 end Alire.Features;

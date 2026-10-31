@@ -19,6 +19,7 @@ package body Alire.Flags is
           (Base
              / Paths.Working_Folder_Inside_Root
              / Paths.Flags_Folder_Inside_Working_Folder
-             / AAA.Strings.To_Lower_Case (Name'Image))));
+             / (AAA.Strings.To_Lower_Case (Name'Image)
+                & (if Has_Data (Name) then ".toml" else "")))));
 
 end Alire.Flags;

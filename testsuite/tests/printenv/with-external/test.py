@@ -32,9 +32,9 @@ assert_match('.*warn: Generating possibly incomplete environment'
              ' because of missing dependencies\n'
              # Note: this warning is via stderr so it's OK
              '.*'
-             'export ALIRE="True"\n'
+             'export ALIRE=\'True\'\n'
              '.*'
-             'export GPR_PROJECT_PATH="' + expected_gpr_path + '"\n'
+             'export GPR_PROJECT_PATH=\'' + expected_gpr_path + '\'\n'
              '.*',
              p.out)
 

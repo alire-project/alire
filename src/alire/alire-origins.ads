@@ -192,6 +192,19 @@ package Alire.Origins is
 
    Unknown_Source_Archive_Name_Error : exception;
 
+   function Error_In_Archive_Name (Name : String) return String;
+   --  Returns "" for a valid archive name, or else an error message naming it
+   --  and saying why it is invalid. The archive is downloaded to a file with
+   --  this name, so it must be a plain file name, without any path.
+
+   function Error_In_VCS_URL (URL : Alire.URL) return String;
+   --  Returns "" for a VCS URL that is safe to pass to its VCS tool, or else
+   --  an error message naming it and saying why not: the tool could take it,
+   --  or its host, as an option (e.g. "ssh://-oProxyCommand=..."), or as a
+   --  command to run (e.g. git's "ext::" transport). Only the http, https,
+   --  ssh and git transports, local paths and git@host:path remotes are
+   --  accepted, without whitespace or control characters.
+
    function New_Source_Archive
      (URL    : Alire.URL;
       Name   : String := "") return Origin;
@@ -206,7 +219,21 @@ package Alire.Origins is
    --  If Name is omitted, it is tentatively inferred from URL. If it cannot be
    --  inferred, this raises a Unknown_Source_Archive_Name_Error exception.
 
-   function New_System (System_Package_Name : String) return Origin;
+   function Error_In_System_Package_Name (Name : String) return String;
+   --  Returns "" for a valid system package name, or else an error message
+   --  naming it and saying why it is invalid. Package managers receive these
+   --  names from index manifests, so names that a package manager would not
+   --  take as a package from its repositories are rejected: options (a
+   --  leading '-'), local paths, URLs, patterns, and names with whitespace or
+   --  control characters. Any other name is allowed, as it can only select a
+   --  package from the system repositories, which an index manifest may name
+   --  anyway.
+
+   function Is_Valid_System_Package_Name (Name : String) return Boolean
+   is (Error_In_System_Package_Name (Name) = "");
+
+   function New_System (System_Package_Name : String) return Origin
+     with Pre => Is_Valid_System_Package_Name (System_Package_Name);
    --  A system origin points to a single system package known to exist,
    --  already detected by some External.
 

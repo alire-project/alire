@@ -15,6 +15,7 @@ executables = ["alr"]
 
 [[depends-on]]
 aaa = "~0.3.0"
+aaa_texts = "~0.4"
 ada_toml = "~0.5"
 ajunitgen = "^1.0.1"
 ansiada = "^1.1"
@@ -24,11 +25,11 @@ den = "~0.2"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
 gnatcoll = "^21"
-lml = "~0.2"
+lml = "~0.3"
 minirest = "~0.3"
 optional = "~0.1.1"
 resources = "~0.1"
-semantic_versioning = "^3.0"
+semantic_versioning = "^4.0"
 simple_logging = "^2.0"
 si_units = "~0.2.2"
 spdx = "^26"
@@ -54,13 +55,16 @@ windows = { ALIRE_OS = "windows", GNATCOLL_OS = "windows", PRJ_TARGET = "Windows
 
 # Some dependencies require precise versions during the development cycle:
 [[pins]]
-[pins.aaa]
+# aaa_texts' own pins bring in aaa and aaa_ansi from the same checkout, so
+# those are not pinned here (separate pins might conflict with them).
+[pins.aaa_texts]
 url    = "https://github.com/mosteo/aaa"
-commit = "73d99ae1ff2f5210dc41c2ea7afebe600f9e9916"
+subdir = "aaa_texts"
+commit = "b9b87aa5cb7a9146cb0a6ff8472970eb1f2412e8"
 
 [pins.ada_toml]
 url    = "https://github.com/pmderodat/ada-toml"
-commit = "669eacabc8cad45b89b0bfc34d99b4334d66bebd"
+commit = "27a9bc926e9145cf2d8ebef7e931883d394d786b"
 
 [pins.ansiada]
 url    = "https://github.com/mosteo/ansi-ada"
@@ -72,11 +76,11 @@ commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 
 [pins.clic]
 url    = "https://github.com/alire-project/clic"
-commit = "7f3af9f2d6bf0f3e41dc0ab61907364c6acc5b1c"
+commit = "f7cd77d2ba6c5dfe1fc782254c95ea7bca1dd453"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"
-commit = "32225955994267799495262f7cac479b6cd22fd3"
+commit = "1464686bdc249b553139b47b43ff82afa8a014c3"
 
 [pins.dirty_booleans]
 url    = "https://github.com/mosteo/dirty_booleans"
@@ -84,7 +88,7 @@ commit = "05c40d88ecfe109e575ec8b21dd6ffa2e61df1dc"
 
 [pins.diskflags]
 url    = "https://github.com/mosteo/diskflags"
-commit = "60729edf31816aca0036b13b2794c39a9bd0172e"
+commit = "af119105e677e64aa79e53e22a824cc0a510476e"
 
 [pins.gnatcoll]
 url    = "https://github.com/alire-project/gnatcoll-core.git"
@@ -92,7 +96,7 @@ commit = "40cb993cc0bdd84bd7c4d5ff0438380751497c16"
 
 [pins.lml]
 url    = "https://github.com/mosteo/lml_ada.git"
-commit = "6e775b785f795af21bb6d8cb870b59f549dae159"
+commit = "1c4e2235339e2c71d87aa6bcb1c32e2014306d87"
 
 [pins.minirest]
 url    = "https://github.com/mosteo/minirest.git"
@@ -108,11 +112,11 @@ commit = "d3a83f35d7c0b586119fc19a568289cf21c87aa0"
 
 [pins.semantic_versioning]
 url    = "https://github.com/alire-project/semantic_versioning"
-commit = "4861e32bd8a2f0df038d3ecc9a72b6381e7a34cc"
+commit = "1f0ffc41f3d42f6e600293b34b4a5eb52481a789"
 
 [pins.simple_logging]
 url    = "https://github.com/alire-project/simple_logging"
-commit = "f45bf378588dc1d0479cc24eb0eb41dc99f69cb4"
+commit = "4ba9fec27e12d54978646f440ff901d85376a992"
 
 [pins.si_units]
 url    = "https://github.com/mosteo/si_units"
@@ -129,7 +133,7 @@ commit = "441acdc3769469e348680d4afd1928022a4da36b"
 
 [pins.toml_slicer]
 url    = "https://github.com/mosteo/toml_slicer"
-commit = "3e5cbdb5673b85a1da6344a41764ef1cbafe3289"
+commit = "8c5988f91eb008298a2a0504be85b8692cafc9ad"
 
 [pins.yeison_12]
 url    = "https://github.com/mosteo/yeison"

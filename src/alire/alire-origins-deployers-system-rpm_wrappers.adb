@@ -57,6 +57,7 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
                    ("rpm",
                     Empty_Vector &
                       "--query" &
+                      "--" &
                       Full_Pkg_Name,
                     Valid_Exit_Codes => (0, 1), -- Returned when not found
                     Err_To_Out     => True);
@@ -152,6 +153,7 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
                           Empty_Vector &
                             "--query" &
                             "--info" &
+                            "--" &
                             Full_Pkg_Name,
                           Valid_Exit_Codes => (0, 1), -- 1 when not found
                           Err_To_Out       => True);

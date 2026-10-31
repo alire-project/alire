@@ -1,4 +1,5 @@
 driver: python-script
+build_mode: shared
 control:
     - [SKIP, "skip_unix", "XDG variables are Unix-only"]
 indexes:

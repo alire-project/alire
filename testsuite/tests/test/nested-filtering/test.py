@@ -11,7 +11,8 @@ def make_test(parent:str, name:str):
    cap = name[0].upper() + name[1:]
    os.makedirs(f"./tests/src/{parent}", exist_ok=True)
    with open(f"./tests/src/{parent}/xxx_tests-{name}.adb", "w") as f:
-      f.write(f"""procedure Xxx_Tests.{cap} is
+      f.write(f"""pragma Alire_Test;
+procedure Xxx_Tests.{cap} is
 begin
    null;
 end Xxx_Tests.{cap};
@@ -34,10 +35,10 @@ assert run_alr("test", "/").out.count("PASS") == 5
 assert run_alr("test", "po", "no").out.count("PASS") == 4
 
 # Check on the test name only
-run_alr("test").out.count("PASS") == 5
-run_alr("test", "yes", "no").out.count("PASS") == 5
-run_alr("test", "yes").out.count("PASS") == 3
-run_alr("test", "no").out.count("PASS") == 2
-run_alr("test", "anything").out.count("PASS") == 0
+assert run_alr("test").out.count("PASS") == 5
+assert run_alr("test", "yes", "no").out.count("PASS") == 5
+assert run_alr("test", "yes").out.count("PASS") == 3
+assert run_alr("test", "no").out.count("PASS") == 2
+assert run_alr("test", "anything").out.count("PASS") == 0
 
 print('SUCCESS')

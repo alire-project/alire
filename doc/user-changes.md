@@ -18,6 +18,23 @@ is on PATH, `alr` requires the corresponding `cygpath` to be located in the same
 directory as the `git` executable; this is the case for default installations of
 Cygwin and MSYS2.
 
+### Invalid index manifests are skipped with a warning
+
+PR [#2194](https://github.com/alire-project/alire/pull/2194)
+
+A single invalid manifest in an index no longer breaks `alr` for every command
+that needs the index. Commands now skip the invalid manifest, warn about it,
+and load the rest of the index as usual:
+
+```
+Warning: Skipping invalid index manifest .../he/hello/hello-1.0.0.toml: ...
+```
+
+Strict loading still fails on the first invalid manifest. Strict loading is
+used by `alr index --check`, which is the way to validate an index, and by
+`alr publish`. Unexpected errors in a manifest are now also reported there as
+regular errors.
+
 ### Updated SPDX license expression support
 
 PR [#2096](https://github.com/alire-project/alire/pull/2096)
@@ -129,6 +146,7 @@ warning is printed suggesting the use of `--builtin`.
 ### New test command
 
 PR [#1874](https://github.com/alire-project/alire/pull/1874)
+PR [#2157](https://github.com/alire-project/alire/pull/2157)
 
 The `alr test` command can now be configured with a new `[test]` section in the
 Alire manifest, with the option to use a built-in test runner or an external
@@ -142,9 +160,20 @@ command = ["my", "custom", "runner"]
 ```
 
 The built-in test runner allows crate authors to compile and run tests from
-simple `.adb` files. It compiles and runs every `.adb` file of the subcrate's
-`/src` folder as a separate test. A skeleton test subcrate is now generated
-with `alr init` (this can be prevented with the `--no-test` flag).
+simple `.adb` files in the test crate's `src/` folder. A source is run as a
+separate test only if it is a parameterless main procedure that declares itself
+with a pragma in its context clause:
+
+```ada
+pragma Alire_Test;          --  run this source as a test
+```
+
+Sources that can never be a runnable main (package bodies, functions, generics,
+`separate` subunits, ...) are ignored silently. See the new testsuite documentation 
+for more test configuration pragmas.
+
+A skeleton test subcrate, including a declared test, is now generated with
+`alr init` (this can be prevented with the `--no-test` flag).
 
 For backwards compatibility, running `alr test` without a `[test]` section in
 the manifest will still run local test actions, but they should be considered

@@ -1,4 +1,5 @@
 with "aaa";
+with "aaa_texts";
 with "ada_toml";
 with "alire";
 with "alire_common";

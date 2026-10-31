@@ -94,7 +94,7 @@ Each crate is "owned" by a list of maintainers, provided with the
 `maintainers-logins` property of the crate file. After the initial submission,
 which will be manually approved (see the [policies](policies) for details),
 the maintainers of a crate are the only people allowed to submit new releases
-or metadata modifications to the corresponding crate.
+of the corresponding crate, or to withdraw existing ones.
 
 Other checks your submission will go through are:
 

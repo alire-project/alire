@@ -1,0 +1,13 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello_world"
+version = "0.1.0"
+licenses = "GPL-3.0-only"
+maintainers = ["user@example.com"]
+maintainers-logins = ["mylogin"]
+
+[environment]
+"BAD-NAME".set = "x"
+
+[origin]
+url = "https://example.com/hello_world.tar.gz"
+hashes = ["sha512:deadbeef"]

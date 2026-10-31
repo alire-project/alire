@@ -1,5 +1,6 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
+with Ada.Exceptions;
 
 with Alire.Containers;
 with Alire.Index_On_Disk.Loading;
@@ -32,6 +33,48 @@ package body Alire.Index is
    --  Release_Aliases, but as this simpler information is the one that's
    --  read/written to disk on index update, we better keep a separate copy
    --  for simplicity.
+
+   ------------------------------
+   -- Error_In_Release_Version --
+   ------------------------------
+
+   function Error_In_Release_Version (Text : String) return String is
+
+      function Invalid (Reason : String) return String
+      is ("version '" & Text & "' is not valid in an index: " & Reason);
+
+      function Part_Length (Part : String) return Natural
+      is (if Part = "" then 0 else Part'Length + 1);
+      --  Including the '-' or '+' separator
+
+   begin
+      if Text not in Semantic_Versioning.Version_String then
+         return Invalid ("it contains spaces");
+      elsif not Semantic_Versioning.Has_All_Points (Text) then
+         return Invalid ("it must give all three numbers, X.Y.Z");
+      end if;
+
+      declare
+         V : constant Semantic_Versioning.Version :=
+               Semantic_Versioning.Parse (Text);
+         --  Strict parsing rejects anything else semantic versioning forbids
+
+         Suffix_Length : constant Natural :=
+                           Part_Length (Semantic_Versioning.Pre_Release (V))
+                           + Part_Length (Semantic_Versioning.Build (V));
+      begin
+         if Suffix_Length > Max_Version_Suffix_Length then
+            return Invalid ("pre-release and build metadata are longer than"
+                            & Max_Version_Suffix_Length'Image
+                            & " characters in total");
+         end if;
+      end;
+
+      return "";
+   exception
+      when E : Semantic_Versioning.Malformed_Input =>
+         return Invalid (Ada.Exceptions.Exception_Message (E));
+   end Error_In_Release_Version;
 
    ---------
    -- Add --
@@ -108,11 +151,21 @@ package body Alire.Index is
       end Add_Aliases;
 
       Crate : Crates.Crate := Crates.New_Crate (Release.Name);
+
+      Is_New : constant Boolean :=
+                 not Contents.Contains (Release.Name)
+                 or else
+                   not Contents (Release.Name).Contains (Release.Version);
+      --  An already indexed version is not replaced (see Add for crates), so
+      --  neither must be its aliases, or a duplicate release could replace
+      --  the indexed one through crates that provide it.
    begin
       Crate.Add (Release);
       Add (Crate, Policy);
 
-      Add_Aliases;
+      if Is_New then
+         Add_Aliases;
+      end if;
    end Add;
 
    package Name_Sets is
@@ -125,19 +178,39 @@ package body Alire.Index is
 
    procedure Check_Contents is
       OK : Boolean := True;
+
+      procedure Check_Host (Rel    : Releases.Release;
+                            Origin : Origins.Origin;
+                            What   : String;
+                            Fatal  : Boolean) is
+      begin
+         --  VCS sources are pinned by commit, i.e., by SHA-1, which is open to
+         --  collisions, so they must come from trusted hosts. Archives are
+         --  pinned by stronger hashes, so they may come from anywhere.
+         if Origin.Kind in Origins.VCS_Kinds
+           and then not Publish.Is_Trusted (Origin.URL,
+                                            For_Community => False)
+         then
+            if Fatal then
+               OK := False;
+            end if;
+            Put_Warning ("Release " & Rel.Milestone.TTY_Image
+                         & " has " & What & " not in known hosts: "
+                         & TTY.URL (Origin.URL));
+         end if;
+      end Check_Host;
+
    begin
       for Crate of All_Crates.all loop
          for Rel of Crate.Releases loop
-            if Rel.Origin.Kind in Origins.VCS_Kinds then
-               if not Publish.Is_Trusted
-                 (Rel.Origin.URL, For_Community => False)
-               then
-                  OK := False;
-                  Put_Warning ("Release " & Rel.Milestone.TTY_Image
-                               & " has URL not in known hosts: "
-                                 & TTY.URL (Rel.Origin.URL));
-               end if;
-            end if;
+            Check_Host (Rel, Rel.Origin, "URL", Fatal => True);
+
+            --  Mirrors are fallbacks for availability, often on less common
+            --  hosts, so they are only reported; whether to deploy from an
+            --  untrusted one is up to the user when it is used.
+            for Mirror of Rel.Mirrors loop
+               Check_Host (Rel, Mirror, "mirror URL", Fatal => False);
+            end loop;
          end loop;
       end loop;
 

@@ -36,7 +36,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         submodules: recursive
 
@@ -59,7 +59,9 @@ jobs:
           -v${PWD}:/alire
           -w /alire
           -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-        # Token required for self-update tests to not hit GH API rate limits
+          -e ALIRE_TESTSUITE_DISABLE_NETWORK_TESTS=true
+        # Token required for self-update tests to not hit GH API rate limits.
+        # Tests that use the network run only in CI Release, to limit flakes.
 
     - name: Fix testsuite output permissions (on failure)
       if: failure()

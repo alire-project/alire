@@ -1,4 +1,5 @@
 with "aaa";
+with "aaa_texts";
 with "ada_toml";
 with "alire_common";
 with "ajunitgen";
@@ -21,6 +22,7 @@ with "templates_parser";
 with "toml_slicer";
 with "uri_ada";
 with "xml_ez_out";
+with "yaml";
 
 library project Alire is
 

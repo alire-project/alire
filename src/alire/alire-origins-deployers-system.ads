@@ -12,6 +12,14 @@ package Alire.Origins.Deployers.System is
    --  The last step of the three in a regular deployer is hijacked to perform
    --  the actual installation of the system package.
 
+   --  Package names come from index manifests and are validated when loaded
+   --  (see Origins.Error_In_System_Package_Name), so they cannot be taken as
+   --  options. As defence in depth, implementations must pass "--" before the
+   --  package name to the tools known to honour it (dpkg, apt-cache, apt-get,
+   --  pacman, rpm). For the other tools (dnf/yum, zypper, emerge and related
+   --  Gentoo tools, brew, port) its handling has not been verified, so it is
+   --  not used, as an unexpected "--" could break installation. TODO: verify.
+
    type Deployer is abstract new Deployers.Deployer with private;
 
    function Already_Installed (This : Deployer) return Boolean is abstract;

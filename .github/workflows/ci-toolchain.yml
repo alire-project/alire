@@ -23,9 +23,35 @@ permissions:
 
 jobs:
 
+  gcc_versions:
+
+    name: GCC versions
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      versions: ${{ steps.versions.outputs.versions }}
+      latest: ${{ steps.versions.outputs.latest }}
+
+    steps:
+    - name: List GCC versions to test
+      id: versions
+      # Add GCC versions as they become available. Remove ones failing in
+      # modern platforms, and maybe keep a representative combo in the
+      # 'include' explicit section of the build job. Only the newest one runs
+      # the full Python testsuite; older ones run a smoke subset (see
+      # scripts/ci-github.sh).
+      env:
+        VERSIONS: '[12, 13, 14, 15, 16]'
+      run: |
+        echo "versions=$VERSIONS" >> $GITHUB_OUTPUT
+        echo "latest=$(jq max <<< "$VERSIONS")" >> $GITHUB_OUTPUT
+
   build:
 
     name: ${{ matrix.os }} gcc^${{ matrix.gcc_version }}
+
+    needs: gcc_versions
 
     runs-on: ${{ matrix.os }}
 
@@ -40,7 +66,10 @@ jobs:
           - macos-26-intel
 
           - macos-15
-          - macos-26
+          # - macos-26 # Since runner image 20261013, its SDK's libSystem.tbd
+          #            # lists arm64e.x1, which the GNAT linker rejects
+          #            # ("unknown architecture"), so linking fails. Restore
+          #            # (its excludes below are kept) once a fixed GNAT is out.
 
           # - ubuntu-22.04 # Only two legacy combs manually included below
           - ubuntu-24.04
@@ -50,10 +79,8 @@ jobs:
 
           # - windows-11-arm # No compiler available yet
 
-        # Add GCC versions as they become available. Remove ones failing in
-        # modern platforms, and maybe keep a representative combo in the
-        # 'include' explicit section.
-        gcc_version: [12, 13, 14, 15, 16]
+        # Versions are listed in the gcc_versions job above
+        gcc_version: ${{ fromJSON(needs.gcc_versions.outputs.versions) }}
 
         include:
           # Only test gcc-10 and -11 on ubuntu-22.04 (to maintain testing
@@ -174,12 +201,17 @@ jobs:
       uses: actions/setup-python@v6
       with:
         python-version: '3.x'
+        cache: pip # Downloads only; the test script installs into its own venv
+        cache-dependency-path: testsuite/requirements.txt
 
-    - name: Install e3
-      run: pip install --upgrade -r testsuite/requirements.txt
-
-    - name: Run testsuite # But ensure a new alr is not build
-      run: scripts/ci-github.sh build=false
+    - name: Run testsuite 
+      # But ensure a new alr is not build
+      # Also run only a subset of tests that use GCC for older GCC versions
+      run: >
+        scripts/ci-github.sh skip_build
+        ${{ matrix.gcc_version != needs.gcc_versions.outputs.latest && 'smoke_test' || '' }}
       shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Tests that use the network run only in CI Release, to limit flakes
+        ALIRE_TESTSUITE_DISABLE_NETWORK_TESTS: true

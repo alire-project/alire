@@ -161,7 +161,11 @@ static, i.e. they cannot depend on the context.
    ```
 
  - `long-description`: optional free-form string to provide information about
-   this package, in addition to `description`, without length restrictions.
+   this package, in addition to `description`, of up to 16384 characters.
+
+   Text fields (`description`, `long-description`, `authors`, `notes`,
+   `website`, ...) must not contain control characters, except line breaks
+   and tabs in `long-description` and `notes`.
 
  - `authors`: optional array of strings. Flat list of human-readable names for
    the authors, i.e. the people that wrote the software that is packaged. For
@@ -215,8 +219,8 @@ static, i.e. they cannot depend on the context.
    licenses = "LicenseRef-my-license-1.2"
    ```
 
- - `website`: optional string. URL to the original project's website. For
-   instance:
+ - `website`: optional string, of up to 512 characters. URL to the original
+   project's website. For instance:
 
    ```toml
    website = "https://myproject.example.org/"
@@ -275,7 +279,11 @@ static, i.e. they cannot depend on the context.
 
  - `project-files`: optional list of strings. Each is a path, relative to the
    root of the source directory, to a `.gpr` project file to be made available.
-   Expressions are accepted. For instance:
+   Expressions are accepted. In index manifests, paths must use forward
+   slashes and stay within the deployed origin: a crate in a `subdir` may refer
+   to files above it in the same repository, but not outside. The same
+   applies to `executables` and to `directory` in actions and tests. For
+   instance:
 
    ```toml
    project-files = ["my_project.gpr", "utils/utils_for_my_project.gpr"]
@@ -312,7 +320,8 @@ static, i.e. they cannot depend on the context.
  - `environment`: optional dynamic table used to modify environment variables
    that will apply at build time. Variables and values are specified with the
    form `VARIABLE.<action> = "value"`, where `<action>` is one of `append`,
-   `prepend`, or `set`. For instance:
+   `prepend`, or `set`. In index manifests, variable names must be made of
+   ASCII letters, digits and `_`, and not begin with a digit. For instance:
 
    ```toml
    [environment]
@@ -500,6 +509,7 @@ static, i.e. they cannot depend on the context.
       - `archive-name`: optional string. If `url` points to a source archive,
         this can specify the name of the file to download, which is needed in
         order to properly extract the sources, in case the URL does not identify it.
+        It must be a plain file name, without `/`, `\` or `:`.
 
       - `commit`: mandatory string for VCS origins that describes the
         VCS-specific revision to be checked out (a git/hg hash, a svn
@@ -509,7 +519,9 @@ static, i.e. they cannot depend on the context.
         that when provided indicates that the crate is not located at the
         repository root. This option enables the possibility of publishing
         several crates from the same repository (sometimes referred to as a
-        *monorepo*).
+        *monorepo*). It must use forward slashes, cannot begin with `/` or
+        contain `:`, and must stay within the repository (`..` segments may not
+        go above its root).
 
       - `binary`: optional (defaults to false) boolean used to design the origin
         as binary. Binary origins are not compiled and can optionally use dynamic
@@ -552,8 +564,8 @@ static, i.e. they cannot depend on the context.
  - `available`: optional dynamic boolean expression.  If it evaluates to
    `false`, the package is not available for the current platform.
 
- - `notes`: optional string. Provides miscellaneous information about this
-   release. For instance:
+ - `notes`: optional string, of up to 2048 characters. Provides miscellaneous
+   information about this release. For instance:
 
    ```json
    notes = "Experimental version"

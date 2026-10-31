@@ -13,12 +13,16 @@ DIFF_SUMMARY_MSG = "New solution is incomplete (timed out)."
 SHOW_WARNING = "Warning: Dependency resolution timed out"
 """The warning issued by `alr show` when incomplete due to timeout."""
 UPDATE_NO_CHANGES_WARNING = (
-    "Warning: Dependency resolution timed out with missing dependencies "
-    "(use `alr with --solve` for details).\nNothing to update."
+    ".*"
+    + re.escape(
+        "Warning: Dependency resolution timed out with missing dependencies "
+        "(use `alr with --solve` for details)."
+    )
+    + r"\n[ \r]*Nothing to update\."
 )
 """
 The warning `alr update` issues when the solution is incomplete due to a timeout
-but there is no diff to confirm.
+but there is no diff to confirm (as regex).
 """
 
 # Configure solver for immediate timeouts
@@ -51,7 +55,7 @@ assert_not_substring(TELLTALE, run_alr("-vv", "search", "hello", quiet=False).ou
 search_output = run_alr_interactive(["-vv", "search", "hello", "--solve"], [], [])
 assert_substring(TELLTALE, search_output)
 # The crate's status should be `?`.
-assert_match(r".*\nhello\s+\?\s+1\.0\.1", search_output)
+assert_match(r".*\n[ \r]*hello\s+\?\s+1\.0\.1", search_output)
 
 # Enter a new crate to test commands that require one.
 init_local_crate()
@@ -62,7 +66,7 @@ assert_substring(DIFF_SUMMARY_MSG, run_alr("with", "hello", quiet=False).out)
 alr_with("hello", manual=True, update=False)
 assert_substring(DIFF_SUMMARY_MSG, run_alr("with", quiet=False).out)
 assert_substring(DIFF_SUMMARY_MSG, run_alr("pin", "hello=1.0.0", quiet=False).out)
-assert_substring(UPDATE_NO_CHANGES_WARNING, run_alr("update", quiet=False).out)
+assert_match(UPDATE_NO_CHANGES_WARNING, run_alr("update", quiet=False).out)
 
 
 # Test interactive timeout prompts.
@@ -101,7 +105,7 @@ for cmd, output, input in [
     ),
     # `update` with exit on 1st timeout: only trivial solution found, so no
     # changes to confirm
-    (["update"], [SOLVER_ASKS_INCOMPLETE, ".*" + re.escape(UPDATE_NO_CHANGES_WARNING)], ["n"]),
+    (["update"], [SOLVER_ASKS_INCOMPLETE, UPDATE_NO_CHANGES_WARNING], ["n"]),
     # `update` with exit on 2nd timeout: solved for `hello` but not `libhello`,
     # so asks for confirmation of incomplete solution
     (

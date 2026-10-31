@@ -14,12 +14,17 @@ aggregate project Alr_Env is
                          --  vendored in Alire repo to avoid forking the
                          --  upstream just for that. This also allows switching
                          --  their profiles directly here if it were necessary.
+                         "deps/_configs/aaa/aaa_ansi",
+                         "deps/_configs/aaa/aaa_base",
+                         "deps/_configs/aaa/aaa_texts",
                          "deps/_configs/json-ada/json",
 
                          --  These are regular vendored dependencies, possibly
                          --  containing their own config if they are Alire
                          --  crates that have a default config committed.
-                         "deps/aaa",
+                         "deps/aaa/aaa_ansi",
+                         "deps/aaa/aaa_base",
+                         "deps/aaa/aaa_texts",
                          "deps/ada-toml",
                          "deps/ajunitgen",
                          "deps/ansi",
@@ -45,6 +50,7 @@ aggregate project Alr_Env is
                          "deps/umwi",
                          "deps/uri-ada",
                          "deps/xmlezout",
+                         "deps/yamlfk",
                          "deps/yeison/yeison_12"
                         );
 

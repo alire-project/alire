@@ -57,16 +57,20 @@ properties:
     type: string  # TODO: refine into a semver pattern
     description: Semantic version of the release.
   description:
-    type: string  # TODO: refine with bounds
+    "$ref": "#/$defs/single-line-text"
+    maxLength: 72
     description: One-line description of the crate.
   long-description:
-    type: string
+    "$ref": "#/$defs/multi-line-text"
+    maxLength: 16384
     description: Long, possibly multi-line description of the crate.
   notes:
-    type: string
+    "$ref": "#/$defs/multi-line-text"
+    maxLength: 2048
     description: Notes about this release
   website:
-    type: string  # TODO: refine as URL
+    "$ref": "#/$defs/single-line-text"  # TODO: refine as URL
+    maxLength: 512
     description: URL of the project's website or repository.
   auto-gpr-with:
     type: boolean
@@ -77,12 +81,12 @@ properties:
       appropriate clauses manually to find the sources of the crate.
 
   authors:
-    "$ref": "#/$defs/string-array"
+    "$ref": "#/$defs/text-array"
     description: >-
       Array of human-readable names of the people who wrote the packaged
       software.
   maintainers:
-    "$ref": "#/$defs/string-array"
+    "$ref": "#/$defs/text-array"
     description: >-
       Array of human-readable names (optional) with a contact email (mandatory)
       of the people who maintain the crate metadata in Alire. Mandatory for
@@ -90,7 +94,7 @@ properties:
   maintainers-logins:
     type: array
     items:
-      type: string
+      "$ref": "#/$defs/single-line-text"
       minLength: 1
     description: >-
       Array of GitHub login usernames authorized to modify the crate. Mandatory
@@ -473,19 +477,27 @@ properties:
           Array of `kind:digest` hashes for source archives (e.g. sha512:...).
       archive-name:
         type: string
+        # A plain file name (see Alire.Origins.Error_In_Archive_Name)
+        pattern: '^(?!\.\.?$)[^/\\:]+$'
         description: >-
           Name of the file to download when the URL does not identify the
-          source archive, needed for proper extraction.
+          source archive, needed for proper extraction. A plain file name,
+          without '/', '\' or ':'.
       commit:
         type: string  # TODO: length is known
         description: >-
           VCS revision (git/hg hash or svn revision) to check out. Mandatory
           for VCS origins.
       subdir:
-        type: string  # TODO: a portable path, more precisely (forward slashes)
+        type: string
+        # A portable path (see Alire.VFS.Error_In_Portable_Path). That it does
+        # not go above the repository root is checked by alr, as a pattern
+        # cannot count '..' segments.
+        pattern: '^(?!/)[^\\:]*$'
         description: >-
           Relative path to the crate within the repository, when not at its
-          root (e.g., monorepos).
+          root (e.g., monorepos). It uses forward slashes, cannot begin with
+          '/' or contain ':', and must stay within the repository.
       binary:
         type: boolean
         default: false
@@ -803,6 +815,20 @@ properties:
     type: array
     items:
       type: string
+  # Text shown to users, without control characters (as alr checks in
+  # Alire.Utils.Error_In_Text), which could form terminal escape sequences.
+  # Lengths (maxLength) count characters, as alr does.
+  single-line-text:
+    type: string
+    pattern: '^[^\u0000-\u001F\u007F-\u009F]*$'
+  multi-line-text:
+    # Also allows tabs and line breaks (LF)
+    type: string
+    pattern: '^[^\u0000-\u0008\u000B-\u001F\u007F-\u009F]*$'
+  text-array:
+    type: array
+    items:
+      "$ref": "#/$defs/single-line-text"
   hash-array:
     type: array
     items:
