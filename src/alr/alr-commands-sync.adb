@@ -11,8 +11,7 @@ package body Alr.Commands.Sync is
       pragma Unreferenced (Args);
    begin
       Cmd.Requires_Workspace (Sync => False);
-      --  The sync below is forced, and happens even under the setting
-      --  update.manually_only, which skips the automatic one.
+      --  The sync below is forced, so the automatic one is not needed
 
       Cmd.Root.Sync_From_Manifest (Silent   => False,
                                    Interact => False,

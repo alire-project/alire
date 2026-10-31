@@ -6,6 +6,28 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### `update.manually_only` keeps existing releases instead of skipping syncs
+
+PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)
+
+With `update.manually_only` set, manual edits of the manifest are now applied
+by the next `alr` command, as long as no release already in the solution has
+to change. The same holds for `alr sync`, `alr with` and `alr pin`.
+Previously, edits were not applied at all until the next `alr update`.
+
+When an edit would require changing a release, the command fails and names
+the crates involved, without applying anything: the manifest and lockfile
+stay as they were. After a manual edit of the manifest, commands keep failing
+until the edit is adjusted or applied with `alr update`.
+
+```
+$ alr with libbar
+ERROR: Dependencies cannot change while `update.manually_only` is set:
+ERROR:    The requested change would also change libfoo, so it was not applied. To apply it, make the change in the manifest by hand and run `alr update libfoo`, or `alr update` for all dependencies.
+```
+
+Pins are explicit requests, so they may change releases.
+
 ### `alr with` and `alr pin` keep dependency versions
 
 PR [#XXXX](https://github.com/alire-project/alire/pull/XXXX)

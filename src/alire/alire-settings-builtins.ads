@@ -261,10 +261,11 @@ package Alire.Settings.Builtins is
      (Key  => "update.manually_only",
       Def  => False,
       Help =>
-        "If true, Alire will not attempt to update dependencies even after "
-      & "the manifest is manually edited, or when no valid solution has "
-      & "been ever computed. All updates have to be manually requested "
-      & "through `alr update`");
+        "If true, releases of dependencies already in the solution are never "
+      & "changed automatically: applying manual edits of the manifest, "
+      & "`alr sync`, `alr with` and `alr pin` fail if that would be needed. "
+      & "Workspaces without a solution are not solved automatically. All "
+      & "updates have to be manually requested through `alr update`");
 
    --  USER
 

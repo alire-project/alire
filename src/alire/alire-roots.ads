@@ -447,17 +447,37 @@ private
    --  Support for editable roots begins here. These are not expected to be
    --  directly useful to clients, so better kept them under wraps.
 
+   type Freezing_Reasons is
+     (Selective_Update, -- `alr update <crates>`
+      Manual_Sync,      -- Applying the manifest under update.manually_only
+      Manual_Edit);     -- `alr with/pin` under update.manually_only
+
    function Compute_Update
      (This     : in out Root;
       Options  : Solver.Query_Options := Solver.Default_Options;
-      Previous : Solutions.Solution := Solutions.Empty_Valid_Solution)
+      Previous : Solutions.Solution := Solutions.Empty_Valid_Solution;
+      Frozen   : Solutions.Solution := Solutions.Empty_Valid_Solution;
+      Reason   : Freezing_Reasons    := Selective_Update)
       return Solver.Result;
    --  Compute a new solution for the workspace. Releases in Previous are
    --  preferred over others, so they only change when the manifest requires
-   --  it.
-   --  This function loads configured indexes from disk. No changes are applied
-   --  to This root. NOTE: pins have to be added to This.Solution beforehand,
-   --  or they will not be applied.
+   --  it. Releases in Frozen cannot change at all (see Solver.Resolve): if a
+   --  frozen release cannot be kept, or keeping them leaves dependencies
+   --  unsolved that changing them would solve, fail explaining why according
+   --  to Reason. This function loads configured indexes from disk. No changes
+   --  are applied to This root. NOTE: pins have to be added to This.Solution
+   --  beforehand, or they will not be applied.
+
+   function Freezing (Old    : Solutions.Solution;
+                      Except : Containers.Crate_Name_Sets.Set :=
+                        Containers.Crate_Name_Sets.Empty_Set)
+                      return Solutions.Solution;
+   --  Return the releases from Old that the solver must keep exactly. All
+   --  of them are frozen except:
+   --  * those of crates in Except, which are allowed to change;
+   --  * those of pinned crates, whose release is decided by their pin.
+   --  Crates missing in Old have no release, so nothing is frozen for them
+   --  and they can still be solved.
 
    function Temporary_Copy (This : in out Root) return Root'Class;
    --  Obtain a temporary copy of This root, in the sense that it uses temp
