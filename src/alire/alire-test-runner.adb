@@ -1059,6 +1059,21 @@ package body Alire.Test.Runner is
       return Test_List;
    end Get_Test_List;
 
+   ---------------------
+   -- Ensure_Solution --
+   ---------------------
+
+   procedure Ensure_Solution (Root : in out Roots.Root) is
+   begin
+      --  Ensure a void solution on first test run
+      if not Root.Has_Lockfile then
+         Root.Update
+           (Silent   => True,
+            Interact => False,
+            Allowed  => Roots.Allow_All_Crates);
+      end if;
+   end Ensure_Solution;
+
    ---------
    -- Run --
    ---------
@@ -1082,13 +1097,7 @@ package body Alire.Test.Runner is
    begin
       Create_Gpr_List (Root, Test_Cases);
 
-      --  Ensure a void solution on first test run
-      if not Root.Has_Lockfile then
-         Root.Update
-           (Silent   => True,
-            Interact => False,
-            Allowed  => Roots.Allow_All_Crates);
-      end if;
+      Ensure_Solution (Root);
 
       if Tables.Structured_Output then
          --  disable gprbuild output when doing structured formatting

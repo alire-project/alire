@@ -16,6 +16,10 @@ package Alire.Test.Runner is
    --  Build_Args allows forwarding arguments directly to GPRbuild.
    --  Build_Only stops the runner right after building the tests.
 
+   procedure Ensure_Solution (Root : in out Alire.Roots.Root);
+   --  Solve the test crate on its first run, before it is built. Done by Run,
+   --  and also needed to report the toolchain the tests would use.
+
    procedure Show_List
      (Root   : Roots.Root;
       Filter : AAA.Strings.Vector := AAA.Strings.Empty_Vector);

@@ -7,6 +7,10 @@ with Alire.Properties.Actions.Executor;
 with Alire.Properties.Tests;
 with Alire.Roots;
 with Alire.Test.Runner;
+with Alire.Toolchains.Solutions;
+with Alire.Utils.Tables;
+
+with Alr.Commands.Build;
 
 with CLIC.Subcommand;
 
@@ -116,13 +120,167 @@ package body Alr.Commands.Test is
          & " after ""--"" in the command line.");
    end Warn_Builtin_Not_Forwarded;
 
+   ----------------------
+   -- Selected_Runners --
+   ----------------------
+
+   function Selected_Runners (Cmd : in out Command)
+                              return Alire.Properties.Vector
+   --  The test runners defined for the platform, narrowed down to the one
+   --  selected with --id, if any.
+   is
+      use type GNAT.Strings.String_Access;
+      use Alire.Properties.Tests;
+
+      All_Settings : Alire.Properties.Vector :=
+                       Cmd.Root.Release.On_Platform_Properties
+                         (Cmd.Root.Environment, Settings'Tag);
+   begin
+      --  id selection logic
+      if not All_Settings.Is_Empty
+        and then Cmd.By_Id /= null
+        and then Cmd.By_Id.all /= ""
+      then
+         declare
+            Found : Natural := 0;
+         begin
+            for I in All_Settings.First_Index .. All_Settings.Last_Index loop
+               if Settings (All_Settings.Element (I)).Id = Cmd.By_Id.all then
+                  Found := I;
+               end if;
+            end loop;
+
+            if Found = 0 then
+               Reportaise_Command_Failed
+                 ("Could not find test runner with id '"
+                  & Cmd.By_Id.all
+                  & "'");
+            else
+               --  swap to first position and remove the rest
+               All_Settings.Swap (All_Settings.First_Index, Found);
+               All_Settings.Set_Length (1);
+            end if;
+         end;
+      end if;
+
+      return All_Settings;
+   end Selected_Runners;
+
+   ---------------------
+   -- Check_Directory --
+   ---------------------
+
+   procedure Check_Directory (Cmd : in out Command;
+                              S   : Alire.Properties.Tests.Settings)
+   is
+      use Dirs;
+   begin
+      if not Dirs.Is_Directory (Cmd.Root.Path / S.Directory) then
+         Trace.Error ("while running " & S.Image);
+         Reportaise_Command_Failed
+           ("directory '"
+            & (Cmd.Root.Path / S.Directory)
+            & "' does not exist.");
+      end if;
+   end Check_Directory;
+
+   ---------------
+   -- Test_Root --
+   ---------------
+
+   function Test_Root (Cmd : in out Command;
+                       S   : Alire.Properties.Tests.Settings)
+                       return Alire.Roots.Optional.Root
+   --  The crate in the directory of a built-in runner
+   is
+      use Dirs;
+   begin
+      return Result : constant Alire.Roots.Optional.Root :=
+        Alire.Roots.Optional.Detect_Root (Cmd.Root.Path / S.Directory)
+      do
+         if not Result.Is_Valid then
+            Alire.Raise_Checked_Error
+              ("cannot detect a proper crate in test directory '"
+               & S.Directory
+               & "' (error: "
+               & Result.Message
+               & ")");
+         end if;
+      end return;
+   end Test_Root;
+
+   ----------------------
+   -- Report_Toolchain --
+   ----------------------
+
+   procedure Report_Toolchain (Cmd : in out Command) is
+      use Alire.Properties.Tests;
+
+      Runners : constant Alire.Properties.Vector := Cmd.Selected_Runners;
+      Table   : Alire.Utils.Tables.Table;
+   begin
+      if Runners.Is_Empty then
+         Reportaise_Command_Failed
+           ("No test runner defined; legacy test actions cannot be reported");
+      end if;
+
+      Table.Header ("Runner");
+      Build.Append_Toolchain_Headers (Table);
+      Table.New_Row;
+
+      for Runner of Runners loop
+         Cmd.Check_Directory (Settings (Runner));
+
+         declare
+            use Dirs;
+
+            S     : constant Settings := Settings (Runner);
+            Label : constant String :=
+                      (if S.Id = "" then S.Directory else S.Id);
+
+            Guard : Dirs.Guard (Enter (Cmd.Root.Path / S.Directory))
+            with Unreferenced;
+         begin
+            case S.Runner.Kind is
+               when Alire_Runner =>
+                  declare
+                     Runner_Root : Alire.Roots.Optional.Root :=
+                                     Cmd.Test_Root (S);
+                  begin
+                     Alire.Test.Runner.Ensure_Solution (Runner_Root.Value);
+
+                     for Tool of Alire.Toolchains.Tools loop
+                        Table.Append (Label);
+                        Build.Append_Tool_Cells
+                          (Table,
+                           Alire.Toolchains.Solutions.Effective
+                             (Runner_Root.Value.Solution, Tool));
+                        Table.New_Row;
+                     end loop;
+                  end;
+
+               when External =>
+                  --  Whatever the command runs cannot be ascertained
+                  Table
+                    .Append (Label)
+                    .Append ("")
+                    .Append ("")
+                    .Append ("")
+                    .Append ("unknown")
+                    .New_Row;
+            end case;
+         end;
+      end loop;
+
+      Table.Print (Always);
+   end Report_Toolchain;
+
    -------------
    -- Execute --
    -------------
 
    overriding
    procedure Execute (Cmd : in out Command; Args : AAA.Strings.Vector) is
-      use type GNAT.Strings.String_Access;
       use type Ada.Containers.Count_Type;
       use Alire.Properties.Tests;
       use Dirs;
@@ -131,6 +289,19 @@ package body Alr.Commands.Test is
    begin
       Cmd.Build_Args.Move (Build_Args);
       --  move the build args into the command struct
+
+      if Cmd.Toolchain
+        and then (Cmd.Legacy
+                  or else Cmd.List
+                  or else Cmd.Build_Only
+                  or else Cmd.Jobs >= 0
+                  or else not Cmd.Build_Args.Is_Empty
+                  or else not Args.Is_Empty)
+      then
+         Reportaise_Wrong_Arguments
+           ("--toolchain can only be combined with --id and --here");
+      end if;
+
       Cmd.Requires_Workspace;
 
       if Cmd.Legacy then
@@ -153,9 +324,12 @@ package body Alr.Commands.Test is
          end;
       end if;
 
-      All_Settings :=
-        Cmd.Root.Release.On_Platform_Properties
-          (Cmd.Root.Environment, Settings'Tag);
+      if Cmd.Toolchain then
+         Cmd.Report_Toolchain;
+         return;
+      end if;
+
+      All_Settings := Cmd.Selected_Runners;
 
       if All_Settings.Is_Empty then
          Trace.Warning ("no test runner defined, running legacy actions");
@@ -163,30 +337,6 @@ package body Alr.Commands.Test is
            ("Cannot use structured output with legacy actions");
          Execute_Legacy (Cmd.Root);
          return;
-      end if;
-
-      --  id selection logic
-      if Cmd.By_Id /= null and then Cmd.By_Id.all /= "" then
-         declare
-            Found : Natural := 0;
-         begin
-            for I in All_Settings.First_Index .. All_Settings.Last_Index loop
-               if Settings (All_Settings.Element (I)).Id = Cmd.By_Id.all then
-                  Found := I;
-               end if;
-            end loop;
-
-            if Found = 0 then
-               Reportaise_Command_Failed
-                 ("Could not find test runner with id '"
-                  & Cmd.By_Id.all
-                  & "'");
-            else
-               --  swap to first position and remove the rest
-               All_Settings.Swap (All_Settings.First_Index, Found);
-               All_Settings.Set_Length (1);
-            end if;
-         end;
       end if;
 
       if All_Settings.Length > 1 then
@@ -223,81 +373,65 @@ package body Alr.Commands.Test is
       end if;
 
       for Test_Setting of All_Settings loop
-         if Dirs.Is_Directory
-              (Cmd.Root.Path / Settings (Test_Setting).Directory)
-         then
-            declare
-               function Get_Args return AAA.Strings.Vector
-               is (if All_Settings.Length = 1
-                   then Args
-                   else AAA.Strings.Empty_Vector);
-               --  Only forward arguments if the runner is the only one.
+         Cmd.Check_Directory (Settings (Test_Setting));
 
-               S        : constant Settings := Settings (Test_Setting);
-               Failures : Integer;
+         declare
+            function Get_Args return AAA.Strings.Vector
+            is (if All_Settings.Length = 1
+                then Args
+                else AAA.Strings.Empty_Vector);
+            --  Only forward arguments if the runner is the only one.
 
-               Guard : Dirs.Guard (Enter (Cmd.Root.Path / S.Directory))
-               with Unreferenced;
+            S        : constant Settings := Settings (Test_Setting);
+            Failures : Integer;
 
-               Test_Root : Alire.Roots.Optional.Root :=
-                 Alire.Roots.Optional.Detect_Root
-                   (Cmd.Root.Path / S.Directory);
-            begin
-               if All_Settings.Length > 1 then
-                  Alire.Put_Info ("running test with " & S.Image);
-               end if;
+            Guard : Dirs.Guard (Enter (Cmd.Root.Path / S.Directory))
+            with Unreferenced;
+         begin
+            if All_Settings.Length > 1 then
+               Alire.Put_Info ("running test with " & S.Image);
+            end if;
 
-               case S.Runner.Kind is
-                  when Alire_Runner =>
-                     if not Test_Root.Is_Valid then
-                        Alire.Raise_Checked_Error
-                          ("cannot detect a proper crate in test directory '"
-                           & S.Directory
-                           & "' (error: "
-                           & Test_Root.Message
-                           & ")");
-                     end if;
-
+            case S.Runner.Kind is
+               when Alire_Runner =>
+                  declare
+                     Runner_Root : Alire.Roots.Optional.Root :=
+                                     Cmd.Test_Root (S);
+                  begin
                      if Cmd.List then
                         Alire.Test.Runner.Show_List
-                          (Test_Root.Value, Get_Args);
+                          (Runner_Root.Value, Get_Args);
                         OS_Lib.Bailout;
                      end if;
 
                      Failures :=
                        Alire.Test.Runner.Run
-                         (Root       => Test_Root.Value,
+                         (Root       => Runner_Root.Value,
                           Filter     => Get_Args,
                           Jobs       =>
                             (if Cmd.Jobs < 0 then S.Jobs else Cmd.Jobs),
                           Build_Only => Cmd.Build_Only,
                           Build_Args => Cmd.Build_Args);
+                  end;
 
-                  when External     =>
-                     Cmd.Forbids_Structured_Output
-                       ("Cannot output structured output for external runner");
-                     Failures :=
-                       Alire.OS_Lib.Subprocess.Unchecked_Spawn
-                         (S.Runner.Command.First_Element,
-                          S.Runner.Command.Tail.Append (Get_Args),
-                          Dim_Output => False);
+               when External     =>
+                  Cmd.Forbids_Structured_Output
+                    ("Cannot output structured output for external runner");
+                  Failures :=
+                    Alire.OS_Lib.Subprocess.Unchecked_Spawn
+                      (S.Runner.Command.First_Element,
+                       S.Runner.Command.Tail.Append (Get_Args),
+                       Dim_Output => False);
 
-               end case;
+            end case;
 
-               if Failures /= 0 then
-                  Reportaise_Command_Failed
-                    (if S.Runner.Kind = Alire_Runner
-                     then ""
-                     else "test failure");
-               end if;
-            end;
-         else
-            Trace.Error ("while running " & (Settings (Test_Setting).Image));
-            Reportaise_Command_Failed
-              ("directory '"
-               & (Cmd.Root.Path / Settings (Test_Setting).Directory)
-               & "' does not exist.");
-         end if;
+            if Failures /= 0 then
+               Reportaise_Command_Failed
+                 (if S.Runner.Kind = Alire_Runner
+                  then ""
+                  else "test failure");
+            end if;
+         end;
       end loop;
 
       Alire.Put_Success ("Successful test run");
@@ -335,6 +469,14 @@ package body Alr.Commands.Test is
             ("By default, nested crates without tests inherit the closest"
              & " parent crate test definitions. Use --here to only consider"
              & " the current crate.")
+         .Append ("")
+         .Append
+            ("--toolchain lists, without building, the tools that each"
+             & " built-in runner would build its tests with (see"
+             & " 'alr help build' for the meaning of each source). Each row"
+             & " is labeled with its runner id, or its directory when it has"
+             & " no id. The toolchain of external runners cannot be"
+             & " ascertained, so their source is 'unknown'.")
              );
 
    --------------------
@@ -402,6 +544,15 @@ package body Alr.Commands.Test is
          Switch      => "",
          Long_Switch => "--build-only",
          Help        => "Stop the runner right after building the tests",
+         Value       => True);
+
+      Define_Switch
+        (Config,
+         Cmd.Toolchain'Access,
+         Switch      => "",
+         Long_Switch => "--toolchain",
+         Help        => "Show the tools the tests would be built with, "
+                        & "without building",
          Value       => True);
 
       Define_Switch
