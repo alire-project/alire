@@ -6,6 +6,24 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### `alr build --toolchain` reports the tools a build will use
+
+PR [#2222](https://github.com/alire-project/alire/pull/2222)
+
+The tools selected with `alr toolchain` may be overridden by dependencies on
+specific compilers, and unselected tools are taken from the environment. The
+new `alr build --toolchain` switch reports, without building, which tools a
+build will actually use and where they come from:
+
+```
+$ alr build --toolchain
+CRATE        VERSION  DEPENDENCIES  SOURCE
+gnat_native  16.2.1   gnat*         dependencies
+gprbuild     24.0.1                 global
+```
+
+See `alr help build` for details on the sources.
+
 ### Invalid index manifests are skipped with a warning
 
 PR [#2194](https://github.com/alire-project/alire/pull/2194)
