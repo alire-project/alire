@@ -1,0 +1,128 @@
+name: CI self stable
+# Build Alire with `alr build` using the latest stable release, to ensure that
+# the latest stable release is able to build the next version. This one is less
+# exhaustive than ci-toolchain.yml, as it does not test all conceivable
+# toolchains, just the latest stable one. The testsuite is not run here either,
+# as ci-toolchain.yml already runs it and only the alr used for building differs.
+#
+# Also ensure that the latest stable release can load crates initialized by the
+# next version: new manifest features may not be backwards compatible, but those
+# must not be used by default if possible, or must be recognized by the previous
+# stable release to avoid friction, even if ignored/discarded.
+#
+# Stable may legitimately be unable to build master until a new patch release
+# is out, so failures are allowed in PRs, but not for release tags or manual
+# runs.
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+
+  build:
+
+    name: ${{ matrix.os }}${{ github.event_name == 'pull_request' && ' (advisory)' || '' }}
+
+    runs-on: ${{ matrix.os }}
+
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-15-intel   # macOS x86_64
+          # Not macos-latest (macos-26): since runner image 20261013, its SDK's
+          # libSystem.tbd lists arm64e.x1, which the GNAT linker rejects
+          # ("unknown architecture"). Restore once a fixed GNAT is out.
+          - macos-15         # macOS arm64
+          - ubuntu-24.04-arm # Ubuntu arm64
+          - ubuntu-24.04     # Ubuntu x86_64
+          - windows-2025     # Windows x86_64
+
+    steps:
+    - name: Check out
+      uses: actions/checkout@v7
+
+    # Download the latest stable release of alr. This also selects the toolchain
+    # that it uses below, so no compiler is needed in PATH.
+
+    - name: Download latest stable alr
+      uses: alire-project/setup-alire@latest
+
+    - name: Show builder alr configuration
+      run: |
+        alr -d -n version
+        alr --version
+
+    - name: Update dependencies
+      run: alr -d -n -f update
+      # Force because otherwise solving may time out in non-interactive mode
+
+    - name: Show dependencies/pins
+      run: |
+        alr -d -n -q with --solve || alr -n -v -d with --solve
+        alr -d -n -q with --tree
+
+    - name: Show build environment, with debug fallback
+      run: alr -d -n printenv || alr -n -v -d printenv
+
+    - name: SELF-BUILD
+      run: alr -d -n build
+
+    - name: Show built version
+      run: ./bin/alr -d -n version
+
+    # Show from within each crate, as this also loads the workspace files that
+    # the built alr created. A warning about a discarded future feature is OK.
+
+    - name: Load with stable alr the crates initialized by built alr
+      run: |
+        built=$PWD/bin/alr
+        cd "$RUNNER_TEMP"
+        for kind in bin lib; do
+          "$built" -d -n init --$kind fresh_$kind
+          for crate in fresh_$kind fresh_$kind/tests; do
+            (cd $crate && alr -d -n show)
+          done
+        done
+
+    # Keep failures visible even when allowed, as the run as a whole passes in
+    # that case.
+
+    - name: Report failure
+      if: failure()
+      env:
+        LEVEL: ${{ github.event_name == 'pull_request' && 'warning' || 'error' }}
+        ADVICE: >-
+          ${{ github.event_name == 'pull_request'
+              && 'This does not block merging.'
+              || 'This must be fixed before releasing.' }}
+        OS: ${{ matrix.os }}
+      run: |
+        builder=$(alr --version 2>/dev/null || echo "an unavailable alr")
+        msg="Failed on $OS with $builder. The latest stable alr may be unable"
+        msg+=" to build this change or to load crates initialized by it, or"
+        msg+=" setup may have failed: see the job log. $ADVICE"
+        echo "::$LEVEL title=CI self stable::$msg"
+        echo "$msg" >> "$GITHUB_STEP_SUMMARY"

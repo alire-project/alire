@@ -62,6 +62,9 @@ jobs:
           - os: macos-15-intel      # x64
             id: x86_64-macos
 
+          # Not macos-latest (macos-26): since runner image 20261013, its SDK's
+          # libSystem.tbd lists arm64e.x1, which the GNAT linker rejects
+          # ("unknown architecture"). Restore once a fixed GNAT is out.
           - os: macos-15            # arm64
             id: aarch64-macos
 
@@ -139,7 +142,7 @@ jobs:
 
   build-macos-universal:
     name: Create macOS universal binary
-    runs-on: macos-14 # See above about macos-latest
+    runs-on: macos-15 # See above about macos-latest
     needs: build
     steps:
 
@@ -220,10 +223,10 @@ jobs:
           - os: macos-15-intel
             id: x86_64-macos
 
-          - os: macos-14 # See above about macos-latest
+          - os: macos-15 # See above about macos-latest
             id: aarch64-macos
 
-          - os: macos-14 # See above about macos-latest
+          - os: macos-15 # See above about macos-latest
             id: universal-macos
 
           - os: ubuntu-22.04
@@ -551,10 +554,10 @@ jobs:
           - os: macos-15-intel
             id: x86_64-macos
 
-          - os: macos-14 # See above about macos-latest
+          - os: macos-15 # See above about macos-latest
             id: aarch64-macos
 
-          - os: macos-14 # See above about macos-latest
+          - os: macos-15 # See above about macos-latest
             id: universal-macos
 
           - os: ubuntu-22.04
