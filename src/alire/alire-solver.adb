@@ -292,7 +292,8 @@ package body Alire.Solver is
                      Props    : Properties.Vector;
                      Pins     : Solution;
                      Options  : Query_Options := Default_Options;
-                     Previous : Solution := Solutions.Empty_Valid_Solution)
+                     Previous : Solution := Solutions.Empty_Valid_Solution;
+                     Frozen   : Solution := Solutions.Empty_Valid_Solution)
                      return Result
    is
       Tmp_Pool : System.Pool_Local.Unbounded_Reclaim_Pool;
@@ -322,22 +323,50 @@ package body Alire.Solver is
 
       Previous_Releases : constant Alire.Solutions.Release_Map :=
                             Previous.Releases;
+      Frozen_Releases   : constant Alire.Solutions.Release_Map :=
+                            Frozen.Releases;
 
-      -----------------
-      -- Is_Previous --
-      -----------------
+      --------------
+      -- Is_Among --
+      --------------
 
-      function Is_Previous (Crate : Crate_Name;
-                            Rel   : Alire.Releases.Release)
-                            return Boolean
+      function Is_Among (Releases : Alire.Solutions.Release_Map;
+                         Crate    : Crate_Name;
+                         Rel      : Alire.Releases.Release)
+                         return Boolean
       is
-         --  Say if Rel was fulfilling Crate in the Previous solution
+         --  Say if Rel is the one fulfilling Crate in Releases
          use type Semver.Version;
       begin
-         return Previous_Releases.Contains (Crate)
-           and then Previous_Releases (Crate).Name = Rel.Name
-           and then Previous_Releases (Crate).Version = Rel.Version;
-      end Is_Previous;
+         return Releases.Contains (Crate)
+           and then Releases (Crate).Name = Rel.Name
+           and then Releases (Crate).Version = Rel.Version;
+      end Is_Among;
+
+      -------------------
+      -- Filter_Frozen --
+      -------------------
+
+      function Filter_Frozen
+        (Crate      : Crate_Name;
+         Candidates : Alire.Releases.Containers.Release_Set)
+         return Alire.Releases.Containers.Release_Set
+      is
+         --  Keep only the frozen release among the Candidates for a frozen
+         --  Crate, so it cannot change.
+      begin
+         if not Frozen_Releases.Contains (Crate) then
+            return Candidates;
+         end if;
+
+         return Result : Alire.Releases.Containers.Release_Set do
+            for Candidate of Candidates loop
+               if Is_Among (Frozen_Releases, Crate, Candidate) then
+                  Result.Include (Candidate);
+               end if;
+            end loop;
+         end return;
+      end Filter_Frozen;
 
       Progress : Trace.Ongoing := Trace.Activity ("Solving dependencies");
 
@@ -790,8 +819,10 @@ package body Alire.Solver is
                      when Both  =>
                         --  Count releases kept from the previous solution
                         case Comparisons.Which_One
-                          (Is_Previous (Crate, LD (Crate).Release),
-                           Is_Previous (Crate, RD (Crate).Release))
+                          (Is_Among (Previous_Releases,
+                                     Crate, LD (Crate).Release),
+                           Is_Among (Previous_Releases,
+                                     Crate, RD (Crate).Release))
                         is
                            when Left        =>
                               Kept_Releases := Kept_Releases + 1;
@@ -1707,8 +1738,10 @@ package body Alire.Solver is
 
                declare
                   Candidates : constant Releases.Containers.Release_Set :=
-                                 Index.Releases_Satisfying
-                                   (Dep, Props, Index_Query_Options);
+                                 Filter_Frozen
+                                   (Dep.Crate,
+                                    Index.Releases_Satisfying
+                                      (Dep, Props, Index_Query_Options));
                   Downgrade  : Natural := 0;
 
                   --------------

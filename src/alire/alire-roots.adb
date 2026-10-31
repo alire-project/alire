@@ -14,6 +14,7 @@ with Alire.OS_Lib;
 with Alire.Paths.Vault;
 with Alire.Properties.Actions.Executor;
 with Alire.Roots.Optional;
+with Alire.Settings.Builtins;
 with Alire.Solutions.Diffs;
 with Alire.Spawn;
 with Alire.Toolchains.Solutions;
@@ -1907,6 +1908,82 @@ package body Alire.Roots is
                           Force_Regen    => True);
    end Update;
 
+   ----------------
+   -- Check_Kept --
+   ----------------
+
+   procedure Check_Kept (Frozen   : Solutions.Solution;
+                         Solution : Solutions.Solution;
+                         Reason   : Freezing_Reasons)
+   is
+      --  Fail, explaining why according to Reason, if Solution needs a crate
+      --  with a release in Frozen but does not keep that release. Crates
+      --  pinned in Solution are exempt, as pins take precedence.
+      use type Milestones.Milestone;
+      Changed : AAA.Strings.Vector; -- Names, for the user
+      Command : AAA.Strings.Vector; -- Names, for `alr update`
+   begin
+      for Crate of Frozen.Crates loop
+         if Frozen.State (Crate).Has_Release
+           and then Solution.Depends_On (Crate)
+           and then not Solution.State (Crate).Is_User_Pinned
+           and then not
+             (Solution.State (Crate).Has_Release
+              and then Solution.State (Crate).Release.Milestone
+                       = Frozen.State (Crate).Release.Milestone)
+         then
+            Changed.Append (Utils.TTY.Name (Crate));
+            Command.Append (Crate.As_String);
+         end if;
+      end loop;
+
+      if Changed.Is_Empty then
+         return;
+      end if;
+
+      case Reason is
+         when Selective_Update =>
+            Raise_Checked_Error
+              (Errors.New_Wrapper
+               .Wrap ("Cannot update only the requested crates")
+               .Wrap ("The solution would also change "
+                      & Changed.Flatten (", ")
+                      & ". Add these crates to the command, or run `"
+                      & TTY.Terminal ("alr update")
+                      & "` without arguments to update all dependencies.")
+               .Get);
+
+         when Manual_Sync | Manual_Edit =>
+            declare
+               Updates : constant String :=
+                           "`" & TTY.Terminal ("alr update "
+                                               & Command.Flatten (" "))
+                           & "`, or `" & TTY.Terminal ("alr update")
+                           & "` for all dependencies";
+            begin
+               Raise_Checked_Error
+                 (Errors.New_Wrapper
+                  .Wrap ("Dependencies cannot change while `"
+                         & TTY.Terminal ("update.manually_only")
+                         & "` is set")
+                  .Wrap
+                    (case Reason is
+                        when Manual_Sync =>
+                           "Applying the manifest would change "
+                           & Changed.Flatten (", ")
+                           & ". Run " & Updates
+                           & ", to apply it; or adjust the manifest.",
+                        when others =>
+                           "The requested change would also change "
+                           & Changed.Flatten (", ")
+                           & ", so it was not applied. To apply it, "
+                           & "make the change in the manifest by hand and "
+                           & "run " & Updates & ".")
+                  .Get);
+            end;
+      end case;
+   end Check_Kept;
+
    --------------------
    -- Compute_Update --
    --------------------
@@ -1914,26 +1991,108 @@ package body Alire.Roots is
    function Compute_Update
      (This     : in out Root;
       Options  : Solver.Query_Options := Solver.Default_Options;
-      Previous : Solutions.Solution := Solutions.Empty_Valid_Solution)
+      Previous : Solutions.Solution := Solutions.Empty_Valid_Solution;
+      Frozen   : Solutions.Solution := Solutions.Empty_Valid_Solution;
+      Reason   : Freezing_Reasons    := Selective_Update)
       return Solver.Result
    is
       Deps : constant Conditional.Dependencies :=
                Release (This).Dependencies (This.Environment);
+
+      -----------
+      -- Solve --
+      -----------
+
+      function Solve (Frozen : Solutions.Solution) return Solver.Result
+      is (Solver.Resolve
+            (Deps     => Deps,
+             Props    => This.Environment,
+             Pins     => This.Pins,
+             Options  => Options,
+             Previous => Previous,
+             Frozen   => Frozen));
+      --  The same query, with or without frozen releases
+
    begin
 
       --  Ensure we have complete pin information
 
       This.Sync_Pins_From_Manifest (Exhaustive => False);
 
-      --  And solve
+      --  Solve keeping the frozen releases. This is the result unless one of
+      --  the following checks fails.
 
-      return Solver.Resolve
-        (Deps     => Deps,
-         Props    => This.Environment,
-         Pins     => This.Pins,
-         Options  => Options,
-         Previous => Previous);
+      return Result : constant Solver.Result := Solve (Frozen) do
+
+         --  A frozen release that is lost conflicts with the manifest itself,
+         --  so fail naming it.
+
+         Check_Kept (Frozen, Result.Solution, Reason);
+
+         declare
+            function Newly_Missing (Crate : Crate_Name) return Boolean
+            is (Result.Solution.State (Crate).Is_Missing
+                and then not (Frozen.Depends_On (Crate)
+                              and then Frozen.State (Crate).Is_Missing));
+            --  Missing now but not before, so possibly because of freezing
+         begin
+
+            --  Nothing frozen, or nothing newly missing: the result is OK
+
+            if not Frozen.Crates.Is_Empty
+              and then (for some Crate of Result.Solution.Crates =>
+                          Newly_Missing (Crate))
+            then
+
+               --  Solve again without freezing, only to find out whether
+               --  freezing is the cause. This is the only case in which
+               --  we doubly-solve, and this is only for report, so not
+               --  a new overhead in every sync/update.
+
+               declare
+                  Unfrozen : constant Solutions.Solution :=
+                               Solve (Solutions.Empty_Valid_Solution)
+                               .Solution;
+               begin
+
+                  --  If a newly missing dependency is solved this way,
+                  --  freezing is the cause, so fail naming the frozen
+                  --  releases that would change. Otherwise those dependencies
+                  --  are really unsolvable, and are reported as usual.
+
+                  if (for some Crate of Result.Solution.Crates =>
+                        Newly_Missing (Crate)
+                        and then Unfrozen.Depends_On (Crate)
+                        and then Unfrozen.State (Crate).Has_Release)
+                  then
+                     Check_Kept (Frozen, Unfrozen, Reason);
+                  end if;
+               end;
+            end if;
+         end;
+      end return;
    end Compute_Update;
+
+   --------------
+   -- Freezing --
+   --------------
+
+   function Freezing (Old    : Solutions.Solution;
+                      Except : Containers.Crate_Name_Sets.Set :=
+                        Containers.Crate_Name_Sets.Empty_Set)
+                      return Solutions.Solution
+   is
+   begin
+      return Result : Solutions.Solution := Old do
+         for Crate of Old.Crates loop
+            if Except.Contains (Crate)
+              or else Old.State (Crate).Is_User_Pinned
+            then
+               Result := Result.Excluding (Crate);
+            end if;
+         end loop;
+      end return;
+   end Freezing;
 
    -------------------------
    -- Update_Dependencies --
@@ -1979,51 +2138,15 @@ package body Alire.Roots is
          end return;
       end Kept;
 
-      -----------------------------
-      -- Check_Only_Allowed_Move --
-      -----------------------------
-
-      procedure Check_Only_Allowed_Move (New_Sol : Solutions.Solution);
-      --  In a selective update, only the allowed crates may change their
-      --  releases. When the solution requires changing others, we fail
-      --  without applying anything. Pinned crates are exempt, as they follow
-      --  the manifest and not the solver.
-
-      procedure Check_Only_Allowed_Move (New_Sol : Solutions.Solution) is
-         use type Milestones.Milestone;
-         Moved : AAA.Strings.Vector;
-      begin
-         if Allowed.Is_Empty then
-            return;
-         end if;
-
-         for Crate of Old.Crates loop
-            if not Allowed.Contains (Crate)
-              and then Old.State (Crate).Has_Release
-              and then not Old.State (Crate).Is_User_Pinned
-              and then New_Sol.Depends_On (Crate)
-              and then not New_Sol.State (Crate).Is_User_Pinned
-              and then not
-                (New_Sol.State (Crate).Has_Release
-                 and then New_Sol.State (Crate).Release.Milestone
-                          = Old.State (Crate).Release.Milestone)
-            then
-               Moved.Append (Utils.TTY.Name (Crate));
-            end if;
-         end loop;
-
-         if not Moved.Is_Empty then
-            Raise_Checked_Error
-              (Errors.New_Wrapper
-               .Wrap ("Cannot update only the requested crates")
-               .Wrap ("The solution would also change "
-                      & Moved.Flatten (", ")
-                      & ". Add these crates to the command, or run `"
-                      & TTY.Terminal ("alr update")
-                      & "` without arguments to update all dependencies.")
-               .Get);
-         end if;
-      end Check_Only_Allowed_Move;
+      Frozen : constant Solutions.Solution :=
+                 (if not Allowed.Is_Empty
+                  then Freezing (Old, Except => Allowed)
+                  elsif Sync_Only
+                        and then Settings.Builtins.Update_Manually_Only.Get
+                  then Freezing (Old)
+                  else Solutions.Empty_Valid_Solution);
+      --  Releases that cannot change: in a selective update, all but those
+      --  of the requested crates; in a sync under update.manually_only, all.
 
    begin
       --  Ensure requested crates are in solution first.
@@ -2045,12 +2168,15 @@ package body Alire.Roots is
 
       declare
          Computed_Update : constant Solver.Result        := This.Compute_Update
-           (Options, Previous => Kept);
+           (Options,
+            Previous => Kept,
+            Frozen   => Frozen,
+            Reason   => (if Allowed.Is_Empty
+                         then Manual_Sync
+                         else Selective_Update));
          Diff            : constant Solutions.Diffs.Diff := Old.Changes
            (Computed_Update.Solution);
       begin
-         Check_Only_Allowed_Move (Computed_Update.Solution);
-
          --  Early exit when there are no changes
 
          if not Alire.Force and then not Diff.Contains_Changes then

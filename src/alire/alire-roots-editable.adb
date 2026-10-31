@@ -6,6 +6,7 @@ with Alire.Directories;
 with Alire.Index;
 with Alire.Manifest;
 with Alire.Roots.Optional;
+with Alire.Settings.Builtins;
 with Alire.Solver.Predefined_Options;
 with Alire.User_Pins;
 with Alire.Utils.User_Input;
@@ -47,6 +48,12 @@ package body Alire.Roots.Editable is
                          Latter => Release (Edited)
                          .Dependencies (Edited.Environment));
 
+         Frozen : constant Solutions.Solution :=
+                    (if Settings.Builtins.Update_Manually_Only.Get
+                     then Freezing (Original.Solution)
+                     else Solutions.Empty_Valid_Solution);
+         --  Under update.manually_only, existing releases cannot change
+
          Solver_Result : Solver.Result;
       begin
 
@@ -61,7 +68,9 @@ package body Alire.Roots.Editable is
          --  Compute the new solution
 
          Solver_Result :=
-           Edited.Compute_Update (Previous => Original.Solution);
+           Edited.Compute_Update (Previous => Original.Solution,
+                                  Frozen   => Frozen,
+                                  Reason   => Manual_Edit);
          --  The edited solution has the edited crates reset, so we prefer the
          --  releases in the original one.
          Edited.Set (Solution => Solver_Result.Solution);

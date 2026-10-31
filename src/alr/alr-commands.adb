@@ -446,9 +446,11 @@ package body Alr.Commands is
             when Lockfiles.Valid =>
                Trace.Debug ("Lockfile at " & Checked.Lock_File & " is valid");
 
-               --  If only manual updates are allowed, exit already
+               --  If only manual updates are allowed, exit already when no
+               --  solution was ever computed. Otherwise, the sync below keeps
+               --  existing releases, failing if they would have to change.
 
-               if Manual_Only then
+               if Manual_Only and then not Checked.Solution.Is_Attempted then
                   Trace.Detail
                     ("Skipping automatic dependency update"
                      & " per configuration setting.");

@@ -137,14 +137,17 @@ package Alire.Solver is
                      Props    : Properties.Vector;
                      Pins     : Solution;
                      Options  : Query_Options := Default_Options;
-                     Previous : Solution := Solutions.Empty_Valid_Solution)
+                     Previous : Solution := Solutions.Empty_Valid_Solution;
+                     Frozen   : Solution := Solutions.Empty_Valid_Solution)
                      return Result;
    --  Exhaustively look for a solution to the given dependencies, under the
    --  given platform properties and lookup options. Pins can be supplied to
    --  override Deps. A solution is always returned; in the worst case it is
    --  a trivially unsolved one (all dependencies skipped). Releases in
    --  Previous are preferred over any other, but never at the cost of
-   --  completeness, so they are kept unless Deps require otherwise.
+   --  completeness, so they are kept unless Deps require otherwise. Crates
+   --  with a release in Frozen can only be solved with that release (or be
+   --  missing), unless pinned, as pins take precedence.
 
    function Is_Resolvable (Deps    : Types.Abstract_Dependencies;
                            Props   : Properties.Vector;
