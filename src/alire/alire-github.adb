@@ -67,9 +67,20 @@ package body Alire.GitHub is
       end Decode;
 
    begin
-      --  The result includes the enclosing quotes, as required by Minirest
-      return LML.Encode
-        (LML.Scalars.New_Text (Decode).Image (LML.Yeison.JSON));
+      --  The result includes the enclosing quotes, as required by Minirest.
+      --  Backslashes and quotes are written as \uXXXX so no backslash ends
+      --  up next to a quote, as that wouldn't reach curl intact on Windows:
+      --  when quoting the arguments of a spawned process, GNAT doesn't escape
+      --  a backslash before a quote. Backslashes must go first, so any \" left
+      --  is an escaped quote and not the end of a preceding \\.
+      return AAA.Strings.Replace
+        (AAA.Strings.Replace
+           (LML.Encode
+              (LML.Scalars.New_Text (Decode).Image (LML.Yeison.JSON)),
+            Match => "\\",
+            Subst => "\u005c"),
+         Match => "\""",
+         Subst => "\u0022");
    end JSON_Escape;
 
    -------------

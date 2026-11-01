@@ -206,10 +206,11 @@ with MockCommand("curl", CURL, "cmd_dir"):
                      run_alr("publish", "--status").out)
     set_routes()
 
-    # Cancelling, sending a reason that requires escaping
+    # Cancelling, sending a reason that requires escaping, also with backslashes
+    # next to quotes and at the end
 
     requests()
-    REASON = 'say "hi" \\ /' + ('' if on_windows() else ' ñ')
+    REASON = 'say "hi" \\" / ' + ('' if on_windows() else 'ñ ') + '\\'
     p = run_alr("publish", "--cancel=1", f"--reason={REASON}", quiet=False)
     assert_substring("closed successfully", p.out)
     log = requests()
@@ -223,6 +224,11 @@ with MockCommand("curl", CURL, "cmd_dir"):
     body = json.loads(comment[0]["data"])["body"]
     assert_match("Closed using `alr .*` with reason: ", body)
     assert body.endswith(REASON), body
+
+    # A backslash next to a quote wouldn't reach curl intact on Windows, where
+    # GNAT doesn't escape it when quoting the arguments of a spawned process
+
+    assert_not_substring('\\"', comment[0]["data"])
 
     # Text that isn't valid UTF-8 can't prevent the request; this is possible
     # on Windows but we can only reproduce it here on other platforms
@@ -251,6 +257,7 @@ with MockCommand("curl", CURL, "cmd_dir"):
     assert_substring("Review requested successfully", p.out)
     query = sent("POST")
     assert_eq([GRAPHQL], [r["path"] for r in query])
+    assert_not_substring('\\"', query[0]["data"])
     assert_match(r'mutation \{ markPullRequestReadyForReview \(input: \{ '
                  r'clientMutationId: "alr-.*", pullRequestId: "PR_1" \}\)',
                  json.loads(query[0]["data"])["query"])
