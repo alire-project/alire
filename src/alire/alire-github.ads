@@ -2,11 +2,11 @@ with Alire.Index;
 with Alire.Milestones;
 with Alire.Utils.User_Input.Query_Config;
 
-with GNATCOLL.JSON;
+with LML;
 
 package Alire.GitHub is
 
-   subtype JSON_Value is GNATCOLL.JSON.JSON_Value;
+   subtype JSON_Value is LML.Yeison.Any;
 
    Env_GH_Token : constant String := "GH_TOKEN";
    --  This is the environment variable used by the `gh` tool to look for the

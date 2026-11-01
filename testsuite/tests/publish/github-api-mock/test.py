@@ -54,7 +54,9 @@ with open(r"{ROUTES}", encoding="utf-8") as routes:
 
 sys.stdout.buffer.write(
     (f"HTTP/2 {{status}} \\r\\nx-ratelimit-remaining: 59\\r\\n\\r\\n"
-     + json.dumps(body, indent=2, ensure_ascii=False) + "\\n").encode("utf-8"))
+     + json.dumps(body, indent=2, ensure_ascii=False)
+       .replace("<", chr(92) + "u003c")  # As real responses do
+     + "\\n").encode("utf-8"))
 """
 
 
@@ -70,7 +72,7 @@ def pull(number, sha="ok", draft=False, state="open", label="mylogin:branch",
             "state": state,
             "locked": False,
             "title": title,
-            "body": "Lines\nwith \"quotes\", \\ / \t and ñ€\U0001F600",
+            "body": "<Lines>\nwith \"quotes\", \\ / \t and ñ€\U0001F600",
             "assignee": None,
             "labels": [],
             "draft": draft,
@@ -221,6 +223,16 @@ with MockCommand("curl", CURL, "cmd_dir"):
     body = json.loads(comment[0]["data"])["body"]
     assert_match("Closed using `alr .*` with reason: ", body)
     assert body.endswith(REASON), body
+
+    # Text that isn't valid UTF-8 can't prevent the request; this is possible
+    # on Windows but we can only reproduce it here on other platforms
+
+    if not on_windows():
+        p = run_alr("publish", "--cancel=1",
+                    "--reason=" + os.fsdecode(b"caf\xe9"), quiet=False)
+        assert_substring("closed successfully", p.out)
+        comment = [r for r in requests() if r["verb"] == "POST"]
+        assert_substring("caf", json.loads(comment[0]["data"])["body"])
 
     # Cannot cancel what isn't open or doesn't exist
 

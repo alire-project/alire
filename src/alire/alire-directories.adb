@@ -819,7 +819,6 @@ package body Alire.Directories is
             begin
                --  May fail in rare circumstances, like containing
                --  a softlink to a parent folder or itself.
-               --  GNATCOLL.VFS.Remove_Dir also fails.
                Delete_Tree (This.Filename);
             exception
                when E : others =>
