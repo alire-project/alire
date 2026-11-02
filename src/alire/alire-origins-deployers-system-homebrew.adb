@@ -3,12 +3,11 @@ with AAA.Strings; use AAA.Strings;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 
-with GNATCOLL.JSON;
+with LML.Input.JSON;
 
 package body Alire.Origins.Deployers.System.Homebrew is
 
    --  Ada.Strings.Unbounded is use-visible via Alire.Origins.
-   use GNATCOLL.JSON;
 
    package Subprocess renames Alire.OS_Lib.Subprocess;
 
@@ -59,87 +58,43 @@ package body Alire.Origins.Deployers.System.Homebrew is
 
       Homebrew_Found_Required_Package :
       declare
-         Data : constant JSON_Value := Read (AAA.Strings.Flatten (Info));
+         package Yeison renames LML.Yeison;
+         use all type Yeison.Kinds;
 
-         procedure Get_Available_Version
-           (From    :     JSON_Value;
-            Version : out Ada.Strings.Unbounded.Unbounded_String)
-         with Pre => Kind (From) = JSON_Object_Type;
-         procedure Get_Installed_Version
-           (From    :     JSON_Array;
-            Version : out Ada.Strings.Unbounded.Unbounded_String);
-         procedure Info_Callback (Name : UTF8_String; Value : JSON_Value);
-         --  Called for the elements of the JSON data to find the
-         --  relevant sections and use Get_Available_Version,
-         --  Get_Installed_Version to extract the actual versions (if
-         --  any).
-
-         procedure Get_Available_Version
-           (From    :     JSON_Value;
-            Version : out Ada.Strings.Unbounded.Unbounded_String)
-         is
-         begin
-            Version := Ada.Strings.Unbounded.To_Unbounded_String
-              (String'(Get (From, "stable")));
-         end Get_Available_Version;
-
-         procedure Get_Installed_Version
-           (From    :     GNATCOLL.JSON.JSON_Array;
-            Version : out Ada.Strings.Unbounded.Unbounded_String)
-         is
-            Result : Ada.Strings.Unbounded.Unbounded_String;
-            procedure Installed_Callback (Name : UTF8_String;
-                                          Value : JSON_Value);
-            procedure Installed_Callback (Name : UTF8_String;
-                                          Value : JSON_Value)
-            is
-            begin
-               if Name = "version" then
-                  Result := Ada.Strings.Unbounded.To_Unbounded_String
-                    (String'(Get (Value)));
-               end if;
-            end Installed_Callback;
-         begin
-            if Length (From) /= 0 then
-               Map_JSON_Object (Get (From, 1), Installed_Callback'Access);
-            end if;
-            Version := Result;
-         end Get_Installed_Version;
-
-         procedure Info_Callback (Name : UTF8_String; Value : JSON_Value) is
-            function "+"
-              (L : Ada.Strings.Unbounded.Unbounded_String) return String
-              renames Ada.Strings.Unbounded.To_String;
-         begin
-            if Name = "versions" then
-               if Kind (Value) /= JSON_Object_Type then
-                  raise JSON_Issue with "JSON 'versions' not JSON_Object";
-               end if;
-               Get_Available_Version (Value, Available_Version);
-               Trace.Debug ("available: " & (+Available_Version));
-            elsif Name = "installed" then
-               if Kind (Value) /= JSON_Array_Type then
-                  raise JSON_Issue with "JSON 'installed' not JSON_Array";
-               end if;
-               Get_Installed_Version (JSON_Array'(Get (Value)),
-                                      Installed_Version);
-               Trace.Debug ("installed: " & (+Installed_Version));
-            end if;
-         end Info_Callback;
-
-         Arr : JSON_Array;
+         Data : constant Yeison.Any :=
+                  LML.Input.JSON.From_UTF_8 (AAA.Strings.Flatten (Info));
       begin
-         if Kind (Data) /= JSON_Array_Type then
-            raise JSON_Issue with "JSON info not JSON_Array";
+         if Data.Kind /= Vec_Kind then
+            raise JSON_Issue with "JSON info not array";
          end if;
-         Arr := Get (Data);
-         if Length (Arr) /= 1 then
+         if Data.Length /= 1 then
             raise JSON_Issue with "JSON info length /= 1";
          end if;
-         if Kind (Get (Arr, 1)) /= JSON_Object_Type then
-            raise JSON_Issue with "JSON info (1) not JSON_Object";
+         if Data (1).Kind /= Map_Kind then
+            raise JSON_Issue with "JSON info (1) not object";
          end if;
-         Map_JSON_Object (Get (Arr, 1), Info_Callback'Access);
+
+         if Data (1).Has_Field ("versions") then
+            if Data (1) ("versions").Kind /= Map_Kind then
+               raise JSON_Issue with "JSON 'versions' not object";
+            end if;
+            Available_Version := To_Unbounded_String
+              (Data (1) ("versions") ("stable").As_UTF_8);
+            Trace.Debug ("available: " & To_String (Available_Version));
+         end if;
+
+         if Data (1).Has_Field ("installed") then
+            if Data (1) ("installed").Kind /= Vec_Kind then
+               raise JSON_Issue with "JSON 'installed' not array";
+            end if;
+            if not Data (1) ("installed").Is_Empty
+              and then Data (1) ("installed") (1).Has_Field ("version")
+            then
+               Installed_Version := To_Unbounded_String
+                 (Data (1) ("installed") (1) ("version").As_UTF_8);
+            end if;
+            Trace.Debug ("installed: " & To_String (Installed_Version));
+         end if;
       end Homebrew_Found_Required_Package;
 
    end Get_Info;

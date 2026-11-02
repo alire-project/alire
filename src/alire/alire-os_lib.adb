@@ -1,5 +1,3 @@
-with GNAT.OS_Lib;
-
 with Interfaces.C_Streams;
 
 package body Alire.OS_Lib is
