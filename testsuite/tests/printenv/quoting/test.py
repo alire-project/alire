@@ -27,7 +27,8 @@ set_environ_in_manifest(VALUES)
 # run
 
 if shutil.which("sh"):
-    with open("env.sh", "w", encoding="utf-8") as f:
+    # LF line endings: Cygwin's sh would keep a CR as part of the values
+    with open("env.sh", "w", encoding="utf-8", newline="\n") as f:
         f.write(run_alr("printenv", "--unix").out)
     for name, value in VALUES.items():
         out = subprocess.run(["sh", "-c", f'. ./env.sh && printf %s "${name}"'],
