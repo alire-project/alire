@@ -231,6 +231,13 @@ package Alire.VCSs.Git is
    --  origin, or any other unforeseen circumstance. If Public, a git@github
    --  private URL is transformed into its equivalent https:// public URL.
 
+   function To_Native_URL (This : String) return String;
+   --  Convert paths reported by Git into native paths and return other URLs
+   --  unmodified.
+   --
+   --  On Windows, uses `cygpath` if one is detected, otherwise replaces
+   --  `/` -> `\`. On other platforms, paths are returned unmodified.
+
    not overriding
    function Head_Commit (This : VCS;
                          Repo : Directory_Path)

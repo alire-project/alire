@@ -54,7 +54,7 @@ function get_OS() {
     "Darwin")
         echo macos
         ;;
-    "Windows")
+    "Windows" | "CYGWIN_NT"*)
         echo windows
         ;;
     *)
