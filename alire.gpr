@@ -9,7 +9,6 @@ with "clic";
 with "den";
 with "dirty_booleans";
 with "diskflags";
-with "gnatcoll";
 with "lml";
 with "minirest";
 with "optional";

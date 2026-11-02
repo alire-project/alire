@@ -1,8 +1,6 @@
 with Alire.OS_Lib;
 with Den;
 
-private with GNATCOLL.OS.Constants;
-
 private package Alire.Platforms.Common is
 
    --  Reusable code from both Linux/macOS or other several OSes. Intended for
@@ -55,9 +53,7 @@ private
    -- On_Windows --
    ----------------
 
-   pragma Warnings (Off, "condition is always"); -- Silence warning of OS check
    function On_Windows return Boolean
-   is (GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows);
-   pragma Warnings (On);
+   is (OS_Lib.Dir_Separator = '\');
 
 end Alire.Platforms.Common;

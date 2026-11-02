@@ -16,10 +16,6 @@
 [submodule "deps/ada-toml"]
 	path = deps/ada-toml
 	url = https://github.com/pmderodat/ada-toml
-[submodule "deps/gnatcoll-slim"]
-	path = deps/gnatcoll-slim
-	url = https://github.com/alire-project/gnatcoll-core.git
-	branch = slim
 [submodule "deps/ansi"]
 	path = deps/ansi
 	url = https://github.com/mosteo/ansi-ada

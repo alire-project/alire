@@ -34,8 +34,6 @@ with Alire.Warnings;
 
 with Den.Walk;
 
-with GNATCOLL.VFS;
-
 with TOML;
 use type TOML.Any_Value_Kind, TOML.TOML_Value;
 
@@ -804,7 +802,6 @@ package body Alire.TOML_Index is
                             Rel  : Releases.Release)
    is
       use all type Origins.Kinds;
-      use all type GNATCOLL.VFS.Filesystem_String;
       Fixed : Releases.Release := Rel;
    begin
       --  Adjust and check a valid path for a local origin.
@@ -818,7 +815,7 @@ package body Alire.TOML_Index is
       begin
          if Origin.Kind = Filesystem then
             if not Origins.Deployers.Filesystem.Is_Valid_Local_Crate
-              (GNATCOLL.VFS.Create (+Origin.Path))
+              (Origin.Path)
             then
                Raise_Checked_Error
                  ("Local origin path is not a valid directory: "

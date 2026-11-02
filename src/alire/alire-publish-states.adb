@@ -11,11 +11,11 @@ with AnsiAda;
 
 with CLIC.User_Input;
 
-with GNATCOLL.JSON;
-
 package body Alire.Publish.States is
 
    use URI.Operators;
+
+   subtype JSON_Value is GitHub.JSON_Value;
 
    -------------
    -- Matches --
@@ -76,15 +76,15 @@ package body Alire.Publish.States is
    -- To_Status --
    ---------------
 
-   function To_Status (Info : GNATCOLL.JSON.JSON_Value) return PR_Status
+   function To_Status (Info : JSON_Value) return PR_Status
    is
    begin
-      if Info.Is_Empty then
+      if Info.Is_Nil or else Info.Is_Empty then
          return (Exists => False);
       end if;
 
       declare
-         Number  : constant Natural := Info.Get (Key.Number);
+         Number  : constant Natural := Natural (Info (Key.Number).As_Int);
 
          -------------------
          -- Needs_Changes --
@@ -95,18 +95,17 @@ package body Alire.Publish.States is
                         Simple_Logging.Activity
                           ("Retrieving reviews for PR" & Number'Image)
                           with Unreferenced;
-            use GNATCOLL.JSON;
-            Reviews : constant JSON_Array := GitHub.Reviews (Number).Get;
+            Reviews : constant JSON_Value := GitHub.Reviews (Number);
 
             --  Reviews pile up and only the last one of each reviewer is
             --  important, so we have to keep track of reviewers seen.
             Reviewers : AAA.Strings.Map;
 
          begin
-            for I in 1 .. Length (Reviews) loop
+            for Review of Reviews loop
                Reviewers.Include
-                 (Get (Reviews, I).Get (Key.User).Get (Key.Login),
-                  Get (Reviews, I).Get (Key.State));
+                 (Review (Key.User) (Key.Login).As_UTF_8,
+                  Review (Key.State).As_UTF_8);
             end loop;
 
             if (for some Review of Reviewers =>
@@ -133,28 +132,28 @@ package body Alire.Publish.States is
                         Simple_Logging.Activity
                           ("Retrieving checks for PR" & Number'Image)
                           with Unreferenced;
-            use GNATCOLL.JSON;
-            Checks : constant JSON_Array
-              := GitHub.Checks (SHA).Get ("workflow_runs");
+            Response : constant JSON_Value := GitHub.Checks (SHA);
+            Checks   : constant JSON_Value := Response ("workflow_runs");
 
             Some_Incomplete : Boolean := False;
          begin
-            if Length (Checks) = 0 then
+            if Checks.Is_Empty then
                return Checks_Ongoing;
             end if;
 
-            for I in 1 .. Length (Checks) loop
+            for Check of Checks loop
                declare
-                  Check      : constant JSON_Value := Get (Checks, I);
                   Conclusion : constant Conclusions
                     := (if not Check.Has_Field (Key.Conclusion)
-                           or else Check.Get (Key.Conclusion).Is_Empty
+                           or else Check (Key.Conclusion).Is_Nil
                         then
                            Pending
-                        elsif not Is_Valid (Check.Get (Key.Conclusion)) then
+                        elsif not Is_Valid (Check (Key.Conclusion).As_UTF_8)
+                        then
                            Unknown
                         else
-                           Conclusions'Value (Check.Get (Key.Conclusion)));
+                           Conclusions'Value
+                             (Check (Key.Conclusion).As_UTF_8));
                begin
                   case Conclusion is
                      when Failure | Cancelled | Timed_Out =>
@@ -177,28 +176,29 @@ package body Alire.Publish.States is
       begin
          return
            (Exists  => True,
-            Branch  => +Info.Get (Key.Head).Get (Key.Label),
+            Branch  => +Info (Key.Head) (Key.Label).As_UTF_8,
             Number  => Number,
-            Node_ID => +Info.Get (Key.Node_ID),
-            Title   => +Info.Get (Key.Title),
+            Node_ID => +Info (Key.Node_ID).As_UTF_8,
+            Title   => +Info (Key.Title).As_UTF_8,
             Status  => (if Info.Has_Field (Key.Merged) and then
-                           Info.Get (Key.Merged)
+                           Info (Key.Merged).As_Bool
                         then
                            Merged
-                        elsif Matches (Info.Get (Key.State), Val.Closed) then
+                        elsif Matches (Info (Key.State).As_UTF_8, Val.Closed)
+                        then
                            Rejected
                         elsif Needs_Changes then
                            Changes_Requested
                         else
-                          (case Checks_Status (Info.Get (Key.Head)
-                                                   .Get (Key.SHA))
+                          (case Checks_Status
+                                  (Info (Key.Head) (Key.SHA).As_UTF_8)
                            is
                               when Checks_Ongoing =>
                                 Checks_Ongoing,
                               when Checks_Failed  =>
                                 Checks_Failed,
                               when Checks_Passed =>
-                               (if Info.Get (Key.Draft) then
+                               (if Info (Key.Draft).As_Bool then
                                    Checks_Passed
                                 else
                                    Under_Review)))
@@ -212,33 +212,28 @@ package body Alire.Publish.States is
 
    function Find_Pull_Request (M : Milestones.Milestone) return PR_Status
    is
-      use GNATCOLL.JSON;
-      Result : constant JSON_Value := GitHub.Find_Pull_Request (M);
-      List   : constant JSON_Array := Result.Get;
-      Target :          JSON_Value := JSON_Null;
+      List   : constant JSON_Value := GitHub.Find_Pull_Request (M);
+      Target :          JSON_Value;
+      --  Remains nil if no suitable one is found
    begin
-      for I in 1 .. Length (List) loop
-         declare
-            Obj : constant JSON_Value := Get (List, I);
-         begin
-            --  Keep the first one we see
-            if Matches (Obj.Get (Key.State).Get, Val.Open) then
-               Target := Obj;
-               exit;
+      for Obj of List loop
 
-            elsif Target.Is_Empty
-              or else
-                (Target.Get (Key.State) /= Val.Open
-                 and then Integer'(Target.Get (Key.Number).Get) <
-                   Obj.Get (Key.Number))
-            then
-               --  Keep the one with the highest #number
-               Target := Obj;
-            end if;
-         end;
+         --  Keep the first one we see
+         if Matches (Obj (Key.State).As_UTF_8, Val.Open) then
+            Target := Obj;
+            exit;
+
+         elsif Target.Is_Nil
+           or else
+             (Target (Key.State).As_UTF_8 /= Val.Open
+              and then Target (Key.Number).As_Int < Obj (Key.Number).As_Int)
+         then
+            --  Keep the one with the highest #number
+            Target := Obj;
+         end if;
       end loop;
 
-      if Target.Is_Empty then
+      if Target.Is_Nil then
          return (Exists => False);
       else
          return To_Status (Target);
@@ -258,26 +253,24 @@ package body Alire.Publish.States is
 
    function Find_Pull_Requests return Status_Array is
       use AAA.Strings;
-      use GNATCOLL.JSON;
       Busy : constant Simple_Logging.Ongoing
         := Simple_Logging.Activity ("Retrieving user's PRs") with Unreferenced;
-      List : constant JSON_Array := GitHub.Find_Pull_Requests.Get;
-      Result : Status_Array (1 .. Length (List));
+      List : constant JSON_Value := GitHub.Find_Pull_Requests;
+      Result : Status_Array (1 .. Natural (List.Length));
       I      : Natural := Result'First;
    begin
       --  We can filter at GitHub side using the complete reference, but
       --  surprisingly not by author only. Hence we have to filter here.
-      for J in 1 .. Length (List) loop
+      for Item of List loop
          declare
-            Branch : constant String
-              := +Get (List, J).Get (Key.Head).Get (Key.Label);
+            Branch : constant String := Item (Key.Head) (Key.Label).As_UTF_8;
             --  Do this first so we don't retrieve unneeded reviews
          begin
             if Has_Prefix
               (Branch,
                Utils.User_Input.Query_Config.User_GitHub_Login & ":")
             then
-               Result (I) := To_Status (Get (List, J));
+               Result (I) := To_Status (Item);
                I := I + 1;
             end if;
          end;
