@@ -15,8 +15,8 @@ def check(descr: str = "", name: str = ""):
     """
     run_alr_interactive(['init', '--bin', 'xxx'],
                         output=['> ' for _ in range(7)],
-                        input=[descr,   # Description
-                               name,    # Full user name
+                        input=[descr.encode(),  # Description
+                               name.encode(),   # Full user name
                                '',      # Github login
                                '',      # Email
                                '',      # License
@@ -50,6 +50,10 @@ def check(descr: str = "", name: str = ""):
 check('hello "world"', 'Robert "Bobby" Tables')
 check('"hello" "world"', '"Bobby" Robert Tables')
 check('""""""', '"Bobby" Robert "Tables"')
+
+# Non-ASCII text must be kept as typed, with one, two, three and four bytes per
+# character in UTF-8
+check('Descripción con ñ, € y 😀', 'Núñez Ñandú')
 
 
 print('SUCCESS')

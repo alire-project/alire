@@ -141,6 +141,10 @@ routes = {
     f"GET {RELEASES}/tags/nightly":
         [200, {"tag_name": "nightly", "assets": [{"name": "other.zip"}]}],
 }
+routes[f"GET {PULLS}/13"] = [200, pull(13, title="Título ñ", merged=False)]
+routes[f"GET {PULLS}/13/reviews"] = [200, []]
+routes[f"PATCH {PULLS}/13"] = [200, pull(13, state="closed")]
+routes[f"POST {COMMENTS}/13/comments"] = [201, {"id": 5000000001}]
 for p, _ in OPEN:
     routes[f"GET {PULLS}/{p['number']}"] = [200, {**p, "merged": False}]
     routes[f"GET {PULLS}/{p['number']}/reviews"] = \
@@ -239,6 +243,13 @@ with MockCommand("curl", CURL, "cmd_dir"):
         assert_substring("closed successfully", p.out)
         comment = [r for r in requests() if r["verb"] == "POST"]
         assert_substring("caf", json.loads(comment[0]["data"])["body"])
+
+    # Non-ASCII text from a response is shown as-is in a prompt
+
+    p = run_alr("publish", "--cancel=13", "--reason=x", quiet=False)
+    if not on_windows():
+        assert_substring("(Título ñ)", p.out)
+    requests()
 
     # Cannot cancel what isn't open or doesn't exist
 
