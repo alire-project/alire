@@ -15,12 +15,12 @@ executables = ["alr"]
 
 [[depends-on]]
 aaa = "~0.3.1"
-aaa_texts = "~0.4"
+aaa_texts = "~0.4.1"
 ada_toml = "~0.5"
 ajunitgen = "^1.0.1"
 ansiada = "^1.1"
 c_strings = "^1.0"
-clic = "~0.3"
+clic = "~0.4.1"
 den = "~0.2"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
@@ -34,7 +34,7 @@ si_units = "~0.2.2"
 spdx = "^26"
 stopwatch = "~0.1"
 templates_parser = "^24" # Latests pre-Ada 2022 version
-toml_slicer = "~0.1"
+toml_slicer = "~0.1.4"
 uri_ada = "^2.0"
 
 [gpr-set-externals]
@@ -58,7 +58,7 @@ windows = { ALIRE_OS = "windows", PRJ_TARGET = "Windows" }
 [pins.aaa_texts]
 url    = "https://github.com/mosteo/aaa"
 subdir = "aaa_texts"
-commit = "144fba9c365198a72b34ab5ae7d3a5c960252b56"
+commit = "81be216da5e46f3da86c1fa0200854be51af875e"
 
 [pins.ada_toml]
 url    = "https://github.com/pmderodat/ada-toml"
@@ -74,7 +74,7 @@ commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 
 [pins.clic]
 url    = "https://github.com/alire-project/clic"
-commit = "f7cd77d2ba6c5dfe1fc782254c95ea7bca1dd453"
+commit = "941ec4895ac07e01cb7f7176d36c564be3dc0a1a"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"
@@ -127,7 +127,7 @@ commit = "441acdc3769469e348680d4afd1928022a4da36b"
 
 [pins.toml_slicer]
 url    = "https://github.com/mosteo/toml_slicer"
-commit = "8c5988f91eb008298a2a0504be85b8692cafc9ad"
+commit = "cc863cbc25bf47f99799eff16248a43830bfc9c8"
 
 [pins.yeison_12]
 url    = "https://github.com/mosteo/yeison"
