@@ -2,6 +2,7 @@ with Ada.Containers;
 
 with CLIC.Subcommand;
 
+with Alire.Roots.Locks;
 with Alire.Spawn;
 with Alire.Platforms.Current;
 
@@ -107,6 +108,9 @@ package body Alr.Commands.Exec is
                end;
             end;
          end if;
+
+         Alire.Roots.Locks.Release;
+         --  The workspace is ready, and the command may run alr itself
 
          Alire.Spawn.Command (Cmd                 => Cmd_Name,
                               Args                => Cmd_Args,
