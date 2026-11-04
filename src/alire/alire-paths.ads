@@ -16,6 +16,10 @@ package Alire.Paths with Preelaborate is
 
    Flags_Folder_Inside_Working_Folder : constant Relative_Path := "flags";
 
+   Locks_Folder_Inside_Cache_Folder : constant Relative_Path := "locks";
+   --  Lock files for things in the cache shared by workspaces, see
+   --  Cache.Locks. Inside, they follow the layout of the cache.
+
    Release_Folder_Inside_Working_Folder : constant Relative_Path := "releases";
 
    Temp_Folder_Inside_Working_Folder : constant Relative_Path := "tmp";

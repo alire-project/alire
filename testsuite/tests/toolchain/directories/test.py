@@ -25,7 +25,9 @@ def config_path_re(crate):
     return re.escape(f"{config_dir}/cache/toolchains/{crate}_") + unk_re
 
 def check_content(crate):
-    paths = contents(cache_dir, crate)
+    # Lock files for deployments are kept apart, so leave them out
+    paths = [path for path in contents(cache_dir, crate)
+             if not path.startswith(f"{cache_dir}/locks/")]
     try:
         assert len(paths) >= 1 and \
             re.search(config_path_re(crate), paths[0]), \

@@ -1,5 +1,8 @@
 with Ada.Directories;
 
+with AAA.Filesystem.Locks;
+
+with Alire.Cache.Locks;
 with Alire.Settings.Builtins;
 with Alire.Crates;
 with Alire.Directories;
@@ -270,6 +273,8 @@ package body Alire.Releases is
       Skip_Cleanup : Boolean := False;
       --  Set before raising to skip the cleanup deletion of `Repo_Folder`.
 
+      Lock : AAA.Filesystem.Locks.Lock;
+
       ------------------------------
       -- Backup_Upstream_Manifest --
       ------------------------------
@@ -346,6 +351,31 @@ package body Alire.Releases is
 
       Trace.Debug ("Deploying " & This.Milestone.TTY_Image
                    & " into " & TTY.URL (Repo_Folder));
+
+      --  Another alr process may be deploying the same release at the same
+      --  time, e.g. into the shared vault, so only one does it at a time; the
+      --  checks below then find the other's already deployed.
+
+      --  For sandboxed dependencies and two alr deploying in the same
+      --  workspace, the workspace lock is enough to guarantee safety.
+      --  Even so, locks include a hash of the full path to prevent
+      --  any unrelated deployments to block each other. Also note that
+      --  even in sandboxed mode, some releases are shared (toolchains),
+      --  so this simplifies the logic by using the general mechanism.
+
+      if This.Origin.Kind in Origins.Deployable_Kinds
+        and then not (Completed.Exists and then not Is_Foreign_Shared)
+      then
+         Cache.Locks.Acquire
+           (Lock,
+            Name  => Paths.Release_Folder_Inside_Working_Folder
+                     / (This.Deployment_Folder & "_"
+                        & GNAT.SHA256.Digest
+                            (Alire.Directories.Full_Name (Repo_Folder))
+                            (1 .. 8)
+                        & ".lock"),
+            Doing => "deploying " & This.Milestone.TTY_Image);
+      end if;
 
       --  A shared checkout may only be reused when it comes from the same
       --  origin, so it cannot be planted by another crate (e.g. with a
