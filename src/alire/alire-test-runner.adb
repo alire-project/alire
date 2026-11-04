@@ -9,6 +9,7 @@ with GNAT.IO;
 with GNAT.OS_Lib;
 with System.Multiprocessors;
 
+with AAA.Console_IO;
 with AAA.Enum_Tools;
 
 with Alire_Early_Elaboration;
@@ -220,7 +221,20 @@ package body Alire.Test.Runner is
       procedure Fail
         (Test_Name, Reason : String;
          Start_Time        : Ada.Calendar.Time;
-         Output            : AAA.Strings.Vector) is
+         Output            : AAA.Strings.Vector)
+      is
+         --  Tests may print anything. If their output isn't valid UTF-8, all
+         --  of it is shown escaped, and said so, instead of passing along the
+         --  invalid bytes or taking them for other characters.
+
+         Escaped : constant Boolean :=
+                     (for some Line of Output =>
+                        not AAA.Console_IO.Is_UTF_8 (Line));
+
+         function Escape (Line : String) return String
+         is (if Escaped
+             then Utils.Text_Files.Escape_Invalid_UTF_8 (Line)
+             else Line);
       begin
          Failed := Failed + 1;
          if Structured_Output then
@@ -232,7 +246,13 @@ package body Alire.Test.Runner is
             Builder.Insert (+TOML_Keys.Test_Report_Reason);
             Builder.Append (LML.Scalars.New_Text (+Reason));
             Builder.Insert (+TOML_Keys.Test_Report_Output);
-            Builder.Append (LML.Scalars.New_Text (+Output.Flatten (New_Line)));
+            Builder.Append
+              (LML.Scalars.New_Text
+                 (+Escape (Output.Flatten (New_Line))));
+            if Escaped then
+               Builder.Insert (+TOML_Keys.Test_Report_Output_Escaped);
+               Builder.Append (LML.Scalars.New_Bool (True));
+            end if;
             Builder.Insert (+TOML_Keys.Test_Report_Duration);
             Builder.Append (LML_Scalar_Elapsed (Start_Time));
             Builder.End_Map;
@@ -248,9 +268,13 @@ package body Alire.Test.Runner is
                & Reason
                & ")");
             if not Output.Is_Empty then
-               Trace.Info ("*** Test output ***");
+               Trace.Info
+                 (if Escaped
+                  then "*** Test output (not valid UTF-8: invalid bytes"
+                       & " shown as \xHH, backslashes as \\) ***"
+                  else "*** Test output ***");
                for L of Output loop
-                  Trace.Info (CLIC.TTY.Dim (L));
+                  Trace.Info (CLIC.TTY.Dim (Escape (L)));
                end loop;
                Trace.Info ("*** End Test output ***");
             end if;
@@ -911,7 +935,8 @@ package body Alire.Test.Runner is
                    then "test passed but was expected to fail"
                    else "non-zero return code"),
                   Test.Start_Time,
-                  Utils.Text_Files.Lines (Test.Output_File));
+                  Utils.Text_Files.Read_Lines (Test.Output_File));
+               --  Raw read, as the test output need not be valid UTF-8
             end if;
 
             Delete_File (Test.Output_File, Success);

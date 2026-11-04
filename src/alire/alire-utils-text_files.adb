@@ -1,6 +1,8 @@
 with Ada.Streams.Stream_IO;
+with Ada.Strings.Unbounded;
 with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 
+with AAA.Console_IO;
 with AAA.Strings; use AAA.Strings;
 
 with Alire.Directories;
@@ -106,6 +108,40 @@ package body Alire.Utils.Text_Files is
          end if;
          raise;
    end Write_Lines;
+
+   --------------------------
+   -- Escape_Invalid_UTF_8 --
+   --------------------------
+
+   function Escape_Invalid_UTF_8 (Text : String) return String is
+      use Ada.Strings.Unbounded;
+      Hex    : constant String (1 .. 16) := "0123456789ABCDEF";
+      Result : Unbounded_String;
+      Pos    : Positive := Text'First;
+      Len    : Natural;
+   begin
+      while Pos <= Text'Last loop
+         Len := AAA.Console_IO.UTF_8_Sequence_Length (Text, Pos);
+
+         if Len = 0 then
+            declare
+               Byte : constant Natural := Character'Pos (Text (Pos));
+            begin
+               Append (Result,
+                       "\x" & Hex (Byte / 16 + 1) & Hex (Byte mod 16 + 1));
+            end;
+            Len := 1;
+         elsif Text (Pos) = '\' then
+            Append (Result, "\\");
+         else
+            Append (Result, Text (Pos .. Pos + Len - 1));
+         end if;
+
+         Pos := Pos + Len;
+      end loop;
+
+      return To_String (Result);
+   end Escape_Invalid_UTF_8;
 
    --------------
    -- Finalize --

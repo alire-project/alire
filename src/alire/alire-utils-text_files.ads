@@ -50,6 +50,12 @@ package Alire.Utils.Text_Files is
                           Lines     : AAA.Strings.Vector);
    --  Write Lines to File_Name, replacing it, with native line endings
 
+   function Escape_Invalid_UTF_8 (Text : String) return String;
+   --  Text with each byte that doesn't start a well-formed UTF-8 sequence
+   --  written as \xHH, and each backslash as \\, so the result is valid UTF-8
+   --  from which the original bytes can be recovered. Well-formed sequences
+   --  other than the backslash are kept as they are.
+
 private
 
    type File (Length, Backup_Len : Natural) is
