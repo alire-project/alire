@@ -1,16 +1,15 @@
 with Ada.Calendar;
-with Ada.Characters.Conversions;
 with Ada.Exceptions;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
-with Ada.Strings.UTF_Encoding;
 with Ada.Unchecked_Deallocation;
 with GNAT.IO;
 with GNAT.OS_Lib;
 with System.Multiprocessors;
 
+with AAA.Console_IO;
 with AAA.Enum_Tools;
 
 with Alire_Early_Elaboration;
@@ -183,20 +182,6 @@ package body Alire.Test.Runner is
             (LML.Yeison.Reals.New_Real
                (Long_Long_Float (Duration_Since (Start_Time)))));
 
-      -------------------
-      -- Decode_Output --
-      -------------------
-
-      function Decode_Output (Output : String) return LML.Text is
-      begin
-         return LML.Decode (Output);
-      exception
-         when Ada.Strings.UTF_Encoding.Encoding_Error =>
-            --  Tests may print anything, not only UTF-8, so keep each byte as
-            --  a character rather than failing the whole report.
-            return Ada.Characters.Conversions.To_Wide_Wide_String (Output);
-      end Decode_Output;
-
       --  TODO: have an xplicit XFAIL or similar in the output to distinguish
       --  from PASS/FAIL (or maybe annotate the test name with a trailing
       --  [with expected failure] when Should_Fail). Now just PASS is printed.
@@ -236,7 +221,20 @@ package body Alire.Test.Runner is
       procedure Fail
         (Test_Name, Reason : String;
          Start_Time        : Ada.Calendar.Time;
-         Output            : AAA.Strings.Vector) is
+         Output            : AAA.Strings.Vector)
+      is
+         --  Tests may print anything. If their output isn't valid UTF-8, all
+         --  of it is shown escaped, and said so, instead of passing along the
+         --  invalid bytes or taking them for other characters.
+
+         Escaped : constant Boolean :=
+                     (for some Line of Output =>
+                        not AAA.Console_IO.Is_UTF_8 (Line));
+
+         function Escape (Line : String) return String
+         is (if Escaped
+             then Utils.Text_Files.Escape_Invalid_UTF_8 (Line)
+             else Line);
       begin
          Failed := Failed + 1;
          if Structured_Output then
@@ -250,7 +248,11 @@ package body Alire.Test.Runner is
             Builder.Insert (+TOML_Keys.Test_Report_Output);
             Builder.Append
               (LML.Scalars.New_Text
-                 (Decode_Output (Output.Flatten (New_Line))));
+                 (+Escape (Output.Flatten (New_Line))));
+            if Escaped then
+               Builder.Insert (+TOML_Keys.Test_Report_Output_Escaped);
+               Builder.Append (LML.Scalars.New_Bool (True));
+            end if;
             Builder.Insert (+TOML_Keys.Test_Report_Duration);
             Builder.Append (LML_Scalar_Elapsed (Start_Time));
             Builder.End_Map;
@@ -266,9 +268,13 @@ package body Alire.Test.Runner is
                & Reason
                & ")");
             if not Output.Is_Empty then
-               Trace.Info ("*** Test output ***");
+               Trace.Info
+                 (if Escaped
+                  then "*** Test output (not valid UTF-8: invalid bytes"
+                       & " shown as \xHH, backslashes as \\) ***"
+                  else "*** Test output ***");
                for L of Output loop
-                  Trace.Info (CLIC.TTY.Dim (L));
+                  Trace.Info (CLIC.TTY.Dim (Escape (L)));
                end loop;
                Trace.Info ("*** End Test output ***");
             end if;
