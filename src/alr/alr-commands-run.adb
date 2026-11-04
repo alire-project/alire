@@ -3,6 +3,7 @@ with Ada.Containers;
 with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
+with Alire.Roots.Locks;
 
 with Alr.Commands.Build;
 with Alr.Files;
@@ -220,6 +221,10 @@ package body Alr.Commands.Run is
             else
                Trace.Detail ("Launching " & Target_Exes.First_Element);
                Trace.Detail ("...");
+
+               Alire.Roots.Locks.Release;
+               --  The program may run for long, and doesn't need alr
+
                Alire.OS_Lib.Subprocess.Spawn_Raw
                  (Target_Exes.First_Element,
                   Alire.OS_Lib.Subprocess.Split_Arguments (Cmd.Args.all));

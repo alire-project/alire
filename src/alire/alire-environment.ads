@@ -34,6 +34,10 @@ package Alire.Environment with Preelaborate is
 
    function Traceback_Enabled return Boolean;
 
+   Workspace_Lock : constant String := "ALIRE_WORKSPACE_LOCK";
+   --  Path of the workspace locked by the alr process that sets it, so alr
+   --  processes started from that one don't wait for it (see Roots.Locks)
+
    type Context is tagged limited private;
 
    procedure Set (This : in out Context; Name, Value, Origin : String);

@@ -14,7 +14,7 @@ project-files = ["alr.gpr"]
 executables = ["alr"]
 
 [[depends-on]]
-aaa = "~0.3.1"
+aaa = "~0.3.2"
 aaa_texts = "~0.4.1"
 ada_toml = "~0.5"
 ajunitgen = "^1.0.1"
@@ -58,7 +58,7 @@ windows = { ALIRE_OS = "windows", PRJ_TARGET = "Windows" }
 [pins.aaa_texts]
 url    = "https://github.com/mosteo/aaa"
 subdir = "aaa_texts"
-commit = "81be216da5e46f3da86c1fa0200854be51af875e"
+commit = "75b06fe416da954f0c6c733fd95f16f14a7e87af"
 
 [pins.ada_toml]
 url    = "https://github.com/pmderodat/ada-toml"

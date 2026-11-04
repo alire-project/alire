@@ -20,6 +20,11 @@ package Alire.Paths with Preelaborate is
 
    Temp_Folder_Inside_Working_Folder : constant Relative_Path := "tmp";
 
+   Workspace_Lock_Inside_Working_Folder : constant Relative_Path :=
+                                            "workspace.lock";
+   --  Locked by the alr process working on the workspace, see Roots.Locks.
+   --  Not to be confused with the lockfile holding the solution.
+
    Working_Folder_Inside_Root : constant Relative_Path := "alire";
    --  Folder within a workspace that will contain metadata/build files,
    --  dependency releases, etc.
