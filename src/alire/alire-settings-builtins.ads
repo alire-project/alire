@@ -67,6 +67,33 @@ package Alire.Settings.Builtins is
         " quoting rules. The token ${GPR_FILE} is replaced by" &
         " a path to the project file to open.");
 
+   --  EXTERNALS
+
+   Externals_Version_Output_Policy : constant Builtin := New_Builtin
+     (Key         => "externals.version_output.policy",
+      Kind        => Stn_String,
+      Def         => "allowlist",
+      Check       => Checks.Valid_Version_Output_Policy'Access,
+      Global_Only => True,
+      Help        =>
+        "Which version commands of external crates detected from their output"
+      & " may be run: 'all', 'allowlist' (only those in"
+      & " externals.version_output.allowlist) or 'none'.");
+
+   Externals_Version_Output_Allowlist : constant Builtin := New_Builtin
+     (Key         => "externals.version_output.allowlist",
+      Kind        => Stn_String,
+      Def         => "curl --version; gnat --version; gprbuild --version;"
+                   & " m4 --version; make --version; odbc_config --version;"
+                   & " pkg-config --modversion *; pkg-config --version",
+      Global_Only => True,
+      Help        =>
+        "Version commands of external crates that may be run, separated by"
+      & " ';', when externals.version_output.policy is 'allowlist'. Words in"
+      & " a command must match exactly, except that a '*' argument matches"
+      & " one argument made of letters, digits and '.', '_', '+', '-', not"
+      & " starting with '-'.");
+
    --  INDEX
 
    Index_Auto_Community : constant Builtin := New_Builtin
