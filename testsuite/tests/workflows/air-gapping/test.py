@@ -69,9 +69,10 @@ shutil.move("my_index", "somewhere_else")
 
 # Simulate transferring to a different system by clearing the alr-config
 # directory (we keep settings.toml, since it just does various things to isolate
-# the test environment) and changing the absolute path of the crate directory.
+# the test environment, and its lock file) and changing the absolute path of the
+# crate directory.
 for f in os.listdir("alr-config"):
-    if f != "settings.toml":
+    if f not in ("settings.toml", "settings.toml.lock"):
         shutil.rmtree(os.path.join("alr-config", f))
 shutil.move(f"hello_1.0.1_filesystem", "hello")
 

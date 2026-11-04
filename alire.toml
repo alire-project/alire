@@ -20,7 +20,7 @@ ada_toml = "~0.5"
 ajunitgen = "^1.0.1"
 ansiada = "^1.1"
 c_strings = "^1.0"
-clic = "~0.4.1"
+clic = "~0.4.2"
 den = "~0.2"
 dirty_booleans = "~0.1"
 diskflags = "~0.1"
@@ -58,7 +58,7 @@ windows = { ALIRE_OS = "windows", PRJ_TARGET = "Windows" }
 [pins.aaa_texts]
 url    = "https://github.com/mosteo/aaa"
 subdir = "aaa_texts"
-commit = "75b06fe416da954f0c6c733fd95f16f14a7e87af"
+commit = "1fb939d67fee97ab2245b507521a2f5c3aa6f63f"
 
 [pins.ada_toml]
 url    = "https://github.com/pmderodat/ada-toml"
@@ -74,7 +74,7 @@ commit = "e4d58ad90bf32bc44304197e5906a519f5a9a7bf"
 
 [pins.clic]
 url    = "https://github.com/alire-project/clic"
-commit = "941ec4895ac07e01cb7f7176d36c564be3dc0a1a"
+commit = "5c8e3cc0093910656497343e3e1c7cfd641bc0e9"
 
 [pins.den]
 url    = "https://github.com/mosteo/den"

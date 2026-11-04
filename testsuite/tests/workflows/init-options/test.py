@@ -10,6 +10,39 @@ from drivers.helpers import compare, contents
 
 test_dir = os.getcwd()
 
+
+def skeleton(root: str, crate: str, tests: bool = True) -> list:
+    """
+    Sorted paths, under root, of what `alr init --bin crate` creates
+    """
+    files = [".gitignore",
+             "alire",
+             "alire.toml",
+             "alire/alire.lock",
+             "alire/build_hash_inputs",
+             "alire/settings.toml",
+             "alire/settings.toml.lock",
+             "alire/tmp",
+             "config",
+             f"config/{crate}_config.ads",
+             f"config/{crate}_config.gpr",
+             f"config/{crate}_config.h",
+             "share",
+             f"share/{crate}",
+             "src",
+             f"src/{crate}.adb",
+             f"{crate}.gpr"]
+    if tests:
+        files += ["tests",
+                  "tests/.gitignore",
+                  "tests/alire.toml",
+                  "tests/src",
+                  f"tests/src/{crate}_tests-assertions_enabled.adb",
+                  f"tests/src/{crate}_tests.ads",
+                  f"tests/{crate}_tests.gpr"]
+    return sorted(f"{root}/{file}" for file in files)
+
+
 # Invalid crate name
 p = run_alr('init', '--bin', 'invalid-name',
             complain_on_error=False)
@@ -21,57 +54,12 @@ assert_match(".*Identifiers must be.*", p.out)
 
 # Plain init
 run_alr('init', '--bin', 'xxx')
-compare(contents('xxx'), ['xxx/.gitignore',
-                          'xxx/alire',
-                          'xxx/alire.toml',
-                          'xxx/alire/alire.lock',
-                          'xxx/alire/build_hash_inputs',
-                          'xxx/alire/settings.toml',
-                          'xxx/alire/tmp',
-                          'xxx/config',
-                          'xxx/config/xxx_config.ads',
-                          'xxx/config/xxx_config.gpr',
-                          'xxx/config/xxx_config.h',
-                          'xxx/share',
-                          'xxx/share/xxx',
-                          'xxx/src',
-                          'xxx/src/xxx.adb',
-                          'xxx/tests',
-                          'xxx/tests/.gitignore',
-                          'xxx/tests/alire.toml',
-                          'xxx/tests/src',
-                          'xxx/tests/src/xxx_tests-assertions_enabled.adb',
-                          'xxx/tests/src/xxx_tests.ads',
-                          'xxx/tests/xxx_tests.gpr',
-                          'xxx/xxx.gpr'])
+compare(contents('xxx'), skeleton('xxx', 'xxx'))
 
 # Plain init, existing empty dir
 os.mkdir('aaa')
 run_alr('init', '--bin', 'aaa')
-compare(contents('aaa'), ['aaa/.gitignore',
-                          'aaa/aaa.gpr',
-                          'aaa/alire',
-                          'aaa/alire.toml',
-                          'aaa/alire/alire.lock',
-                          'aaa/alire/build_hash_inputs',
-                          'aaa/alire/settings.toml',
-                          'aaa/alire/tmp',
-                          'aaa/config',
-                          'aaa/config/aaa_config.ads',
-                          'aaa/config/aaa_config.gpr',
-                          'aaa/config/aaa_config.h',
-                          'aaa/share',
-                          'aaa/share/aaa',
-                          'aaa/src',
-                          'aaa/src/aaa.adb',
-                          'aaa/tests',
-                          'aaa/tests/.gitignore',
-                          'aaa/tests/aaa_tests.gpr',
-                          'aaa/tests/alire.toml',
-                          'aaa/tests/src',
-                          'aaa/tests/src/aaa_tests-assertions_enabled.adb',
-                          'aaa/tests/src/aaa_tests.ads'
-                          ])
+compare(contents('aaa'), skeleton('aaa', 'aaa'))
 
 # Init without skeleton
 run_alr('init', '--bin', '--no-skel', 'yyy')
@@ -80,22 +68,7 @@ compare(contents('yyy'), ['yyy/alire.toml',
 
 # Init without tests
 run_alr('init', '--bin', '--no-test', 'bbb')
-compare(contents('bbb'), ['bbb/.gitignore',
-                          'bbb/alire',
-                          'bbb/alire.toml',
-                          'bbb/alire/alire.lock',
-                          'bbb/alire/build_hash_inputs',
-                          'bbb/alire/settings.toml',
-                          'bbb/alire/tmp',
-                          'bbb/bbb.gpr',
-                          'bbb/config',
-                          'bbb/config/bbb_config.ads',
-                          'bbb/config/bbb_config.gpr',
-                          'bbb/config/bbb_config.h',
-                          'bbb/share',
-                          'bbb/share/bbb',
-                          'bbb/src',
-                          'bbb/src/bbb.adb'])
+compare(contents('bbb'), skeleton('bbb', 'bbb', tests=False))
 
 # Init with existing crate
 os.chdir('yyy')
@@ -120,29 +93,7 @@ os.chdir(test_dir)
 os.mkdir('zzz')
 os.chdir('zzz')
 run_alr('init', '--bin', '--in-place', 'zzz')
-compare(contents('.'), ['./.gitignore',
-                        './alire',
-                        './alire.toml',
-                        './alire/alire.lock',
-                        './alire/build_hash_inputs',
-                        './alire/settings.toml',
-                        './alire/tmp',
-                        './config',
-                        './config/zzz_config.ads',
-                        './config/zzz_config.gpr',
-                        './config/zzz_config.h',
-                        './share',
-                        './share/zzz',
-                        './src',
-                        './src/zzz.adb',
-                        './tests',
-                        './tests/.gitignore',
-                        './tests/alire.toml',
-                        './tests/src',
-                        './tests/src/zzz_tests-assertions_enabled.adb',
-                        './tests/src/zzz_tests.ads',
-                        './tests/zzz_tests.gpr',
-                        './zzz.gpr'])
+compare(contents('.'), skeleton('.', 'zzz'))
 
 
 print('SUCCESS')
