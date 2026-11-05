@@ -35,6 +35,17 @@ package Alire.Settings.Builtins is
       & "location inside the global cache. When false, "
       & "dependencies are sandboxed in each workspace.");
 
+   Dependencies_Shared_Locking : constant Builtin := New_Builtin
+     (Key  => "dependencies.shared_locking",
+      Def  => True,
+      Help =>
+        "When true, alr processes building workspaces with the same shared "
+      & "dependencies take turns with each shared build folder while they "
+      & "sync it, configure it, run its actions, or compile it for the "
+      & "first time. When false, they don't wait for each other, and "
+      & "building the same dependency at the same time may fail (building "
+      & "again fixes it).");
+
    --  DISTRIBUTION
 
    Distribution_Disable_Detection : constant Builtin := New_Builtin

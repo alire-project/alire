@@ -1,5 +1,6 @@
 with AAA.Strings;
 
+with Alire.Builds.Locks;
 with Alire.Cache;
 with Alire.Directories;
 with Alire.Flags;
@@ -43,38 +44,107 @@ package body Alire.Builds is
          Trace.Detail ("Skipping build syncing to existing " & Dst);
          Was_There := True;
          return;
-      else
+      end if;
+
+      declare
+         Lock : constant Locks.Holder := Locks.Folder (Root, Release)
+           with Unreferenced;
+         --  The folder is shared with other workspaces, which may be syncing
+         --  it at the same time.
+      begin
+         if Synced.Exists then
+            Trace.Detail ("Skipping build syncing to " & Dst
+                          & ", just synced by another alr process");
+            Was_There := True;
+            return;
+         end if;
+
          Directories.Delete_Tree (Dst);
          --  Ensure nothing interferes at destination with the new copy
 
          Directories.Create_Tree (Directories.Parent (Dst));
          --  And that the destination parent exists
-      end if;
 
-      declare
-         Busy : constant Simple_Logging.Ongoing :=
-                  Simple_Logging.Activity
-                    ("Syncing " & Release.Milestone.TTY_Image)
-                    with Unreferenced;
-      begin
-         Den.Filesystem.Create_Directory (Dst);
-         Den.Filesystem.Copy (Src, Dst);
-      exception
-         when E : others =>
-            Log_Exception (E);
-            Raise_Checked_Error
-              ("Could not sync build dir from " & Src & " to " & Dst);
+         declare
+            Busy : constant Simple_Logging.Ongoing :=
+                     Simple_Logging.Activity
+                       ("Syncing " & Release.Milestone.TTY_Image)
+                       with Unreferenced;
+         begin
+            Den.Filesystem.Create_Directory (Dst);
+            Den.Filesystem.Copy (Src, Dst);
+         exception
+            when E : others =>
+               Log_Exception (E);
+               Raise_Checked_Error
+                 ("Could not sync build dir from " & Src & " to " & Dst);
+         end;
+
+         --  At this point we can generate the final crate configuration
+         Root.Configuration.Generate_Config_Files (Root, Release,
+                                                   Full => Force);
+
+         --  We could run post-fetch now but for consistency with sandboxed
+         --  deps and to have a single call point, we delay until build time
+         --  (which is performed right after sync anyway).
+
+         Synced.Mark (Done => True);
       end;
-
-      --  At this point we can generate the final crate configuration
-      Root.Configuration.Generate_Config_Files (Root, Release, Full => Force);
-
-      --  We could run post-fetch now but for consistency with sandboxed deps
-      --  and to have a single call point, we delay until build time (which is
-      --  performed right after sync anyway).
-
-      Synced.Mark (Done => True);
    end Sync;
+
+   ---------------
+   -- Is_Shared --
+   ---------------
+
+   function Is_Shared (Root    : in out Roots.Root;
+                       Release : Releases.Release)
+                       return Boolean
+   is (Root.Solution.Depends_On (Release.Name)
+       and then Root.Requires_Build_Sync (Release));
+
+   ----------------
+   -- Built_Flag --
+   ----------------
+
+   function Built_Flag (Root    : in out Roots.Root;
+                        Release : Releases.Release)
+                        return Flags.Flag
+   is (Flags.Built (Builds.Path (Root, Release, Subdir => False)));
+
+   --------------
+   -- Is_Built --
+   --------------
+
+   function Is_Built (Root    : in out Roots.Root;
+                      Release : Releases.Release)
+                      return Boolean
+   is (Is_Shared (Root, Release) and then Built_Flag (Root, Release).Exists);
+
+   ----------------
+   -- Mark_Built --
+   ----------------
+
+   procedure Mark_Built (Root    : in out Roots.Root;
+                         Release : Releases.Release)
+   is
+   begin
+      if Is_Shared (Root, Release) and then not Is_Built (Root, Release) then
+         Built_Flag (Root, Release).Mark_Done;
+      end if;
+   end Mark_Built;
+
+   ------------------
+   -- Mark_Unbuilt --
+   ------------------
+
+   procedure Mark_Unbuilt (Root    : in out Roots.Root;
+                           Release : Releases.Release)
+   is
+   begin
+      if Is_Built (Root, Release) then
+         Built_Flag (Root, Release).Mark_Undone;
+      end if;
+   end Mark_Unbuilt;
 
    ----------
    -- Path --

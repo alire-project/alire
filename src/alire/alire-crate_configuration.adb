@@ -4,6 +4,7 @@ with Ada.Directories;
 with AAA.Enum_Tools;
 with AAA.Strings; use AAA.Strings;
 
+with Alire.Builds.Locks;
 with Alire.Containers;
 with Alire_Early_Elaboration;
 with Alire.Solutions;
@@ -485,7 +486,16 @@ package body Alire.Crate_Configuration is
 
             declare
                Version_Str : constant String := Rel.Version.Image;
+
+               Lock : constant Builds.Locks.Holder :=
+                        Builds.Locks.Folder (Root, Rel)
+                 with Unreferenced;
+               --  In case the folder is shared with other workspaces
             begin
+               --  New config files need compiling, even if unchanged, as
+               --  gprbuild goes by their timestamps.
+               Builds.Mark_Unbuilt (Root, Rel);
+
                if not Ent.Disabled then
                   Ada.Directories.Create_Path (Conf_Dir);
 

@@ -72,4 +72,36 @@ package Alire.Builds is
    --  If Subdir and Release is in monorepo, include the extra path inside the
    --  monorepo. Has no effect for ordinary releases.
 
+   --  A shared build folder is marked as built once compiled, until its
+   --  sources change, so its builds are known to be no longer needed (see
+   --  Builds.Locks). Nothing is marked for releases built elsewhere.
+
+   --  Note that this is only advisory, for locking. Gprbuild will examine the
+   --  closure of dependencies normally and determine what requires building
+   --  or not. A discrepancy between our determination and gprbuild's will
+   --  result in an unlocked build, which is the old behavior, and normally
+   --  harmless or easily fixable with a rebuild.
+
+   function Is_Built (Root    : in out Roots.Root;
+                      Release : Releases.Release)
+                      return Boolean;
+   --  Whether the shared build folder of Release is marked as built
+
+   procedure Mark_Built (Root    : in out Roots.Root;
+                         Release : Releases.Release);
+   --  After compiling Release successfully
+
+   procedure Mark_Unbuilt (Root    : in out Roots.Root;
+                           Release : Releases.Release);
+   --  Before changing the sources in the shared build folder of Release, as
+   --  it will need compiling again. For example, on config regeneration,
+   --  even if identical (this happens with explicit updates).
+
+private
+
+   function Is_Shared (Root    : in out Roots.Root;
+                       Release : Releases.Release)
+                       return Boolean;
+   --  Whether Release is a dependency of Root built in a shared build folder
+
 end Alire.Builds;

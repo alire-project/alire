@@ -1,3 +1,4 @@
+with Alire.Builds.Locks;
 with Alire.Directories;
 with Alire.Errors;
 with Alire.Flags;
@@ -22,10 +23,19 @@ package body Alire.Properties.Actions.Executor is
               Root.Release_Base (Rel.Name, Roots.For_Build);
 
       CD  : Directories.Guard (Directories.Enter (CWD)) with Unreferenced;
+
+      function Already_Ran return Boolean
+      is (Moment = Post_Fetch and then Flags.Post_Fetch (CWD).Exists);
+
+      function Has_Actions return Boolean is
+         Now : Releases.Moment_Array := (others => False);
+      begin
+         Now (Moment) := True;
+         return not Rel.On_Platform_Actions (Root.Environment, Now).Is_Empty;
+      end Has_Actions;
+
    begin
-      if Moment = Post_Fetch and then
-        Flags.Post_Fetch (CWD).Exists
-      then
+      if Already_Ran then
          Trace.Debug
            ("Skipping already ran " &
               Utils.TTY.Name (TOML_Adapters.Tomify (Moment'Image))
@@ -33,14 +43,33 @@ package body Alire.Properties.Actions.Executor is
          return;
       end if;
 
-      Execute_Actions
-        (Release => Rel,
-         Env     => Root.Environment,
-         Moment  => Moment);
+      declare
+         Lock : constant Builds.Locks.Holder :=
+                  (if Has_Actions
+                   then Builds.Locks.Folder (Root, Rel)
+                   else Builds.Locks.None)
+           with Unreferenced;
+         --  Actions may change the folder, which may be shared with other
+         --  workspaces.
+      begin
+         --  Another alr process may have run them while we waited
+         if Already_Ran then
+            return;
+         end if;
 
-      if Moment = Post_Fetch then
-         Flags.Post_Fetch (CWD).Mark_Done;
-      end if;
+         if Has_Actions then
+            Builds.Mark_Unbuilt (Root, Rel);
+         end if;
+
+         Execute_Actions
+           (Release => Rel,
+            Env     => Root.Environment,
+            Moment  => Moment);
+
+         if Moment = Post_Fetch then
+            Flags.Post_Fetch (CWD).Mark_Done;
+         end if;
+      end;
    exception
       when Action_Failed | Checked_Error =>
          raise;

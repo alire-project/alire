@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 
+from drivers import locks
 from drivers.alr import alr_settings_dir, run_alr
 from drivers.asserts import assert_eq, assert_match
 from drivers.helpers import MockCommand
@@ -42,7 +43,7 @@ with MockCommand("tar", TAR, "mocks"):
 
 # Only one did it, while the others said they were waiting
 
-assert any("Waiting for another alr process deploying gnat_native=8888.0.0"
+assert any(f"{locks.WAITING} deploying gnat_native=8888.0.0"
            in out for out in outputs), "\n".join(outputs)
 
 # The deployment is complete, and there is only one

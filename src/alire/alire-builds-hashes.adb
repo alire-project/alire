@@ -1,3 +1,4 @@
+with Alire.Builds.Locks;
 with Alire.Crate_Configuration.Hashes;
 with Alire.Directories;
 with Alire.Environment.Loading;
@@ -338,20 +339,35 @@ package body Alire.Builds.Hashes is
       ------------------
 
       procedure Write_Inputs (Rel : Releases.Release) is
-         File : constant Absolute_Path := Inputs_File_Name (Root, Rel);
+         File   : constant Absolute_Path := Inputs_File_Name (Root, Rel);
+         Inputs : constant AAA.Strings.Vector :=
+                    This.Inputs (Rel.Name).To_Vector;
          use Directories;
          use Utils.Text_Files;
+         use type AAA.Strings.Vector;
       begin
-         --  First ensure we have a pristine file to work with
-         Delete_Tree (File);
-         Create_Tree (Parent (File));
-         Touch (File);
+         --  Nothing to write if already there, as is usual for a shared build
+         --  folder used before.
 
-         --  Now add the hashed contents for the record
+         if Is_File (File) and then Read_Lines (File) = Inputs then
+            return;
+         end if;
 
-         Append_Lines (File,
-                       This.Inputs (Rel.Name).To_Vector,
-                       Backup => False);
+         declare
+            Lock : constant Builds.Locks.Holder :=
+                     Builds.Locks.Folder (Root, Rel)
+              with Unreferenced;
+            --  In case the folder is shared with other workspaces
+         begin
+            --  First ensure we have a pristine file to work with
+            Delete_Tree (File);
+            Create_Tree (Parent (File));
+            Touch (File);
+
+            --  Now add the hashed contents for the record
+
+            Append_Lines (File, Inputs, Backup => False);
+         end;
       end Write_Inputs;
 
       ------------------

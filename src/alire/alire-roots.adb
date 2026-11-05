@@ -1,6 +1,7 @@
 with Ada.Directories;
 with Ada.Unchecked_Deallocation;
 
+with Alire.Builds.Locks;
 with Alire.Conditional;
 with Alire.Dependencies.Containers;
 with Alire.Environment.Loading;
@@ -172,27 +173,45 @@ package body Alire.Roots is
                          Trace.Detail);
 
             else
+               declare
+                  Lock : constant Builds.Locks.Holder :=
+                           Builds.Locks.For_Compiling (This, Release)
+                    with Unreferenced;
+                  --  Shared dependencies not built yet are compiled too, maybe
+                  --  by another workspace at the same time.
+               begin
+                  --  Build all the project files
+                  for Gpr_File of Release.Project_Files
+                    (This.Environment, With_Path => True)
+                  loop
+                     Put_Info ("Building "
+                               & Release.Milestone.TTY_Image & "/"
+                               & TTY.URL (Gpr_File)
+                               & (if Count > 1
+                                 then " (" & AAA.Strings.Trim (Current'Image)
+                                 & "/" & AAA.Strings.Trim (Count'Image) & ")"
+                                 else "")
+                               & "...");
 
-               --  Build all the project files
-               for Gpr_File of Release.Project_Files
-                 (This.Environment, With_Path => True)
-               loop
-                  Put_Info ("Building "
-                            & Release.Milestone.TTY_Image & "/"
-                            & TTY.URL (Gpr_File)
-                            & (if Count > 1
-                              then " (" & AAA.Strings.Trim (Current'Image)
-                              & "/" & AAA.Strings.Trim (Count'Image) & ")"
-                              else "")
-                            & "...");
+                     Spawn.Gprbuild
+                       (This.Release_Base (Release.Name, For_Build)
+                        / Gpr_File,
+                        Extra_Args => Cmd_Args);
 
-                  Spawn.Gprbuild (This.Release_Base (Release.Name, For_Build)
-                                  / Gpr_File,
-                                  Extra_Args => Cmd_Args);
+                     Current := Current + 1;
+                  end loop;
 
-                  Current := Current + 1;
-               end loop;
-
+                  --  The root build compiles every dependency it withs
+                  if Is_Root then
+                     for Rel of This.Solution.Releases loop
+                        if Rel.Auto_GPR_With then
+                           Builds.Mark_Built (This, Rel);
+                        end if;
+                     end loop;
+                  else
+                     Builds.Mark_Built (This, Release);
+                  end if;
+               end;
             end if;
 
          exception

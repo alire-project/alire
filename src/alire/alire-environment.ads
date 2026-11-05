@@ -38,6 +38,11 @@ package Alire.Environment with Preelaborate is
    --  Path of the workspace locked by the alr process that sets it, so alr
    --  processes started from that one don't wait for it (see Roots.Locks)
 
+   Build_Locks : constant String := "ALIRE_BUILD_LOCKS";
+   --  Locks on shared build folders held by the alr process that sets it,
+   --  separated by GNAT.OS_Lib.Path_Separator, so alr processes started from
+   --  that one don't wait for them (see Builds.Locks).
+
    type Context is tagged limited private;
 
    procedure Set (This : in out Context; Name, Value, Origin : String);

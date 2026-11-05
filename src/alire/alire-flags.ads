@@ -20,11 +20,17 @@ package Alire.Flags is
    --  The origin a release was deployed from, to tell whether a deployment
    --  that is shared (e.g., the checkout of a monorepo) is the right one
 
+   function Built (Base : Absolute_Path) return Flag;
+   --  Signals that a shared build folder has been compiled since its sources
+   --  last changed, so compiling it again is not expected (see
+   --  Builds.Is_Built).
+
 private
 
    --  The following names directly translate into lowercase filenames
    type Names is
-     (Complete_Copy,
+     (Built,
+      Complete_Copy,
       Monorepo_Data,
       Post_Fetch_Done);
 
@@ -38,6 +44,9 @@ private
                       return Flag;
    --  Base refers to the top-dir of any release, not necessarily a workspace
    --  root.
+
+   function Built (Base : Absolute_Path) return Flag
+   is (New_Flag (Built, Base));
 
    function Complete_Copy (Base : Absolute_Path) return Flag
    is (New_Flag (Complete_Copy, Base));
