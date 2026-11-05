@@ -1,0 +1,3 @@
+driver: python-script
+indexes:
+    basic_index: {}

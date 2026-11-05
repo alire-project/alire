@@ -343,7 +343,7 @@ package Alire.Roots is
                                   Needed  : Boolean := True)
                                   return Builds.Locks.Holder;
    --  Lock the shared build folder of Release, if it has one and Needed, to
-   --  sync it, configure it or run its actions. With not Needed this is a 
+   --  sync it, configure it or run its actions. With not Needed this is a
    --  noop, but since this returns a limited object, this simplifies things
    --  at the caller that needs not to duplicate blocks with[out] the lock.
 

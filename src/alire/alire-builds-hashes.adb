@@ -272,9 +272,14 @@ package body Alire.Builds.Hashes is
             then
                Add_Compiler;   -- Compiler version
             end if;
-
-            Add_Dependencies;  -- Hash of dependencies
          end if;
+
+         --  Dependencies do appear in generated files, as the withs of the
+         --  project file, so they're needed even for sandboxed dependencies:
+         --  otherwise, a dependency added or removed by editing the manifest
+         --  wouldn't change the inputs, and the config wouldn't be generated
+         --  again until a forced update.
+         Add_Dependencies;  -- Hash of dependencies
 
          --  Final computation
          Compute_Hash;

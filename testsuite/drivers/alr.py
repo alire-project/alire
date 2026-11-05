@@ -651,7 +651,8 @@ def alr_with(dep="", path="", url="", commit="", branch="",
 
     if manual:
         if delete:
-            delete_array_entry_from_manifest("depends-on", dep, update=update)
+            delete_array_entry_from_manifest("depends-on", dep[:pos],
+                                             update=update)
         else:
             with open(alr_manifest(), "at") as manifest:
                 lines = ["\n[[depends-on]]\n",
