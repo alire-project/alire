@@ -54,6 +54,17 @@ During `alr init`, if a `LicenseRef-` prefix is necessary and sufficient to make
 a user-specified `licenses` string valid, `alr` will now suggest the corrected
 form.
 
+### Crate names cannot be reserved keywords anymore
+
+PR [#2051](https://github.com/alire-project/alire/pull/2051)
+
+It is no longer possible to create a Crate with a reserved keyword as its name.
+The reserved keywords are the same as Ada2022 and the ones defined by GPR.
+See the [GPR config](https://docs.adacore.com/gprbuild-docs/pdf/gprbuild_ug.pdf)
+definition in 2.9.1 and
+[Ada2022](https://www.adaic.org/resources/add_content/standards/22rm/html/RM-2-9.html)
+definition.
+
 ### Support for quoting in custom editors, quoting changes for `alr run`
 
 PR [#1993](https://github.com/alire-project/alire/pull/1993)
@@ -1309,14 +1320,3 @@ $ alr with indexed_crate
 $ alr pin indexed_crate --use /path/to/gpr/containing/folder
 # To pin a previously added dependency.
 ```
-
-### Crate names cannot be reserved keywords anymore
-
-PR [#2051](https://github.com/alire-project/alire/pull/2051)
-
-It is no longer possible to create a Crate with a reserved keyword as its name.
-The reserved keywords are the same as Ada2022 and the ones defined by GPR.
-See the [GPR config](https://docs.adacore.com/gprbuild-docs/pdf/gprbuild_ug.pdf)
-definition in 2.9.1 and
-[Ada2022](https://www.adaic.org/resources/add_content/standards/22rm/html/RM-2-9.html)
-definition.
