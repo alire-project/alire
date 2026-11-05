@@ -6,6 +6,12 @@ stay on top of `alr` new features.
 
 ## Release `3.0`
 
+### Misstyping correction
+
+PR [#2239](https://github.com/alire-project/alire/pull/2239)
+When Misstyping a command like `alr witg` instead of `alr with`, you will be
+informed of the nearest possible command
+
 ### Support for Git from Cygwin and MSYS2
 
 PR [#2186](https://github.com/alire-project/alire/pull/2186)
