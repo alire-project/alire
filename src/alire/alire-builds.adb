@@ -47,7 +47,7 @@ package body Alire.Builds is
       end if;
 
       declare
-         Lock : constant Locks.Holder := Locks.Folder (Root, Release)
+         Lock : constant Locks.Holder := Root.Release_Compile_Lock (Release)
            with Unreferenced;
          --  The folder is shared with other workspaces, which may be syncing
          --  it at the same time.

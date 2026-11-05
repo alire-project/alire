@@ -22,6 +22,8 @@ package Alire.Builds.Locks is
    --  A process takes several locks at once only when compiling, and then
    --  in a fixed order and holding no others, so processes can't deadlock.
 
+   --  Callers take these locks through the Roots wrappers.
+
    type Holder (<>) is tagged limited private;
    --  The locks taken by one of the following, released when it is finalized
 

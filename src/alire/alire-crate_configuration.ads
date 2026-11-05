@@ -175,21 +175,24 @@ private
                             Root  : in out Roots.Root;
                             Crate : Crate_Name);
 
-   procedure Generate_Ada_Config (This     : Global_Config;
-                                  Crate    : Crate_Name;
-                                  Filepath : Absolute_Path;
-                                  Version  : String);
+   --  The contents of each kind of config file, so they can be compared
+   --  to existing contents before being written (to avoid rebuilds).
 
-   procedure Generate_GPR_Config (This        : Global_Config;
-                                  Crate       : Crate_Name;
-                                  Filepath    : Absolute_Path;
-                                  Withs       : AAA.Strings.Set;
-                                  Version     : String);
+   function Ada_Config_Lines (This    : Global_Config;
+                              Crate   : Crate_Name;
+                              Version : String)
+                              return AAA.Strings.Vector;
 
-   procedure Generate_C_Config (This     : Global_Config;
-                                Crate    : Crate_Name;
-                                Filepath : Absolute_Path;
-                                Version  : String);
+   function GPR_Config_Lines (This    : Global_Config;
+                              Crate   : Crate_Name;
+                              Withs   : AAA.Strings.Set;
+                              Version : String)
+                              return AAA.Strings.Vector;
+
+   function C_Config_Lines (This    : Global_Config;
+                            Crate   : Crate_Name;
+                            Version : String)
+                            return AAA.Strings.Vector;
 
    function Key (Crate : Crate_Name; Var_Name : String) return String;
    --  Keys in the var map are normalized as "crate.var" lowercased

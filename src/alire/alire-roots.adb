@@ -1,7 +1,6 @@
 with Ada.Directories;
 with Ada.Unchecked_Deallocation;
 
-with Alire.Builds.Locks;
 with Alire.Conditional;
 with Alire.Dependencies.Containers;
 with Alire.Environment.Loading;
@@ -13,6 +12,7 @@ with Alire.Origins;
 with Alire.OS_Lib;
 with Alire.Paths.Vault;
 with Alire.Properties.Actions.Executor;
+with Alire.Roots.Locks;
 with Alire.Roots.Optional;
 with Alire.Solutions.Diffs;
 with Alire.Spawn;
@@ -175,7 +175,7 @@ package body Alire.Roots is
             else
                declare
                   Lock : constant Builds.Locks.Holder :=
-                           Builds.Locks.For_Compiling (This, Release)
+                           This.Build_Lock (Release)
                     with Unreferenced;
                   --  Shared dependencies not built yet are compiled too, maybe
                   --  by another workspace at the same time.
@@ -205,11 +205,11 @@ package body Alire.Roots is
                   if Is_Root then
                      for Rel of This.Solution.Releases loop
                         if Rel.Auto_GPR_With then
-                           Builds.Mark_Built (This, Rel);
+                           This.Mark_Built (Rel);
                         end if;
                      end loop;
                   else
-                     Builds.Mark_Built (This, Release);
+                     This.Mark_Built (Release);
                   end if;
                end;
             end if;
@@ -615,6 +615,77 @@ package body Alire.Roots is
    begin
       return Current /= Stored;
    end Config_Outdated;
+
+   --------------------
+   -- Lock_Workspace --
+   --------------------
+
+   procedure Lock_Workspace (This : Root) is
+   begin
+      Locks.Acquire (This);
+   end Lock_Workspace;
+
+   ----------------------
+   -- Unlock_Workspace --
+   ----------------------
+
+   procedure Unlock_Workspace (This : Root) is
+      pragma Unreferenced (This);
+   begin
+      Locks.Release;
+   end Unlock_Workspace;
+
+   --------------------------
+   -- Release_Compile_Lock --
+   --------------------------
+
+   function Release_Compile_Lock (This    : in out Root;
+                                  Release : Releases.Release;
+                                  Needed  : Boolean := True)
+                                  return Builds.Locks.Holder
+   is (if Needed
+       then Builds.Locks.Folder (This, Release)
+       else Builds.Locks.None);
+
+   ----------------
+   -- Build_Lock --
+   ----------------
+
+   function Build_Lock (This    : in out Root;
+                        Release : Releases.Release)
+                        return Builds.Locks.Holder
+   is (Builds.Locks.For_Compiling (This, Release));
+
+   --------------
+   -- Is_Built --
+   --------------
+
+   function Is_Built (This    : in out Root;
+                      Release : Releases.Release)
+                      return Boolean
+   is (Builds.Is_Built (This, Release));
+
+   ----------------
+   -- Mark_Built --
+   ----------------
+
+   procedure Mark_Built (This    : in out Root;
+                         Release : Releases.Release)
+   is
+   begin
+      Builds.Mark_Built (This, Release);
+   end Mark_Built;
+
+   ------------------
+   -- Mark_Unbuilt --
+   ------------------
+
+   procedure Mark_Unbuilt (This    : in out Root;
+                           Release : Releases.Release)
+   is
+   begin
+      Builds.Mark_Unbuilt (This, Release);
+   end Mark_Unbuilt;
 
    ------------------------
    -- Load_Configuration --

@@ -455,6 +455,95 @@ package body Alire.Crate_Configuration is
                    Root.Release_Base (Rel.Name, Roots.For_Build)
                    / Ent.Output_Dir;
 
+      -------------------------
+      -- Write_Changed_Files --
+      -------------------------
+
+      procedure Write_Changed_Files is
+         --  Files are only written when their contents change, as rewriting
+         --  them would make gprbuild compile them again.
+
+         Version_Str : constant String := Rel.Version.Image;
+
+         Ada_File : constant Absolute_Path :=
+                      Conf_Dir / (+Rel.Name & "_config.ads");
+         GPR_File : constant Absolute_Path :=
+                      Conf_Dir / (+Rel.Name & "_config.gpr");
+         C_File   : constant Absolute_Path :=
+                      Conf_Dir / (+Rel.Name & "_config.h");
+
+         Ada_Lines : constant AAA.Strings.Vector :=
+                       (if Ent.Generate_Ada
+                        then This.Ada_Config_Lines (Rel.Name, Version_Str)
+                        else AAA.Strings.Empty_Vector);
+         GPR_Lines : constant AAA.Strings.Vector :=
+                       (if Ent.Generate_GPR
+                        then This.GPR_Config_Lines
+                          (Rel.Name,
+                           (if Ent.Auto_GPR_With
+                            then Root.Direct_Withs (Rel)
+                            else AAA.Strings.Empty_Set),
+                           Version_Str)
+                        else AAA.Strings.Empty_Vector);
+         C_Lines   : constant AAA.Strings.Vector :=
+                       (if Ent.Generate_C
+                        then This.C_Config_Lines (Rel.Name, Version_Str)
+                        else AAA.Strings.Empty_Vector);
+
+         function Changed (Enabled : Boolean;
+                           File    : Absolute_Path;
+                           Lines   : AAA.Strings.Vector)
+                           return Boolean
+         is (Enabled
+             and then (not Is_File (File)
+                       or else Utils.Text_Files.Read_Lines (File)
+                                 .Flatten (Latin_1.LF)
+                               /= Lines.Flatten (Latin_1.LF)));
+         --  Compared as whole texts, as some generated lines span several
+         --  lines themselves.
+
+         function Any_Changed return Boolean
+         is (Changed (Ent.Generate_Ada, Ada_File, Ada_Lines)
+             or else Changed (Ent.Generate_GPR, GPR_File, GPR_Lines)
+             or else Changed (Ent.Generate_C, C_File, C_Lines));
+
+         procedure Write_If_Changed (Enabled : Boolean;
+                                     File    : Absolute_Path;
+                                     Lines   : AAA.Strings.Vector)
+         is
+         begin
+            if Changed (Enabled, File, Lines) then
+               Utils.Text_Files.Write_Lines (File, Lines);
+            end if;
+         end Write_If_Changed;
+
+      begin
+         if not Any_Changed then
+            Trace.Debug ("Config files of " & Rel.Milestone.TTY_Image
+                         & " are already up to date");
+            return;
+         end if;
+
+         declare
+            Lock : constant Builds.Locks.Holder :=
+                     Root.Release_Compile_Lock (Rel)
+              with Unreferenced;
+            --  In case the folder is shared with other workspaces
+         begin
+            --  Another alr process may have written them while we waited
+            if not Any_Changed then
+               return;
+            end if;
+
+            Root.Mark_Unbuilt (Rel);
+
+            Ada.Directories.Create_Path (Conf_Dir);
+            Write_If_Changed (Ent.Generate_Ada, Ada_File, Ada_Lines);
+            Write_If_Changed (Ent.Generate_GPR, GPR_File, GPR_Lines);
+            Write_If_Changed (Ent.Generate_C, C_File, C_Lines);
+         end;
+      end Write_Changed_Files;
+
    begin
       --  We don't create config files for external releases, since they
       --  are not sources built by Alire.
@@ -484,46 +573,9 @@ package body Alire.Crate_Configuration is
               (Root,
                Containers.Crate_Name_Sets.To_Set (Rel.Name));
 
-            declare
-               Version_Str : constant String := Rel.Version.Image;
-
-               Lock : constant Builds.Locks.Holder :=
-                        Builds.Locks.Folder (Root, Rel)
-                 with Unreferenced;
-               --  In case the folder is shared with other workspaces
-            begin
-               --  New config files need compiling, even if unchanged, as
-               --  gprbuild goes by their timestamps.
-               Builds.Mark_Unbuilt (Root, Rel);
-
-               if not Ent.Disabled then
-                  Ada.Directories.Create_Path (Conf_Dir);
-
-                  if Ent.Generate_Ada then
-                     This.Generate_Ada_Config
-                       (Rel.Name,
-                        Conf_Dir / (+Rel.Name & "_config.ads"),
-                        Version_Str);
-                  end if;
-
-                  if Ent.Generate_GPR then
-                     This.Generate_GPR_Config
-                       (Rel.Name,
-                        Conf_Dir / (+Rel.Name & "_config.gpr"),
-                        (if Ent.Auto_GPR_With
-                         then Root.Direct_Withs (Rel)
-                         else AAA.Strings.Empty_Set),
-                        Version_Str);
-                  end if;
-
-                  if Ent.Generate_C then
-                     This.Generate_C_Config
-                       (Rel.Name,
-                        Conf_Dir / (+Rel.Name & "_config.h"),
-                        Version_Str);
-                  end if;
-               end if;
-            end;
+            if not Ent.Disabled then
+               Write_Changed_Files;
+            end if;
          end if;
       else
          Trace.Debug ("Not generating config files for non-buildable release: "
@@ -543,14 +595,14 @@ package body Alire.Crate_Configuration is
       Lines.Append (Line);
    end Add;
 
-   -------------------------
-   -- Generate_Ada_Config --
-   -------------------------
+   ----------------------
+   -- Ada_Config_Lines --
+   ----------------------
 
-   procedure Generate_Ada_Config (This     : Global_Config;
-                                  Crate    : Crate_Name;
-                                  Filepath : Absolute_Path;
-                                  Version  : String)
+   function Ada_Config_Lines (This    : Global_Config;
+                              Crate   : Crate_Name;
+                              Version : String)
+                              return AAA.Strings.Vector
    is
       Lines : AAA.Strings.Vector;
 
@@ -605,8 +657,8 @@ package body Alire.Crate_Configuration is
       end loop;
       Add (Lines, "");
       Add (Lines, "end " & Crate_Mixed & "_Config;");
-      Utils.Text_Files.Write_Lines (Filepath, Lines);
-   end Generate_Ada_Config;
+      return Lines;
+   end Ada_Config_Lines;
 
    --------------
    -- Is_Valid --
@@ -646,15 +698,15 @@ package body Alire.Crate_Configuration is
       Add (Lines, Indent_Str & ");");
    end Pretty_Print_Switches;
 
-   -------------------------
-   -- Generate_GPR_Config --
-   -------------------------
+   ----------------------
+   -- GPR_Config_Lines --
+   ----------------------
 
-   procedure Generate_GPR_Config (This     : Global_Config;
-                                  Crate    : Crate_Name;
-                                  Filepath : Absolute_Path;
-                                  Withs    : AAA.Strings.Set;
-                                  Version  : String)
+   function GPR_Config_Lines (This    : Global_Config;
+                              Crate   : Crate_Name;
+                              Withs   : AAA.Strings.Set;
+                              Version : String)
+                              return AAA.Strings.Vector
    is
       Lines : AAA.Strings.Vector;
 
@@ -716,17 +768,17 @@ package body Alire.Crate_Configuration is
 
       Add (Lines, "");
       Add (Lines, "end " & Crate_Mixed & "_Config;");
-      Utils.Text_Files.Write_Lines (Filepath, Lines);
-   end Generate_GPR_Config;
+      return Lines;
+   end GPR_Config_Lines;
 
-   -----------------------
-   -- Generate_C_Config --
-   -----------------------
+   --------------------
+   -- C_Config_Lines --
+   --------------------
 
-   procedure Generate_C_Config (This     : Global_Config;
-                                Crate    : Crate_Name;
-                                Filepath : Absolute_Path;
-                                Version  : String)
+   function C_Config_Lines (This    : Global_Config;
+                            Crate   : Crate_Name;
+                            Version : String)
+                            return AAA.Strings.Vector
    is
       Lines : AAA.Strings.Vector;
 
@@ -775,8 +827,8 @@ package body Alire.Crate_Configuration is
       end loop;
       Add (Lines, "");
       Add (Lines, "#endif");
-      Utils.Text_Files.Write_Lines (Filepath, Lines);
-   end Generate_C_Config;
+      return Lines;
+   end C_Config_Lines;
 
    ---------
    -- Key --

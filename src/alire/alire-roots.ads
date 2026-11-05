@@ -5,6 +5,7 @@ with AAA.Strings;
 
 with Alire.Builds;
 private with Alire.Builds.Hashes;
+with Alire.Builds.Locks;
 with Alire.Containers;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.States;
@@ -320,6 +321,50 @@ package Alire.Roots is
                              return Boolean;
    --  Say if the config on disk must be regenerated, comparing the hash on
    --  disk with the newly computed hash.
+
+   --  Locks, so that alr processes working on the same workspace, or on
+   --  workspaces sharing build folders, don't break each other's work (see
+   --  Roots.Locks and Builds.Locks for details). Locks are released when the
+   --  returned holders are finalized.
+
+   --  Those are wrappers for lower-level subprograms elsewhere, contextualized
+   --  for the current Root.
+
+   procedure Lock_Workspace (This : Root);
+   --  Lock the workspace of This for the rest of the run, waiting while
+   --  another alr process holds it.
+
+   procedure Unlock_Workspace (This : Root);
+   --  Before handing over to a program that doesn't need the workspace kept
+   --  locked, as `alr run` and `alr exec` do.
+
+   function Release_Compile_Lock (This    : in out Root;
+                                  Release : Releases.Release;
+                                  Needed  : Boolean := True)
+                                  return Builds.Locks.Holder;
+   --  Lock the shared build folder of Release, if it has one and Needed, to
+   --  sync it, configure it or run its actions. With not Needed this is a 
+   --  noop, but since this returns a limited object, this simplifies things
+   --  at the caller that needs not to duplicate blocks with[out] the lock.
+
+   function Build_Lock (This    : in out Root;
+                        Release : Releases.Release)
+                        return Builds.Locks.Holder;
+   --  Lock the shared build folder of Release, if it has one, and those of
+   --  all shared dependencies not built yet, to run gprbuild on Release.
+
+   function Is_Built (This    : in out Root;
+                      Release : Releases.Release)
+                      return Boolean;
+   --  Whether the shared build folder of Release is marked as built
+
+   procedure Mark_Built (This    : in out Root;
+                         Release : Releases.Release);
+   --  After compiling Release successfully
+
+   procedure Mark_Unbuilt (This    : in out Root;
+                           Release : Releases.Release);
+   --  Before changing the sources in the shared build folder of Release
 
    procedure Install
      (This           : in out Root;

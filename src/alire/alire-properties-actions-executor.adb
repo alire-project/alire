@@ -45,9 +45,7 @@ package body Alire.Properties.Actions.Executor is
 
       declare
          Lock : constant Builds.Locks.Holder :=
-                  (if Has_Actions
-                   then Builds.Locks.Folder (Root, Rel)
-                   else Builds.Locks.None)
+                  Root.Release_Compile_Lock (Rel, Needed => Has_Actions)
            with Unreferenced;
          --  Actions may change the folder, which may be shared with other
          --  workspaces.
@@ -58,7 +56,7 @@ package body Alire.Properties.Actions.Executor is
          end if;
 
          if Has_Actions then
-            Builds.Mark_Unbuilt (Root, Rel);
+            Root.Mark_Unbuilt (Rel);
          end if;
 
          Execute_Actions

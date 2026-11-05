@@ -74,7 +74,8 @@ package Alire.Builds is
 
    --  A shared build folder is marked as built once compiled, until its
    --  sources change, so its builds are known to be no longer needed (see
-   --  Builds.Locks). Nothing is marked for releases built elsewhere.
+   --  Builds.Locks). Nothing is marked for releases built elsewhere. Callers
+   --  use them through the Roots wrappers of the same names.
 
    --  Note that this is only advisory, for locking. Gprbuild will examine the
    --  closure of dependencies normally and determine what requires building
@@ -94,8 +95,8 @@ package Alire.Builds is
    procedure Mark_Unbuilt (Root    : in out Roots.Root;
                            Release : Releases.Release);
    --  Before changing the sources in the shared build folder of Release, as
-   --  it will need compiling again. For example, on config regeneration,
-   --  even if identical (this happens with explicit updates).
+   --  it will need compiling again. For example, when its config files
+   --  change, or when its actions run.
 
 private
 

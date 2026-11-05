@@ -355,7 +355,7 @@ package body Alire.Builds.Hashes is
 
          declare
             Lock : constant Builds.Locks.Holder :=
-                     Builds.Locks.Folder (Root, Rel)
+                     Root.Release_Compile_Lock (Rel)
               with Unreferenced;
             --  In case the folder is shared with other workspaces
          begin

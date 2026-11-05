@@ -19,7 +19,6 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Root;
-with Alire.Roots.Locks;
 with Alire.Solutions;
 with Alire.Toolchains;
 with Alire.Utils.Did_You_Mean;
@@ -431,7 +430,7 @@ package body Alr.Commands is
 
       --  From here on, we may write to the workspace, so we lock it
 
-      Alire.Roots.Locks.Acquire (Unchecked.Value);
+      Unchecked.Value.Lock_Workspace;
 
       Unchecked.Value.Check_Stored;
 
