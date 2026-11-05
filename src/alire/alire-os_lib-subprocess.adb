@@ -535,8 +535,28 @@ package body Alire.OS_Lib.Subprocess is
    end Spawn_And_Capture;
 
    function Get_Privilege_Tool return String is
-   begin
-      return "sudo";
-   end Get_Privilege_Tool;
+      use GNAT.OS_Lib;
 
+      --  Here we abuse the fact that most tools names are of legth 4
+      --  In case newer tools come out that are not of length 4 we would need
+      --  to make a String Vector. Preferably put this function in its own package
+      Privilege_Tools : constant array (1 .. 2) of String (1 .. 4)
+      := ("sudo", "doas");  --  "run0");
+
+      function Check (Tool_Name : String) return Boolean is
+         Found : constant String_Access := Locate_Exec_On_Path (Tool_Name);
+      begin
+         return Found = null;
+      end Check;
+   begin
+      for Tool_Index in Privilege_Tools'Range loop
+         if Check (Privilege_Tools (Tool_Index)) then
+            return Privilege_Tools (Tool_Index);
+         end if;
+      end loop;
+
+      --  We found no sutable tools
+      Trace.Info ("No sudo or doas installed or found");
+      return "";
+   end Get_Privilege_Tool;
 end Alire.OS_Lib.Subprocess;
