@@ -38,6 +38,8 @@ package body Alire.OS_Lib.Subprocess is
    --  Returns output as vector of strings
    --  Even if exception raised, Output will be filled-in
 
+   function Get_Privilege_Tool return String;
+
    ----------------------
    -- To_Argument_List --
    ----------------------
@@ -257,16 +259,17 @@ package body Alire.OS_Lib.Subprocess is
       Dim_Output          : Boolean := True;
       Run_Privileged      : Boolean := False)
    is
-      Needs_Sudo  : constant Boolean :=
+      Needs_Privileged  : constant Boolean :=
                       Run_Privileged
                       and then not Platforms.Current.On_Windows
                       --  This is never called with Run_Privileged on Windows,
                       --  but just in case.
                       and then not Platforms.Current.Running_As_Root;
       Actual_Cmd  : constant String :=
-                      (if Needs_Sudo then "sudo" else Command);
+                      (if Needs_Privileged
+                       then Get_Privilege_Tool else Command);
       Actual_Args : constant AAA.Strings.Vector :=
-                      (if Needs_Sudo
+                      (if Needs_Privileged
                        then AAA.Strings.To_Vector (Command) & Arguments
                        else Arguments);
       Exit_Code   : constant Integer :=
@@ -530,5 +533,10 @@ package body Alire.OS_Lib.Subprocess is
       Cleanup;
       return Exit_Code;
    end Spawn_And_Capture;
+
+   function Get_Privilege_Tool return String is
+   begin
+      return "sudo";
+   end Get_Privilege_Tool;
 
 end Alire.OS_Lib.Subprocess;
