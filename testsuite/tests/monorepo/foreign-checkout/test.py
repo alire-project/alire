@@ -35,9 +35,9 @@ init_local_crate("top")
 alr_with("mycrate")
 run_alr("build")
 
-origin_flag = glob(os.path.join(builds.deps_dir(),
-                                f"monoproject_{URL_HASH_GLOB}_{commit[:8]}",
-                                "alire", "flags", "monorepo_data.toml"))[0]
+origin_flag = glob(builds.monorepo_data_flag(
+    os.path.join(builds.deps_dir(),
+                 f"monoproject_{URL_HASH_GLOB}_{commit[:8]}")))[0]
 with open(origin_flag) as f:
     recorded = f.read()
 assert_substring(f'commit = "{commit}"', recorded)

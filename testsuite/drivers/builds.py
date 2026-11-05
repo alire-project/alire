@@ -88,6 +88,50 @@ def deps_dir() -> str:
             else os.path.join(alr_workspace_cache(), "dependencies"))
 
 
+def flag(base: str, name: str) -> str:
+    """
+    Return the path to a flag file that alr keeps for the release whose top
+    folder is base (a deployment, e.g. in the vault, or a build folder). The
+    name is that of the file, as in the following helpers.
+    """
+    return os.path.join(base, "alire", "flags", name)
+
+
+def complete_copy_flag(base: str) -> str:
+    """
+    Flag of a deployment or build folder copied completely
+    """
+    return flag(base, "complete_copy")
+
+
+def post_fetch_flag(base: str) -> str:
+    """
+    Flag of a release whose post-fetch actions have run
+    """
+    return flag(base, "post_fetch_done")
+
+
+def built_flag(base: str) -> str:
+    """
+    Flag of a shared build folder compiled since its sources last changed
+    """
+    return flag(base, "built")
+
+
+def monorepo_data_flag(base: str) -> str:
+    """
+    Flag recording the origin of the checkout of a monorepo
+    """
+    return flag(base, "monorepo_data.toml")
+
+
+def is_built(crate_name: str) -> bool:
+    """
+    Whether the shared build folder of a crate is marked as built
+    """
+    return os.path.isfile(built_flag(find_dir(crate_name)))
+
+
 def sync() -> None:
     """
     Sync the shared build directory

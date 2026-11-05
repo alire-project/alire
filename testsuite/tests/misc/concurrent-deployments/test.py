@@ -1,15 +1,15 @@
 """
 Several alr processes deploying the same release into a location shared by all
-workspaces at the same time all succeed, and leave a complete deployment. We use
-a toolchain, as its deployment involves nothing else shared (unlike a dependency,
-whose shared build folder also gets synced).
+workspaces at the same time all succeed, and leave a complete deployment. We
+use a toolchain, as its deployment involves nothing else shared (unlike a
+dependency, whose shared build folder also gets synced).
 """
 
 import os
 import shutil
 import subprocess
 
-from drivers import locks
+from drivers import builds, locks
 from drivers.alr import alr_settings_dir, run_alr
 from drivers.asserts import assert_eq, assert_match
 from drivers.helpers import MockCommand
@@ -51,8 +51,8 @@ assert any(f"{locks.WAITING} deploying gnat_native=8888.0.0"
 toolchains = os.path.join(alr_settings_dir(), "cache", "toolchains")
 deployed = [d for d in os.listdir(toolchains) if d.startswith("gnat_native")]
 assert_eq(1, len(deployed))
-assert os.path.isfile(os.path.join(toolchains, deployed[0],
-                                   "alire", "flags", "complete_copy")), \
+assert os.path.isfile(builds.complete_copy_flag(
+    os.path.join(toolchains, deployed[0]))), \
     "Incomplete deployment"
 
 assert_match(".*gnat_native.*8888.0.0.*Available.*",

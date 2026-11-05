@@ -52,7 +52,7 @@ base = builds.find_dir("hello")
 files = contents(base)  # This returns "normalized" paths (with '/' separators)
 nbase = neutral_path(base)
 check_in(f'{nbase}/config/hello_config.ads', files)     # config was generated
-check_in(f'{nbase}/alire/flags/post_fetch_done', files) # actions were run
+check_in(neutral_path(builds.post_fetch_flag(base)), files) # actions run
 # check_in(f'{nbase}/obj/b__hello.ads', files)          # build took place
 # The build actually doesn't take place because the dependency is not used.
 # Due to a former bug, where all deps were built, the previous check succeeded.

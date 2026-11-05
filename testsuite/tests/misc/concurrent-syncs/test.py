@@ -40,8 +40,8 @@ for i, p in enumerate(procs):
 
 # The build folder is complete
 
-assert os.path.isfile(os.path.join(builds.find_dir("libhello"),
-                                   "alire", "flags", "complete_copy")), \
+assert os.path.isfile(
+    builds.complete_copy_flag(builds.find_dir("libhello"))), \
     "Incomplete build folder"
 
 print("SUCCESS")

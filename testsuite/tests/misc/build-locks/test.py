@@ -11,8 +11,8 @@ from drivers.alr import alr_with, init_local_crate, run_alr
 from drivers.asserts import assert_eq, assert_not_substring
 
 
-def built_flag() -> str:
-    return os.path.join(builds.find_dir("libhello"), "alire", "flags", "built")
+def mark_unbuilt():
+    os.remove(builds.built_flag(builds.find_dir("libhello")))
 
 
 def build_without_waiting(env=None):
@@ -30,7 +30,7 @@ def build_without_waiting(env=None):
 init_local_crate()
 alr_with("libhello")
 builds.sync()
-assert not os.path.exists(built_flag()), "Unexpectedly built"
+assert not builds.is_built("libhello"), "Unexpectedly built"
 
 # While another process works on its folder, the build waits to compile it
 
@@ -39,7 +39,7 @@ with locks.Held(locks.build_lock("libhello")):
                       message=f"{locks.WAITING} building libhello")
 
 p.finish()
-assert os.path.isfile(built_flag()), "Not marked as built"
+assert builds.is_built("libhello"), "Not marked as built"
 
 with locks.Held(locks.build_lock("libhello")):
 
@@ -51,13 +51,14 @@ with locks.Held(locks.build_lock("libhello")):
     # action), which it would otherwise wait for forever. The holder tells its
     # children which locks it holds.
 
-    os.remove(built_flag())
-    held = os.path.join("builds", os.path.basename(locks.build_lock("libhello")))
+    mark_unbuilt()
+    held = os.path.join("builds",
+                        os.path.basename(locks.build_lock("libhello")))
     build_without_waiting(env={**os.environ, "ALIRE_BUILD_LOCKS": held})
 
     # Nor with locking disabled, even when not built
 
-    os.remove(built_flag())
+    mark_unbuilt()
     run_alr("settings", "--global", "--set", "dependencies.shared_locking",
             "false")
     build_without_waiting()

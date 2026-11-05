@@ -2,8 +2,6 @@
 Ensure that no unnecessary rebuilds happend due to crate config generation
 """
 
-import os
-
 from drivers import builds
 from drivers.alr import alr_with, init_local_crate, run_alr
 from drivers.asserts import assert_match
@@ -26,8 +24,7 @@ assert_match('.*"xxx.*" up to date', p.out)
 
 # And a shared dependency stays marked as built, so builds don't lock it
 if builds.are_shared():
-    assert os.path.isfile(os.path.join(builds.find_dir("libhello"),
-                                       "alire", "flags", "built")), \
+    assert builds.is_built("libhello"), \
         "Shared dependency no longer marked as built"
 
 # Switch to another profile and build must happen

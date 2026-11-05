@@ -26,7 +26,7 @@ with open("xxx.gpr", "r+") as project:
 run_alr("build", "--stop-after=generation")
 
 build_dir = builds.find_dir("envdep")
-assert_file_exists(os.path.join(build_dir, "alire", "flags", "complete_copy"))
+assert_file_exists(builds.complete_copy_flag(build_dir))
 assert_file_exists(os.path.join(build_dir, "pre_build_ran"), wanted=False)
 hash_input = builds.hash_input("envdep")
 base_folder = "envdep_1.0.0_filesystem"
