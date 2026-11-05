@@ -54,7 +54,9 @@ already available.
 
 To see which tools a build will use, and why, run `alr build --toolchain`. This
 reports the effective toolchain without building anything (see
-`alr help build` for details).
+`alr help build` for details). The compiler is confirmed with gprbuild, so
+the report also identifies a compiler chosen by project files (for example,
+with `Compiler'Driver` or `Target`) instead of the one selected in Alire.
 
 ## Specifying dependencies on GNAT compilers for crate publishing
 

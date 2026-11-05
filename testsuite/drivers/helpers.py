@@ -226,6 +226,21 @@ def with_project(file, project):
         f.write('with "{}";'.format(project) + '\n' + content)
 
 
+def add_to_project(file, declaration, package=None):
+    """
+    Add a declaration (e.g., 'for Target use "arm-eabi";') to a project file,
+    at the start of the given package, which must exist, or of the project
+    """
+    opening = rf"^\s*package\s+{package}\s+is\s*\n" if package \
+        else r"^\s*(abstract\s+|library\s+)?project\s+\w+\s+is\s*\n"
+    content = content_of(file)
+    match = re.search(opening, content, re.MULTILINE | re.IGNORECASE)
+    assert match, f"No {package or 'project'} declaration in {file}"
+    with open(file, "wt") as f:
+        f.write(content[:match.end()] + f"   {declaration}\n"
+                + content[match.end():])
+
+
 def git_branch(path="."):
     """
     Return the branch name of the checkout

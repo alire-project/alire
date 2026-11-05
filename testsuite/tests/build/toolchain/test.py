@@ -14,8 +14,10 @@ def tools():
     """
     Return the structured report as a dict tool -> row. Rows give the crate of
     the release in use, so compilers are identified by their "gnat" prefix.
+    The tools in this index are fake, so gprbuild isn't asked to confirm them.
     """
-    rows = json.loads(run_alr("--format=json", "build", "--toolchain").out)
+    rows = json.loads(run_alr("--format=json", "build", "--toolchain",
+                              "--no-probe").out)
     assert_eq(2, len(rows))
     result = {}
     for row in rows:
@@ -32,27 +34,30 @@ init_local_crate()
 
 t = tools()
 assert_eq({"crate": "gnat_external", "version": "3.3.3",
-           "dependencies": "", "source": "environment"},
+           "dependencies": "", "source": "environment",
+           "project": "", "path": ""},
           t["gnat"])
 assert_eq("gprbuild", t["gprbuild"]["crate"])
 assert_eq("environment", t["gprbuild"]["source"])
 
 # Plain output is the same table
 
-assert_match(r"CRATE\s+VERSION\s+DEPENDENCIES\s+SOURCE\n"
-             r"gnat_external\s+3\.3\.3\s+environment\n"
-             r"gprbuild\s+.*environment\n",
-             run_alr("build", "--toolchain").out)
+assert_match(r"CRATE\s+VERSION\s+DEPENDENCIES\s+SOURCE\s+PROJECT\s+PATH\n"
+             r"gnat_external\s+3\.3\.3\s+environment\s*\n"
+             r"gprbuild\s+.*environment\s*\n",
+             run_alr("build", "--toolchain", "--no-probe").out)
 
 # Tools selected globally
 
 run_alr("toolchain", "--select", "gnat_native=8888", "gprbuild=8888")
 t = tools()
 assert_eq({"crate": "gnat_native", "version": "8888.0.0",
-           "dependencies": "", "source": "global"},
+           "dependencies": "", "source": "global",
+           "project": "", "path": ""},
           t["gnat"])
 assert_eq({"crate": "gprbuild", "version": "8888.0.0",
-           "dependencies": "", "source": "global"},
+           "dependencies": "", "source": "global",
+           "project": "", "path": ""},
           t["gprbuild"])
 
 # A tool selected locally
@@ -60,7 +65,8 @@ assert_eq({"crate": "gprbuild", "version": "8888.0.0",
 run_alr("toolchain", "--select", "--local", "gnat_native=7777")
 t = tools()
 assert_eq({"crate": "gnat_native", "version": "7777.0.0",
-           "dependencies": "", "source": "local"},
+           "dependencies": "", "source": "local",
+           "project": "", "path": ""},
           t["gnat"])
 assert_eq("global", t["gprbuild"]["source"])
 
@@ -70,7 +76,8 @@ assert_eq("global", t["gprbuild"]["source"])
 alr_with("gnat")
 t = tools()
 assert_eq({"crate": "gnat_native", "version": "7777.0.0",
-           "dependencies": "gnat*", "source": "dependencies"},
+           "dependencies": "gnat*", "source": "dependencies",
+           "project": "", "path": ""},
           t["gnat"])
 assert_eq("global", t["gprbuild"]["source"])
 alr_with("gnat", delete=True, manual=False)
@@ -80,7 +87,8 @@ alr_with("gnat", delete=True, manual=False)
 alr_with("gnat_cross_1")
 t = tools()
 assert_eq({"crate": "gnat_cross_1", "version": "9999.0.0",
-           "dependencies": "gnat_cross_1*", "source": "dependencies"},
+           "dependencies": "gnat_cross_1*", "source": "dependencies",
+           "project": "", "path": ""},
           t["gnat"])
 assert_eq("global", t["gprbuild"]["source"])
 
@@ -91,11 +99,12 @@ assert_eq("global", t["gprbuild"]["source"])
 alr_with("gnat")
 t = tools()
 assert_eq({"crate": "gnat_cross_1", "version": "9999.0.0",
-           "dependencies": "gnat*, gnat_cross_1*", "source": "dependencies"},
+           "dependencies": "gnat*, gnat_cross_1*", "source": "dependencies",
+           "project": "", "path": ""},
           t["gnat"])
 assert_match(r".*gnat_cross_1\s+9999\.0\.0\s+gnat\*, gnat_cross_1\*\s+"
-             r"dependencies\n",
-             run_alr("build", "--toolchain").out)
+             r"dependencies\s*\n",
+             run_alr("build", "--toolchain", "--no-probe").out)
 
 # Other build switches or arguments are rejected
 
@@ -105,6 +114,10 @@ assert_match(".*--toolchain cannot be combined.*", p.out)
 
 p = run_alr("build", "--toolchain", "--", "-v", complain_on_error=False)
 assert p.status != 0, "Should have failed"
+
+p = run_alr("build", "--no-probe", complain_on_error=False)
+assert p.status != 0, "Should have failed"
+assert_match(".*--no-probe can only be used with --toolchain.*", p.out)
 
 # No build has happened
 

@@ -11,16 +11,23 @@ stay on top of `alr` new features.
 PR [#2222](https://github.com/alire-project/alire/pull/2222)
 
 The tools selected with `alr toolchain` may be overridden by dependencies on
-specific compilers, and unselected tools are taken from the environment. The
-new `alr build --toolchain` switch reports, without building, which tools a
-build will actually use and where they come from:
+specific compilers, and unselected tools are taken from the environment.
+Project files may also make gprbuild use another compiler, with their
+`Compiler'Driver`, `Target` or `Runtime` attributes. The new
+`alr build --toolchain` switch reports, without building, which tools a build
+will actually use and where they come from:
 
 ```
 $ alr build --toolchain
-CRATE        VERSION  DEPENDENCIES  SOURCE
-gnat_native  16.2.1   gnat*         dependencies
-gprbuild     24.0.1                 global
+CRATE        VERSION  DEPENDENCIES  SOURCE        PROJECT    PATH
+gnat_native  16.2.1   gnat*         dependencies  hello.gpr  /home/user/.local/share/alire/toolchains/gnat_native_16.2.1_.../bin/gcc
+gprbuild     24.0.1                 global                   /home/user/.local/share/alire/toolchains/gprbuild_24.0.1_.../bin/gprbuild
 ```
+
+The compiler of each project file is confirmed by having gprbuild compile an
+empty unit as one of its sources. When it is not the one decided by Alire, the
+report shows the compiler that gprbuild runs, with a warning. Use `--no-probe`
+to report only the decisions of Alire.
 
 See `alr help build` for details on the sources.
 

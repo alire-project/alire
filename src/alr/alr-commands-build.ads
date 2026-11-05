@@ -59,5 +59,6 @@ private
       --  "%" meaning all crates without a previous setting in a manifest.
       Stop_After      : aliased GNAT.OS_Lib.String_Access;
       Toolchain       : aliased Boolean := False;
+      No_Probe        : aliased Boolean := False;
    end record;
 end Alr.Commands.Build;

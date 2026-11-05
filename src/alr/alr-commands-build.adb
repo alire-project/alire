@@ -1,6 +1,10 @@
 with AAA.Enum_Tools;
 
 with Alire.Crate_Configuration;
+with Alire.Errors;
+with Alire.Milestones;
+with Alire.OS_Lib.Subprocess;
+with Alire.Roots.Probes;
 with Alire.TOML_Adapters;
 with Alire.Toolchains.Solutions;
 with Alire.Utils.Switches;
@@ -13,6 +17,7 @@ package body Alr.Commands.Build is
    Switch_Profiles  : constant String := "--profiles";
    Switch_Stop      : constant String := "--stop-after";
    Switch_Toolchain : constant String := "--toolchain";
+   Switch_No_Probe  : constant String := "--no-probe";
 
    --------------------
    -- Apply_Profiles --
@@ -57,6 +62,16 @@ package body Alr.Commands.Build is
       use Alire.Toolchains.Solutions;
       Table : Alire.Utils.Tables.Table;
 
+      -----------
+      -- Image --
+      -----------
+
+      function Image (Tool : Effective_Tool) return String
+      is (if Tool.Source = Missing
+          then "no " & Tool.Crate.TTY_Image
+          else Alire.Milestones.New_Milestone
+                 (Tool.Crate, Tool.Version).TTY_Image);
+
       --------------------
       -- Provides_Image --
       --------------------
@@ -71,27 +86,122 @@ package body Alr.Commands.Build is
          return Result.Flatten (", ");
       end Provides_Image;
 
+      ------------
+      -- Probed --
+      ------------
+
+      function Probed (Decided : Effective_Tool;
+                       Project : Alire.Relative_File)
+                       return Effective_Tool
+      --  The compiler gprbuild actually runs for Project, or Decided if that
+      --  cannot be determined.
+      is
+         Probe : constant Alire.Roots.Probes.Ada_Compiler_Probe :=
+                   Alire.Roots.Probes.Ada_Compiler (Cmd.Root, Project);
+
+         --------------------
+         -- Not_Confirmed --
+         --------------------
+
+         function Not_Confirmed (Reason : String) return Effective_Tool is
+         begin
+            Alire.Put_Warning
+              ("Could not confirm with gprbuild the compiler for "
+               & TTY.URL (Project) & ": " & Reason);
+            return Decided;
+         end Not_Confirmed;
+
+      begin
+         if not Probe.Found then
+            return Not_Confirmed (+Probe.Reason);
+         end if;
+
+         declare
+            Result : constant Effective_Tool :=
+                       Actual (Decided, +Probe.Driver);
+         begin
+            if Result.Source = Gprbuild then
+               Alire.Put_Warning
+                 ("gprbuild compiles " & TTY.URL (Project) & " with "
+                  & Image (Result) & ", not with " & Image (Decided)
+                  & " as decided by Alire. Check the Compiler'Driver, Target "
+                  & "and Runtime attributes of project files, or gprbuild "
+                  & "configuration files for the override.");
+            end if;
+
+            return Result;
+         end;
+      exception
+         when E : Alire.Checked_Error =>
+            return Not_Confirmed (Alire.Errors.Get (E));
+      end Probed;
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add (Tool : Effective_Tool; Project : String := "") is
+      begin
+         Table
+           .Append (Tool.Crate.As_String)
+           .Append (if Tool.Source = Missing
+                    then ""
+                    else Tool.Version.Image)
+           .Append (Provides_Image (Tool))
+           .Append (AAA.Strings.To_Lower_Case (Tool.Source'Image))
+           .Append (Project)
+           .Append (Tool.Path)
+           .New_Row;
+      end Add;
+
    begin
       Table
         .Header ("Crate")
         .Header ("Version")
         .Header ("Dependencies")
         .Header ("Source")
+        .Header ("Project")
+        .Header ("Path")
         .New_Row;
+
+      --  The probes need the same files and environment as a build
+
+      if not Cmd.No_Probe then
+         Cmd.Root.Build_Prepare (Saved_Profiles => False,
+                                 Force_Regen    => False,
+                                 Stop_After     => Alire.Builds.Generation);
+      end if;
 
       for Crate of Alire.Toolchains.Tools loop
          declare
             Tool : constant Effective_Tool :=
                      Effective (Cmd.Root.Solution, Crate);
          begin
-            Table
-              .Append (Tool.Crate.As_String)
-              .Append (if Tool.Source = Missing
-                       then ""
-                       else Tool.Version.Image)
-              .Append (Provides_Image (Tool))
-              .Append (AAA.Strings.To_Lower_Case (Tool.Source'Image))
-              .New_Row;
+            if Cmd.No_Probe then
+               Add (Tool);
+
+            elsif Crate = Alire.GNAT_Crate then
+
+               --  Each project file may have its own compiler
+
+               for Project of Cmd.Root.Release.Project_Files
+                 (Cmd.Root.Environment, With_Path => True)
+               loop
+                  Add (Probed (Tool, Project), Project);
+               end loop;
+
+            else
+
+               --  The one gprbuild in the build environment
+
+               declare
+                  Path : constant String :=
+                           Alire.OS_Lib.Subprocess.Locate_In_Path
+                             (Crate.As_String);
+               begin
+                  Add (if Path = "" then Tool else Tool.With_Path (Path));
+               end;
+            end if;
          end;
       end loop;
 
@@ -133,6 +243,10 @@ package body Alr.Commands.Build is
          Cmd.Requires_Workspace;
          Cmd.Report_Toolchain;
          return;
+
+      elsif Cmd.No_Probe then
+         Reportaise_Wrong_Arguments
+           (Switch_No_Probe & " can only be used with " & Switch_Toolchain);
       end if;
 
       if Profiles_Selected > 1 then
@@ -330,8 +444,21 @@ package body Alr.Commands.Build is
                  & "in the current environment; the build uses whatever is "
                  & "first in PATH, which crate environment settings may "
                  & "alter")
+        .Append ("* " & TTY.Emph ("gprbuild") & ": not the compiler decided "
+                 & "by Alire, but the one gprbuild runs because of the "
+                 & "project files (e.g., Compiler'Driver, Target, Runtime) or "
+                 & "gprbuild configuration files")
         .Append ("* " & TTY.Emph ("missing") & ": no release available, the "
                  & "build will likely fail")
+        .New_Line
+        .Append ("The compiler of each project file of the crate is confirmed "
+                 & "by having gprbuild compile an empty unit as one of its "
+                 & "sources, after preparing the build as "
+                 & TTY.Terminal ("--stop-after=generation") & " does. The "
+                 & "path of each tool is the executable that the build runs. "
+                 & "Use " & TTY.Terminal (Switch_No_Probe) & " to report "
+                 & "only the decisions of Alire, without preparing the build "
+                 & "or running gprbuild.")
       ;
    end Long_Description;
 
@@ -378,6 +505,12 @@ package body Alr.Commands.Build is
          Cmd.Toolchain'Access,
          "", Switch_Toolchain,
          "Show the tools a build would use, without building");
+
+      Define_Switch
+        (Config,
+         Cmd.No_Probe'Access,
+         "", Switch_No_Probe,
+         "With " & Switch_Toolchain & ", do not confirm with gprbuild");
 
    end Setup_Switches;
 

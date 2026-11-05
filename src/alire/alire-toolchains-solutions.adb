@@ -1,12 +1,16 @@
 with AAA.Strings;
 
+with Alire.Directories;
 with Alire.Index;
 with Alire.Origins;
+with Alire.OS_Lib.Subprocess;
 with Alire.Releases.Containers;
 with Alire.Root;
 with Alire.Solver;
 
 package body Alire.Toolchains.Solutions is
+
+   use Directories.Operators;
 
    subtype Decided_Sources is Tool_Sources range Dependencies .. Environment;
    --  Where tools can come from, when not missing
@@ -187,6 +191,60 @@ package body Alire.Toolchains.Solutions is
       return Solution.Releases_Providing (GNAT_Crate).First_Element;
    end Compiler;
 
+   No_Deps : constant Alire.Dependencies.Containers.List :=
+               (Alire.Dependencies.Containers.Lists.Empty_List
+                with null record);
+
+   ----------------
+   -- Found_Tool --
+   ----------------
+
+   function Found_Tool (Source   : Tool_Sources;
+                        Crate    : Crate_Name;
+                        Version  : Semantic_Versioning.Version;
+                        Provides : Alire.Dependencies.Containers.List :=
+                                     No_Deps;
+                        Path     : Optional_Absolute_Path := "")
+                        return Effective_Tool
+     with Pre => Source /= Missing
+   is
+   begin
+      return Result : Effective_Tool (Source, Crate.Len) do
+         Result.Crate    := Crate;
+         Result.Provides := Provides;
+         Result.Version  := Version;
+         Result.Path     := +Path;
+      end return;
+   end Found_Tool;
+
+   ------------------
+   -- Missing_Tool --
+   ------------------
+
+   function Missing_Tool (Tool     : Crate_Name;
+                          Provides : Alire.Dependencies.Containers.List :=
+                                       No_Deps)
+                          return Effective_Tool
+   is (Source   => Missing,
+       Name_Len => Tool.Len,
+       Crate    => Tool,
+       Provides => Provides,
+       Path     => +"");
+
+   ---------------
+   -- With_Path --
+   ---------------
+
+   function With_Path (This : Effective_Tool;
+                       Path : Absolute_File)
+                       return Effective_Tool
+   is
+   begin
+      return Result : Effective_Tool := This do
+         Result.Path := +Path;
+      end return;
+   end With_Path;
+
    ---------------
    -- Effective --
    ---------------
@@ -195,42 +253,6 @@ package body Alire.Toolchains.Solutions is
                        Tool     : Crate_Name)
                        return Effective_Tool
    is
-      No_Deps : constant Alire.Dependencies.Containers.List :=
-                  (Alire.Dependencies.Containers.Lists.Empty_List
-                   with null record);
-
-      ----------------
-      -- Found_Tool --
-      ----------------
-
-      function Found_Tool (Source   : Tool_Sources;
-                           Crate    : Crate_Name;
-                           Version  : Semantic_Versioning.Version;
-                           Provides : Alire.Dependencies.Containers.List :=
-                                        No_Deps)
-                           return Effective_Tool
-        with Pre => Source /= Missing
-      is
-      begin
-         return Result : Effective_Tool (Source, Crate.Len) do
-            Result.Crate    := Crate;
-            Result.Provides := Provides;
-            Result.Version  := Version;
-         end return;
-      end Found_Tool;
-
-      ------------------
-      -- Missing_Tool --
-      ------------------
-
-      function Missing_Tool (Provides : Alire.Dependencies.Containers.List :=
-                                          No_Deps)
-                             return Effective_Tool
-      is (Source   => Missing,
-          Name_Len => Tool.Len,
-          Crate    => Tool,
-          Provides => Provides);
-
       Decided : constant Decided_Sources := Source_Of (Solution, Tool);
       --  Where Alire decides the tool is going to come from
 
@@ -254,7 +276,7 @@ package body Alire.Toolchains.Solutions is
                if Providers.Is_Empty then
                   --  Unsolved dependency on the tool itself
                   Provides.Append (Solution.Dependency (Tool));
-                  return Missing_Tool (Provides);
+                  return Missing_Tool (Tool, Provides);
                end if;
 
                for State of Providers loop
@@ -285,11 +307,86 @@ package body Alire.Toolchains.Solutions is
                                      Env_Tool.Value.Name,
                                      Env_Tool.Value.Version);
                else
-                  return Missing_Tool;
+                  return Missing_Tool (Tool);
                end if;
             end;
       end case;
    end Effective;
+
+   ------------
+   -- Actual --
+   ------------
+
+   function Actual (Decided : Effective_Tool;
+                    Driver  : Absolute_File)
+                    return Effective_Tool
+   is
+      use type Semantic_Versioning.Version;
+
+      ----------------------
+      -- External_Version --
+      ----------------------
+
+      function External_Version return Semantic_Versioning.Version is
+         --  gcc prints its full version with the first switch since gcc 7,
+         --  which some builds need, and with the second one before that.
+         use AAA.Strings;
+         Output : constant AAA.Strings.Vector :=
+                    OS_Lib.Subprocess.Checked_Spawn_And_Capture
+                      (Driver,
+                       Empty_Vector & "-dumpfullversion" & "-dumpversion");
+      begin
+         return Semantic_Versioning.Parse
+           (AAA.Strings.Trim (Output.First_Element), Relaxed => True);
+      exception
+         when others =>
+            Raise_Checked_Error
+              ("Cannot determine the version of " & TTY.URL (Driver));
+      end External_Version;
+
+   begin
+      --  A compiler deployed by Alire
+
+      for Rel of Toolchains.Available (Detect_Externals => False) loop
+         if AAA.Strings.Has_Prefix
+           (Driver,
+            Toolchains.Path / Rel.Deployment_Folder
+            & GNAT.OS_Lib.Directory_Separator)
+         then
+            if Decided.Source /= Missing
+              and then Decided.Crate = Rel.Name
+              and then Decided.Version = Rel.Version
+            then
+               return Decided.With_Path (Driver);
+            else
+               return Found_Tool (Gprbuild, Rel.Name, Rel.Version,
+                                  Path => Driver);
+            end if;
+         end if;
+      end loop;
+
+      --  An external compiler, which is the one decided if Alire also expects
+      --  an external one, found as the gnat first in PATH.
+
+      if Decided.Source /= Missing
+        and then Decided.Crate = GNAT_External_Crate
+      then
+         declare
+            GNAT_In_Path : constant String :=
+                             OS_Lib.Subprocess.Locate_In_Path ("gnat");
+         begin
+            if GNAT_In_Path /= ""
+              and then Directories.Parent (GNAT_In_Path)
+                       = Directories.Parent (Driver)
+            then
+               return Decided.With_Path (Driver);
+            end if;
+         end;
+      end if;
+
+      return Found_Tool (Gprbuild, GNAT_External_Crate, External_Version,
+                         Path => Driver);
+   end Actual;
 
    ---------------------
    -- Is_In_Toolchain --

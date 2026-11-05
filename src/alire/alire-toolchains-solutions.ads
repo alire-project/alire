@@ -30,6 +30,7 @@ package Alire.Toolchains.Solutions is
       Global,       -- Selected with `alr toolchain` in global settings
       Local,        -- Selected with `alr toolchain --local`
       Environment,  -- Unselected, detected as external in the environment
+      Gprbuild,     -- Not Alire's choice, but what gprbuild actually runs
       Missing);     -- No release available, the build will likely fail
 
    type Effective_Tool (<>) is tagged private;
@@ -48,11 +49,27 @@ package Alire.Toolchains.Solutions is
                       return Alire.Dependencies.Containers.List;
    --  Final dependencies in the solution fulfilled by the tool, if any
 
+   function Path (This : Effective_Tool) return Optional_Absolute_Path;
+   --  The executable of the tool, when known
+
+   function With_Path (This : Effective_Tool;
+                       Path : Absolute_File)
+                       return Effective_Tool;
+
    function Effective (Solution : Alire.Solutions.Solution;
                        Tool     : Crate_Name)
                        return Effective_Tool
      with Pre => Tools.Contains (Tool);
    --  The Tool release a build with Solution would use, without deploying it
+
+   function Actual (Decided : Effective_Tool;
+                    Driver  : Absolute_File)
+                    return Effective_Tool;
+   --  The compiler that gprbuild runs, given its Driver executable: Decided
+   --  with that path when it is the compiler Alire decided on, or else the
+   --  toolchain release or external compiler at Driver, with source Gprbuild.
+   --  Raises Checked_Error if the version of an external compiler cannot be
+   --  determined.
 
 private
 
@@ -61,6 +78,7 @@ private
    is tagged record
       Crate    : Crate_Name (Name_Len);
       Provides : Alire.Dependencies.Containers.List;
+      Path     : Unbounded_Absolute_Path;
       case Source is
          when Missing =>
             null;
@@ -97,5 +115,12 @@ private
    function Provides (This : Effective_Tool)
                       return Alire.Dependencies.Containers.List
    is (This.Provides);
+
+   ----------
+   -- Path --
+   ----------
+
+   function Path (This : Effective_Tool) return Optional_Absolute_Path
+   is (+This.Path);
 
 end Alire.Toolchains.Solutions;
