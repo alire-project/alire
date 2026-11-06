@@ -545,9 +545,14 @@ package body Alire.OS_Lib.Subprocess is
       := ("sudo", "doas");  --  "run0");
 
       function Check (Tool_Name : String) return Boolean is
-         Found : constant String_Access := Locate_Exec_On_Path (Tool_Name);
+         Found : String_Access := Locate_Exec_On_Path (Tool_Name);
       begin
-         return Found = null;
+         if Found = null then
+            return False;
+         end if;
+
+         Free (Found);
+         return True;
       end Check;
    begin
       for Tool_Index in Privilege_Tools'Range loop
