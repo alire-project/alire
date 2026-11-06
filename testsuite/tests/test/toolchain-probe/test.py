@@ -1,7 +1,7 @@
 """
-`alr test --toolchain` confirms with gprbuild the compiler of the test crates.
-The default test crate shares the object dir of its parent crate, so its
-configuration spec is checked instead of compiling a probe.
+`alr test --toolchain` confirms with gprbuild the compiler of the test crates,
+unless they share their object dir with another project, like their parent
+crate, which gprbuild rejects for the probe.
 """
 
 import json
@@ -10,7 +10,7 @@ import shutil
 
 from drivers.alr import init_local_crate, run_alr
 from drivers.asserts import assert_eq, assert_match
-from drivers.helpers import add_to_project, exe_name
+from drivers.helpers import add_to_project, exe_name, replace_in_file
 
 PROJECT = "xxx_tests.gpr"
 
@@ -27,13 +27,16 @@ def gnat_row():
 
 def assert_no_leftovers():
     """
-    Neither the probe nor any object dir remain
+    Neither the probe nor the object dir of the test crate remain. gprbuild may
+    create the object dirs of dependencies, like the parent crate, as a build
+    would.
     """
     for path, dirs, files in os.walk("."):
         for name in dirs + files:
             assert not name.startswith("alire_toolchain_probe"), \
                 f"Probe left at {os.path.join(path, name)}"
-    assert not os.path.exists("obj"), "Unexpected object dir"
+    obj = os.path.join("tests", "obj")
+    assert not os.path.exists(obj), f"Unexpected object dir {obj}"
 
 
 init_local_crate(with_test=True)
@@ -60,6 +63,20 @@ row = gnat_row()
 assert_eq("gprbuild", row["source"])
 assert_eq(compiler, row["path"])
 assert_match(f".*gprbuild compiles {PROJECT} with gnat_external.*",
+             run_alr("test", "--toolchain", quiet=False).out)
+assert_no_leftovers()
+
+# Sharing the object dir of the parent crate makes the probe a source of both
+# projects, which gprbuild rejects: Alire's decision is reported with a warning.
+
+replace_in_file(os.path.join("tests", PROJECT),
+                'Object_Dir use "obj/"', 'Object_Dir use "../obj/"')
+
+row = gnat_row()
+assert_eq("environment", row["source"])
+assert_eq("", row["path"])
+assert_match(".*Could not confirm with gprbuild the compiler for "
+             f"{PROJECT}: .*",
              run_alr("test", "--toolchain", quiet=False).out)
 assert_no_leftovers()
 

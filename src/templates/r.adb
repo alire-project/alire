@@ -67,15 +67,15 @@ package body r is
             ("crate_test/tests/src/name_tests-assertions_enabled."
              & "adb",
              r.crate_test_tests_src_name_testsxassertions_enabled_adb.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 07, 29, 11, 01, 24, 0.0));
+             GNAT.Calendar.Time_Of (2026, 10, 31, 17, 32, 29, 0.0));
          Register
             ("crate_test/tests/src/name_tests.ads",
              r.crate_test_tests_src_name_tests_ads.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 07, 29, 11, 01, 42, 0.0));
+             GNAT.Calendar.Time_Of (2026, 10, 31, 17, 32, 29, 0.0));
          Register
             ("crate_test/tests/crate_test_tests.gpr",
              r.crate_test_tests_crate_test_tests_gpr.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 07, 29, 11, 56, 17, 0.0));
+             GNAT.Calendar.Time_Of (2026, 11, 06, 09, 38, 57, 0.0));
          Register
             ("github/README.md",
              r.github_readme_md.Content'Access,
@@ -87,7 +87,7 @@ package body r is
          Register
             ("github/selftest.yml",
              r.github_selftest_yml.Content'Access,
-             GNAT.Calendar.Time_Of (2026, 06, 24, 09, 07, 50, 0.0));
+             GNAT.Calendar.Time_Of (2026, 10, 30, 14, 11, 07, 0.0));
       end if;
    end Init;
 
