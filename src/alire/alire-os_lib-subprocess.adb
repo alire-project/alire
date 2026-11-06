@@ -539,7 +539,8 @@ package body Alire.OS_Lib.Subprocess is
 
       --  Here we abuse the fact that most tools names are of legth 4
       --  In case newer tools come out that are not of length 4 we would need
-      --  to make a String Vector. Preferably put this function in its own package
+      --  to make a String Vector. Preferably put this function in its own
+      --  package
       Privilege_Tools : constant array (1 .. 2) of String (1 .. 4)
       := ("sudo", "doas");  --  "run0");
 
