@@ -213,6 +213,7 @@ package body Alire.Roots.Probes is
                for Line of Output loop
                   if Has_Prefix (Line, "gprbuild:")
                     or else Has_Prefix (Line, "kb:")
+                    or else Contains (Line, ">>>") -- Project file errors
                   then
                      Messages.Append (Trim (Line));
                   end if;

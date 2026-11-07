@@ -218,7 +218,7 @@ package Alire.Roots is
    --  not Interact, run as if --non-interactive were in effect.
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
-     with Post => not This.Is_Lockfile_Outdated;
+     with Post => not This.Has_Lockfile or else not This.Is_Lockfile_Outdated;
    --  If the lockfile is older than the manifest, sync their timestamps, do
    --  nothing otherwise. We want this when the manifest has been manually
    --  edited but the solution hasn't changed (and so the lockfile hasn't been

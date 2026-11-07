@@ -1,0 +1,5 @@
+driver: python-script
+build_mode: shared  # No build happens, so a single mode suffices
+indexes:
+    toolchain_index:
+        in_fixtures: true

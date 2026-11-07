@@ -1059,6 +1059,42 @@ package body Alire.Test.Runner is
       return Test_List;
    end Get_Test_List;
 
+   ---------------------
+   -- Ensure_Solution --
+   ---------------------
+
+   procedure Ensure_Solution (Root : in out Roots.Root) is
+   begin
+      --  Ensure a void solution on first test run
+      if not Root.Has_Lockfile then
+         Root.Update
+           (Silent   => True,
+            Interact => False,
+            Allowed  => Roots.Allow_All_Crates);
+      end if;
+   end Ensure_Solution;
+
+   -------------
+   -- Prepare --
+   -------------
+
+   procedure Prepare (Root       : in out Roots.Root;
+                      Test_Cases : Test_Case_Vector)
+   is
+   begin
+      Create_Gpr_List (Root, Test_Cases);
+      Ensure_Solution (Root);
+   end Prepare;
+
+   -------------
+   -- Prepare --
+   -------------
+
+   procedure Prepare (Root : in out Roots.Root) is
+   begin
+      Prepare (Root, Get_Test_List (Root, Filter => AAA.Strings.Empty_Vector));
+   end Prepare;
+
    ---------
    -- Run --
    ---------
@@ -1080,15 +1116,7 @@ package body Alire.Test.Runner is
       Test_Cases : constant Test_Case_Vector :=
         Get_Test_List (Root, Filter);
    begin
-      Create_Gpr_List (Root, Test_Cases);
-
-      --  Ensure a void solution on first test run
-      if not Root.Has_Lockfile then
-         Root.Update
-           (Silent   => True,
-            Interact => False,
-            Allowed  => Roots.Allow_All_Crates);
-      end if;
+      Prepare (Root, Test_Cases);
 
       if Tables.Structured_Output then
          --  disable gprbuild output when doing structured formatting

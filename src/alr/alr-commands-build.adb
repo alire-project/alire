@@ -8,7 +8,6 @@ with Alire.Roots.Probes;
 with Alire.TOML_Adapters;
 with Alire.Toolchains.Solutions;
 with Alire.Utils.Switches;
-with Alire.Utils.Tables;
 
 with Stopwatch;
 
@@ -54,13 +53,33 @@ package body Alr.Commands.Build is
       end;
    end Apply_Profiles;
 
-   ----------------------
-   -- Report_Toolchain --
-   ----------------------
+   ------------------------------
+   -- Append_Toolchain_Headers --
+   ------------------------------
 
-   procedure Report_Toolchain (Cmd : in out Command) is
+   procedure Append_Toolchain_Headers
+     (Table : in out Alire.Utils.Tables.Table) is
+   begin
+      Table
+        .Header ("Crate")
+        .Header ("Version")
+        .Header ("Dependencies")
+        .Header ("Source")
+        .Header ("Project")
+        .Header ("Path");
+   end Append_Toolchain_Headers;
+
+   ---------------------------
+   -- Append_Toolchain_Rows --
+   ---------------------------
+
+   procedure Append_Toolchain_Rows
+     (Table       : in out Alire.Utils.Tables.Table;
+      Root        : in out Alire.Roots.Root;
+      Probe       : Boolean;
+      First_Cells : AAA.Strings.Vector := AAA.Strings.Empty_Vector)
+   is
       use Alire.Toolchains.Solutions;
-      Table : Alire.Utils.Tables.Table;
 
       -----------
       -- Image --
@@ -97,11 +116,11 @@ package body Alr.Commands.Build is
       --  cannot be determined.
       is
          Probe : constant Alire.Roots.Probes.Ada_Compiler_Probe :=
-                   Alire.Roots.Probes.Ada_Compiler (Cmd.Root, Project);
+                   Alire.Roots.Probes.Ada_Compiler (Root, Project);
 
-         --------------------
+         -------------------
          -- Not_Confirmed --
-         --------------------
+         -------------------
 
          function Not_Confirmed (Reason : String) return Effective_Tool is
          begin
@@ -142,6 +161,10 @@ package body Alr.Commands.Build is
 
       procedure Add (Tool : Effective_Tool; Project : String := "") is
       begin
+         for Cell of First_Cells loop
+            Table.Append (Cell);
+         end loop;
+
          Table
            .Append (Tool.Crate.As_String)
            .Append (if Tool.Source = Missing
@@ -155,37 +178,28 @@ package body Alr.Commands.Build is
       end Add;
 
    begin
-      Table
-        .Header ("Crate")
-        .Header ("Version")
-        .Header ("Dependencies")
-        .Header ("Source")
-        .Header ("Project")
-        .Header ("Path")
-        .New_Row;
 
       --  The probes need the same files and environment as a build
 
-      if not Cmd.No_Probe then
-         Cmd.Root.Build_Prepare (Saved_Profiles => False,
-                                 Force_Regen    => False,
-                                 Stop_After     => Alire.Builds.Generation);
+      if Probe then
+         Root.Build_Prepare (Saved_Profiles => False,
+                             Force_Regen    => False,
+                             Stop_After     => Alire.Builds.Generation);
       end if;
 
       for Crate of Alire.Toolchains.Tools loop
          declare
-            Tool : constant Effective_Tool :=
-                     Effective (Cmd.Root.Solution, Crate);
+            Tool : constant Effective_Tool := Effective (Root.Solution, Crate);
          begin
-            if Cmd.No_Probe then
+            if not Probe then
                Add (Tool);
 
             elsif Crate = Alire.GNAT_Crate then
 
                --  Each project file may have its own compiler
 
-               for Project of Cmd.Root.Release.Project_Files
-                 (Cmd.Root.Environment, With_Path => True)
+               for Project of Root.Release.Project_Files
+                 (Root.Environment, With_Path => True)
                loop
                   Add (Probed (Tool, Project), Project);
                end loop;
@@ -204,6 +218,19 @@ package body Alr.Commands.Build is
             end if;
          end;
       end loop;
+   end Append_Toolchain_Rows;
+
+   ----------------------
+   -- Report_Toolchain --
+   ----------------------
+
+   procedure Report_Toolchain (Cmd : in out Command) is
+      Table : Alire.Utils.Tables.Table;
+   begin
+      Append_Toolchain_Headers (Table);
+      Table.New_Row;
+
+      Append_Toolchain_Rows (Table, Cmd.Root, Probe => not Cmd.No_Probe);
 
       Table.Print (Always);
    end Report_Toolchain;
