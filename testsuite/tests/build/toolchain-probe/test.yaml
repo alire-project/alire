@@ -1,0 +1,4 @@
+driver: python-script
+build_mode: shared  # The probe uses only the root's object dir
+indexes:
+    basic_index: {}

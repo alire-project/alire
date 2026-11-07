@@ -52,6 +52,12 @@ Within these conditions, a compiler already downloaded will be preferred.
 Downloading a new compiler will be attempted only if no matching compiler is
 already available.
 
+To see which tools a build will use, and why, run `alr build --toolchain`. This
+reports the effective toolchain without building anything (see
+`alr help build` for details). The compiler is confirmed with gprbuild, so
+the report also identifies a compiler chosen by project files (for example,
+with `Compiler'Driver` or `Target`) instead of the one selected in Alire.
+
 ## Specifying dependencies on GNAT compilers for crate publishing
 
 From the point of view of a user preparing a release for publication, these
