@@ -8,6 +8,8 @@ ultimately not accepted.
 The guidelines below apply to everyone working on the code, people and coding
 agents alike. Agents should also read `/AGENTS.md`.
 
+If you use AI tools when contributing, please also read `/AI_POLICY.md`.
+
 # Project Overview
 
 This project is a command-line tool (`alr`) and a supporting library
