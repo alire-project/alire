@@ -2,7 +2,6 @@ with "../deps/aaa/aaa";
 with "../deps/ada-toml/ada_toml";
 with "../alire_common";
 with "ajunitgen";
-with "../deps/gnatcoll-slim/gnatcoll";
 with "../deps/semantic_versioning/semantic_versioning";
 with "../deps/simple_logging/simple_logging";
 with "../deps/xmlezout/xml_ez_out";

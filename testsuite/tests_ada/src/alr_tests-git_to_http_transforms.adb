@@ -1,3 +1,4 @@
+pragma Alire_Test;
 with Alire.VCSs.Git;
 
 procedure Alr_Tests.Git_To_HTTP_Transforms is

@@ -3,7 +3,6 @@ Assorted helpers that are reused by several tests.
 """
 
 import hashlib
-import json
 import os
 import platform
 import re
@@ -14,8 +13,6 @@ from subprocess import run
 from textwrap import dedent
 from typing import Union
 from zipfile import ZipFile
-
-from drivers.alr import DEFAULT_CRATE_NAME
 
 
 def mkcd(dir: str, exist_ok: bool = True):
@@ -400,54 +397,6 @@ def exe_name(exec : str) -> str:
     return f"{exec}.exe" if on_windows() else exec
 
 
-def testing_write_test(stem: str, body: str, prelude: str = "",
-                       crate: str = DEFAULT_CRATE_NAME) -> None:
-    """
-    Write a test source file under tests/src/ of `crate`, created with
-    `init_local_crate(crate, with_test=True)`. `stem` is the suffix after
-    `<crate>_tests-`, e.g. crate "xxx" and stem "named" yields
-    tests/src/xxx_tests-named.adb. `prelude` is inserted ahead of the unit
-    declaration, where compilation pragmas must live.
-    """
-    unit = f"{crate}_tests"
-    proc = f"{unit.title()}.{stem.title()}"
-    path = f"./tests/src/{unit}-{stem}.adb"
-    with open(path, "w") as f:
-        f.write(prelude)
-        f.write(f"procedure {proc} is\n")
-        f.write(f"begin\n   {body}\nend {proc};\n")
-
-
-def testing_find_test(tests: list[dict], name: str) -> dict:
-    """
-    Return the test entry named `name` from a list of JSON test entries, or
-    raise AssertionError listing the available names.
-    """
-    for t in tests:
-        if t["name"] == name:
-            return t
-    raise AssertionError(
-        f"no test named {name!r} in {[t['name'] for t in tests]}"
-        )
-
-
-def testing_parse_json_result(p):
-    """Return the parsed JSON object from p.out.
-
-    Trace.Error/Warning go to stderr, which e3 merges with stdout, so p.out may
-    contain diagnostic lines before the JSON blob. The JSON itself may be
-    pretty-printed across multiple lines, so we find the first line that starts
-    with '{' and parse from there to end of output.
-    """
-    lines = p.out.splitlines()
-    for i, line in enumerate(lines):
-        if line.lstrip().startswith("{"):
-            return json.loads("\n".join(lines[i:]))
-    raise AssertionError(
-        f"no JSON object found in output:\n{p.out}"
-    )
-
-
 class FileLock():
     """
     A filesystem-level lock for tests executed from different threads but
@@ -501,6 +450,10 @@ begin
 end Main;
 """
 
+URL_HASH_GLOB = "[0-9a-f]" * 8
+"""Glob for the hash of the repository URL in the name of a monorepo folder"""
+
+
 class MockCommand:
     """
     Replace a command with a Python script.
@@ -540,22 +493,30 @@ class MockCommand:
         with open(self._script_path, "x") as f:
             f.write(self._script)
         # Only binary executables are consistently recognised on the `PATH` in
-        # Windows, so we need to compile a binary wrapper for the script.
-        build_dir = os.path.join(self._dir, "build")
-        os.makedirs(build_dir)
-        with open(os.path.join(build_dir, "main.adb"), "x") as f:
-            f.write(MOCK_COMMAND_TEMPLATE.format(script_path=self._script_path))
-        run(
-            ["gnat", "make", "-q", os.path.join(build_dir, "main.adb")],
-            cwd=build_dir
-        ).check_returncode()
-        # Copy the binary to a directory on PATH
+        # Windows, so we need to compile a binary wrapper for the script. The
+        # wrapper depends only on the script path, so it is compiled once and
+        # reused by later mocks of the same command in the same directory.
         suffix = ".exe" if on_windows() else ""
+        wrapper_path = os.path.join(self._dir, "wrappers", self._name + suffix)
+        if not os.path.exists(wrapper_path):
+            build_dir = os.path.join(self._dir, "build")
+            os.makedirs(build_dir)
+            with open(os.path.join(build_dir, "main.adb"), "x") as f:
+                f.write(
+                    MOCK_COMMAND_TEMPLATE.format(script_path=self._script_path)
+                )
+            run(
+                ["gnat", "make", "-q", os.path.join(build_dir, "main.adb")],
+                cwd=build_dir
+            ).check_returncode()
+            os.makedirs(os.path.dirname(wrapper_path), exist_ok=True)
+            shutil.copy(os.path.join(build_dir, "main" + suffix), wrapper_path)
+            shutil.rmtree(build_dir)
+        # Copy the binary to a directory on PATH
         self._bin_dir = os.path.join(self._dir, "path_dir")
         self._bin_path = os.path.join(self._bin_dir, self._name + suffix)
         os.makedirs(self._bin_dir, exist_ok=True)
-        shutil.copy(os.path.join(build_dir, "main" + suffix), self._bin_path)
-        shutil.rmtree(build_dir)
+        shutil.copy(wrapper_path, self._bin_path)
         os.environ["PATH"] = f'{self._bin_dir}{os.pathsep}{os.environ["PATH"]}'
 
     def disable(self):

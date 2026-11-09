@@ -1,5 +1,7 @@
 with Ada.Calendar;
+with Ada.Characters.Conversions;
 with Ada.Exceptions;
+with Ada.Strings.UTF_Encoding;
 
 with Alire.Errors;
 with Alire.OS_Lib;
@@ -10,8 +12,7 @@ with Alire.Utils.TTY;
 with Alire.Version;
 with Alire.VCSs.Git;
 
-with GNATCOLL.JSON.Utility;
-with GNATCOLL.Strings;
+with LML.Input.JSON;
 
 with Minirest;
 
@@ -50,11 +51,44 @@ package body Alire.GitHub is
 
    function JSON_Escape (S : String) return String
    is
-      use GNATCOLL;
-      X : constant Strings.XString := Strings.To_XString (S);
+
+      ------------
+      -- Decode --
+      ------------
+
+      function Decode return LML.Text is
+      begin
+         return LML.Decode (S);
+      exception
+         when Ada.Strings.UTF_Encoding.Encoding_Error =>
+            --  Not everything we send is known to be UTF-8, e.g., command-line
+            --  arguments on Windows, and this should not prevent the request.
+            return Ada.Characters.Conversions.To_Wide_Wide_String (S);
+      end Decode;
+
    begin
-      return +GNATCOLL.JSON.Utility.Escape_String (X);
+      --  The result includes the enclosing quotes, as required by Minirest.
+      --  Backslashes and quotes are written as \uXXXX so no backslash ends
+      --  up next to a quote, as that wouldn't reach curl intact on Windows:
+      --  when quoting the arguments of a spawned process, GNAT doesn't escape
+      --  a backslash before a quote. Backslashes must go first, so any \" left
+      --  is an escaped quote and not the end of a preceding \\.
+      return AAA.Strings.Replace
+        (AAA.Strings.Replace
+           (LML.Encode
+              (LML.Scalars.New_Text (Decode).Image (LML.Yeison.JSON)),
+            Match => "\\",
+            Subst => "\u005c"),
+         Match => "\""",
+         Subst => "\u0022");
    end JSON_Escape;
+
+   -------------
+   -- To_JSON --
+   -------------
+
+   function To_JSON (Response : Minirest.Response) return JSON_Value
+   is (LML.Input.JSON.From_UTF_8 (Response.Content.Flatten ("")));
 
    --------------
    -- API_Call --
@@ -161,7 +195,7 @@ package body Alire.GitHub is
                       Kind   : Kinds := GET;
                       Token  : String := OS_Lib.Getenv (Env_GH_Token, "");
                       Error  : String := "GitHub API call failed")
-                      return GNATCOLL.JSON.JSON_Value
+                      return JSON_Value
    is
       Response : constant Minirest.Response
         := API_Call (Proc   => Proc,
@@ -170,7 +204,7 @@ package body Alire.GitHub is
                      Token  => Token);
    begin
       if Response.Succeeded then
-         return GNATCOLL.JSON.Read (Response.Content.Flatten (""));
+         return To_JSON (Response);
       else
          Raise_Checked_Error
            (Errors.New_Wrapper
@@ -211,29 +245,28 @@ package body Alire.GitHub is
      )
       return Natural
    is
+      PR : constant JSON_Value :=
+             API_Call
+               (Kind  => POST,
+                Token => Token,
+                Error => "Pull request could not be created",
+                Proc  => "repos" / Base / Repo / "pulls",
+                Args  =>
+                    "title" = Title
+                and "body"  = Message
+                and "base"  = Base_Branch
+                and "head"  = User & ":" & Head_Branch
+                and "draft" = Draft
+                and "maintainer_can_modify" = Maintainer_Can_Modify);
    begin
-      return
-        API_Call
-          (Kind  => POST,
-           Token => Token,
-           Error => "Pull request could not be created",
-           Proc  => "repos" / Base / Repo / "pulls",
-           Args  =>
-               "title" = Title
-           and "body"  = Message
-           and "base"  = Base_Branch
-           and "head"  = User & ":" & Head_Branch
-           and "draft" = Draft
-           and "maintainer_can_modify" = Maintainer_Can_Modify)
-        .Get ("number").Get;
+      return Natural (PR ("number").As_Int);
    end Create_Pull_Request;
 
    ---------------
    -- Get_Pulls --
    ---------------
 
-   function Get_Pulls (Args : Minirest.Parameters)
-                       return GNATCOLL.JSON.JSON_Value
+   function Get_Pulls (Args : Minirest.Parameters) return JSON_Value
    is
    begin
       return
@@ -251,7 +284,7 @@ package body Alire.GitHub is
    -----------------------
 
    function Find_Pull_Request (M : Milestones.Milestone)
-                               return GNATCOLL.JSON.JSON_Value
+                               return JSON_Value
    is (Get_Pulls ("state" = "all"
               and "head"  = User_Info.User_GitHub_Login & ":"
                             & Publish.Branch_Name (M)));
@@ -261,7 +294,7 @@ package body Alire.GitHub is
    -----------------------
 
    function Find_Pull_Request (Number : Natural)
-                               return GNATCOLL.JSON.JSON_Value
+                               return JSON_Value
    is (API_Call
          ("repos"
           / Index.Community_Organization
@@ -275,7 +308,7 @@ package body Alire.GitHub is
    -- Find_Pull_Requests --
    ------------------------
 
-   function Find_Pull_Requests return GNATCOLL.JSON.JSON_Value
+   function Find_Pull_Requests return JSON_Value
    is (Get_Pulls ("state" = "open"
               and "head"  = User_Info.User_GitHub_Login));
 
@@ -284,7 +317,7 @@ package body Alire.GitHub is
    -------------
 
    procedure Comment (Number : Natural; Text : String) is
-      Unused : constant GNATCOLL.JSON.JSON_Value
+      Unused : constant JSON_Value
         := API_Call
           ("repos"
            / Index.Community_Organization
@@ -304,7 +337,7 @@ package body Alire.GitHub is
 
    procedure Close (Number : Natural; Reason : String) is
       use AAA.Strings;
-      Unused : constant GNATCOLL.JSON.JSON_Value
+      Unused : constant JSON_Value
         := API_Call ("repos"
                      / Index.Community_Organization
                      / Index.Community_Repo_Name
@@ -336,7 +369,7 @@ package body Alire.GitHub is
       Start : constant Time := Clock;
       Next  : Time := Start + 1.0;
 
-      Unused : constant GNATCOLL.JSON.JSON_Value
+      Unused : constant JSON_Value
         := API_Call ("repos" / Owner / Repo / "forks",
                      Kind  => POST,
                      Token => Token,
@@ -444,11 +477,9 @@ package body Alire.GitHub is
                        "{""query"":"
                        & JSON_Escape (Replace (Mutation, "PRID", Node_ID))
                        & "}");
-
-      use GNATCOLL.JSON;
    begin
       if not Response.Succeeded or else
-        Read (Response.Content.Flatten ("")).Has_Field ("errors")
+        To_JSON (Response).Has_Field ("errors")
       then
          Raise_Checked_Error
            (Errors.New_Wrapper
@@ -468,11 +499,11 @@ package body Alire.GitHub is
    ------------------------------
 
    function Get_Latest_Alire_Release return String is
-      Response : constant GNATCOLL.JSON.JSON_Value :=
+      Response : constant JSON_Value :=
         API_Call (Alire_Repo_API / Releases / Latest);
       --  public endpoint
    begin
-      return Response.Get ("tag_name");
+      return Response ("tag_name").As_UTF_8;
    end Get_Latest_Alire_Release;
 
    --------------------------------
@@ -486,15 +517,11 @@ package body Alire.GitHub is
    begin
       if Response.Succeeded then
          declare
-            use GNATCOLL.JSON;
-
-            Data   : constant JSON_Value :=
-              GNATCOLL.JSON.Read (Response.Content.Flatten (""));
-            Assets : constant JSON_Array := Data.Get ("assets");
-            Len    : constant Natural := Length (Assets);
+            Data   : constant JSON_Value := To_JSON (Response);
+            Assets : constant JSON_Value := Data ("assets");
          begin
-            if (for some I in 1 .. Len
-                => Get (Assets, I).Get ("name") = Archive)
+            if (for some Asset of Assets =>
+                  Asset ("name").As_UTF_8 = Archive)
             then
                return Outcome_Success;
             else
@@ -529,10 +556,10 @@ package body Alire.GitHub is
          return True;
       end if;
 
-      --  Newer PATs that start with gh?_ or github_pat_. Probably not all of
-      --  those can work, this would require further digging.
+      --  Newer PATs that start with gh?_ or github_pat_. This is only a
+      --  plausibility check, so allow the punctuation used in current formats.
       return Utils.Regex.Fully_Matches
-        (Regex => "(github_pat|gh[pours])_[A-Za-z0-9]+",
+        (Regex => "(github_pat|gh[pours])_[A-Za-z0-9\.\-_]+",
          Text  => S);
    end Is_Possibly_A_Token;
 

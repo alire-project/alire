@@ -1,5 +1,4 @@
 with Ada.Directories;
-with Ada.Text_IO;
 
 with Alire.Settings.Builtins;
 with Alire.Crates;
@@ -19,11 +18,11 @@ with Alire.Utils.YAML;
 with Alire.Warnings;
 
 with GNAT.IO; -- To keep preelaborable
+with GNAT.SHA256;
 
 with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
 
-with TOML.File_IO;
 with Ada.Strings.Fixed;
 
 package body Alire.Releases is
@@ -198,8 +197,12 @@ package body Alire.Releases is
          end Simple_Name;
 
       begin
+         --  The URL hash keeps apart repositories with the same name on
+         --  different hosts or owners, which would otherwise share a folder
          return
            Sanitize (Ada.Directories.Base_Name (Simple_Name (R.Origin.URL)))
+           & "_"
+           & GNAT.SHA256.Digest (R.Origin.URL) (1 .. 8)
            & "_"
            & (case R.Origin.Kind is
                  when Git | Hg => R.Origin.Short_Unique_Id,
@@ -262,6 +265,7 @@ package body Alire.Releases is
       Rel_Folder  : constant Any_Path :=
                       Parent_Folder / This.Base_Folder;
       Completed   : Flags.Flag := Flags.Complete_Copy (Repo_Folder);
+      Monorepo_Flag : constant Flags.Flag := Flags.Monorepo_Data (Repo_Folder);
 
       Skip_Cleanup : Boolean := False;
       --  Set before raising to skip the cleanup deletion of `Repo_Folder`.
@@ -315,10 +319,47 @@ package body Alire.Releases is
                                       Kind);
       end Create_Authoritative_Manifest;
 
+      -------------------
+      -- Monorepo_Data --
+      -------------------
+
+      function Monorepo_Data return String is
+         Table : constant TOML.TOML_Value := TOML.Create_Table;
+      begin
+         Table.Set ("url", TOML.Create_String (This.Origin.URL));
+         Table.Set ("commit", TOML.Create_String (This.Origin.Commit));
+         return TOML.Dump_As_String (Table);
+      end Monorepo_Data;
+      --  What identifies the checkout of a monorepo, shared by its crates
+
+      ----------------------
+      -- Is_Foreign_Shared --
+      ----------------------
+
+      function Is_Foreign_Shared return Boolean
+      is (This.Origin.Is_Monorepo
+          and then (not Monorepo_Flag.Exists
+                    or else Monorepo_Flag.Data /= Monorepo_Data));
+      --  Whether the shared checkout in place does not come from our origin
+
    begin
 
       Trace.Debug ("Deploying " & This.Milestone.TTY_Image
                    & " into " & TTY.URL (Repo_Folder));
+
+      --  A shared checkout may only be reused when it comes from the same
+      --  origin, so it cannot be planted by another crate (e.g. with a
+      --  colliding folder name). Otherwise, it is deployed again.
+
+      if This.Origin.Is_Index_Provided
+        and then Completed.Exists
+        and then Is_Foreign_Shared
+      then
+         Put_Warning ("The checkout at " & TTY.URL (Repo_Folder)
+                      & " does not match the origin of "
+                      & This.Milestone.TTY_Image & ", deploying it again");
+         Directories.Force_Delete (Repo_Folder);
+      end if;
 
       --  Deploy if the target dir is not already there. We only skip for
       --  releases that require a folder to be deployed; system releases
@@ -391,6 +432,9 @@ package body Alire.Releases is
       end if;
 
       if Mark_Completion then
+         if This.Origin.Is_Monorepo then
+            Monorepo_Flag.Mark_Done (Monorepo_Data);
+         end if;
          Completed.Mark (Done => True);
       end if;
 
@@ -1189,18 +1233,8 @@ package body Alire.Releases is
    procedure To_File (R        : Release;
                       Filename : String;
                       Format   : Manifest.Sources) is
-      use Ada.Text_IO;
-      File : File_Type;
    begin
-      Create (File, Out_File, Filename);
-      TOML.File_IO.Dump_To_File (R.To_TOML (Format), File);
-      Close (File);
-   exception
-      when others =>
-         if Is_Open (File) then
-            Close (File);
-         end if;
-         raise;
+      TOML_Load.Write_File (R.To_TOML (Format), Filename);
    end To_File;
 
    -------------

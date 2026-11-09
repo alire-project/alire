@@ -3,6 +3,8 @@
 # Parameters (optional):
 # skip_build   : skip alr build
 # skip_test    : skip testsuites
+# smoke_test   : run only the Python tests that build code or detect the
+#                compiler (the Ada testsuite still runs in full)
 # use_external : use the system external compiler for the Ada testsuite
 
 trap 'echo "ERROR at line ${LINENO} (code: $?)" >&2' ERR
@@ -21,8 +23,8 @@ popd
 
 echo "Running as user: $(whoami) (uid: $(id -u), gid: $(id -g))"
 
-# Mark location safe to assuage git if necessary (happens under docker as we
-# run with a different user).
+# Mark location safe to assuage git if necessary (happens under docker & Cygwin
+# as we run with a different user).
 if git status 2>&1 | grep -q "dubious ownership"; then
    echo "Marking $PWD as safe for git"
    git config --global --add safe.directory "$PWD"
@@ -31,7 +33,11 @@ if git status 2>&1 | grep -q "dubious ownership"; then
    # as we have there some pre-created git repositories that would fail too.
    # These are copied to temporary locations by the test runner, so we cannot
    # simply use the `git config` trick.
-   sudo chown -R $(id -u):$(id -g) testsuite
+   if [ "$(get_OS)" == "windows" ]; then
+      takeown /R /D Y /F testsuite
+   else
+      sudo chown -R $(id -u):$(id -g) testsuite
+   fi
 fi
 
 # Patch version
@@ -122,8 +128,20 @@ echo Check Finalize exception handling :
 $run_python ../scripts/python/check_finalize_exceptions.py ../src
 echo ............................
 
+# With "smoke_test", select only tests whose outcome may depend on the compiler
+test_selection=""
+if [[ " $* " == *" smoke_test "* ]]; then
+    test_selection="tests/build \
+                    tests/build_profile \
+                    tests/crate_config \
+                    tests/install \
+                    tests/toolchain \
+                    tests/solver/compiler-"
+    echo "Running only a smoke subset of the Python test suite: $test_selection"
+fi
+
 echo Running Python test suite now:
-$run_python ./run.py --show-time-info -E || { echo Python test suite failures, unstable build!; exit 1; }
+$run_python ./run.py --show-time-info -E $test_selection || { echo Python test suite failures, unstable build!; exit 1; }
 cd ..
 echo ............................
 

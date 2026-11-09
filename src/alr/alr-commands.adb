@@ -1,4 +1,3 @@
-with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Environment_Variables;
@@ -58,8 +57,6 @@ with Alr.Commands.Topics.Toolchains;
 with Alr.Commands.Topics.Upgrading_Alr;
 
 with GNAT.OS_Lib;
-
-with GNATCOLL.VFS;
 
 package body Alr.Commands is
 
@@ -278,9 +275,8 @@ package body Alr.Commands is
    --------------------------
 
    procedure Create_Alire_Folders is
-      use GNATCOLL.VFS;
    begin
-      Make_Dir (Create (+Alire.Settings.Edit.Path));
+      Alire.Directories.Create_Tree (Alire.Settings.Edit.Path);
    end Create_Alire_Folders;
 
    --------------------------

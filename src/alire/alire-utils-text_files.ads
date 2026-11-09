@@ -38,6 +38,18 @@ package Alire.Utils.Text_Files is
                             Backup_Dir : Any_Path := "");
    --  Replace contents of File with the new lines.
 
+   --  Raw access, byte for byte: the UTF-8 text in alr strings is kept as is
+   --  (never through Ada.Text_IO, which would encode it again), and text that
+   --  is not UTF-8 (e.g. command output in a console code page) can be read.
+   --  Unlike with File objects, errors propagate to the caller.
+
+   function Read_Lines (File_Name : Any_Path) return AAA.Strings.Vector;
+   --  The lines of File_Name, without their line endings (LF or CR LF)
+
+   procedure Write_Lines (File_Name : Any_Path;
+                          Lines     : AAA.Strings.Vector);
+   --  Write Lines to File_Name, replacing it, with native line endings
+
 private
 
    type File (Length, Backup_Len : Natural) is

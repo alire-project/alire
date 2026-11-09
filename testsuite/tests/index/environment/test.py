@@ -46,15 +46,15 @@ run_alr('get', 'hello')
 os.chdir(glob('hello*')[0])
 p = run_alr('printenv', '--unix')
 assert_match('.*'
-             'export VAR1="abc"\n'
-             'export VAR2="xyz"\n'
-             'export VAR3="pqr"\n'
-             'export VAR4="TEST"\n'
-             'export VAR5="\${_ALIRE_TEST_"\n'
-             'export VAR6="\\\\\${_ALIRE_TEST_}"\n'
-             'export VAR7="abcTESTabc"\n'
-             'export VAR8="abc\\\\\${_ALIRE_TEST_}abc"\n'
-             'export VAR9="TESTTESTTEST"\n'
+             'export VAR1=\'abc\'\n'
+             'export VAR2=\'xyz\'\n'
+             'export VAR3=\'pqr\'\n'
+             'export VAR4=\'TEST\'\n'
+             'export VAR5=\'\${_ALIRE_TEST_\'\n'
+             'export VAR6=\'\\\\\${_ALIRE_TEST_}\'\n'
+             'export VAR7=\'abcTESTabc\'\n'
+             'export VAR8=\'abc\\\\\${_ALIRE_TEST_}abc\'\n'
+             'export VAR9=\'TESTTESTTEST\'\n'
              '.*',
              p.out, flags=re.S)
 

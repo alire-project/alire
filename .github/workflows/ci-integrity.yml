@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Verify pinned dependencies
         run: scripts/verify-pins.sh
@@ -28,11 +28,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # `alr` is needed to build `awsres` from `templates_parser`
       - name: Install Alire
-        uses: alire-project/setup-alire@v5
+        uses: alire-project/setup-alire@v6
 
       - name: Verify templates are up to date
         run: |

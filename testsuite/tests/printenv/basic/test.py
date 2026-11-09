@@ -45,15 +45,15 @@ expected_gpr_path = \
     f"{os.pathsep.join([expected_libhello_path, expected_hello_path])}" \
     ")"
 
-assert_match('export ALIRE="True"\n'
+assert_match('export ALIRE=\'True\'\n'
              '.*'
-             'export GPR_PROJECT_PATH="' + expected_gpr_path + '"\n'
+             'export GPR_PROJECT_PATH=\'' + expected_gpr_path + '\'\n'
              '.*'
-             'export HELLO_ALIRE_PREFIX="' + expected_hello_path + '"\n'
+             'export HELLO_ALIRE_PREFIX=\'' + expected_hello_path + '\'\n'
              '.*'
-             'export LIBHELLO_ALIRE_PREFIX="' + expected_libhello_path + '"\n'
+             'export LIBHELLO_ALIRE_PREFIX=\'' + expected_libhello_path + '\'\n'
              '.*'
-             'export TEST_GPR_EXTERNAL="gpr_ext_B"\n'
+             'export TEST_GPR_EXTERNAL=\'gpr_ext_B\'\n'
              '.*',
              p.out, flags=re.S)
 
@@ -63,7 +63,7 @@ assert_match('export ALIRE="True"\n'
 os.environ["GPR_PROJECT_PATH"] = "canary"
 assert_match(
     '.*'
-    f'export GPR_PROJECT_PATH="{expected_gpr_path}{os.pathsep}canary"\n',
+    f'export GPR_PROJECT_PATH=\'{expected_gpr_path}{os.pathsep}canary\'\n',
     run_alr('printenv', quiet=False).out)
 
 print('SUCCESS')

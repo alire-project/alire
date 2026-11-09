@@ -39,10 +39,9 @@ compare(contents('xxx'), ['xxx/.gitignore',
                           'xxx/tests',
                           'xxx/tests/.gitignore',
                           'xxx/tests/alire.toml',
-                          'xxx/tests/common',
-                          'xxx/tests/common/xxx_tests.ads',
                           'xxx/tests/src',
                           'xxx/tests/src/xxx_tests-assertions_enabled.adb',
+                          'xxx/tests/src/xxx_tests.ads',
                           'xxx/tests/xxx_tests.gpr',
                           'xxx/xxx.gpr'])
 
@@ -69,10 +68,9 @@ compare(contents('aaa'), ['aaa/.gitignore',
                           'aaa/tests/.gitignore',
                           'aaa/tests/aaa_tests.gpr',
                           'aaa/tests/alire.toml',
-                          'aaa/tests/common',
-                          'aaa/tests/common/aaa_tests.ads',
                           'aaa/tests/src',
-                          'aaa/tests/src/aaa_tests-assertions_enabled.adb'
+                          'aaa/tests/src/aaa_tests-assertions_enabled.adb',
+                          'aaa/tests/src/aaa_tests.ads'
                           ])
 
 # Init without skeleton
@@ -140,10 +138,9 @@ compare(contents('.'), ['./.gitignore',
                         './tests',
                         './tests/.gitignore',
                         './tests/alire.toml',
-                        './tests/common',
-                        './tests/common/zzz_tests.ads',
                         './tests/src',
                         './tests/src/zzz_tests-assertions_enabled.adb',
+                        './tests/src/zzz_tests.ads',
                         './tests/zzz_tests.gpr',
                         './zzz.gpr'])
 

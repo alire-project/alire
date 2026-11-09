@@ -1,0 +1,5 @@
+driver: python-script
+build_mode: sandboxed # we work with a local dependency
+indexes:
+    my_index:
+        in_fixtures: false

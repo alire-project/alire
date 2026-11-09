@@ -1,0 +1,3 @@
+driver: python-script
+indexes:
+    build_hash_index: {}

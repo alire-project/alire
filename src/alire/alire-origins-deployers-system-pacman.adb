@@ -14,7 +14,10 @@ package body Alire.Origins.Deployers.System.Pacman is
 
    function Get_Package_Line (Package_Name : String) return String is
 
-      Package_Match : constant String := "^" & Package_Name & "$";
+      Package_Match : constant String :=
+                        "^" & Utils.Regex.Escape (Package_Name) & "$";
+      --  pacman -Ss takes a regex, so names with special characters (e.g.
+      --  "gtk+3") must be escaped to be matched literally.
 
       Output : constant AAA.Strings.Vector :=
                  Subprocess.Checked_Spawn_And_Capture
@@ -44,6 +47,7 @@ package body Alire.Origins.Deployers.System.Pacman is
                    ("pacman",
                     Empty_Vector &
                       "-Qq" &
+                      "--" &
                       This.Base.Package_Name,
                     Valid_Exit_Codes => (0, 1), -- Returned when not found
                     Err_To_Out       => True);
@@ -117,6 +121,7 @@ package body Alire.Origins.Deployers.System.Pacman is
            "--needed" &
            "--noconfirm" &
            "-S" &
+           "--" &
            This.Base.Package_Name);
 
       return Outcome_Success;

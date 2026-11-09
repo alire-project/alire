@@ -103,6 +103,19 @@ package body Alire.Properties.Labeled is
          From.Checked_Error ("Cannot read valid property from " & Key);
    end From_TOML;
 
+   ----------------
+   -- Max_Length --
+   ----------------
+
+   function Max_Length (Name : Labels) return Natural
+   is (case Name is
+          when Description      => Max_Description_Length,
+          when Long_Description => Max_Long_Description_Length,
+          when Notes | Hint     => Max_Notes_Length,
+          when Website          => Max_Website_Length,
+          when others           => Natural'Last);
+   --  Tags, and other labels with a more specific format, are checked below
+
    --------------
    -- Validate --
    --------------
@@ -110,14 +123,29 @@ package body Alire.Properties.Labeled is
    procedure Validate (L    : Label;
                        From : TOML_Adapters.Key_Queue) is
    begin
-      case L.Name is
-         when Description =>
-            if L.Value'Length > Max_Description_Length then
-               From.Checked_Error
-                 ("Description string is too long (must be no more than"
-                    & Max_Description_Length'Img & ")");
-            end if;
+      --  Checks common to all labels, as their values may be shown in the
+      --  terminal: a maximum length, and no control characters (which could
+      --  form terminal escape sequences) other than line breaks and tabs in
+      --  multi-line texts.
 
+      if UTF_8_Length (L.Value) > Max_Length (L.Name) then
+         From.Checked_Error
+           (Key (L.Name) & " is too long:" & UTF_8_Length (L.Value)'Image
+            & " characters, the maximum is" & Max_Length (L.Name)'Image);
+      end if;
+
+      declare
+         Error : constant String :=
+                   Utils.Error_In_Text
+                     (L.Value,
+                      Multiline => L.Name in Long_Description | Notes | Hint);
+      begin
+         if Error /= "" then
+            From.Checked_Error (Key (L.Name) & ": " & Error);
+         end if;
+      end;
+
+      case L.Name is
          when Maintainer =>
             if not Utils.Could_Be_An_Email (L.Value, With_Name => True) then
                From.Checked_Error

@@ -1,6 +1,6 @@
 private with AAA.Strings;
 
-with GNATCOLL.OS.Constants;
+with GNAT.OS_Lib;
 
 package Alire.OS_Lib with Preelaborate is
 
@@ -28,7 +28,7 @@ package Alire.OS_Lib with Preelaborate is
    --  On Windows, no need to append ".exe" as it will be found without it.
 
    Forbidden_Dir_Separator : constant Character :=
-                               (case GNATCOLL.OS.Constants.Dir_Sep is
+                               (case GNAT.OS_Lib.Directory_Separator is
                                    when '/' => '\',
                                    when '\' => '/',
                                    when others =>
@@ -37,7 +37,7 @@ package Alire.OS_Lib with Preelaborate is
 
    --  For things that may contain path fragments but are not proper paths
 
-   Dir_Separator : Character renames GNATCOLL.OS.Constants.Dir_Sep;
+   Dir_Separator : Character renames GNAT.OS_Lib.Directory_Separator;
 
    subtype Native_Path_Like is String
      with Dynamic_Predicate =>
@@ -57,10 +57,13 @@ package Alire.OS_Lib with Preelaborate is
 
    function To_Native (Path : Portable_Path_Like) return Native_Path_Like;
 
+   procedure Flush_Output;
+   --  Flush the standard output and error of the C library, which GNAT.IO
+   --  (and so Trace) writes to; e.g., after output without a line break.
+
 private
 
    use AAA.Strings;
-   use all type GNATCOLL.OS.OS_Type;
 
    ----------------------
    -- To_Portable_Like --
@@ -75,8 +78,8 @@ private
    --------------------
 
    function To_Native (Path : Portable_Path_Like) return Native_Path_Like
-   is (case GNATCOLL.OS.Constants.OS is
-          when MacOS | Unix => Replace (String (Path), "\", "/"),
-          when Windows      => Replace (String (Path), "/", "\"));
+   is (Replace (String (Path),
+                Match => (1 => Forbidden_Dir_Separator),
+                Subst => (1 => Dir_Separator)));
 
 end Alire.OS_Lib;

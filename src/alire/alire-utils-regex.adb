@@ -7,7 +7,7 @@ package body Alire.Utils.Regex is
    ------------
 
    function Escape (Literal : String) return String is
-      Targets  : constant String := "\()[].*+?^";
+      Targets  : constant String := "\()[]{}.*+?^$|";
       Result   : UString;
       use UStrings;
    begin

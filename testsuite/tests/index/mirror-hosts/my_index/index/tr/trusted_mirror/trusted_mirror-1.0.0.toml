@@ -1,0 +1,13 @@
+name = "trusted_mirror"
+description = "d"
+version = "1.0.0"
+licenses = "MIT"
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin]
+url = "git+https://github.com/someone/crate.git"
+commit = "0123456789abcdef0123456789abcdef01234567"
+
+[[mirror]]
+url = "git+https://gitlab.com/someone/crate.git"

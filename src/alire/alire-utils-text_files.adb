@@ -1,3 +1,4 @@
+with Ada.Streams.Stream_IO;
 with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 
 with AAA.Strings; use AAA.Strings;
@@ -7,6 +8,8 @@ with Alire.Directories;
 with LML;
 
 package body Alire.Utils.Text_Files is
+
+   package SIO renames Ada.Streams.Stream_IO;
 
    ------------------
    -- Append_Lines --
@@ -22,6 +25,52 @@ package body Alire.Utils.Text_Files is
       F.Lines.Append (Lines);
    end Append_Lines;
 
+   ----------------
+   -- Read_Lines --
+   ----------------
+
+   function Read_Lines (File_Name : Any_Path) return AAA.Strings.Vector is
+      File : SIO.File_Type;
+   begin
+      SIO.Open (File, SIO.In_File, File_Name);
+      declare
+         Text  : String (1 .. Natural (SIO.Size (File)));
+         Lines : AAA.Strings.Vector;
+         First : Positive := Text'First; -- Of the current line
+         Last  : Natural;
+      begin
+         String'Read (SIO.Stream (File), Text);
+         SIO.Close (File);
+
+         --  We do a manual scan to avoid copies with Split and deal
+         --  with Windows CRLF that nags our immutable vector elems.
+
+         for I in Text'Range loop
+            if Text (I) = Latin_1.LF then
+               Last := I - 1;
+               if Last >= First and then Text (Last) = Latin_1.CR then
+                  Last := Last - 1;
+               end if;
+               Lines.Append (Text (First .. Last));
+               First := I + 1;
+            end if;
+         end loop;
+
+         --  A last line without line break
+         if First <= Text'Last then
+            Lines.Append (Text (First .. Text'Last));
+         end if;
+
+         return Lines;
+      end;
+   exception
+      when others =>
+         if SIO.Is_Open (File) then
+            SIO.Close (File);
+         end if;
+         raise;
+   end Read_Lines;
+
    -------------------
    -- Replace_Lines --
    -------------------
@@ -35,6 +84,28 @@ package body Alire.Utils.Text_Files is
    begin
       F.Lines := Lines;
    end Replace_Lines;
+
+   -----------------
+   -- Write_Lines --
+   -----------------
+
+   procedure Write_Lines (File_Name : Any_Path;
+                          Lines     : AAA.Strings.Vector)
+   is
+      File : SIO.File_Type;
+   begin
+      SIO.Create (File, SIO.Out_File, File_Name);
+      for Line of Lines loop
+         String'Write (SIO.Stream (File), Line & Alire.New_Line);
+      end loop;
+      SIO.Close (File);
+   exception
+      when others =>
+         if SIO.Is_Open (File) then
+            SIO.Close (File);
+         end if;
+         raise;
+   end Write_Lines;
 
    --------------
    -- Finalize --

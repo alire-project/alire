@@ -101,8 +101,23 @@ package body Alire.Externals.From_System is
       -- From_Array --
       ----------------
 
-      function From_Array (Values : TOML.TOML_Value) return Package_Vector
-      is (Packages => TOML_Adapters.To_Vector (Values));
+      function From_Array (Values : TOML.TOML_Value) return Package_Vector is
+         Packages : constant AAA.Strings.Vector :=
+                      TOML_Adapters.To_Vector (Values);
+      begin
+         for Name of Packages loop
+            declare
+               Error : constant String :=
+                         Origins.Error_In_System_Package_Name (Name);
+            begin
+               if Error /= "" then
+                  From.Checked_Error (Error);
+               end if;
+            end;
+         end loop;
+
+         return (Packages => Packages);
+      end From_Array;
 
       Value : TOML.TOML_Value;
    begin

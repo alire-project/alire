@@ -47,6 +47,13 @@ package Alire.Utils with Preelaborate is
          'a' .. 'z' | '0' .. '9' | '-';
 
    function Error_In_Tag (Tag : String) return String;
+
+   function Error_In_Text (Text : String; Multiline : Boolean) return String;
+   --  Returns "" if Text has no control characters, or else an error message
+   --  saying where the first one is. Control characters are C0 ones, DEL and
+   --  C1 ones (U+0080 .. U+009F, in UTF-8), as they may form terminal escape
+   --  sequences. Line breaks (LF) and tabs are allowed when Multiline.
+
    function Is_Valid_Tag (Tag : String) return Boolean;
 
    function Quote (S : String) return String;

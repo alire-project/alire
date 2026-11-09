@@ -96,6 +96,39 @@ package body Alire.Origins is
                Hashes   => <>,
                Subdir   => +Subdir));
 
+   ----------------------------------
+   -- Error_In_System_Package_Name --
+   ----------------------------------
+
+   function Error_In_System_Package_Name (Name : String) return String is
+      Max_Length : constant := 256;
+
+      function Is_Blank (C : Character) return Boolean
+      is (C <= ' ' or else C = Character'Val (127));
+      --  ASCII whitespace and control characters
+
+      function Invalid (Reason : String) return String
+      is ("invalid system package name '" & Name & "': " & Reason);
+   begin
+      if Name = "" then
+         return Invalid ("it is empty");
+      elsif Name'Length > Max_Length then
+         return Invalid ("it is longer than" & Max_Length'Image
+                         & " characters");
+      elsif Name (Name'First) not in 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' then
+         --  Excludes options ('-'), MacPorts variants ('+'), local paths
+         --  ('.', '/'), apt patterns ('~', '?') and emerge sets ('@').
+         return Invalid ("it must begin with a letter or digit");
+      elsif (for some C of Name => Is_Blank (C)) then
+         return Invalid ("it must not contain whitespace or control "
+                         & "characters");
+      elsif AAA.Strings.Contains (Name, "://") then
+         return Invalid ("it must not be a URL");
+      else
+         return "";
+      end if;
+   end Error_In_System_Package_Name;
+
    ----------------
    -- New_System --
    ----------------
@@ -351,6 +384,57 @@ package body Alire.Origins is
       end if;
    end Archive_Format;
 
+   ---------------------------
+   -- Error_In_Archive_Name --
+   ---------------------------
+
+   function Error_In_Archive_Name (Name : String) return String is
+      function Invalid (Reason : String) return String
+      is ("invalid archive name '" & Name & "': " & Reason);
+   begin
+      if Name = "" or else Name = "." or else Name = ".." then
+         return Invalid ("it must be a file name");
+      elsif (for some C of Name => C in '/' | '\' | ':') then
+         return Invalid ("it must be a plain file name, without '/', '\' "
+                         & "or ':'");
+      else
+         return "";
+      end if;
+   end Error_In_Archive_Name;
+
+   ----------------------
+   -- Error_In_VCS_URL --
+   ----------------------
+
+   function Error_In_VCS_URL (URL : Alire.URL) return String is
+      use all type URI.URI_Kinds;
+
+      function Invalid (Reason : String) return String
+      is ("invalid VCS URL '" & URL & "': " & Reason);
+
+      Kind   : constant URI.URI_Kinds := URI.URI_Kind (URL);
+      Remote : constant String := VCSs.Repo_URL (URL);
+      --  As given to the VCS tool
+   begin
+      if (for some C of URL => C <= ' ' or else C = Character'Val (127)) then
+         return Invalid ("it must not contain whitespace or control "
+                         & "characters");
+      elsif Remote = "" or else Remote (Remote'First) = '-' then
+         return Invalid ("it must not be empty or begin with '-'");
+      elsif Kind not in URI.Local_URIs | SCP_Style_Git
+        and then URI.Scheme (Remote) not in "http" | "https" | "ssh" | "git"
+      then
+         return Invalid ("transport '" & URI.Scheme (Remote)
+                         & "' is not supported");
+      elsif AAA.Strings.Has_Prefix (URI.Authority (Remote), "-")
+        or else AAA.Strings.Has_Prefix (URI.Host (Remote), "-")
+      then
+         return Invalid ("its user or host must not begin with '-'");
+      else
+         return "";
+      end if;
+   end Error_In_VCS_URL;
+
    ------------------------
    -- New_Source_Archive --
    ------------------------
@@ -400,8 +484,13 @@ package body Alire.Origins is
                      Is_Mirror : Boolean := False) return Origin is
       URL_Kind : constant URI.URI_Kinds := URI.URI_Kind (URL);
       VCS_URL : constant String := VCSs.Repo_URL (URL);
+      Error   : constant String := Error_In_VCS_URL (URL);
 
    begin
+      if Error /= "" then
+         Raise_Checked_Error (Error);
+      end if;
+
       case URL_Kind is
          when URI.Git_URIs =>
             --  A mirror has no commit of its own (it's taken from the origin)
@@ -458,6 +547,15 @@ package body Alire.Origins is
          if Archive.Kind /= TOML.TOML_String then
             Table.Checked_Error ("archive name must be a string");
          end if;
+
+         declare
+            Error : constant String :=
+                      Error_In_Archive_Name (Archive.As_String);
+         begin
+            if Error /= "" then
+               Table.Checked_Error (Error);
+            end if;
+         end;
       end if;
 
       declare
@@ -695,7 +793,14 @@ package body Alire.Origins is
                               then Table.Checked_Pop
                               (Keys.Subdir, TOML_String).As_String
                               else "");
+                  Error  : constant String :=
+                             VFS.Error_In_Contained_Path
+                               (Subdir, What => Keys.Subdir);
                begin
+                  if Error /= "" then
+                     Table.Checked_Error (Error);
+                  end if;
+
                   This := New_VCS
                   (URL,
                      Commit => Commit,
@@ -712,7 +817,16 @@ package body Alire.Origins is
                                 & " instead.");
 
          when System                       =>
-            This := New_System (URI.Path (URL));
+            declare
+               Name  : constant String := URI.Path (URL);
+               Error : constant String := Error_In_System_Package_Name (Name);
+            begin
+               if Error /= "" then
+                  From.Checked_Error (Error);
+               end if;
+
+               This := New_System (Name);
+            end;
 
          when Unknown                      =>
             From.Checked_Error ("unsupported scheme in URL: " & URL);

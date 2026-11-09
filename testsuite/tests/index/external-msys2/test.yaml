@@ -1,6 +1,7 @@
 driver: python-script
 control:
     - [SKIP, "skip_windows", "Windows-only"]
+    - [SKIP, "skip_network", "Network disabled"]
 indexes:
     my_index:
         in_fixtures: false

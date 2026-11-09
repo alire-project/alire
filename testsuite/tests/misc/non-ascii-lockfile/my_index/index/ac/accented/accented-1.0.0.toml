@@ -1,0 +1,9 @@
+name = "accented"
+version = "1.0.0"
+description = "Crate with non-ASCII text: é€中"
+licenses = "MIT"
+maintainers = ["César <cesar@example.com>"]
+maintainers-logins = ["someone"]
+
+[origin]
+url = "file:../../../../accented"

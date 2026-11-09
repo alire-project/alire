@@ -21,7 +21,7 @@ package body Alire.Origins.Deployers.System.Apt is
       Output : constant AAA.Strings.Vector :=
                  Subprocess.Checked_Spawn_And_Capture
                    ("dpkg",
-                    Empty_Vector & "-s" & This.Base.Package_Name,
+                    Empty_Vector & "-s" & "--" & This.Base.Package_Name,
                     Valid_Exit_Codes => (0, 1), -- returned when not found
                     Err_To_Out       => True);
    begin
@@ -49,6 +49,7 @@ package body Alire.Origins.Deployers.System.Apt is
                        Empty_Vector &
                          "-q" &
                          "show" &
+                         "--" &
                          This.Base.Package_Name,
                        Valid_Exit_Codes => (0, 100), -- Returned when not found
                        Err_To_Out       => True);
@@ -114,6 +115,7 @@ package body Alire.Origins.Deployers.System.Apt is
            "-q" &
            "-q" &
            "-y" &
+           "--" &
            This.Base.Package_Name,
          Run_Privileged => True);
 

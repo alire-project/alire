@@ -21,41 +21,59 @@ package body Alire.VFS is
       end if;
    end Attempt_Portable;
 
-   --------------
-   -- Read_Dir --
-   --------------
+   ----------------------------
+   -- Error_In_Portable_Path --
+   ----------------------------
 
-   function Read_Dir
-     (Dir     : Virtual_File;
-      Filter  : Read_Dir_Filter := All_Files;
-      Special : Boolean         := True) return Virtual_File_Vector
+   function Error_In_Portable_Path (Path : String;
+                                    What : String := "path") return String
    is
-      Files : GNATCOLL.VFS.File_Array_Access :=
-                Dir.Read_Dir (GNATCOLL.VFS.Read_Dir_Filter (Filter));
+      function Invalid (Reason : String) return String
+      is ("invalid " & What & " '" & Path & "': " & Reason);
    begin
-      return Contents : Virtual_File_Vector do
-         Contents.Reserve_Capacity (Files'Length);
+      if (for some C of Path => C = '\') then
+         return Invalid ("it must use forward slashes");
+      elsif Path /= "" and then Path (Path'First) = '/' then
+         return Invalid ("it must be a relative path");
+      elsif (for some C of Path => C = ':') then
+         return Invalid ("it must not contain ':'");
+      else
+         return "";
+      end if;
+   end Error_In_Portable_Path;
 
-         for File of Files.all loop
-            if Special or else
-              (File.Base_Name /= "." and then File.Base_Name /= "..")
-            then
-               Contents.Append (File);
+   -----------------------------
+   -- Error_In_Contained_Path --
+   -----------------------------
+
+   function Error_In_Contained_Path (Path   : String;
+                                     What   : String := "path";
+                                     Within : String := "") return String
+   is
+      Error    : constant String := Error_In_Portable_Path (Path, What);
+      Segments : constant AAA.Strings.Vector :=
+                   Split (Within & "/" & Path, '/');
+      Depth    : Natural := 0;
+      --  Of the current folder below the one Within is relative to
+   begin
+      if Error /= "" then
+         return Error;
+      end if;
+
+      for Segment of Segments loop
+         if Segment = ".." then
+            if Depth = 0 then
+               return "invalid " & What & " '" & Path
+                 & "': it must not go above the root of its origin";
             end if;
-         end loop;
+            Depth := Depth - 1;
+         elsif Segment not in "" | "." then
+            Depth := Depth + 1;
+         end if;
+      end loop;
 
-         GNATCOLL.VFS.Unchecked_Free (Files);
-      end return;
-   end Read_Dir;
-
-   -----------------
-   -- Simple_Name --
-   -----------------
-
-   function Simple_Name (File : Virtual_File) return Filesystem_String is
-     (if File.Is_Directory
-      then File.Base_Dir_Name
-      else File.Base_Name);
+      return "";
+   end Error_In_Contained_Path;
 
    -----------------
    -- Is_Same_Dir --
@@ -80,6 +98,8 @@ package body Alire.VFS is
 
       --  To be absolutely sure, touch a temp file in one of the dirs and
       --  verify whether it exist in the other.
+      --
+      --  If the write fails for some reason, assume the dirs are different.
 
       declare
          Tmp : constant Directories.Temp_File := Directories.In_Dir (P1);
@@ -88,6 +108,12 @@ package body Alire.VFS is
          Directories.Touch (Tmp.Filename);
          return Is_Regular_File (P2
                                  / Ada.Directories.Simple_Name (Tmp.Filename));
+      exception
+         when E : others =>
+            Trace.Debug ("Failed to write probe file to '" & P1
+                         & "'. Assuming different from '" & P2 & "'.");
+            Log_Exception (E);
+            return False;
       end;
    end Is_Same_Dir;
 

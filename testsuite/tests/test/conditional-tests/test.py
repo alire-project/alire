@@ -7,6 +7,7 @@ import os
 import shutil
 from drivers.alr import alr_manifest, init_local_crate, init_local_crate, run_alr
 from drivers.helpers import append_to_file
+from drivers.testing import declare_main_as_test
 from drivers.asserts import assert_substring, assert_match
 
 CRATE="xxx"
@@ -26,8 +27,9 @@ for mode in ["table", "array"]:
                   ])
     append_to_file(alr_manifest(), test)
 
-    # Initialize the test nested crate
+    # Initialize the test nested crate and declare its main as a test
     init_local_crate("tests", enter=False)
+    declare_main_as_test("tests")
 
     # Verify the test runs in all platforms
     p = run_alr("test")

@@ -1,5 +1,3 @@
-with Alire.VFS;
-
 package Alire.Origins.Deployers.Filesystem is
 
    type Deployer is new Deployers.Deployer with null record;
@@ -30,7 +28,7 @@ package Alire.Origins.Deployers.Filesystem is
    --  Filesystem origins that point to a tarball must verify it, while ones
    --  that point to a directory must not.
 
-   function Is_Valid_Local_Crate (Path : VFS.Virtual_File) return Boolean;
+   function Is_Valid_Local_Crate (Path : Any_Path) return Boolean;
    --  True if Path is a folder or a file with known source archive extension.
 
 end Alire.Origins.Deployers.Filesystem;

@@ -1,3 +1,7 @@
+with AAA.Strings;
+
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+
 with GNAT.OS_Lib;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -76,18 +80,128 @@ package body Alire.Environment is
       --  TODO: PowerShell or CMD version for Windows. Is it possible to detect
       --  the kind of shell we are running in?
       for Elt of This.Compile (Check_Conflicts => True) loop
-         case Kind is
-         when Platforms.Unix =>
-            Trace.Always (To_String ("export " & Elt.Key & "=""" &
-                            Elt.Value & """"));
-         when Platforms.PowerShell =>
-            Trace.Always (To_String ("$env:" & Elt.Key & " = """ &
-                            Elt.Value & """"));
-         when Platforms.WinCmd =>
-            Trace.Always (To_String ("set " & Elt.Key & "=" & Elt.Value));
-         end case;
+         Trace.Always (Shell_Command (Kind,
+                                      Name  => To_String (Elt.Key),
+                                      Value => To_String (Elt.Value)));
       end loop;
    end Print_Shell;
+
+   -------------------
+   -- Shell_Command --
+   -------------------
+
+   function Shell_Command (Kind  : Platforms.Shells;
+                           Name  : String;
+                           Value : String) return String
+   is
+      use AAA.Strings;
+
+      Error : constant String := Error_In_Variable_Name (Name);
+
+      ---------
+      -- Hex --
+      ---------
+
+      Hex_Digits : constant String := "0123456789ABCDEF";
+
+      function Hex (Value : Natural; Width : Natural := 4) return String
+      is ((if Value < 16 and then Width <= 1
+           then ""
+           else Hex (Value / 16, Natural'Max (Width, 1) - 1))
+          & Hex_Digits (Value mod 16 + 1));
+      --  Uppercase hexadecimal image, with at least Width digits
+
+      ---------------------------
+      -- PowerShell_Expression --
+      ---------------------------
+
+      function PowerShell_Expression (Text : String) return String is
+         --  Single-quoted runs of printable ASCII, in which PowerShell takes
+         --  everything literally but single quotes (doubled), joined with
+         --  [char] codes for anything else. The result is plain ASCII, so it
+         --  means the same whatever encoding PowerShell reads it with (non-
+         --  ASCII bytes may otherwise decode to the typographic quotes that
+         --  PowerShell also accepts, U+2018 .. U+201B).
+
+         Result : Unbounded_String := +"'";
+         In_Run : Boolean := True;
+         --  Whether Result ends inside a quoted run. It always begins with
+         --  one, so that PowerShell concatenates strings and not chars.
+
+         procedure Add (Point : Natural) is
+         begin
+            if Point in 16#20# .. 16#7E# then
+               if not In_Run then
+                  Append (Result, " + '");
+                  In_Run := True;
+               end if;
+               Append (Result, (if Point = Character'Pos (''')
+                                then "''"
+                                else (1 => Character'Val (Point))));
+            else
+               Append (Result,
+                       (if In_Run then "'" else "") & " + "
+                       & (if Point > 16#FFFF#
+                          then "[char]::ConvertFromUtf32(0x" & Hex (Point)
+                               & ")"
+                          else "[char]0x" & Hex (Point)));
+               In_Run := False;
+            end if;
+         end Add;
+
+      begin
+         declare
+            Points : constant Wide_Wide_String :=
+                       Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Decode
+                         (Text);
+         begin
+            for Point of Points loop
+               Add (Wide_Wide_Character'Pos (Point));
+            end loop;
+         end;
+
+         return +Result & (if In_Run then "'" else "");
+      exception
+         when Ada.Strings.UTF_Encoding.Encoding_Error =>
+            --  Not UTF-8 (it may come from the user's environment), so keep
+            --  its bytes as they are
+            Result := +"'";
+            In_Run := True;
+            for Char of Text loop
+               Add (Character'Pos (Char));
+            end loop;
+            return +Result & (if In_Run then "'" else "");
+      end PowerShell_Expression;
+
+   begin
+      if Error /= "" then
+         Raise_Checked_Error (Error);
+      end if;
+
+      case Kind is
+         when Platforms.Unix =>
+            --  In single quotes, everything is literal but single quotes,
+            --  which are closed, escaped and reopened.
+            return "export " & Name & "='" & Replace (Value, "'", "'\''")
+              & "'";
+
+         when Platforms.PowerShell =>
+            return "$env:" & Name & " = " & PowerShell_Expression (Value);
+
+         when Platforms.WinCmd =>
+            --  In set "NAME=VALUE", cmd takes metacharacters (& | < > ^)
+            --  literally, but there is no reliable escape for these:
+            if (for some C of Value =>
+                  C in '"' | '%' | '!' | Latin_1.CR | Latin_1.LF)
+            then
+               Raise_Checked_Error
+                 ("the value of " & Name & " cannot be given literally to "
+                  & "cmd.exe, as it contains '""', '%', '!' or a line break; "
+                  & "use PowerShell instead");
+            end if;
+            return "set """ & Name & "=" & Value & """";
+      end case;
+   end Shell_Command;
 
    -------------------
    -- Print_Details --

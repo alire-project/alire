@@ -331,9 +331,9 @@ package body Alr.Commands.Init is
 
    function Description_Validation (Str : String) return Boolean is
    begin
-      if Str'Length > Alire.Max_Description_Length then
+      if Alire.UTF_8_Length (Str) > Alire.Max_Description_Length then
          Put_Line ("Description too long:"
-                   & Str'Length'Img & " (max"
+                   & Alire.UTF_8_Length (Str)'Img & " (max"
                    & Alire.Max_Description_Length'Img & ")");
          return False;
       else

@@ -1,7 +1,6 @@
 with Ada.Directories;
 
 with Alire.Directories;
-with Alire.OS_Lib;
 
 with GNAT.OS_Lib;
 
@@ -21,7 +20,14 @@ package Alr.OS_Lib is
 
    --  OS PORTABLE FUNCTIONS
 
-   procedure Bailout (Code : Integer := 0) renames Alire.OS_Lib.Bailout;
+   Pause_Before_Exit : Boolean := False with Atomic;
+   --  When set, Bailout waits for the user to press Enter before exiting, if
+   --  interactive. Used by the Windows self-update helper process, whose
+   --  console window would otherwise close before its errors can be read.
+
+   procedure Bailout (Code : Integer := 0);
+   --  Exit immediately with the given code (see Alire.OS_Lib.Bailout), after
+   --  pausing if Pause_Before_Exit is set.
 
    function Is_Older (This : String; Than : String) return Boolean;
    --  Says if This file is older than Than

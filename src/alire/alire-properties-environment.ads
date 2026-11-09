@@ -5,6 +5,11 @@ package Alire.Properties.Environment with Preelaborate is
 
    type Actions is (Append, Prepend, Set);
 
+   function Error_In_Variable_Name (Name : String) return String;
+   --  Returns "" for a valid environment variable name, or else an error
+   --  message naming it and saying why it is invalid. Names are those that
+   --  every shell accepts in an assignment: [A-Za-z_][A-Za-z0-9_]*.
+
    type Variable is new Property with private;
 
    --  Own data

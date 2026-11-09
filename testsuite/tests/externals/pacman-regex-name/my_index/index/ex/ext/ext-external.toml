@@ -1,0 +1,8 @@
+name = "ext"
+description = "External with a system package name with regex characters"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[[external]]
+kind = "system"
+origin = ["gtk+3"]

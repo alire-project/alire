@@ -1,4 +1,5 @@
 driver: python-script
+build_mode: shared
 indexes:
     basic_index: # needed to avoid cloning the community index
         in_fixtures: true

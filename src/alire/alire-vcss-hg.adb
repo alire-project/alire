@@ -46,6 +46,7 @@ package body Alire.VCSs.Hg is
            "-y" &
            Commit_Arg &
            Extra &
+           "--" &
            Repo_URL (From) &
            Into);
 

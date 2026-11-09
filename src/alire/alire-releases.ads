@@ -190,6 +190,9 @@ package Alire.Releases is
 
    function Origin  (R : Release) return Origins.Origin;
 
+   function Mirrors (R : Release) return Origins.Mirrors.Mirror_Vector;
+   --  Alternative origins for the same sources
+
    function Available (R : Release) return Conditional.Availability;
    function Is_Available (R : Release;
                           P : Alire.Properties.Vector) return Boolean;
@@ -510,6 +513,9 @@ private
 
    function Origin  (R : Release) return Origins.Origin
    is (R.Origin);
+
+   function Mirrors (R : Release) return Origins.Mirrors.Mirror_Vector
+   is (R.Mirrors);
 
    function Available (R : Release) return Conditional.Availability
    is (R.Available);

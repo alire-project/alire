@@ -20,6 +20,10 @@
       - Link to user-changes.md
       - Link to BREAKING.md
     - Credit all collaborators (if release notes aren't exhaustive).
+  - Check that `CI self stable` passed on the tag: the latest stable `alr` must
+    be able to build the new release and to load crates initialized by it. This
+    workflow runs separately, so it does not prevent the draft from being
+    created.
   - Once all is OK, publish the draft.
 1. [ ] Ensure the index version is the default branch in the community repos:
   - alire-index

@@ -17,6 +17,7 @@ from argparse import ArgumentTypeError
 
 import e3.testsuite
 import e3.testsuite.driver
+from drivers.alr import prepare_env
 from drivers.driver.docker_wrapper import DockerWrapperDriver
 from drivers.driver.python_script import PythonScriptDriver
 from drivers.helpers import on_windows
@@ -75,6 +76,13 @@ class Testsuite(e3.testsuite.Testsuite):
         )
         print(result.stdout)
         sys.stdout.flush()
+
+        # Prepare once the settings every test starts with, so tests copy them
+        # instead of spawning several `alr settings` each.
+        template_dir = os.path.join(self.env.working_dir,
+                                    ".alr-settings-template")
+        prepare_env(template_dir, dict(os.environ))
+        os.environ['ALR_TESTSUITE_SETTINGS_TEMPLATE'] = template_dir
 
         # Ensure toolchain is in scope, or err early instead of during tests
         # Locate gnat and gprbuild in path and report their location

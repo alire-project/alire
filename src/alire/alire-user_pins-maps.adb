@@ -1,4 +1,4 @@
-with Ada.Text_IO;
+with GNAT.IO;
 
 package body Alire.User_Pins.Maps is
 
@@ -50,7 +50,7 @@ package body Alire.User_Pins.Maps is
    -----------
 
    procedure Print (This : Map; Prefix : String := "") is
-      use Ada.Text_IO;
+      use GNAT.IO;
    begin
       for I in This.Iterate loop
          Put_Line (Prefix

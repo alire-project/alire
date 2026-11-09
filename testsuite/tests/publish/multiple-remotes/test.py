@@ -59,9 +59,10 @@ def test_publishing(
     Run `alr --force publish --skip-submit` with the specified additional args,
     and assert that it succeeds (optionally asserting the output matches a regex
     pattern) and that the resulting manifest points to the specified remote
-    and commit.
+    and commit. Building is skipped, as only the origin is checked here.
     """
-    p = run_alr("--force", "publish", "--skip-submit", *extra_args, quiet=False)
+    p = run_alr("--force", "publish", "--skip-submit", "--skip-build",
+                *extra_args, quiet=False)
     manifest_path = os.path.join(
         TEST_ROOT_DIR, "xxx", "alire", "releases", "xxx-0.1.0-dev.toml"
     )

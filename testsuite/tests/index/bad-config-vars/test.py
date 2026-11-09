@@ -6,7 +6,7 @@ import os
 import re
 
 from drivers.alr import run_alr
-from drivers.asserts import assert_match
+from drivers.asserts import assert_invalid_manifest
 from drivers.helpers import content_of
 
 
@@ -32,9 +32,10 @@ def check_error(var_def, expected):
 
    make_manifest(var_def)
 
-   p = run_alr('show', 'hello_world',
-               complain_on_error=False, debug=False, quiet=True)
-   assert_match('ERROR:.*' + expected + '\n', p.out)
+   # The manifest is skipped with a warning, and rejected by alr index --check.
+   # Not anchored at the line end: the warning lists all error context levels
+   # on a single line.
+   assert_invalid_manifest(expected)
 
 def check_ok(var_def):
 

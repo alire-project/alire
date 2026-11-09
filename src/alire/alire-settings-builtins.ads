@@ -67,6 +67,33 @@ package Alire.Settings.Builtins is
         " quoting rules. The token ${GPR_FILE} is replaced by" &
         " a path to the project file to open.");
 
+   --  EXTERNALS
+
+   Externals_Version_Output_Policy : constant Builtin := New_Builtin
+     (Key         => "externals.version_output.policy",
+      Kind        => Stn_String,
+      Def         => "allowlist",
+      Check       => Checks.Valid_Version_Output_Policy'Access,
+      Global_Only => True,
+      Help        =>
+        "Which version commands of external crates detected from their output"
+      & " may be run: 'all', 'allowlist' (only those in"
+      & " externals.version_output.allowlist) or 'none'.");
+
+   Externals_Version_Output_Allowlist : constant Builtin := New_Builtin
+     (Key         => "externals.version_output.allowlist",
+      Kind        => Stn_String,
+      Def         => "curl --version; gnat --version; gprbuild --version;"
+                   & " m4 --version; make --version; odbc_config --version;"
+                   & " pkg-config --modversion *; pkg-config --version",
+      Global_Only => True,
+      Help        =>
+        "Version commands of external crates that may be run, separated by"
+      & " ';', when externals.version_output.policy is 'allowlist'. Words in"
+      & " a command must match exactly, except that a '*' argument matches"
+      & " one argument made of letters, digits and '.', '_', '+', '-', not"
+      & " starting with '-'.");
+
    --  INDEX
 
    Index_Auto_Community : constant Builtin := New_Builtin
@@ -114,6 +141,23 @@ package Alire.Settings.Builtins is
       Def  => "alire-index",
       Help => "Name of the index repository.");
 
+   Index_Max_Manifest_Size : constant Builtin := New_Builtin
+     (Key  => "index.max_manifest_size",
+      Kind => Stn_Int,
+      Def  => "65536", -- bytes, ten times the largest in the community index
+      Help =>
+        "Maximum size in bytes of a manifest in an index. Larger manifests "
+        & "are skipped with a warning, or rejected by `alr index --check`.");
+
+   Index_Allow_Symlinks : constant Builtin := New_Builtin
+     (Key  => "index.allow_symlinks",
+      Def  => False,
+      Help =>
+        "When true, symbolic links to manifests in indexes are followed, "
+        & "with a warning (links to folders are never entered). When false, "
+        & "they are skipped with a warning, or rejected by "
+        & "`alr index --check`. The community index cannot contain them.");
+
    --  INIT
 
    Init_Github_Files : constant Builtin := New_Builtin
@@ -148,6 +192,17 @@ package Alire.Settings.Builtins is
       & " effect when using 'alr publish' for submissions to the community"
       & " index (which only permits the default list, due to vulnerabilities"
       & " identified in Git's use of SHA1).");
+
+   Origins_Mirrors_Untrusted : constant Builtin := New_Builtin
+     (Key         => "origins.mirrors.untrusted",
+      Kind        => Stn_String,
+      Def         => "warn",
+      Global_Only => True,
+      Help        =>
+        "What to do when deploying from a VCS mirror whose host is not in"
+      & " origins.git.trusted_sites: 'warn', 'reject' or 'allow'. Mirrors"
+      & " are only tried when the origin itself is unavailable. Not used"
+      & " yet, as alr does not deploy from mirrors yet.");
 
    --  SOLVER
 

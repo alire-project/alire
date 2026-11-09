@@ -173,6 +173,9 @@ package Alire.URI with Preelaborate is
    function VCS_Kind (This : String) return VCS_Kinds
      with Pre => URI_Kind (This) in VCS_URIs;
 
+   function Scheme (This : URL) return String;
+   --  The scheme of a URL, in lower case (e.g. "git+https"), or "" for a path
+
    function Authority (This : URL) return String;
    --  The authority includes credentials : user:pass@websi.te
 
@@ -276,6 +279,13 @@ private
        when Hg_URIs => Hg,
        when SVN_URIs => SVN,
        when others => raise Program_Error with "unreachable case");
+
+   ------------
+   -- Scheme --
+   ------------
+
+   function Scheme (This : URL) return String
+   is (L (U.Scheme (This)));
 
    ---------------
    -- Authority --

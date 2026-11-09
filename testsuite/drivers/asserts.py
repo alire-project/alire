@@ -155,3 +155,24 @@ def assert_not_substring(target: str, text: str):
     """
     assert target not in text, \
         f"Unexpected string '{target}' in text:\n{text}"
+
+
+def assert_invalid_manifest(detail_re: str, *command: str,
+                            command_fails: bool = True):
+    """
+    Check how users meet an invalid index manifest, given a regex for the
+    detail of the error:
+    - A regular alr command skips the manifest with a warning carrying the
+      detail. Because the manifest is skipped, the command may fail for
+      another reason (e.g. a crate whose only release is invalid is not found).
+    - `alr index --check` fails, reporting the detail as an error.
+    """
+    command = command or ("show", "hello_world")
+
+    p = run_alr(*command, quiet=False, debug=False,
+                complain_on_error=not command_fails)
+    assert_match(".*Warning: Skipping invalid index manifest .*" + detail_re,
+                 p.out)
+
+    p = run_alr("index", "--check", debug=False, complain_on_error=False)
+    assert_match(".*ERROR:.*" + detail_re, p.out)

@@ -6,15 +6,16 @@ with Alire.Errors;
 with Alire.Directories;
 with Alire.Formatting;
 with Alire.OS_Lib.Subprocess;
+with Alire.Platforms.Current;
 with Alire.Settings.Builtins;
 with Alire.Spawn;
-with Alire.VFS;
 with Alire.URI;
 with Alire.Utils;             use Alire.Utils;
 with Alire.Utils.Tools;
 
-with GNATCOLL.OS.Constants;
-with GNATCOLL.VFS;
+with Den.Walk;
+
+with GNAT.OS_Lib;
 
 package body Alire.Origins.Deployers.Source_Archive is
 
@@ -31,64 +32,93 @@ package body Alire.Origins.Deployers.Source_Archive is
 
       package Subprocess renames Alire.OS_Lib.Subprocess;
 
-      use type GNATCOLL.OS.OS_Type;
+      On_Windows : constant Boolean := Platforms.Current.On_Windows;
 
-      Unused : AAA.Strings.Vector;
+      ---------------------
+      -- Use_Force_Local --
+      ---------------------
+
+      function Use_Force_Local return Boolean is
+        (On_Windows and then not Utils.Tools.Is_BSD_Tar);
+      --  On some versions of tar found on Windows, an option is required to
+      --  force e.g. C: to mean a local file location rather than the net
+      --  host C. This is the case for the GNU tar bundled with msys2/git,
+      --  but not for the bsdtar bundled with Windows itself, which rejects
+      --  the switch as unknown. We used to blindly retry without
+      --  --force-local on any failure, but that could hide the real error
+      --  behind this unrelated one, so we now decide upfront instead.
+
+      ----------------------
+      -- Only_Link_Errors --
+      ----------------------
+
+      function Only_Link_Errors (Output : Vector) return Boolean is
+      begin
+         --  Windows cannot recreate every link a tarball may contain: msys2's
+         --  tar copies the link target instead of creating an actual link,
+         --  which fails when the target does not exist (dangling links) or
+         --  is otherwise unreachable (e.g. self-referential links). Such
+         --  links are never required to build a crate, so if every complaint
+         --  from tar is about a link, we warn and go ahead instead of
+         --  aborting the whole deployment.
+         if Output.Is_Empty then
+            return False; -- A silent failure is not to be trusted
+         end if;
+
+         for Line of Output loop
+            if not (Contains (Line, "Cannot create symlink")
+                    or else Contains (Line, "Cannot create hard link")
+                    or else Contains (Line, "Exiting with failure status"))
+            then
+               return False;
+            end if;
+         end loop;
+
+         return True;
+      end Only_Link_Errors;
+
+      Args : constant Vector :=
+               (if Use_Force_Local
+                then Empty_Vector & "--force-local"
+                else Empty_Vector)
+               & "-x" & "-f" & Src_File_Full_Name;
+
+      Output : Vector;
+
+      Prev_LC_ALL : constant String := OS_Lib.Getenv ("LC_ALL");
+      --  So tar's messages come in English, and Only_Link_Errors above can
+      --  reliably recognize them regardless of the user's locale.
+
+      Code : Integer;
    begin
 
       --  Make sure tar is installed
       Utils.Tools.Check_Tool (Utils.Tools.Tar);
 
-      case GNATCOLL.OS.Constants.OS is
+      if On_Windows then
+         OS_Lib.Setenv ("LC_ALL", "C");
+      end if;
 
-         when GNATCOLL.OS.Windows =>
+      Code := Subprocess.Unchecked_Spawn_And_Capture
+        ("tar", Args, Output, Err_To_Out => True);
 
-            --  On some versions of tar found on Windows, an option is required
-            --  to force e.g. C: to mean a local file location rather than the
-            --  net host C. Unfortunately this not common to all tar on
-            --  Windows, so we first try to untar with the --force-local, and
-            --  if that fails, we retry without --force-local.
+      if On_Windows then
+         OS_Lib.Setenv ("LC_ALL", Prev_LC_ALL);
+      end if;
 
-            declare
-            begin
-               --  Try to untar with --force-local
-               Unused := Subprocess.Checked_Spawn_And_Capture
-                 ("tar", Empty_Vector &
-                    "--force-local" &
-                    "-x" &
-                    "-f" & Src_File_Full_Name,
-                  Err_To_Out => True);
-
-            exception
-
-               when E : Checked_Error =>
-
-                  Trace.Debug ("tar --force-local failed: " & Errors.Get (E));
-
-                  --  In case of error, retry without the --force-local option
-                  Unused := Subprocess.Checked_Spawn_And_Capture
-                    ("tar", Empty_Vector &
-                       "-x" &
-                       "-f" & Src_File_Full_Name,
-                     Err_To_Out => True);
-            end;
-
-         when GNATCOLL.OS.Unix | GNATCOLL.OS.MacOS =>
-
-            --  On other platforms, just run tar without --force-local
-            Unused := Subprocess.Checked_Spawn_And_Capture
-              ("tar", Empty_Vector &
-                 "-x" &
-                 "-f" & Src_File_Full_Name,
-               Err_To_Out => True);
-      end case;
-
-   exception
-      when E : Checked_Error =>
-         Trace.Warning ("tar failed: " & Errors.Get (E, Clear => False));
-
-         --  Reraise current occurrence
-         raise;
+      if Code /= 0 then
+         if On_Windows and then Only_Link_Errors (Output) then
+            Trace.Warning
+              ("Some links inside " & Src_File_Full_Name
+               & " could not be created; this is a known Windows/msys2 "
+               & "limitation with dangling or otherwise unreachable links");
+            Trace.Debug (Output.Flatten (Separator => "\n"));
+         else
+            raise Checked_Error with Errors.Set
+              ("tar failed with code" & Code'Image
+               & " and output: " & Output.Flatten (Separator => "\n"));
+         end if;
+      end if;
    end Untar;
 
    ------------
@@ -138,7 +168,6 @@ package body Alire.Origins.Deployers.Source_Archive is
                       Folder   : Directory_Path)
                       return Outcome
    is
-      use GNATCOLL.VFS;
       use Alire.Directories;
       Archive_File : constant File_Path :=
         Folder / Ada.Directories.Simple_Name (Filename);
@@ -162,7 +191,7 @@ package body Alire.Origins.Deployers.Source_Archive is
       end Exec_Check;
    begin
       Trace.Debug ("Creating folder: " & Folder);
-      Create (+Folder).Make_Dir;
+      Create_Tree (Folder);
 
       Trace.Detail ("Downloading file: " & URL);
       Alire.Spawn.Settings_Command
@@ -220,18 +249,21 @@ package body Alire.Origins.Deployers.Source_Archive is
       -----------------------
 
       procedure Check_And_Move_Up is
-         Contents : constant VFS.Virtual_File_Vector :=
-                      VFS.Read_Dir
-                        (VFS.New_Virtual_File (VFS.From_FS (Dst_Dir)));
+         use Alire.Directories.Operators;
+
+         Base     : constant Any_Path := Den.Scrub (Dst_Dir);
+         Contents : constant Den.Sorted_Paths := Den.Walk.Ls (Base);
          Success  : Boolean;
       begin
-         if Natural (Contents.Length) = 0 then
+         if Contents.Is_Empty then
             raise Checked_Error with Errors.Set
               ("No content where a single directory was expected: " & Dst_Dir);
          end if;
 
+         --  The kind of a softlink is not directory, so these are rejected
+
          if Natural (Contents.Length) /= 1 or else
-           not Contents.First_Element.Is_Directory
+           Den."/=" (Den.Kind (Base / Contents.First_Element), Den.Directory)
          then
             raise Checked_Error with Errors.Set
               ("Unexpected contents where a single directory was expected: "
@@ -239,43 +271,42 @@ package body Alire.Origins.Deployers.Source_Archive is
          end if;
 
          Trace.Debug ("Unpacked crate root detected as: "
-                      & Contents.First_Element.Display_Base_Dir_Name);
+                      & Contents.First_Element);
 
-         --  Move everything up one level:
+         declare
+            Root : constant Any_Path := Base / Contents.First_Element;
+         begin
 
-         for File of VFS.Read_Dir (Contents.First_Element) loop
-            declare
-               use type VFS.Virtual_File;
-               New_Name : constant VFS.Virtual_File :=
-                            Contents.First_Element.Get_Parent /
-                              VFS.Simple_Name (File);
-            begin
-               GNATCOLL.VFS.Rename
-                 (File      => File,
-                  Full_Name => New_Name,
-                  Success   => Success);
+            --  Move everything up one level. We are not leaving the folder so
+            --  a plain rename suffices. This must also work with dangling
+            --  softlinks, which Ada.Directories.Rename considers missing.
+
+            for File of Den.Walk.Ls (Root) loop
+               GNAT.OS_Lib.Rename_File
+                 (Old_Name => Root / File,
+                  New_Name => Base / File,
+                  Success  => Success);
 
                if not Success then
                   raise Checked_Error with Errors.Set
-                    ("Could not rename " & File.Display_Full_Name
-                     & " to " & New_Name.Display_Full_Name);
+                    ("Could not rename " & (Root / File)
+                     & " to " & (Base / File));
                end if;
-            end;
-         end loop;
+            end loop;
 
-         --  Delete the folder, that must be empty:
+            --  Delete the folder, that must be empty:
 
-         Contents.First_Element.Remove_Dir (Success => Success);
-         if not Success then
-            raise Checked_Error with Errors.Set
-              ("Could not remove supposedly empty directory: "
-               & Contents.First_Element.Display_Full_Name);
-         end if;
+            Dirs.Delete_Directory (Root);
+         exception
+            when E : Dirs.Name_Error | Dirs.Use_Error =>
+               Log_Exception (E);
+               raise Checked_Error with Errors.Set
+                 ("Could not remove supposedly empty directory: " & Root);
+         end;
 
       end Check_And_Move_Up;
 
       package Subprocess renames Alire.OS_Lib.Subprocess;
-      use GNATCOLL.VFS;
 
    begin
 
@@ -292,13 +323,11 @@ package body Alire.Origins.Deployers.Source_Archive is
                --  the source file, in case the given name is
                --  relative.
                Src_File_Full_Name : constant Absolute_Path
-                 := +GNATCOLL.VFS.Full_Name
-                   (GNATCOLL.VFS.Create_From_Base (+Src_File));
+                 := Dirs.Full_Name (Src_File);
 
-               --  Create the destination directory
-               Dst       : constant Virtual_File := Create (+Dst_Dir);
+               --  This guard ensures deletion of the destination on error
                Dst_Guard : Directories.Temp_File :=
-                 Directories.With_Name (+Dst.Full_Name);
+                 Directories.With_Name (Dirs.Full_Name (Dst_Dir));
 
                --  Enter the destination directory, and automatically restore
                --  the current dir at the end of the scope.

@@ -1,0 +1,10 @@
+description = "Example crate"
+name = "softlinks"
+version = "0.1.0"
+licenses = "GPL-3.0-only"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:../../../softlinks-0.1.0.tgz"
+hashes = ["sha256:811a10e17ea336b10cb9078e5c56b85b8ff6df53899dac6029503ba58d7db1cb"]

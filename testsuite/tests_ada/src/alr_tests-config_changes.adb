@@ -1,6 +1,12 @@
+pragma Alire_Test;
+with Alire.Directories;
 with Alire.Settings.Edit;
 
 procedure Alr_Tests.Config_Changes is
+
+   Private_Settings : Directories.Temp_File;
+   --  Global settings belong to the user, and other tests running at the same
+   --  time read them when starting, so these changes have to happen elsewhere
 
    --------------------------
    -- Check_Config_Changes --
@@ -41,5 +47,6 @@ procedure Alr_Tests.Config_Changes is
    end Check_Config_Changes;
 
 begin
+   Settings.Edit.Set_Path (Private_Settings.Filename);
    Check_Config_Changes;
 end Alr_Tests.Config_Changes;

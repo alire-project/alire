@@ -1,1 +1,2 @@
 driver: python-script
+build_mode: shared
