@@ -62,6 +62,17 @@ automatically.
 Minor (without impact in the code or its build) metadata changes can be
 proposed in a regular PR, that will be manually reviewed by index maintainers.
 
+## Required metadata
+
+Besides the fields that the [catalog format](catalog-format-spec) requires,
+the community index requires a `website` in every new release other than
+externals. A crate without a website of its own can use its upstream
+repository:
+
+```toml
+website = "https://github.com/user/repo"
+```
+
 ## Best practices
 
  - Avoid using `ada` as a prefix for your crate name, this will make the

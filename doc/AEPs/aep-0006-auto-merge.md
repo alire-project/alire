@@ -515,6 +515,10 @@ CI would use.
    ([#2213](https://github.com/alire-project/alire/pull/2213)), and the new `origins.mirrors.untrusted` setting (warn,
    reject or allow) is to decide when `alr` deploys from a mirror, once it
    does. Archives, pinned by SHA-512, need no trusted host.*
+1. Require a `website` in new releases, externals excepted, so that every
+   crate points to where it comes from. *Done in [alire-index-checks#38](https://github.com/alire-project/alire-index-checks/pull/38) and
+   [alire-index#2343](https://github.com/alire-project/alire-index/pull/2343), a required check. Its failure suggests the
+   upstream repository as the website, with its URL for git origins.*
 
 Dropped from the original plan:
 
@@ -610,15 +614,20 @@ Phase 4: auto-merge bot
 1. A global kill switch (a repository variable) that disables auto-merge
    immediately.
 
-   *The `AUTO_MERGE` variable: `off` or unset, `dry-run` or `on`.*
+   *The `AUTO_MERGE` variable: `off` or unset, `dry-run` or `on`, set with
+   `scripts/automerge-mode.sh` in alire-index-checks. Leaving `on` withdraws
+   the bot's pending promises to merge.*
 1. Audit trail: a label and a comment stating which checks passed, and a log
    of auto-merged PRs.
 
-   *In dry-run, each change of decision is logged in a tracking issue
-   (alire-index#2299). In `on` mode the bot labels PRs (`auto-merge: pending`
-   while checks run, `auto-merge: cooling` while cooling off,
-   `auto-merge: manual`, `auto-merged`) and keeps one comment on each with the
-   decision and its reasons. Each run also writes a table of decisions.*
+   *In both modes, each change of decision is logged in a log issue, as a
+   **Dry run** entry (nothing done) or a **Live** one. The bot keeps one issue
+   per year (or month, week or day, `AUTO_MERGE_LOG_PERIOD`), which it creates,
+   pins and closes in turn; the dry run started in alire-index#2299. In `on`
+   mode the bot also labels PRs (`auto-merge: pending` while checks run,
+   `auto-merge: cooling` while cooling off, `auto-merge: manual`,
+   `auto-merged`) and keeps one comment on each with the decision and its
+   reasons. Each run also writes a table of decisions.*
 
 Phase 5: defense in depth and incident response
 -----------------------------------------------
@@ -780,6 +789,8 @@ Phase 2: community policy checks
 
 - [x] [alire-index-checks#32](https://github.com/alire-project/alire-index-checks/pull/32) feat: vet origin URL kinds
 - [x] [alire#2213](https://github.com/alire-project/alire/pull/2213) feat: vet mirror origins against trusted sites
+- [x] [alire-index-checks#38](https://github.com/alire-project/alire-index-checks/pull/38) feat: check website in manifest or suggest upstream
+- [x] [alire-index#2343](https://github.com/alire-project/alire-index/pull/2343) feat: require website on manifests
 
 Phase 3: ownership
 ------------------
@@ -797,7 +808,11 @@ Phase 4: auto-merge bot
 - [x] [alire-index#2300](https://github.com/alire-project/alire-index/pull/2300) feat: automerge bot workflow
 - [x] Dry run: the bot's labels, `AUTO_MERGE_ISSUE=2299` and
   `AUTO_MERGE=dry-run` in alire-index.
-- [x] Merging enabled: the GitHub App, its bypass in the `stable-*` rule,
+- [ ] alire-index-checks `feat/automerge-log` feat: log in both modes, rotate
+  the log issue, mode switch script
+- [ ] alire-index `feat/automerge-log` feat: run the bot as the App in both
+  modes
+- [ ] Merging enabled: the GitHub App, its bypass in the `stable-*` rule,
   and `AUTO_MERGE=on`.
 
 Phase 5: defense in depth
